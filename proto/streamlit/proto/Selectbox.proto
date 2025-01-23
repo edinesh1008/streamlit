@@ -24,7 +24,7 @@ import "streamlit/proto/LabelVisibilityMessage.proto";
 message Selectbox {
   string id = 1;
   string label = 2;
-  optional int32 default = 3;
+  int32 default = 3;
   repeated string options = 4;
   string help = 5;
   string form_id = 6;
@@ -40,5 +40,8 @@ message Selectbox {
   string placeholder = 11;
   optional bool accept_new_options = 12;
 
-  // Next: 14
+  string width = 14;
+  int32 scale = 15;
+
+  // Next: 16
 }

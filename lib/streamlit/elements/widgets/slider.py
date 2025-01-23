@@ -212,7 +212,7 @@ class SliderMixin:
         max_value: None = None,
         value:  None = None,
         step: int | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> int:
         ...
 
@@ -226,7 +226,7 @@ class SliderMixin:
         max_value: SliderNumericT | None = None,
         value: SliderNumericT | None = None,
         step: StepNumericT[SliderNumericT] | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> SliderNumericT:
         ...
 
@@ -241,7 +241,7 @@ class SliderMixin:
         *,
         value: SliderNumericSpanT[SliderNumericT],
         step: StepNumericT[SliderNumericT] | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> tuple[SliderNumericT, SliderNumericT]:
         ...
 
@@ -256,7 +256,7 @@ class SliderMixin:
         value: SliderNumericSpanT[SliderNumericT],
         /,
         step: StepNumericT[SliderNumericT] | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> tuple[SliderNumericT, SliderNumericT]:
         ...
 
@@ -270,7 +270,7 @@ class SliderMixin:
         max_value: SliderDatelikeT | None = None,
         value: SliderDatelikeT | None = None,
         step: StepDatelikeT | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> SliderDatelikeT:
         ...
 
@@ -285,7 +285,7 @@ class SliderMixin:
         max_value: SliderDatelikeT,
         value: SliderDatelikeT | None = None,
         step: StepDatelikeT | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> SliderDatelikeT:
         ...
 
@@ -299,7 +299,7 @@ class SliderMixin:
         *,
         value: SliderDatelikeT,
         step: StepDatelikeT | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> SliderDatelikeT:
         ...
 
@@ -314,7 +314,7 @@ class SliderMixin:
         *,
         value: SliderDatelikeSpanT[SliderDatelikeT],
         step: StepDatelikeT | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> tuple[SliderDatelikeT, SliderDatelikeT]:
         ...
 
@@ -329,7 +329,7 @@ class SliderMixin:
         value: SliderDatelikeSpanT[SliderDatelikeT],
         /,
         step: StepDatelikeT | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, disabled: bool = False, label_visibility: LabelVisibility = "visible"
     ) -> tuple[SliderDatelikeT, SliderDatelikeT]:
         ...
 
@@ -348,6 +348,7 @@ class SliderMixin:
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
+        flex: str | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
@@ -538,6 +539,7 @@ class SliderMixin:
             key=key,
             help=help,
             on_change=on_change,
+            flex=flex,
             args=args,
             kwargs=kwargs,
             disabled=disabled,
@@ -556,6 +558,7 @@ class SliderMixin:
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
+        flex: str | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
@@ -846,6 +849,9 @@ class SliderMixin:
         slider_proto.label_visibility.value = get_label_visibility_proto_value(
             label_visibility
         )
+
+        if flex is not None:
+            slider_proto.flex = flex
 
         if help is not None:
             slider_proto.help = dedent(help)

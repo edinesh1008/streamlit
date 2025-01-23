@@ -19,6 +19,7 @@ import React, {
   ReactElement,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react"
@@ -92,6 +93,7 @@ const NumberInput: React.FC<Props> = ({
   const [width, elementRef] = useCalculatedWidth()
 
   const [step, setStep] = useState<number>(() => getStep(element))
+
   const initialValue = getInitialValue({ element, widgetMgr })
   const [dirty, setDirty] = useState(false)
   const [value, setValue] = useState<number | null>(initialValue)
@@ -112,7 +114,8 @@ const NumberInput: React.FC<Props> = ({
     : dirty
   // Hide input instructions for small widget sizes.
   const shouldShowInstructions =
-    isFocused && width > theme.breakpoints.hideWidgetDetails
+    isFocused &&
+    parseInt(width || "0", 10) > theme.breakpoints.hideWidgetDetails
 
   // Update the step if the props change
   useEffect(() => {
@@ -459,7 +462,7 @@ const NumberInput: React.FC<Props> = ({
           }}
         />
         {/* We only want to show the increment/decrement controls when there is sufficient room to display the value and these controls. */}
-        {width > numberInputControlBreakpoint && (
+        {parseInt(width || "0", 10) > numberInputControlBreakpoint && (
           <StyledInputControls>
             <StyledInputControl
               data-testid="stNumberInputStepDown"

@@ -98,7 +98,7 @@ class NumberInputMixin:
         max_value: int | None = None,
         value: IntOrNone | Literal["min"] = "min",
         step: int | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
     ) -> int | IntOrNone:
         ...
 
@@ -115,7 +115,7 @@ class NumberInputMixin:
         max_value: int,
         value: IntOrNone | Literal["min"] = "min",
         step: int | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
     ) -> int | IntOrNone:
         ...
 
@@ -130,7 +130,7 @@ class NumberInputMixin:
         *,
         value: int,
         step: int | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
     ) -> int:
         ...
 
@@ -147,7 +147,7 @@ class NumberInputMixin:
         value: IntOrNone | Literal["min"] = "min",
         *,
         step: int,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
     ) -> int | IntOrNone:
         ...
 
@@ -163,7 +163,7 @@ class NumberInputMixin:
         max_value: float | None = None,
         value: FloatOrNone | Literal["min"] = "min",
         step: float | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", icon: str | None = None
     ) -> float | FloatOrNone:
         ...
     # # fmt: on
@@ -180,6 +180,7 @@ class NumberInputMixin:
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
+        flex: str | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
@@ -350,6 +351,7 @@ class NumberInputMixin:
             key=key,
             help=help,
             on_change=on_change,
+            flex=flex,
             args=args,
             kwargs=kwargs,
             placeholder=placeholder,
@@ -370,6 +372,7 @@ class NumberInputMixin:
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
+        flex: str | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
@@ -466,6 +469,7 @@ class NumberInputMixin:
         if step is None:
             step = 1 if int_value else 0.01
 
+
         try:
             float(format % 2)
         except (TypeError, ValueError):
@@ -533,6 +537,9 @@ class NumberInputMixin:
         number_input_proto.label_visibility.value = get_label_visibility_proto_value(
             label_visibility
         )
+
+        if flex is not None:
+            number_input_proto.flex = flex
 
         if help is not None:
             number_input_proto.help = dedent(help)
