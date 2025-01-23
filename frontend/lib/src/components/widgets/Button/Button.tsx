@@ -26,6 +26,7 @@ import BaseButton, {
 } from "~lib/components/shared/BaseButton"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
 import { Box } from "~lib/components/shared/Base/styled-components"
+import { useLayoutStyles } from "~lib/components/core/Flex/useLayoutStyles"
 
 export interface Props {
   disabled: boolean
@@ -36,6 +37,16 @@ export interface Props {
 
 function Button(props: Props): ReactElement {
   const { disabled, element, widgetMgr, fragmentId } = props
+
+  let fluidWidth = true
+  if (
+    element.width === "stretch" ||
+    element.useContainerWidth
+  ) {
+    fluidWidth = true
+  } else if (element.width === "content") {
+    fluidWidth = false
+  }
 
   let kind = BaseButtonKind.SECONDARY
   if (element.type === "primary") {
@@ -54,7 +65,7 @@ function Button(props: Props): ReactElement {
           kind={kind}
           size={BaseButtonSize.SMALL}
           disabled={disabled}
-          containerWidth={element.useContainerWidth}
+          containerWidth={fluidWidth}
           onClick={() =>
             widgetMgr.setTriggerValue(element, { fromUi: true }, fragmentId)
           }

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable, Generic, cast, overload
+from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, cast, overload
 
 from streamlit.dataframe_util import OptionSequence, convert_anything_to_list
 from streamlit.elements.lib.form_utils import current_form_id
@@ -92,6 +92,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> T: ...
 
     @overload
@@ -110,6 +112,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> T | None: ...
 
     @gather_metrics("selectbox")
@@ -128,6 +132,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> T | None:
         r"""Display a select widget.
 
@@ -209,6 +215,14 @@ class SelectboxMixin:
             label, which can help keep the widget alligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
+        width : "stretch", "content", or int
+            The width of the selectbox. If "stretch", the element will expand to fill its parent container.
+            If "content", the element will be sized to fit its contents. If an integer, the element will have
+            that specific width in pixels. Defaults to "content".
+
+        scale : int or None
+            An optional integer scale factor to apply to the element.
+
         Returns
         -------
         any
@@ -261,6 +275,8 @@ class SelectboxMixin:
             placeholder=placeholder,
             disabled=disabled,
             label_visibility=label_visibility,
+            width=width,
+            scale=scale,
             ctx=ctx,
         )
 
@@ -279,6 +295,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
         ctx: ScriptRunContext | None = None,
     ) -> T | None:
         key = to_key(key)
@@ -331,6 +349,10 @@ class SelectboxMixin:
         selectbox_proto.label_visibility.value = get_label_visibility_proto_value(
             label_visibility
         )
+
+        selectbox_proto.width = str(width)
+        if scale is not None:
+            selectbox_proto.scale = scale
 
         if help is not None:
             selectbox_proto.help = dedent(help)

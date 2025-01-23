@@ -47,6 +47,24 @@ class LayoutsMixin:
         height: int | None = None,
         border: bool | None = None,
         key: Key | None = None,
+        # TODO: Move this Literal definition to somewhere shared
+        gap: Literal["small", "medium", "large"] = "small",
+        direction: Literal["vertical", "horizontal"] = "vertical",
+        wrap: bool = True,
+        horizontal_alignment: Literal[
+            "left",
+            "center",
+            "right",
+            "distribute",
+        ] = "left",
+        vertical_alignment: Literal[
+            "top",
+            "center",
+            "bottom",
+            "distribute",
+        ] = "top",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> DeltaGenerator:
         """Insert a multi-element container.
 
@@ -83,6 +101,13 @@ class LayoutsMixin:
             Additionally, if ``key`` is provided, it will be used as CSS
             class name prefixed with ``st-key-``.
 
+        width : "stretch", "content", or int
+            The width of the container. If "stretch", the element will expand to fill its parent container.
+            If "content", the element will be sized to fit its contents. If an integer, the element will have
+            that specific width in pixels. Defaults to "content".
+
+        scale : int or None
+            An optional integer scale factor to apply to the element.
 
         Examples
         --------
@@ -144,22 +169,30 @@ class LayoutsMixin:
         .. output ::
             https://doc-container4.streamlit.app/
             height: 400px
-
+        # These are flexbox containers.
         """
         key = to_key(key)
         block_proto = BlockProto()
         block_proto.allow_empty = False
-        block_proto.vertical.border = border or False
+        block_proto.flex_container.border = border or False
+        block_proto.flex_container.width = str(width)
+
+        if scale < 1:
+            raise StreamlitAPIException("scale must be a positive integer")
+        block_proto.flex_container.scale = scale
+
+        block_proto.flex_container.gap = gap
+        block_proto.flex_container.wrap = wrap
 
         if height:
             # Activate scrolling container behavior:
             block_proto.allow_empty = True
-            block_proto.vertical.height = height
+            block_proto.flex_container.height = height
             if border is None:
                 # If border is None, we activated the
                 # border as default setting for scrolling
                 # containers.
-                block_proto.vertical.border = True
+                block_proto.flex_container.border = True
 
         if key:
             # At the moment, the ID is only used for extracting the
@@ -170,6 +203,60 @@ class LayoutsMixin:
             block_proto.id = compute_and_register_element_id(
                 "container", user_key=key, form_id=None
             )
+
+        map_to_flex_terminology = {
+            "left": "start",
+            "center": "center",
+            "right": "end",
+            "top": "start",
+            "bottom": "end",
+            "distribute": "space_between",
+            "stretch": "stretch",
+        }
+
+        valid_align = ["start", "center", "end"]
+        valid_justify = ["start", "center", "end", "space_between"]
+
+        def convert_align_to_proto(align):
+            if align in ["start", "end", "center"]:
+                return getattr(BlockProto.FlexContainer.Align, f"ALIGN_{align.upper()}")
+            else:
+                return getattr(BlockProto.FlexContainer.Align, f"{align.upper()}")
+
+        def convert_justify_to_proto(justify):
+            if justify in ["start", "end", "center"]:
+                return getattr(
+                    BlockProto.FlexContainer.Justify, f"JUSTIFY_{justify.upper()}"
+                )
+            else:
+                return getattr(BlockProto.FlexContainer.Justify, f"{justify.upper()}")
+
+        def add_justify_align_to_proto(align, justify, proto):
+            if align in valid_align:
+                proto.flex_container.align = convert_align_to_proto(align)
+
+            if justify in valid_justify:
+                proto.flex_container.justify = convert_justify_to_proto(justify)
+
+        if direction == "vertical":
+            block_proto.flex_container.direction = (
+                BlockProto.FlexContainer.Direction.VERTICAL
+            )
+
+            align = map_to_flex_terminology[horizontal_alignment]
+            justify = map_to_flex_terminology[vertical_alignment]
+
+            add_justify_align_to_proto(align, justify, block_proto)
+
+        elif direction == "horizontal":
+            block_proto.flex_container.direction = (
+                BlockProto.FlexContainer.Direction.HORIZONTAL
+            )
+
+            align = map_to_flex_terminology[vertical_alignment]
+            justify = map_to_flex_terminology[horizontal_alignment]
+
+            add_justify_align_to_proto(align, justify, block_proto)
 
         return self.dg._block(block_proto)
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Callable, Generic, cast
+from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, cast
 
 from streamlit.dataframe_util import OptionSequence
 from streamlit.elements.lib.form_utils import current_form_id
@@ -121,6 +121,8 @@ class MultiSelectMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch"] | int = "stretch",
+        scale: int = 1,
     ) -> list[T]:
         r"""Display a multiselect widget.
         The multiselect widget starts as empty.
@@ -204,6 +206,15 @@ class MultiSelectMixin:
             label, which can help keep the widget alligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
+        width : "stretch" or int
+            The width of the multiselect widget. If an integer, sets the width
+            in pixels. If "stretch", the widget will stretch to fill the available
+            space in its container.
+
+        scale : int
+            An optional integer scale factor to apply to the widget.
+            Defaults to 1.
+
         Returns
         -------
         list
@@ -241,6 +252,8 @@ class MultiSelectMixin:
             placeholder=placeholder,
             disabled=disabled,
             label_visibility=label_visibility,
+            width=width,
+            scale=scale,
             ctx=ctx,
         )
 
@@ -260,6 +273,8 @@ class MultiSelectMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch"] | int = "stretch",
+        scale: int = 1,
         ctx: ScriptRunContext | None = None,
     ) -> list[T]:
         key = to_key(key)
@@ -304,6 +319,12 @@ class MultiSelectMixin:
         proto.options[:] = formatted_options
         if help is not None:
             proto.help = dedent(help)
+
+        if width:
+            proto.width = str(width)
+
+        if scale is not None:
+            proto.scale = scale
 
         serde = MultiSelectSerde(indexable_options, default_values)
         widget_state = register_widget(

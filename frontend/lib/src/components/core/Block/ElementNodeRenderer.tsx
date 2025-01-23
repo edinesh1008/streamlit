@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, Suspense } from "react"
+import React, { FC, ReactElement, Suspense } from "react"
 
 import debounceRender from "react-debounce-render"
 import classNames from "classnames"
@@ -89,6 +89,8 @@ import Heading from "~lib/components/shared/StreamlitMarkdown/Heading"
 import { LibContext } from "~lib/components/core/LibContext"
 import { getElementId } from "~lib/util/utils"
 import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
+import { useLayoutStyles } from "~lib/components/core/Flex/useLayoutStyles"
+import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
 
 import {
   BaseBlockProps,
@@ -98,6 +100,7 @@ import {
   shouldComponentBeEnabled,
 } from "./utils"
 import { StyledElementContainerLayoutWrapper } from "./StyledElementContainerLayoutWrapper"
+import Space from "~lib/components/elements/Space/Space"
 
 // Lazy-load elements.
 const Audio = React.lazy(() => import("~lib/components/elements/Audio"))
@@ -389,6 +392,9 @@ const RawElementNodeRenderer = (
         props.isStale,
         <Snow scriptRunId={props.scriptRunId} />
       )
+
+    case "space":
+      return <Space scriptRunId={props.scriptRunId} />
 
     case "spinner":
       return (

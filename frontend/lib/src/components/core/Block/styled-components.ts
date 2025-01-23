@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from "react"
+import React, { CSSProperties } from "react"
 
 import styled from "@emotion/styled"
 
@@ -22,6 +22,7 @@ import { Block as BlockProto } from "@streamlit/protobuf"
 
 import { StyledCheckbox } from "~lib/components/widgets/Checkbox/styled-components"
 import { EmotionTheme, STALE_STYLES } from "~lib/theme"
+import { assertNever } from "~lib/util/assertNever"
 
 function translateGapWidth(gap: string, theme: EmotionTheme): string {
   let gapWidth = theme.spacing.lg
@@ -32,6 +33,47 @@ function translateGapWidth(gap: string, theme: EmotionTheme): string {
   }
   return gapWidth
 }
+
+const getAlignItems = (
+  align: BlockProto.FlexContainer.Align | undefined
+): CSSProperties["alignItems"] => {
+  switch (align) {
+    case BlockProto.FlexContainer.Align.ALIGN_START:
+      return "start"
+    case BlockProto.FlexContainer.Align.ALIGN_CENTER:
+      return "center"
+    case BlockProto.FlexContainer.Align.ALIGN_END:
+      return "end"
+    case BlockProto.FlexContainer.Align.STRETCH:
+      return "stretch"
+    case undefined:
+      // This is the existing default behavior
+      return "start"
+    default:
+      assertNever(align)
+  }
+}
+
+const getJustifyContent = (
+  justify: BlockProto.FlexContainer.Justify | undefined
+): CSSProperties["justifyContent"] => {
+  switch (justify) {
+    case BlockProto.FlexContainer.Justify.JUSTIFY_START:
+      return "start"
+    case BlockProto.FlexContainer.Justify.JUSTIFY_CENTER:
+      return "center"
+    case BlockProto.FlexContainer.Justify.JUSTIFY_END:
+      return "end"
+    case BlockProto.FlexContainer.Justify.SPACE_BETWEEN:
+      return "space-between"
+    case undefined:
+      // This is the existing default behavior
+      return "start"
+    default:
+      assertNever(justify)
+  }
+}
+
 export interface StyledHorizontalBlockProps {
   gap: string
 }
@@ -45,9 +87,7 @@ export const StyledHorizontalBlock = styled.div<StyledHorizontalBlockProps>(
       // for small ones. This can be adjusted once more information is passed.
       // More information and discussions can be found: Issue #2716, PR #2811
       display: "flex",
-      flexWrap: "wrap",
       flexGrow: 1,
-      alignItems: "stretch",
       gap: gapWidth,
     }
   }
@@ -57,12 +97,16 @@ export interface StyledElementContainerProps {
   isStale: boolean
   width: React.CSSProperties["width"]
   elementType: string
+  marginLeft?: React.CSSProperties["marginLeft"]
 }
 
 const GLOBAL_ELEMENTS = ["balloons", "snow"]
 export const StyledElementContainer = styled.div<StyledElementContainerProps>(
-  ({ theme, isStale, width, elementType }) => ({
+  ({ theme, isStale, width, elementType, maxWidth, flex, marginLeft }) => ({
     width,
+    maxWidth,
+    flex,
+    marginLeft,
     // Allows to have absolutely-positioned nodes inside app elements, like
     // floating buttons.
     position: "relative",
@@ -165,33 +209,35 @@ export interface StyledVerticalBlockProps {
 }
 
 export const StyledVerticalBlock = styled.div<StyledVerticalBlockProps>(
-  ({ width, maxWidth, theme }) => ({
-    width,
-    maxWidth,
-    position: "relative", // Required for the automatic width computation.
-    display: "flex",
-    flex: 1,
-    flexDirection: "column",
-    gap: theme.spacing.lg,
-  })
-)
-
-export const StyledVerticalBlockWrapper = styled.div<StyledVerticalBlockProps>(
-  {
-    display: "flex",
-    flexDirection: "column",
-    flex: 1,
+  ({ width, maxWidth, theme }) => {
+    return {
+      width,
+      maxWidth,
+      position: "relative", // Required for the automatic width computation.
+      display: "flex",
+      flex: 1,
+      flexDirection: "column",
+      gap: theme.spacing.lg,
+    }
   }
 )
+
+export const StyledVerticalBlockWrapper = styled.div({
+  display: "flex",
+  flexDirection: "column",
+  flex: 1,
+})
 
 export interface StyledVerticalBlockBorderWrapperProps {
   border: boolean
   height?: number
+  width?: number
+  flex?: number
 }
 
 export const StyledVerticalBlockBorderWrapper =
   styled.div<StyledVerticalBlockBorderWrapperProps>(
-    ({ theme, border, height }) => ({
+    ({ theme, border, height, width, flex }) => ({
       ...(border && {
         border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
         borderRadius: theme.radii.default,
@@ -201,5 +247,52 @@ export const StyledVerticalBlockBorderWrapper =
         height: `${height}px`,
         overflow: "auto",
       }),
+      ...(width && {
+        width: `${width}`,
+        overflowX: "auto",
+      }),
+      ...(flex && {
+        flex: flex,
+      }),
     })
+  )
+
+export interface StyledFlexContainerWrapperProps {
+  ref?: React.RefObject<any>
+  flexDirection: React.CSSProperties["flexDirection"]
+  align?: BlockProto.FlexContainer.Align
+  justify?: BlockProto.FlexContainer.Justify
+  wrap: boolean
+  gap?: string
+  flex?: React.CSSProperties["flex"]
+  width?: React.CSSProperties["width"]
+  maxWidth?: React.CSSProperties["maxWidth"]
+}
+
+export const StyledFlexContainerWrapper =
+  styled.div<StyledFlexContainerWrapperProps>(
+    ({
+      flexDirection,
+      align,
+      justify,
+      wrap,
+      gap,
+      theme,
+      flex,
+      width,
+      maxWidth,
+    }) => {
+      const gapWidth = gap ? translateGapWidth(gap, theme) : theme.spacing.lg
+      return {
+        display: "flex",
+        width: width,
+        maxWidth: maxWidth,
+        flex: flex,
+        flexDirection: flexDirection,
+        alignItems: getAlignItems(align),
+        justifyContent: getJustifyContent(justify),
+        flexWrap: wrap ? "wrap" : "nowrap",
+        gap: gapWidth,
+      }
+    }
   )
