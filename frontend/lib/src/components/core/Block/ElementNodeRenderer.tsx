@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, Suspense } from "react"
+import React, { ReactElement, Suspense, useRef } from "react"
 
 import debounceRender from "react-debounce-render"
+import { useDrag, useDrop } from "react-dnd"
 import classNames from "classnames"
 
 import {
@@ -68,6 +69,7 @@ import {
 
 import { ElementNode } from "~lib/AppNode"
 import { Quiver } from "~lib/dataframes/Quiver"
+import { EditModeElementsContext } from "~lib/dashboards/EditModeElementsContext"
 // Load (non-lazy) elements.
 import AlertElement from "~lib/components/elements/AlertElement"
 import ArrowTable from "~lib/components/elements/ArrowTable"
@@ -719,6 +721,9 @@ const RawElementNodeRenderer = (
 const ElementNodeRenderer = (
   props: ElementNodeRendererProps
 ): ReactElement => {
+  const { elements, updateElements } = React.useContext(
+    EditModeElementsContext
+  )
   const { isFullScreen, fragmentIdsThisRun } = React.useContext(LibContext)
   const { node, width } = props
 
@@ -736,6 +741,81 @@ const ElementNodeRenderer = (
   const elementId = getElementId(node.element)
   const userKey = getKeyFromId(elementId)
 
+  const ref = useRef<HTMLDivElement>(null)
+  const [{ handlerId }, drop] = useDrop<ElementNode>({
+    accept: "element",
+    collect(monitor) {
+      return {
+        handlerId: monitor.getHandlerId(),
+      }
+    },
+    hover(draggedItem, monitor) {
+      if (!ref.current) {
+        return
+      }
+
+      // Don't replace items with themselves
+      if (node === draggedItem) {
+        return
+      }
+      // Determine rectangle on screen
+      const hoverBoundingRect = ref.current?.getBoundingClientRect()
+      const useThirds = hoverBoundingRect.height > 100
+      // Get vertical middle
+      const hoverMiddleThird =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 3
+      const hoverMiddle =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset()!
+      // Get pixels to the top
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top
+      // Only perform the move when the mouse has crossed half of the items height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+      // Dragging downwards
+      if (
+        useThirds &&
+        hoverClientY > hoverMiddleThird &&
+        hoverClientY < hoverMiddleThird * 2
+      ) {
+        return
+      }
+
+      if (useThirds) {
+        if (hoverClientY <= hoverMiddleThird) {
+          updateElements(elements.moveElement(draggedItem, node, true))
+        }
+        if (hoverClientY >= hoverMiddleThird * 2) {
+          updateElements(elements.moveElement(draggedItem, node, false))
+        }
+        return
+      }
+
+      if (hoverClientY < hoverMiddle) {
+        updateElements(elements.moveElement(draggedItem, node, true))
+        return
+      }
+
+      if (hoverClientY >= hoverMiddle) {
+        updateElements(elements.moveElement(draggedItem, node, false))
+        return
+      }
+    },
+  })
+
+  const [{ isDragging }, drag] = useDrag({
+    type: "element",
+    item: () => {
+      return node
+    },
+    collect: monitor => ({
+      isDragging: monitor.isDragging(),
+    }),
+  })
+  const opacity = isDragging ? 0 : 1
+  drag(drop(ref))
+
   // TODO: If would be great if we could return an empty fragment if isHidden is true, to keep the
   // DOM clean. But this would require the keys passed to ElementNodeRenderer at Block.tsx to be a
   // stable hash of some sort.
@@ -748,6 +828,9 @@ const ElementNodeRenderer = (
           "element-container",
           convertKeyToClassName(userKey)
         )}
+        ref={ref}
+        style={{ opacity }}
+        data-handler-id={handlerId}
         data-testid="stElementContainer"
         data-stale={isStale}
         // Applying stale opacity in fullscreen mode

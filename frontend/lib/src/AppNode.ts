@@ -497,6 +497,41 @@ export class BlockNode implements AppNode {
     )
   }
 
+  moveElement(
+    from: ElementNode,
+    to: ElementNode,
+    insertBefore = false
+  ): BlockNode {
+    const newChildren = []
+    for (const child of this.children) {
+      if (child instanceof BlockNode) {
+        newChildren.push(child.moveElement(from, to, insertBefore))
+      } else if (child === from) {
+        // We are moving the element, so we want to not add anything
+        continue
+      } else if (child === to) {
+        if (insertBefore) {
+          // Push the old item and then the new one
+          newChildren.push(from, to)
+        } else {
+          // Push the new item, and then the
+          newChildren.push(to, from)
+        }
+      } else {
+        newChildren.push(child)
+      }
+    }
+
+    return new BlockNode(
+      this.activeScriptHash,
+      newChildren,
+      this.deltaBlock,
+      this.scriptRunId,
+      this.fragmentId,
+      this.deltaMsgReceivedAt
+    )
+  }
+
   public clearStaleNodes(
     currentScriptRunId: string,
     fragmentIdsThisRun?: Array<string>,
@@ -801,6 +836,28 @@ export class AppRoot {
         currentScriptRunId
       ),
       appLogo
+    )
+  }
+
+  moveElement(
+    from: ElementNode,
+    to: ElementNode,
+    insertBefore = false
+  ): AppRoot {
+    // clears all nodes that are not associated with the mainScriptHash
+    // Get the current script run id from one of the children
+    const currentScriptRunId = this.main.scriptRunId
+    const main = this.main.moveElement(from, to, insertBefore)
+
+    return new AppRoot(
+      this.mainScriptHash,
+      new BlockNode(
+        this.mainScriptHash,
+        [main, this.sidebar, this.event, this.bottom],
+        new BlockProto({ allowEmpty: true }),
+        currentScriptRunId
+      ),
+      this.appLogo
     )
   }
 

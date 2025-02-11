@@ -66,6 +66,8 @@ export const StyledElementContainer = styled.div<StyledElementContainerProps>(
     // Allows to have absolutely-positioned nodes inside app elements, like
     // floating buttons.
     position: "relative",
+    // eslint-disable-next-line streamlit-custom/no-hardcoded-theme-values
+    border: "red dotted 2px",
 
     "@media print": {
       overflow: "visible",

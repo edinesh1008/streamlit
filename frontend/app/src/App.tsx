@@ -22,6 +22,8 @@ import { enableAllPlugins as enableImmerPlugins } from "immer"
 import classNames from "classnames"
 import without from "lodash/without"
 import { getLogger } from "loglevel"
+import { HTML5Backend } from "react-dnd-html5-backend"
+import { DndProvider } from "react-dnd"
 
 import {
   AppRoot,
@@ -32,6 +34,7 @@ import {
   createTheme,
   CUSTOM_THEME_NAME,
   DeployedAppMetadata,
+  EditModeElementsContext,
   ensureError,
   extractPageNameFromPathName,
   FileUploadClient,
@@ -1947,89 +1950,102 @@ export class App extends PureComponent<Props, State> {
             locale: window.navigator.language,
           }}
         >
-          <Hotkeys
-            keyName="r,c,esc"
-            onKeyDown={this.handleKeyDown}
-            onKeyUp={this.handleKeyUp}
-          >
-            <StyledApp
-              className={outerDivClass}
-              data-testid="stApp"
-              data-test-script-state={
-                scriptRunId == INITIAL_SCRIPT_RUN_ID
-                  ? "initial"
-                  : scriptRunState
-              }
-              data-test-connection-state={connectionState}
+          <DndProvider backend={HTML5Backend}>
+            <EditModeElementsContext.Provider
+              value={{
+                elements,
+                updateElements: (newElements: AppRoot) => {
+                  this.setState({ elements: newElements })
+                },
+              }}
             >
-              {/* The tabindex below is required for testing. */}
-              <Header>
-                {!hideTopBar && (
-                  <>
-                    <StatusWidget
-                      connectionState={connectionState}
-                      sessionEventDispatcher={this.sessionEventDispatcher}
-                      scriptRunState={scriptRunState}
-                      rerunScript={this.rerunScript}
-                      stopScript={this.stopScript}
-                      allowRunOnSave={allowRunOnSave}
-                    />
-                    <ToolbarActions
-                      hostToolbarItems={hostToolbarItems}
+              <Hotkeys
+                keyName="r,c,esc"
+                onKeyDown={this.handleKeyDown}
+                onKeyUp={this.handleKeyUp}
+              >
+                <StyledApp
+                  className={outerDivClass}
+                  data-testid="stApp"
+                  data-test-script-state={
+                    scriptRunId == INITIAL_SCRIPT_RUN_ID
+                      ? "initial"
+                      : scriptRunState
+                  }
+                  data-test-connection-state={connectionState}
+                >
+                  {/* The tabindex below is required for testing. */}
+                  <Header>
+                    {!hideTopBar && (
+                      <>
+                        <StatusWidget
+                          connectionState={connectionState}
+                          sessionEventDispatcher={this.sessionEventDispatcher}
+                          scriptRunState={scriptRunState}
+                          rerunScript={this.rerunScript}
+                          stopScript={this.stopScript}
+                          allowRunOnSave={allowRunOnSave}
+                        />
+                        <ToolbarActions
+                          hostToolbarItems={hostToolbarItems}
+                          sendMessageToHost={
+                            this.hostCommunicationMgr.sendMessageToHost
+                          }
+                          metricsMgr={this.metricsMgr}
+                        />
+                      </>
+                    )}
+                    {this.showDeployButton() && (
+                      <DeployButton
+                        onClick={this.deployButtonClicked.bind(this)}
+                      />
+                    )}
+                    <MainMenu
+                      isServerConnected={this.isServerConnected()}
+                      quickRerunCallback={this.rerunScript}
+                      clearCacheCallback={this.openClearCacheDialog}
+                      settingsCallback={this.settingsCallback}
+                      aboutCallback={this.aboutCallback}
+                      printCallback={this.printCallback}
+                      screencastCallback={this.screencastCallback}
+                      screenCastState={this.props.screenCast.currentState}
+                      hostMenuItems={hostMenuItems}
+                      developmentMode={developmentMode}
                       sendMessageToHost={
                         this.hostCommunicationMgr.sendMessageToHost
                       }
+                      menuItems={menuItems}
                       metricsMgr={this.metricsMgr}
+                      toolbarMode={this.state.toolbarMode}
                     />
-                  </>
-                )}
-                {this.showDeployButton() && (
-                  <DeployButton
-                    onClick={this.deployButtonClicked.bind(this)}
-                  />
-                )}
-                <MainMenu
-                  isServerConnected={this.isServerConnected()}
-                  quickRerunCallback={this.rerunScript}
-                  clearCacheCallback={this.openClearCacheDialog}
-                  settingsCallback={this.settingsCallback}
-                  aboutCallback={this.aboutCallback}
-                  printCallback={this.printCallback}
-                  screencastCallback={this.screencastCallback}
-                  screenCastState={this.props.screenCast.currentState}
-                  hostMenuItems={hostMenuItems}
-                  developmentMode={developmentMode}
-                  sendMessageToHost={
-                    this.hostCommunicationMgr.sendMessageToHost
-                  }
-                  menuItems={menuItems}
-                  metricsMgr={this.metricsMgr}
-                  toolbarMode={this.state.toolbarMode}
-                />
-              </Header>
+                  </Header>
 
-              <AppView
-                endpoints={this.endpoints}
-                sendMessageToHost={this.hostCommunicationMgr.sendMessageToHost}
-                elements={elements}
-                scriptRunId={scriptRunId}
-                scriptRunState={scriptRunState}
-                widgetMgr={this.widgetMgr}
-                widgetsDisabled={widgetsDisabled}
-                uploadClient={this.uploadClient}
-                componentRegistry={this.componentRegistry}
-                formsData={this.state.formsData}
-                appLogo={elements.logo}
-                appPages={appPages}
-                navSections={navSections}
-                onPageChange={this.onPageChange}
-                currentPageScriptHash={currentPageScriptHash}
-                hideSidebarNav={hideSidebarNav || hostHideSidebarNav}
-                expandSidebarNav={expandSidebarNav}
-              />
-              {renderedDialog}
-            </StyledApp>
-          </Hotkeys>
+                  <AppView
+                    endpoints={this.endpoints}
+                    sendMessageToHost={
+                      this.hostCommunicationMgr.sendMessageToHost
+                    }
+                    elements={elements}
+                    scriptRunId={scriptRunId}
+                    scriptRunState={scriptRunState}
+                    widgetMgr={this.widgetMgr}
+                    widgetsDisabled={widgetsDisabled}
+                    uploadClient={this.uploadClient}
+                    componentRegistry={this.componentRegistry}
+                    formsData={this.state.formsData}
+                    appLogo={elements.logo}
+                    appPages={appPages}
+                    navSections={navSections}
+                    onPageChange={this.onPageChange}
+                    currentPageScriptHash={currentPageScriptHash}
+                    hideSidebarNav={hideSidebarNav || hostHideSidebarNav}
+                    expandSidebarNav={expandSidebarNav}
+                  />
+                  {renderedDialog}
+                </StyledApp>
+              </Hotkeys>
+            </EditModeElementsContext.Provider>
+          </DndProvider>
         </LibContext.Provider>
       </AppContext.Provider>
     )
