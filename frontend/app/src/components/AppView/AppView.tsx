@@ -21,6 +21,7 @@ import {
   AppRoot,
   BlockNode,
   ComponentRegistry,
+  EditDashboardSidebar,
   FileUploadClient,
   FormsData,
   IGuestToHostMessage,
@@ -53,6 +54,7 @@ import {
   StyledStickyBottomContainer,
 } from "./styled-components"
 import ScrollToBottomContainer from "./ScrollToBottomContainer"
+import { Edit } from "@emotion-icons/material-outlined"
 
 export interface AppViewProps {
   elements: AppRoot
@@ -317,6 +319,7 @@ function AppView(props: AppViewProps): ReactElement {
           </Profiler>
         )}
       </Component>
+      <EditDashboardSidebar />
       {hasEventElements && (
         <Profiler id="Event">
           <EventContainer scriptRunId={elements.event.scriptRunId}>

@@ -113,11 +113,11 @@ const generateSpec = (
       })
     }
   } else if (useContainerWidth) {
-    spec.width = width
+    spec.width = width - 10
 
     if ("vconcat" in spec) {
       spec.vconcat.forEach((child: any) => {
-        child.width = width
+        child.width = width - 10
       })
     }
   }

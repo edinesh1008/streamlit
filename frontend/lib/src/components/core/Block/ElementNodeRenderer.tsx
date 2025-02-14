@@ -721,9 +721,12 @@ const RawElementNodeRenderer = (
 const ElementNodeRenderer = (
   props: ElementNodeRendererProps
 ): ReactElement => {
-  const { elements, updateElements } = React.useContext(
-    EditModeElementsContext
-  )
+  const {
+    elements,
+    updateElements,
+    setHoveringElementNode,
+    hoveringElementNode,
+  } = React.useContext(EditModeElementsContext)
   const { isFullScreen, fragmentIdsThisRun } = React.useContext(LibContext)
   const { node, width } = props
 
@@ -742,11 +745,12 @@ const ElementNodeRenderer = (
   const userKey = getKeyFromId(elementId)
 
   const ref = useRef<HTMLDivElement>(null)
-  const [{ handlerId }, drop] = useDrop<ElementNode>({
+  const [{ handlerId, isOver }, drop] = useDrop<ElementNode>({
     accept: "element",
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
+        isOver: monitor.isOver({ shallow: true }), // Track hover state
       }
     },
     hover(draggedItem, monitor) {
@@ -760,51 +764,52 @@ const ElementNodeRenderer = (
       }
       // Determine rectangle on screen
       const hoverBoundingRect = ref.current?.getBoundingClientRect()
-      const useThirds = hoverBoundingRect.height > 100
-      // Get vertical middle
-      const hoverMiddleThird =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 3
       const hoverMiddle =
         (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+      const hoverMiddleX =
+        (hoverBoundingRect.right - hoverBoundingRect.left) / 2
       // Determine mouse position
       const clientOffset = monitor.getClientOffset()!
       // Get pixels to the top
       const hoverClientY = clientOffset.y - hoverBoundingRect.top
+      const hoverClientX = clientOffset.x - hoverBoundingRect.left
       // Only perform the move when the mouse has crossed half of the items height
       // When dragging downwards, only move when the cursor is below 50%
       // When dragging upwards, only move when the cursor is above 50%
       // Dragging downwards
-      if (
-        useThirds &&
-        hoverClientY > hoverMiddleThird &&
-        hoverClientY < hoverMiddleThird * 2
-      ) {
+      const HORIZONTAL_THRESHOLD = 0.1
+      const horizontalAreaSize = HORIZONTAL_THRESHOLD * hoverMiddleX
+      if (hoverClientX < horizontalAreaSize) {
+        updateElements(
+          elements.moveElement(draggedItem, node, "horizontal-before")
+        )
         return
       }
 
-      if (useThirds) {
-        if (hoverClientY <= hoverMiddleThird) {
-          updateElements(elements.moveElement(draggedItem, node, true))
-        }
-        if (hoverClientY >= hoverMiddleThird * 2) {
-          updateElements(elements.moveElement(draggedItem, node, false))
-        }
+      if (hoverClientX > 2 * hoverMiddleX - horizontalAreaSize) {
+        updateElements(
+          elements.moveElement(draggedItem, node, "horizontal-after")
+        )
         return
       }
 
-      if (hoverClientY < hoverMiddle) {
-        updateElements(elements.moveElement(draggedItem, node, true))
+      if (hoverClientY <= hoverMiddle) {
+        updateElements(
+          elements.moveElement(draggedItem, node, "vertical-before")
+        )
         return
       }
 
-      if (hoverClientY >= hoverMiddle) {
-        updateElements(elements.moveElement(draggedItem, node, false))
+      if (hoverClientY > hoverMiddle) {
+        updateElements(
+          elements.moveElement(draggedItem, node, "vertical-after")
+        )
         return
       }
     },
   })
 
-  const [{ isDragging }, drag] = useDrag({
+  const [, drag] = useDrag({
     type: "element",
     item: () => {
       return node
@@ -813,7 +818,7 @@ const ElementNodeRenderer = (
       isDragging: monitor.isDragging(),
     }),
   })
-  const opacity = isDragging ? 0 : 1
+  const opacity = isOver ? 0.5 : 1
   drag(drop(ref))
 
   // TODO: If would be great if we could return an empty fragment if isHidden is true, to keep the

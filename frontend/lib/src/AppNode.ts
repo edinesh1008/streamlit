@@ -387,6 +387,12 @@ function getNamedDataSet(
   )
 }
 
+type MoveDirection =
+  | "horizontal-before"
+  | "horizontal-after"
+  | "vertical-before"
+  | "vertical-after"
+
 /**
  * A container AppNode that holds children.
  */
@@ -500,22 +506,60 @@ export class BlockNode implements AppNode {
   moveElement(
     from: ElementNode,
     to: ElementNode,
-    insertBefore = false
+    direction: MoveDirection
   ): BlockNode {
     const newChildren = []
     for (const child of this.children) {
       if (child instanceof BlockNode) {
-        newChildren.push(child.moveElement(from, to, insertBefore))
+        newChildren.push(child.moveElement(from, to, direction))
       } else if (child === from) {
         // We are moving the element, so we want to not add anything
         continue
       } else if (child === to) {
-        if (insertBefore) {
-          // Push the old item and then the new one
-          newChildren.push(from, to)
-        } else {
-          // Push the new item, and then the
-          newChildren.push(to, from)
+        switch (direction) {
+          case "horizontal-before":
+            if (this.deltaBlock.horizontal) {
+              // Push the old item and then the new one
+              newChildren.push(from, to)
+            } else {
+              const newBlock = new BlockNode(
+                this.activeScriptHash,
+                [from, to],
+                new BlockProto({
+                  horizontal: {},
+                }),
+                this.scriptRunId,
+                this.fragmentId,
+                this.deltaMsgReceivedAt
+              )
+              newChildren.push(newBlock)
+            }
+            break
+          case "horizontal-after":
+            if (this.deltaBlock.horizontal) {
+              const newBlock = new BlockNode(
+                this.activeScriptHash,
+                [to, from],
+                new BlockProto({
+                  horizontal: {},
+                }),
+                this.scriptRunId,
+                this.fragmentId,
+                this.deltaMsgReceivedAt
+              )
+              // Push the new item, and then the
+              newChildren.push(newBlock)
+            } else {
+            }
+            break
+          case "vertical-before":
+            // Push the old item and then the new one
+            newChildren.push(from, to)
+            break
+          case "vertical-after":
+            // Push the new item, and then the
+            newChildren.push(to, from)
+            break
         }
       } else {
         newChildren.push(child)
@@ -842,12 +886,12 @@ export class AppRoot {
   moveElement(
     from: ElementNode,
     to: ElementNode,
-    insertBefore = false
+    direction: MoveDirection
   ): AppRoot {
     // clears all nodes that are not associated with the mainScriptHash
     // Get the current script run id from one of the children
     const currentScriptRunId = this.main.scriptRunId
-    const main = this.main.moveElement(from, to, insertBefore)
+    const main = this.main.moveElement(from, to, direction)
 
     return new AppRoot(
       this.mainScriptHash,

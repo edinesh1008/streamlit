@@ -140,6 +140,13 @@ export function isEmbed(): boolean {
   return getEmbedUrlParams(EMBED_QUERY_PARAM_KEY).has(EMBED_TRUE)
 }
 
+// Function that detects whether "edit" is a query param with a value of something truthy.
+// This is used to determine whether the app is in "edit" mode.
+export function isEditMode(): boolean {
+  const urlParams = new URLSearchParams(window.location.search)
+  return urlParams.has("edit")
+}
+
 /**
  * Returns true if the URL parameters contain ?embed=true&embed_options=show_colored_line (case insensitive).
  */

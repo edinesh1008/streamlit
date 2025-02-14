@@ -48,7 +48,8 @@ data = pd.DataFrame(
 chart = alt.Chart(data).mark_bar().encode(x="a", y="b")
 
 st.write("Bar chart with overwritten theme props:")
-st.altair_chart(chart.configure_mark(color="black"), theme="streamlit")
+col1, col2 = st.columns(2)
+col1.altair_chart(chart.configure_mark(color="black"), theme="streamlit")
 
 # mark_arc was added in 4.2, but we have to support altair 4.0-4.1, so we
 # have to skip this part of the test when testing min versions.
@@ -68,7 +69,7 @@ if not (major == "4" and minor < "2"):
     )
 
     st.write("Pie Chart with more than 4 Legend items")
-    st.altair_chart(chart, theme="streamlit", use_container_width=False)
+    col2.altair_chart(chart, theme="streamlit", use_container_width=True)
 
 # taken from vega_datasets barley example
 barley = alt.UrlData(

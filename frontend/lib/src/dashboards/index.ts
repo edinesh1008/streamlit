@@ -14,21 +14,4 @@
  * limitations under the License.
  */
 
-import { createContext } from "react"
-
-import { AppRoot, ElementNode } from "~lib/AppNode"
-
-export interface EditModeElementsContextValue {
-  elements: AppRoot
-  updateElements: (elements: AppRoot) => void
-  hoveringElementNode: ElementNode | null
-  setHoveringElementNode: (node: ElementNode | null) => void
-}
-
-export const EditModeElementsContext =
-  createContext<EditModeElementsContextValue>({
-    elements: AppRoot.empty("FAKE"),
-    updateElements: () => {},
-    hoveringElementNode: null,
-    setHoveringElementNode: () => {},
-  })
+export { default as EditDashboardSidebar } from "./EditDashboardSidebar/EditDashboardSidebar"
