@@ -367,6 +367,16 @@ export class ElementNode implements AppNode {
       }
     })
   }
+
+  clone(): ElementNode {
+    return new ElementNode(
+      this.element,
+      this.metadata,
+      this.scriptRunId,
+      this.activeScriptHash,
+      this.fragmentId
+    )
+  }
 }
 
 /**

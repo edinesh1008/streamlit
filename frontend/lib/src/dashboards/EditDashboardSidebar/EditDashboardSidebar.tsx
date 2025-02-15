@@ -22,8 +22,13 @@ import React, {
   useState,
 } from "react"
 
-import { ChevronLeft, ChevronRight } from "@emotion-icons/material-outlined"
+import {
+  Add,
+  ChevronLeft,
+  ChevronRight,
+} from "@emotion-icons/material-outlined"
 import { Resizable } from "re-resizable"
+import { useTheme } from "@emotion/react"
 
 import { localStorageAvailable } from "@streamlit/utils"
 
@@ -31,11 +36,12 @@ import BaseButton, { BaseButtonKind } from "~lib/components/shared/BaseButton"
 import Icon from "~lib/components/shared/Icon"
 import { LibContext } from "~lib/components/core/LibContext"
 import ThemeProvider from "~lib/components/core/ThemeProvider"
-import { createTheme, ThemeConfig } from "~lib/theme"
+import { convertRemToPx, createTheme, ThemeConfig } from "~lib/theme"
 
 import {
   RESIZE_HANDLE_WIDTH,
   StyledCollapseSidebarButton,
+  StyledDataSourcesButton,
   StyledOpenSidebarButton,
   StyledResizeHandle,
   StyledSidebar,
@@ -44,6 +50,8 @@ import {
   StyledSidebarOpenContainer,
   StyledSidebarUserContent,
 } from "./styled-components"
+import { SegmentedButtonGroup } from "./SegmentedButtonGroup"
+import { Catalog } from "./Catalog"
 
 export interface SidebarProps {
   children?: ReactNode
@@ -65,13 +73,15 @@ const createSidebarTheme = (theme: ThemeConfig): ThemeConfig => {
   )
 }
 
-const EditDashboardSidebar: React.FC<SidebarProps> = ({ children }) => {
+const EditDashboardSidebar: React.FC<SidebarProps> = () => {
+  const theme = useTheme()
   const sidebarRef = useRef<HTMLDivElement>(null)
 
   const cachedSidebarWidth = localStorageAvailable()
     ? window.localStorage.getItem("editDashboardSidebarWidth")
     : undefined
 
+  const [view, setView] = useState("catalog")
   const [sidebarWidth, setSidebarWidth] = useState<string>(
     cachedSidebarWidth || MIN_WIDTH
   )
@@ -153,7 +163,10 @@ const EditDashboardSidebar: React.FC<SidebarProps> = ({ children }) => {
           }}
           size={{
             width: sidebarWidth,
-            height: "auto",
+            height:
+              window.innerHeight -
+              convertRemToPx(theme.sizes.headerHeight) -
+              12,
           }}
           as={StyledSidebar}
           onResizeStop={onResizeStop}
@@ -167,6 +180,16 @@ const EditDashboardSidebar: React.FC<SidebarProps> = ({ children }) => {
             ref={sidebarRef}
           >
             <StyledSidebarHeaderContainer data-testid="stSidebarHeader">
+              <StyledDataSourcesButton>
+                <BaseButton
+                  kind={BaseButtonKind.HEADER_NO_PADDING}
+                  onClick={() => {}}
+                >
+                  &nbsp;
+                  <Icon content={Add} size="xl" />
+                  Data Sources&nbsp;&nbsp;
+                </BaseButton>
+              </StyledDataSourcesButton>
               <StyledCollapseSidebarButton data-testid="stSidebarCollapseButton">
                 <BaseButton
                   kind={BaseButtonKind.HEADER_NO_PADDING}
@@ -177,7 +200,10 @@ const EditDashboardSidebar: React.FC<SidebarProps> = ({ children }) => {
               </StyledCollapseSidebarButton>
             </StyledSidebarHeaderContainer>
             <StyledSidebarUserContent data-testid="stSidebarUserContent">
-              {children}
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <SegmentedButtonGroup value={view} onChange={setView} />
+              </div>
+              {view === "catalog" && <Catalog />}
             </StyledSidebarUserContent>
           </StyledSidebarContent>
         </Resizable>

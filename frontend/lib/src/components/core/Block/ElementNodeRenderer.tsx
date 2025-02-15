@@ -779,19 +779,19 @@ const ElementNodeRenderer = (
       // Dragging downwards
       const HORIZONTAL_THRESHOLD = 0.1
       const horizontalAreaSize = HORIZONTAL_THRESHOLD * hoverMiddleX
-      if (hoverClientX < horizontalAreaSize) {
-        updateElements(
-          elements.moveElement(draggedItem, node, "horizontal-before")
-        )
-        return
-      }
+      // if (hoverClientX < horizontalAreaSize) {
+      //   updateElements(
+      //     elements.moveElement(draggedItem, node, "horizontal-before")
+      //   )
+      //   return
+      // }
 
-      if (hoverClientX > 2 * hoverMiddleX - horizontalAreaSize) {
-        updateElements(
-          elements.moveElement(draggedItem, node, "horizontal-after")
-        )
-        return
-      }
+      // if (hoverClientX > 2 * hoverMiddleX - horizontalAreaSize) {
+      //   updateElements(
+      //     elements.moveElement(draggedItem, node, "horizontal-after")
+      //   )
+      //   return
+      // }
 
       if (hoverClientY <= hoverMiddle) {
         updateElements(

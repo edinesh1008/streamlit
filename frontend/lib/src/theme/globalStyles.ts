@@ -192,9 +192,11 @@ export const globalStyles = (theme: EmotionTheme): SerializedStyles => css`
     background: ${theme.colors.fadedText10};
   }
 
-  :hover::-webkit-scrollbar-thumb:vertical,
-  :hover::-webkit-scrollbar-thumb:horizontal {
-    background: ${theme.colors.fadedText40};
-    border-radius: 100px;
-  }
+  // This just looks weird.
+  // Make the page a part of the full page so the scrollbar is always visible
+  // :hover::-webkit-scrollbar-thumb:vertical,
+  // :hover::-webkit-scrollbar-thumb:horizontal {
+  //   background: ${theme.colors.fadedText40};
+  //   border-radius: 100px;
+  // }
 `

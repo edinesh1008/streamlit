@@ -38,6 +38,15 @@ export const StyledCollapseSidebarButton = styled.div(({ theme }) => {
   }
 })
 
+export const StyledDataSourcesButton = styled.div(({ theme }) => {
+  return {
+    color: hasLightBackgroundColor(theme)
+      ? theme.colors.fadedText60
+      : theme.colors.bodyText,
+    lineHeight: "0",
+  }
+})
+
 export interface StyledSidebarProps {
   isCollapsed: boolean
   sidebarWidth: string
@@ -93,17 +102,20 @@ export const StyledSidebar = styled.section<StyledSidebarProps>(
 )
 
 export const StyledSidebarUserContent = styled.div(({ theme }) => ({
-  paddingTop: 0,
-  paddingBottom: theme.sizes.sidebarTopSpace,
+  paddingTop: theme.sizes.twoXL,
+  paddingBottom: theme.sizes.twoXL,
   paddingLeft: theme.spacing.twoXL,
   paddingRight: theme.spacing.twoXL,
+  flexGrow: 1,
 }))
 
 export const StyledSidebarContent = styled.div(({}) => ({
   position: "relative",
-  height: "100%",
   width: "100%",
+  height: "100%",
   overflow: ["auto", "overlay"],
+  display: "flex",
+  flexDirection: "column",
 }))
 
 export const RESIZE_HANDLE_WIDTH = "8px"
@@ -122,6 +134,7 @@ export const StyledResizeHandle = styled.div(({ theme }) => ({
 
 export const StyledSidebarHeaderContainer = styled.div(({ theme }) => ({
   display: "flex",
+  flexDirection: "row-reverse",
   justifyContent: "space-between",
   alignItems: "start",
   padding: theme.spacing.lg,

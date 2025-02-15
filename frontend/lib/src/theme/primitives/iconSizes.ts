@@ -23,4 +23,5 @@ export const iconSizes = {
   xl: "1.5rem",
   twoXL: "1.8rem",
   threeXL: "2.3rem",
+  fourXL: "3rem",
 }
