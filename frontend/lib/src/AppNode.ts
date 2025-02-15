@@ -513,6 +513,27 @@ export class BlockNode implements AppNode {
     )
   }
 
+  replaceElement(from: ElementNode, to: ElementNode): BlockNode {
+    return new BlockNode(
+      this.activeScriptHash,
+      this.children.map((child: AppNode) => {
+        if (child === from) {
+          return to
+        }
+
+        if (child instanceof BlockNode) {
+          return child.replaceElement(from, to)
+        }
+
+        return child
+      }),
+      this.deltaBlock,
+      this.scriptRunId,
+      this.fragmentId,
+      this.deltaMsgReceivedAt
+    )
+  }
+
   moveElement(
     from: ElementNode,
     to: ElementNode,
@@ -944,6 +965,24 @@ export class AppRoot {
         currentScriptRunId
       ),
       appLogo
+    )
+  }
+
+  public replaceElement(from: ElementNode, to: ElementNode): AppRoot {
+    // clears all nodes that are not associated with the mainScriptHash
+    // Get the current script run id from one of the children
+    const currentScriptRunId = this.main.scriptRunId
+    const main = this.main.replaceElement(from, to)
+
+    return new AppRoot(
+      this.mainScriptHash,
+      new BlockNode(
+        this.mainScriptHash,
+        [main, this.sidebar, this.event, this.bottom],
+        new BlockProto({ allowEmpty: true }),
+        currentScriptRunId
+      ),
+      this.appLogo
     )
   }
 

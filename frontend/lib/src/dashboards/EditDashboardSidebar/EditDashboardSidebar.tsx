@@ -18,6 +18,7 @@ import React, {
   ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from "react"
@@ -37,6 +38,7 @@ import Icon from "~lib/components/shared/Icon"
 import { LibContext } from "~lib/components/core/LibContext"
 import ThemeProvider from "~lib/components/core/ThemeProvider"
 import { convertRemToPx, createTheme, ThemeConfig } from "~lib/theme"
+import { EditModeElementsContext } from "~lib/dashboards/EditModeElementsContext"
 
 import {
   RESIZE_HANDLE_WIDTH,
@@ -52,6 +54,7 @@ import {
 } from "./styled-components"
 import { SegmentedButtonGroup } from "./SegmentedButtonGroup"
 import { Catalog } from "./Catalog"
+import { ElementProperties } from "./ElementProperties"
 
 export interface SidebarProps {
   children?: ReactNode
@@ -76,6 +79,7 @@ const createSidebarTheme = (theme: ThemeConfig): ThemeConfig => {
 const EditDashboardSidebar: React.FC<SidebarProps> = () => {
   const theme = useTheme()
   const sidebarRef = useRef<HTMLDivElement>(null)
+  const { selectedElement } = useContext(EditModeElementsContext)
 
   const cachedSidebarWidth = localStorageAvailable()
     ? window.localStorage.getItem("editDashboardSidebarWidth")
@@ -121,6 +125,12 @@ const EditDashboardSidebar: React.FC<SidebarProps> = () => {
 
   const { activeTheme } = useContext(LibContext)
   const sidebarTheme = createSidebarTheme(activeTheme)
+
+  useEffect(() => {
+    if (selectedElement) {
+      setView("properties")
+    }
+  }, [selectedElement])
 
   // The tabindex is required to support scrolling by arrow keys.
   return (
@@ -204,6 +214,9 @@ const EditDashboardSidebar: React.FC<SidebarProps> = () => {
                 <SegmentedButtonGroup value={view} onChange={setView} />
               </div>
               {view === "catalog" && <Catalog />}
+              {view === "properties" && (
+                <ElementProperties element={selectedElement} />
+              )}
             </StyledSidebarUserContent>
           </StyledSidebarContent>
         </Resizable>

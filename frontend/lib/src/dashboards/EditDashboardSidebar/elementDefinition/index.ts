@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-import { createContext } from "react"
+import { Element } from "@streamlit/protobuf"
 
-import { AppRoot, ElementNode } from "~lib/AppNode"
+import { PropertyDefinition } from "~lib/dashboards/EditDashboardSidebar/property"
 
-export interface EditModeElementsContextValue {
-  elements: AppRoot
-  updateElements: (elements: AppRoot) => void
-  selectedElement: ElementNode | null
-  setSelectedElement: (node: ElementNode | null) => void
-  replaceElement: (from: ElementNode, to: ElementNode) => void
-}
+import { richText } from "./richText"
 
-export const EditModeElementsContext =
-  createContext<EditModeElementsContextValue>({
-    elements: AppRoot.empty("FAKE"),
-    updateElements: () => {},
-    selectedElement: null,
-    setSelectedElement: () => {},
-    replaceElement: () => {},
-  })
+type ElementType = NonNullable<Element["type"]>
+
+export default {
+  markdown: richText,
+} as Record<ElementType, PropertyDefinition[]>

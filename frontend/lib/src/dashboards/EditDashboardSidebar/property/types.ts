@@ -14,23 +14,12 @@
  * limitations under the License.
  */
 
-import { createContext } from "react"
+import { ElementNode } from "~lib/AppNode"
 
-import { AppRoot, ElementNode } from "~lib/AppNode"
-
-export interface EditModeElementsContextValue {
-  elements: AppRoot
-  updateElements: (elements: AppRoot) => void
-  selectedElement: ElementNode | null
-  setSelectedElement: (node: ElementNode | null) => void
-  replaceElement: (from: ElementNode, to: ElementNode) => void
+export interface PropertyDefinition<T> {
+  label: string
+  type: string
+  getValue: (element: ElementNode) => T
+  setValue: (element: ElementNode, value: T) => ElementNode
+  props: Record<string, unknown>
 }
-
-export const EditModeElementsContext =
-  createContext<EditModeElementsContextValue>({
-    elements: AppRoot.empty("FAKE"),
-    updateElements: () => {},
-    selectedElement: null,
-    setSelectedElement: () => {},
-    replaceElement: () => {},
-  })

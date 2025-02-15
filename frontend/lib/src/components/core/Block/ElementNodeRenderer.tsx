@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, Suspense, useRef } from "react"
+import React, { ReactElement, Suspense, useCallback, useRef } from "react"
 
 import debounceRender from "react-debounce-render"
 import { useDrag, useDrop } from "react-dnd"
@@ -721,12 +721,8 @@ const RawElementNodeRenderer = (
 const ElementNodeRenderer = (
   props: ElementNodeRendererProps
 ): ReactElement => {
-  const {
-    elements,
-    updateElements,
-    // setHoveringElementNode,
-    // hoveringElementNode,
-  } = React.useContext(EditModeElementsContext)
+  const { elements, updateElements, setSelectedElement, selectedElement } =
+    React.useContext(EditModeElementsContext)
   const { isFullScreen, fragmentIdsThisRun } = React.useContext(LibContext)
   const { node, width } = props
 
@@ -821,6 +817,10 @@ const ElementNodeRenderer = (
   const opacity = isOver ? 0.5 : 1
   drag(drop(ref))
 
+  const handleClick = useCallback(() => {
+    setSelectedElement(node)
+  }, [node, setSelectedElement])
+
   // TODO: If would be great if we could return an empty fragment if isHidden is true, to keep the
   // DOM clean. But this would require the keys passed to ElementNodeRenderer at Block.tsx to be a
   // stable hash of some sort.
@@ -843,6 +843,8 @@ const ElementNodeRenderer = (
         isStale={isStale && !isFullScreen}
         width={width}
         elementType={elementType}
+        isSelected={selectedElement === node}
+        onClick={handleClick}
       >
         <ErrorBoundary width={width}>
           <Suspense

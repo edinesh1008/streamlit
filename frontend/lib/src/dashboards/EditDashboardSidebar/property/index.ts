@@ -14,23 +14,13 @@
  * limitations under the License.
  */
 
-import { createContext } from "react"
+import { ComponentType } from "react"
 
-import { AppRoot, ElementNode } from "~lib/AppNode"
+import { PropertyDefinition } from "./types"
+import { default as TextArea } from "./TextArea"
 
-export interface EditModeElementsContextValue {
-  elements: AppRoot
-  updateElements: (elements: AppRoot) => void
-  selectedElement: ElementNode | null
-  setSelectedElement: (node: ElementNode | null) => void
-  replaceElement: (from: ElementNode, to: ElementNode) => void
-}
+export type { PropertyDefinition } from "./types"
 
-export const EditModeElementsContext =
-  createContext<EditModeElementsContextValue>({
-    elements: AppRoot.empty("FAKE"),
-    updateElements: () => {},
-    selectedElement: null,
-    setSelectedElement: () => {},
-    replaceElement: () => {},
-  })
+export default {
+  text_area: TextArea,
+} as Record<string, ComponentType<PropertyDefinition>>

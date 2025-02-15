@@ -57,17 +57,25 @@ export interface StyledElementContainerProps {
   isStale: boolean
   width: number
   elementType: string
+  isSelected: boolean
 }
 
 const GLOBAL_ELEMENTS = ["balloons", "snow"]
+// TODO(edit-mode)
 export const StyledElementContainer = styled.div<StyledElementContainerProps>(
-  ({ theme, isStale, width, elementType }) => ({
+  ({ theme, isStale, width, elementType, isSelected }) => ({
     width,
     // Allows to have absolutely-positioned nodes inside app elements, like
     // floating buttons.
     position: "relative",
     // eslint-disable-next-line streamlit-custom/no-hardcoded-theme-values
-    border: "red dotted 2px",
+    border: isSelected ? "red dashed 2px" : "transparent solid 2px",
+    boxSizing: "content-box",
+
+    // Target all children
+    "& > *": {
+      pointerEvents: "none",
+    },
 
     "@media print": {
       overflow: "visible",

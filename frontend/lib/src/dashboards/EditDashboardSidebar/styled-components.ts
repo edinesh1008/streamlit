@@ -83,13 +83,7 @@ export const StyledSidebar = styled.section<StyledSidebarProps>(
       },
 
       [`@media print`]: {
-        display: isCollapsed ? "none" : "initial",
-        // set to auto, otherwise the sidebar does not take up the whole page
-        height: "auto !important",
-        // set maxHeight to little bit less than 100%, otherwise the sidebar might start a mostly blank page
-        maxHeight: "99%",
-        // on Chrome, sth. adds a box-shadow in printing mode which looks weird
-        boxShadow: "none",
+        display: "none",
       },
 
       "&:hover": {

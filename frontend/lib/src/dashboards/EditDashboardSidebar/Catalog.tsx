@@ -17,16 +17,6 @@
 import React, { ReactElement, ReactNode, useRef } from "react"
 
 import {
-  Arrow,
-  ArrowNamedDataSet,
-  ArrowVegaLiteChart,
-  Element,
-  ForwardMsgMetadata,
-  Markdown,
-  Styler,
-} from "@streamlit/protobuf"
-
-import {
   BarChart,
   PieChart,
   ShowChart,
@@ -38,6 +28,16 @@ import styled from "@emotion/styled"
 import { transparentize } from "color2k"
 import { useTheme } from "@emotion/react"
 import { useDrag } from "react-dnd"
+
+import {
+  Arrow,
+  ArrowNamedDataSet,
+  ArrowVegaLiteChart,
+  Element,
+  ForwardMsgMetadata,
+  Markdown,
+  Styler,
+} from "@streamlit/protobuf"
 
 import Icon from "~lib/components/shared/Icon"
 import { ElementNode } from "~lib/AppNode"
@@ -438,11 +438,7 @@ function ListItem({
     collect: monitor => ({
       isDragging: monitor.isDragging(),
     }),
-    end: (item, monitor) => {
-      if (!monitor.didDrop()) {
-        return
-      }
-
+    end: () => {
       // Make a new element to produce a different reference
       const currentElement = defaultElements.current[elementType]
       defaultElements.current[elementType] = currentElement.clone()

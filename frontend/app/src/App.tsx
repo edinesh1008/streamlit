@@ -196,7 +196,7 @@ interface State {
   appConfig: AppConfig
   autoReruns: NodeJS.Timeout[]
   inputsDisabled: boolean
-  hoveringElementNode: ElementNode | null
+  selectedElement: ElementNode | null
 }
 
 const ELEMENT_LIST_BUFFER_TIMEOUT_MS = 10
@@ -299,7 +299,7 @@ export class App extends PureComponent<Props, State> {
       navSections: [],
       currentPageScriptHash: "",
       mainScriptHash: "",
-      hoveringElementNode: null,
+      selectedElement: null,
       // We set hideTopBar to true by default because this information isn't
       // available on page load (we get it when the script begins to run), so
       // the user would see top bar elements for a few ms if this defaulted to
@@ -1866,6 +1866,23 @@ export class App extends PureComponent<Props, State> {
     }
   }
 
+  handleUpdateElements = (elements: AppRoot): void => {
+    this.setState({ elements })
+  }
+
+  handleReplaceElement = (from: ElementNode, to: ElementNode): void => {
+    const { selectedElement } = this.state
+
+    this.setState(({ elements }) => ({
+      elements: elements.replaceElement(from, to),
+      selectedElement: selectedElement === from ? to : selectedElement,
+    }))
+  }
+
+  handleSelectedElement = (selectedElement: ElementNode): void => {
+    this.setState({ selectedElement })
+  }
+
   render(): JSX.Element {
     const {
       allowRunOnSave,
@@ -1893,7 +1910,7 @@ export class App extends PureComponent<Props, State> {
       inputsDisabled,
       appPages,
       navSections,
-      hoveringElementNode,
+      selectedElement,
     } = this.state
     const developmentMode = showDevelopmentOptions(
       this.state.isOwner,
@@ -1958,13 +1975,10 @@ export class App extends PureComponent<Props, State> {
             <EditModeElementsContext.Provider
               value={{
                 elements,
-                updateElements: (newElements: AppRoot) => {
-                  this.setState({ elements: newElements })
-                },
-                hoveringElementNode,
-                setHoveringElementNode: node => {
-                  this.setState({ hoveringElementNode: node })
-                },
+                updateElements: this.handleUpdateElements,
+                replaceElement: this.handleReplaceElement,
+                selectedElement,
+                setSelectedElement: this.handleSelectedElement,
               }}
             >
               <Hotkeys
