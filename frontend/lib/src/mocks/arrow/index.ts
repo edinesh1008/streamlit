@@ -41,6 +41,7 @@ import { TEN_BY_TEN } from "./tenByTen"
 import { TALL, VERY_TALL } from "./tall"
 import { SMALL, WIDE } from "./wide"
 import { TIMEDELTA } from "./types/timedelta"
+import { VEGA_LITE_LINE_CHART } from "./vegaLiteLineChart"
 
 export {
   // Types
@@ -71,6 +72,7 @@ export {
   FEWER_COLUMNS,
   DIFFERENT_COLUMN_TYPES,
   VEGA_LITE,
+  VEGA_LITE_LINE_CHART,
   NAMED_INDEX,
   // Specific sizes
   TEN_BY_TEN,

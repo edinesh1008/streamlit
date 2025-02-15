@@ -17,6 +17,16 @@
 import React, { ReactElement, ReactNode, useRef } from "react"
 
 import {
+  Arrow,
+  ArrowNamedDataSet,
+  ArrowVegaLiteChart,
+  Element,
+  ForwardMsgMetadata,
+  Markdown,
+  Styler,
+} from "@streamlit/protobuf"
+
+import {
   BarChart,
   PieChart,
   ShowChart,
@@ -31,7 +41,7 @@ import { useDrag } from "react-dnd"
 
 import Icon from "~lib/components/shared/Icon"
 import { ElementNode } from "~lib/AppNode"
-import { Element, ForwardMsgMetadata, Markdown } from "@streamlit/protobuf"
+import { VEGA_LITE, VEGA_LITE_LINE_CHART } from "~lib/mocks/arrow"
 
 const StyledListItem = styled.li(({ theme }) => ({
   padding: `${theme.spacing.lg} ${theme.spacing.sm}`,
@@ -83,15 +93,184 @@ const StyledListItemDescription = styled.div(({ theme }) => ({
   fontStyle: "italic",
 }))
 
+const fakeMetadata = new ForwardMsgMetadata({
+  cacheable: false,
+  deltaPath: [],
+  activeScriptHash: "NO_ACTIVE_SCRIPT_HASH",
+})
+
 const DEFAULT_ELEMENT: Record<string, ElementNode> = {
-  table: {
-    type: "table",
-    props: {},
-  },
-  line_chart: {
-    type: "line_chart",
-    props: {},
-  },
+  table: new ElementNode(
+    new Element({
+      arrowDataFrame: new Arrow({
+        data: VEGA_LITE,
+        styler: new Styler({
+          uuid: "",
+          caption: "I am a caption",
+          styles: "",
+          displayValues: VEGA_LITE,
+        }),
+        width: 0,
+        height: 0,
+        useContainerWidth: true,
+        id: "",
+        columns: "",
+        editingMode: Arrow.EditingMode.READ_ONLY,
+        disabled: false,
+        formId: "",
+        columnOrder: [],
+        selectionMode: [],
+      }),
+    }),
+    fakeMetadata,
+    "NO_SCRIPT_RUN_ID",
+    "NO_ACTIVE_SCRIPT_HASH"
+  ),
+  line_chart: new ElementNode(
+    new Element({
+      arrowVegaLiteChart: new ArrowVegaLiteChart({
+        spec: JSON.stringify({
+          layer: [
+            {
+              mark: { type: "line" },
+              encoding: {
+                color: {
+                  field: "color--p5bJXXpQgvPz6yvQMFiy",
+                  legend: { titlePadding: 5, offset: 5, orient: "bottom" },
+                  title: " ",
+                  type: "nominal",
+                },
+                tooltip: [
+                  {
+                    field: "index--p5bJXXpQgvPz6yvQMFiy",
+                    title: "index",
+                    type: "quantitative",
+                  },
+                  {
+                    field: "value--p5bJXXpQgvPz6yvQMFiy",
+                    title: "value",
+                    type: "quantitative",
+                  },
+                  {
+                    field: "color--p5bJXXpQgvPz6yvQMFiy",
+                    title: "color",
+                    type: "nominal",
+                  },
+                ],
+                x: {
+                  axis: { grid: false, tickMinStep: 1 },
+                  field: "index--p5bJXXpQgvPz6yvQMFiy",
+                  scale: {},
+                  title: "",
+                  type: "quantitative",
+                },
+                y: {
+                  axis: { grid: true },
+                  field: "value--p5bJXXpQgvPz6yvQMFiy",
+                  scale: {},
+                  title: "",
+                  type: "quantitative",
+                },
+              },
+              name: "view_1",
+            },
+            {
+              mark: { type: "point", filled: true, size: 65 },
+              encoding: {
+                color: {
+                  field: "color--p5bJXXpQgvPz6yvQMFiy",
+                  legend: { titlePadding: 5, offset: 5, orient: "bottom" },
+                  title: " ",
+                  type: "nominal",
+                },
+                opacity: {
+                  condition: { param: "param_1", value: 1, empty: false },
+                  value: 0,
+                },
+                tooltip: [
+                  {
+                    field: "index--p5bJXXpQgvPz6yvQMFiy",
+                    title: "index",
+                    type: "quantitative",
+                  },
+                  {
+                    field: "value--p5bJXXpQgvPz6yvQMFiy",
+                    title: "value",
+                    type: "quantitative",
+                  },
+                  {
+                    field: "color--p5bJXXpQgvPz6yvQMFiy",
+                    title: "color",
+                    type: "nominal",
+                  },
+                ],
+                x: {
+                  axis: { grid: false, tickMinStep: 1 },
+                  field: "index--p5bJXXpQgvPz6yvQMFiy",
+                  scale: {},
+                  title: "",
+                  type: "quantitative",
+                },
+                y: {
+                  axis: { grid: true },
+                  field: "value--p5bJXXpQgvPz6yvQMFiy",
+                  scale: {},
+                  title: "",
+                  type: "quantitative",
+                },
+              },
+              name: "view_2",
+            },
+          ],
+          config: { legend: { symbolType: "stroke" } },
+          data: { name: "6290951a31799f716d6c2394a119dc9e" },
+          height: 0,
+          params: [
+            {
+              name: "param_1",
+              select: {
+                type: "point",
+                clear: "pointerout",
+                fields: ["index--p5bJXXpQgvPz6yvQMFiy"],
+                nearest: true,
+                on: "pointerover",
+              },
+              views: ["view_2"],
+            },
+            {
+              name: "param_2",
+              select: { type: "interval", encodings: ["x", "y"] },
+              bind: "scales",
+              views: ["view_1"],
+            },
+          ],
+          width: 0,
+          $schema: "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+          autosize: { type: "fit", contains: "padding" },
+        }),
+        data: null,
+        datasets: [
+          new ArrowNamedDataSet({
+            name: "6290951a31799f716d6c2394a119dc9e",
+            hasName: true,
+            data: new Arrow({
+              data: VEGA_LITE_LINE_CHART,
+              columnOrder: [],
+              selectionMode: [],
+            }),
+          }),
+        ],
+        useContainerWidth: true,
+        theme: "streamlit",
+        id: "",
+        selectionMode: [],
+        formId: "",
+      }),
+    }),
+    fakeMetadata,
+    "NO_SCRIPT_RUN_ID",
+    "NO_ACTIVE_SCRIPT_HASH"
+  ),
   bar_chart: {
     type: "bar_chart",
     props: {},
@@ -110,11 +289,7 @@ const DEFAULT_ELEMENT: Record<string, ElementNode> = {
         help: "",
       },
     }),
-    new ForwardMsgMetadata({
-      cacheable: false,
-      deltaPath: [],
-      activeScriptHash: "NO_ACTIVE_SCRIPT_HASH",
-    }),
+    fakeMetadata,
     "NO_SCRIPT_RUN_ID",
     "NO_ACTIVE_SCRIPT_HASH"
   ),

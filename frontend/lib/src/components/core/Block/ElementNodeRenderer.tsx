@@ -724,8 +724,8 @@ const ElementNodeRenderer = (
   const {
     elements,
     updateElements,
-    setHoveringElementNode,
-    hoveringElementNode,
+    // setHoveringElementNode,
+    // hoveringElementNode,
   } = React.useContext(EditModeElementsContext)
   const { isFullScreen, fragmentIdsThisRun } = React.useContext(LibContext)
   const { node, width } = props

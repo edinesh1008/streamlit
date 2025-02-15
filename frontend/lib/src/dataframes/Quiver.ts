@@ -134,6 +134,9 @@ export class Quiver {
   /** Cell values of the data columns. */
   private _data: Data
 
+  /** Cell values of the data columns. */
+  private _rawData: Uint8Array<ArrayBufferLike> | null | undefined
+
   /** [optional] Pandas Styler data. This will be defined if the user styled the dataframe. */
   private readonly _styler?: PandasStylerData
 
@@ -159,6 +162,7 @@ export class Quiver {
     this._pandasIndexData = pandasIndexData
     this._columnNames = columnNames
     this._data = data
+    this._rawData = element.data
     this._dataColumnTypes = dataColumnTypes
     this._pandasIndexColumnTypes = pandasIndexColumnTypes
     this._styler = styler
@@ -184,6 +188,10 @@ export class Quiver {
    */
   public get styler(): PandasStylerData | undefined {
     return this._styler
+  }
+
+  public get bytes(): Uint8Array<ArrayBufferLike> {
+    return this._rawData ?? new Uint8Array()
   }
 
   /** Dimensions of the DataFrame. */
