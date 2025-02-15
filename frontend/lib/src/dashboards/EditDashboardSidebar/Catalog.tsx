@@ -271,14 +271,133 @@ const DEFAULT_ELEMENT: Record<string, ElementNode> = {
     "NO_SCRIPT_RUN_ID",
     "NO_ACTIVE_SCRIPT_HASH"
   ),
-  bar_chart: {
-    type: "bar_chart",
-    props: {},
-  },
-  pie_chart: {
-    type: "pie_chart",
-    props: {},
-  },
+  bar_chart: new ElementNode(
+    new Element({
+      arrowVegaLiteChart: new ArrowVegaLiteChart({
+        spec: JSON.stringify({
+          data: { name: "727773f79f9629478a4df97976e3d656" },
+          mark: { type: "bar" },
+          encoding: {
+            color: {
+              field: "color--p5bJXXpQgvPz6yvQMFiy",
+              legend: { titlePadding: 5, offset: 5, orient: "bottom" },
+              title: " ",
+              type: "nominal",
+            },
+            tooltip: [
+              {
+                field: "index--p5bJXXpQgvPz6yvQMFiy",
+                title: "index",
+                type: "quantitative",
+              },
+              {
+                field: "value--p5bJXXpQgvPz6yvQMFiy",
+                title: "value",
+                type: "quantitative",
+              },
+              {
+                field: "color--p5bJXXpQgvPz6yvQMFiy",
+                title: "color",
+                type: "nominal",
+              },
+            ],
+            x: {
+              axis: { grid: false, tickMinStep: 1 },
+              field: "index--p5bJXXpQgvPz6yvQMFiy",
+              scale: {},
+              title: "",
+              type: "ordinal",
+            },
+            y: {
+              axis: { grid: true },
+              field: "value--p5bJXXpQgvPz6yvQMFiy",
+              scale: {},
+              title: "",
+              type: "quantitative",
+            },
+          },
+          height: 0,
+          params: [
+            {
+              name: "param_1",
+              select: { type: "interval", encodings: ["x", "y"] },
+              bind: "scales",
+            },
+          ],
+          width: 0,
+          $schema: "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+          autosize: { type: "fit", contains: "padding" },
+        }),
+        data: null,
+        datasets: [
+          new ArrowNamedDataSet({
+            name: "727773f79f9629478a4df97976e3d656",
+            hasName: true,
+            data: new Arrow({
+              data: VEGA_LITE_LINE_CHART,
+              columnOrder: [],
+              selectionMode: [],
+            }),
+          }),
+        ],
+        useContainerWidth: true,
+        theme: "streamlit",
+        id: "",
+        selectionMode: [],
+        formId: "",
+      }),
+    }),
+    fakeMetadata,
+    "NO_SCRIPT_RUN_ID",
+    "NO_ACTIVE_SCRIPT_HASH"
+  ),
+  pie_chart: new ElementNode(
+    new Element({
+      arrowVegaLiteChart: new ArrowVegaLiteChart({
+        spec: JSON.stringify({
+          data: { name: "727773f79f9629478a4df97976e3d656" },
+          mark: { type: "arc" },
+          encoding: {
+            color: {
+              field: "color--p5bJXXpQgvPz6yvQMFiy",
+              legend: { titlePadding: 5, offset: 5, orient: "bottom" },
+              title: " ",
+              type: "nominal",
+            },
+            theta: {
+              field: "value--p5bJXXpQgvPz6yvQMFiy",
+              type: "quantitative",
+              aggregate: "sum",
+            },
+          },
+          height: 0,
+          width: 0,
+          $schema: "https://vega.github.io/schema/vega-lite/v5.20.1.json",
+          autosize: { type: "fit", contains: "padding" },
+        }),
+        data: null,
+        datasets: [
+          new ArrowNamedDataSet({
+            name: "727773f79f9629478a4df97976e3d656",
+            hasName: true,
+            data: new Arrow({
+              data: VEGA_LITE_LINE_CHART,
+              columnOrder: [],
+              selectionMode: [],
+            }),
+          }),
+        ],
+        useContainerWidth: true,
+        theme: "streamlit",
+        id: "",
+        selectionMode: [],
+        formId: "",
+      }),
+    }),
+    fakeMetadata,
+    "NO_SCRIPT_RUN_ID",
+    "NO_ACTIVE_SCRIPT_HASH"
+  ),
   rich_text: new ElementNode(
     new Element({
       markdown: {
