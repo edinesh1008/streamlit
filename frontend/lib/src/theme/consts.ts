@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export const STALE_TRANSITION_PARAMS = "1s ease-in 0.5s"
+export const STALE_TRANSITION_PARAMS = "0.5s ease-in 0.5s"
 
 export const STALE_STYLES = {
   opacity: 0.33,

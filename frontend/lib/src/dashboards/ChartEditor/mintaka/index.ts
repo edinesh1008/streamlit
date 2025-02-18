@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-export { EditModeElementsContext } from "./EditModeElementsContext"
-export { default as EditDashboardSidebar } from "./EditDashboardSidebar/EditDashboardSidebar"
-export type { ChartEditorDialogProps } from "./ChartEditor/ChartEditorDialog"
-export { ChartEditorDialog } from "./ChartEditor/ChartEditorDialog"
+// Main
+export * from "./components/Mintaka.js"
+
+// Types
+export * from "./configTypes.js"
+export * from "./presetTypes.js"
+export * from "./stateTypes.js"
+export * from "./uiTypes.js"
+export * from "./vegaTypes.js"
+
+// Default configuration
+export * from "./configDefaults.js"
+export * from "./presetDefaults.js"
+
+// Utilities
+export { simpleColumnTypeDetector } from "./simpleColumnTypeDetector.js"

@@ -19,9 +19,9 @@ import { ComponentType } from "react"
 import { ElementNode } from "~lib/AppNode"
 
 import { PropertyDefinition } from "./types"
-import { default as ChartEditorButton } from "./ChartEditorButton"
 import { default as TextArea } from "./TextArea"
 import { default as TableEditorButton } from "./TableEditorButton"
+import { default as ChartEditorButton } from "./ChartEditorButton"
 
 export type { PropertyDefinition } from "./types"
 type Props = PropertyDefinition<any> & {

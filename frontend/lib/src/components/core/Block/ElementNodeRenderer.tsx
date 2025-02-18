@@ -15,6 +15,7 @@
  */
 
 import React, {
+  MouseEvent,
   ReactElement,
   Suspense,
   useCallback,
@@ -842,7 +843,6 @@ const ElementNodeRenderer = (
       isDragging: monitor.isDragging(),
     }),
   })
-  const opacity = isOver ? 0.5 : 1
   drag(drop(ref))
 
   useEffect(() => {
@@ -851,9 +851,13 @@ const ElementNodeRenderer = (
     }
   }, [isDragging, setSelectedElement])
 
-  const handleClick = useCallback(() => {
-    setSelectedElement(node)
-  }, [node, setSelectedElement])
+  const handleClick = useCallback(
+    (event: MouseEvent) => {
+      event.stopPropagation()
+      setSelectedElement(node)
+    },
+    [node, setSelectedElement]
+  )
 
   // TODO: If would be great if we could return an empty fragment if isHidden is true, to keep the
   // DOM clean. But this would require the keys passed to ElementNodeRenderer at Block.tsx to be a
@@ -868,7 +872,6 @@ const ElementNodeRenderer = (
           convertKeyToClassName(userKey)
         )}
         ref={ref}
-        style={{ opacity }}
         data-handler-id={handlerId}
         data-testid="stElementContainer"
         data-stale={isStale}
@@ -877,7 +880,7 @@ const ElementNodeRenderer = (
         isStale={isStale && !isFullScreen}
         width={width}
         elementType={elementType}
-        isSelected={selectedElement === node}
+        isNotSelected={selectedElement !== null && selectedElement !== node}
         onClick={handleClick}
         location={isOver ? location : null}
       >

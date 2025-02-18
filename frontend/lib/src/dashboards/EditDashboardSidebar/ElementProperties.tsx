@@ -35,7 +35,6 @@ const StyledProperties = styled.ul(({ theme }) => {
 const StyledProperty = styled.li(({ theme }) => {
   return {
     listStyleType: "none",
-    padding: theme.spacing.sm,
   }
 })
 

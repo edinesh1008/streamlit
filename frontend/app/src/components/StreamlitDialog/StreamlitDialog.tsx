@@ -18,6 +18,8 @@ import React, { CSSProperties, ReactElement, ReactNode } from "react"
 
 import {
   BaseButtonKind,
+  ChartEditorDialog,
+  ChartEditorDialogProps,
   Modal,
   ModalBody,
   ModalButton,
@@ -52,6 +54,10 @@ interface ThemeCreatorProps extends ThemeCreatorDialogProps {
   type: DialogType.THEME_CREATOR
 }
 
+interface ChartEditorProps extends ChartEditorDialogProps {
+  type: DialogType.CHART_EDITOR
+}
+
 export type DialogProps =
   | AboutProps
   | ClearCacheProps
@@ -61,6 +67,7 @@ export type DialogProps =
   | WarningProps
   | DeployErrorProps
   | DeployDialogProps
+  | ChartEditorProps
 
 export function StreamlitDialog(dialogProps: DialogProps): ReactNode {
   switch (dialogProps.type) {
@@ -80,6 +87,8 @@ export function StreamlitDialog(dialogProps: DialogProps): ReactNode {
       return <DeployDialog {...dialogProps} />
     case DialogType.DEPLOY_ERROR:
       return deployErrorDialog(dialogProps)
+    case DialogType.CHART_EDITOR:
+      return <ChartEditorDialog {...dialogProps} />
     case undefined:
       return noDialog(dialogProps)
     default:

@@ -23,4 +23,5 @@ export enum DialogType {
   WARNING = "warning",
   DEPLOY_ERROR = "deployError",
   DEPLOY_DIALOG = "deployDialog",
+  CHART_EDITOR = "chartEditor",
 }

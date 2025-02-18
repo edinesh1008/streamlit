@@ -58,11 +58,9 @@ export interface StyledElementContainerProps {
   isStale: boolean
   width: number
   elementType: string
-  isSelected: boolean
+  isNotSelected: boolean
   location: MoveLocation
 }
-
-const allBorderDefault = "transparent solid 2px"
 
 function getMoveBorder(
   location: MoveLocation,
@@ -98,13 +96,18 @@ function getMoveBorder(
 const GLOBAL_ELEMENTS = ["balloons", "snow"]
 // TODO(edit-mode)
 export const StyledElementContainer = styled.div<StyledElementContainerProps>(
-  ({ theme, isStale, width, elementType, isSelected, location }) => ({
+  ({ theme, isStale, width, elementType, isNotSelected, location }) => ({
     width,
     // Allows to have absolutely-positioned nodes inside app elements, like
     // floating buttons.
     position: "relative",
     // eslint-disable-next-line streamlit-custom/no-hardcoded-theme-values
-    border: isSelected ? "red dashed 2px" : "transparent solid 2px",
+    ...(isNotSelected
+      ? {
+          opacity: 0.25,
+          transition: "opacity 0.2s ease-in",
+        }
+      : {}),
     boxSizing: "content-box",
     ...getMoveBorder(location, theme),
 

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import React, { FC } from "react"
+import React, { FC, useCallback, useContext } from "react"
 
 import { ElementNode } from "~lib/AppNode"
 import { VegaLiteChartElement } from "~lib/components/elements/ArrowVegaLiteChart"
 import BaseButton, { BaseButtonKind } from "~lib/components/shared/BaseButton"
+import { EditModeElementsContext } from "~lib/dashboards/EditModeElementsContext"
 
 import { PropertyDefinition } from "./types"
 
@@ -29,12 +30,23 @@ interface ChartEditorButtonProps
 
 const ChartEditorButton: FC<ChartEditorButtonProps> = ({
   element,
-  getValue,
+  // getValue,
   label,
   setValue: setPropertyValue,
 }) => {
+  const { openChartEditor } = useContext(EditModeElementsContext)
+  const handleClick = useCallback(() => {
+    openChartEditor(element, vegaElement => {
+      setPropertyValue(element, vegaElement)
+    })
+  }, [element, openChartEditor, setPropertyValue])
+
   return (
-    <BaseButton kind={BaseButtonKind.PRIMARY} fluidWidth={true}>
+    <BaseButton
+      kind={BaseButtonKind.PRIMARY}
+      fluidWidth={true}
+      onClick={handleClick}
+    >
       {label}
     </BaseButton>
   )

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-export { EditModeElementsContext } from "./EditModeElementsContext"
-export { default as EditDashboardSidebar } from "./EditDashboardSidebar/EditDashboardSidebar"
-export type { ChartEditorDialogProps } from "./ChartEditor/ChartEditorDialog"
-export { ChartEditorDialog } from "./ChartEditor/ChartEditorDialog"
+import { PlainRecord, json } from "./typeUtil.js"
+
+export interface VLSpec extends PlainRecord<json> {
+  encoding?: PlainRecord<json>
+}

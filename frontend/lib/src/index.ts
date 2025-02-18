@@ -61,7 +61,6 @@ export { FileUploadClient } from "./FileUploadClient"
 export { default as useScrollToBottom } from "./hooks/useScrollToBottom"
 export { default as HostCommunicationManager } from "./hostComm"
 export { HOST_COMM_VERSION } from "./hostComm/HostCommunicationManager"
-export { EditModeElementsContext } from "./dashboards/EditModeElementsContext"
 export type {
   AppConfig,
   DeployedAppMetadata,
@@ -139,3 +138,4 @@ export {
 export { createFormsData, WidgetStateManager } from "./WidgetStateManager"
 export type { FormsData } from "./WidgetStateManager"
 export * from "./dashboards"
+export type { VegaLiteChartElement } from "./components/elements/ArrowVegaLiteChart"

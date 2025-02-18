@@ -15,8 +15,27 @@
 import altair as alt
 import numpy as np
 import pandas as pd
+from sklearn.datasets import load_iris
 
 import streamlit as st
+
+# Load iris dataset
+iris = load_iris()
+df = pd.DataFrame(iris.data, columns=iris.feature_names)
+df["species"] = iris.target_names[iris.target]
+scatter_chart = (
+    alt.Chart(df)
+    .mark_circle()
+    .encode(
+        x="sepal length (cm)",
+        y="sepal width (cm)",
+        color="species",
+        tooltip=["sepal length (cm)", "sepal width (cm)", "species"],
+    )
+    .properties(width=600, height=400, title="Sepal Length vs Sepal Width by Species")
+)
+
+st.altair_chart(scatter_chart, use_container_width=True)
 
 np.random.seed(0)
 

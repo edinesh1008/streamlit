@@ -14,7 +14,39 @@
  * limitations under the License.
  */
 
-export { EditModeElementsContext } from "./EditModeElementsContext"
-export { default as EditDashboardSidebar } from "./EditDashboardSidebar/EditDashboardSidebar"
-export type { ChartEditorDialogProps } from "./ChartEditor/ChartEditorDialog"
-export { ChartEditorDialog } from "./ChartEditor/ChartEditorDialog"
+.BuilderWrapper {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  padding: 2rem 0;
+  gap: 2rem;
+}
+
+.PreviewPane {
+  flex: auto;
+  align-self: stretch;
+  height: 32rem;
+  overflow-x: auto;
+  overflow-x: overlay;
+}
+
+.PreviewPane > div {
+  min-width: 600px;
+}
+
+@media (min-width: 700px) {
+  .BuilderWrapper {
+    display: flex;
+    flex-direction: row;
+    height: 32rem;
+    gap: 0;
+  }
+
+  .PreviewPane {
+    height: auto;
+  }
+
+  .PreviewPane > div {
+    min-width: 400px;
+  }
+}

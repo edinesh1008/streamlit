@@ -125,12 +125,17 @@ const EditDashboardSidebar: React.FC<SidebarProps> = () => {
 
   const { activeTheme } = useContext(LibContext)
   const sidebarTheme = createSidebarTheme(activeTheme)
+  const shouldShowProperties = selectedElement !== null
+  const shouldHideProperties =
+    selectedElement === null && view === "properties"
 
   useEffect(() => {
-    if (selectedElement) {
+    if (shouldShowProperties) {
       setView("properties")
+    } else if (shouldHideProperties) {
+      setView("catalog")
     }
-  }, [selectedElement])
+  }, [shouldShowProperties, shouldHideProperties])
 
   // The tabindex is required to support scrolling by arrow keys.
   return (
@@ -188,6 +193,9 @@ const EditDashboardSidebar: React.FC<SidebarProps> = () => {
           <StyledSidebarContent
             data-testid="stSidebarContent"
             ref={sidebarRef}
+            onClick={event => {
+              event.stopPropagation()
+            }}
           >
             <StyledSidebarHeaderContainer data-testid="stSidebarHeader">
               <StyledDataSourcesButton>

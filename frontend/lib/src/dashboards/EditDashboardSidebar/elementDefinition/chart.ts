@@ -33,16 +33,16 @@ export const chart = [
       const { arrowVegaLiteChart } = element.element
 
       if (arrowVegaLiteChart) {
-        const newElement = element.clone()
+        // I hate this but we mutate the state cause we want the element
+        // to be the same reference
         // @ts-expect-error
-        newElement.element = new Element({
+        element.element = new Element({
           ...element.element,
           arrowVegaLiteChart: {
             ...arrowVegaLiteChart,
             spec: value.spec,
           },
         })
-        return newElement
       }
 
       return element

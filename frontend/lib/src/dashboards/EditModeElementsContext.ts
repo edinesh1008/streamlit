@@ -17,6 +17,7 @@
 import { createContext } from "react"
 
 import { AppRoot, ElementNode } from "~lib/AppNode"
+import { VegaLiteChartElement } from "~lib/components/elements/ArrowVegaLiteChart"
 
 export interface EditModeElementsContextValue {
   elements: AppRoot
@@ -24,6 +25,10 @@ export interface EditModeElementsContextValue {
   selectedElement: ElementNode | null
   setSelectedElement: (node: ElementNode | null) => void
   replaceElement: (from: ElementNode, to: ElementNode) => void
+  openChartEditor: (
+    element: ElementNode,
+    onClose: (newElement: VegaLiteChartElement) => void
+  ) => void
 }
 
 export const EditModeElementsContext =
@@ -33,4 +38,5 @@ export const EditModeElementsContext =
     selectedElement: null,
     setSelectedElement: () => {},
     replaceElement: () => {},
+    openChartEditor: () => {},
   })

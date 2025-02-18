@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-export { EditModeElementsContext } from "./EditModeElementsContext"
-export { default as EditDashboardSidebar } from "./EditDashboardSidebar/EditDashboardSidebar"
-export type { ChartEditorDialogProps } from "./ChartEditor/ChartEditorDialog"
-export { ChartEditorDialog } from "./ChartEditor/ChartEditorDialog"
+.HiddenInput {
+  /* Hide for everyone except screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

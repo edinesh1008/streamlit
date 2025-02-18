@@ -2405,6 +2405,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rollup/rollup-linux-x64-gnu@npm:^4.24.4":
+  version: 4.34.8
+  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.34.8"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
 "@rollup/rollup-linux-x64-musl@npm:4.24.0":
   version: 4.24.0
   resolution: "@rollup/rollup-linux-x64-musl@npm:4.24.0"
@@ -2798,6 +2805,7 @@ __metadata:
     react-plotly.js: "npm:^2.6.0"
     react-responsive-carousel: "npm:^3.2.23"
     react-syntax-highlighter: "npm:^15.5.0"
+    react-vega: "npm:^7.6.0"
     react-webcam: "npm:7.1.1"
     react-window: "npm:^1.8.8"
     rehype-katex: "npm:^6.0.2"
@@ -15088,6 +15096,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-vega@npm:^7.6.0":
+  version: 7.6.0
+  resolution: "react-vega@npm:7.6.0"
+  dependencies:
+    "@types/react": "npm:*"
+    fast-deep-equal: "npm:^3.1.1"
+    prop-types: "npm:^15.8.1"
+    vega-embed: "npm:^6.5.1"
+  peerDependencies:
+    react: ^16 || ^17 || ^18
+    vega: "*"
+    vega-lite: "*"
+  checksum: 10c0/9e27cef6ba2ecce94ee18a114b7dbc5f868b8dc1a042c092855872f02a2c59d395010ca98b189ab857206207c7280fd0c38336f3cfcb1b56eaffb769fce9005e
+  languageName: node
+  linkType: hard
+
 "react-virtualized-auto-sizer@npm:^1.0.2":
   version: 1.0.24
   resolution: "react-virtualized-auto-sizer@npm:1.0.24"
@@ -17195,7 +17219,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:2, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.6.2, tslib@npm:^2.6.3, tslib@npm:^2.7.0":
+"tslib@npm:2, tslib@npm:^2.0.0, tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.6.2, tslib@npm:^2.6.3, tslib@npm:^2.7.0, tslib@npm:^2.8.1":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10c0/9c4759110a19c53f992d9aae23aac5ced636e99887b51b9e61def52611732872ff7668757d4e4c61f19691e36f4da981cd9485e869b4a7408d689f6bf1f14e62
@@ -17891,6 +17915,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vega-embed@npm:^6.5.1":
+  version: 6.29.0
+  resolution: "vega-embed@npm:6.29.0"
+  dependencies:
+    fast-json-patch: "npm:^3.1.1"
+    json-stringify-pretty-compact: "npm:^4.0.0"
+    semver: "npm:^7.6.3"
+    tslib: "npm:^2.8.1"
+    vega-interpreter: "npm:^1.0.5"
+    vega-schema-url-parser: "npm:^2.2.0"
+    vega-themes: "npm:^2.15.0"
+    vega-tooltip: "npm:^0.35.2"
+  peerDependencies:
+    vega: ^5.21.0
+    vega-lite: "*"
+  checksum: 10c0/298285cd45647c9958d529fbd0450040b6cdec5e204b2e940807b890046aa4f7b52706f662d980428b6347265cb6909e2b47d4e12e8f59e06b358de581dbbb10
+  languageName: node
+  linkType: hard
+
 "vega-encode@npm:~4.10.1":
   version: 4.10.1
   resolution: "vega-encode@npm:4.10.1"
@@ -18172,6 +18215,19 @@ __metadata:
   dependencies:
     vega-util: "npm:^1.17.2"
   checksum: 10c0/2631d30ba5fd499dbb625dc715b7b7081b0c44899fc92876efa73fe0db52976a41a16315c883b83aa6fee2128324f5d42e3795fe2829d588886596a135dcf6fa
+  languageName: node
+  linkType: hard
+
+"vega-tooltip@npm:^0.35.2":
+  version: 0.35.2
+  resolution: "vega-tooltip@npm:0.35.2"
+  dependencies:
+    "@rollup/rollup-linux-x64-gnu": "npm:^4.24.4"
+    vega-util: "npm:^1.17.2"
+  dependenciesMeta:
+    "@rollup/rollup-linux-x64-gnu":
+      optional: true
+  checksum: 10c0/9ebd70e687f604dad23d99268df0ef30aadc942237a9ba20f1996252fdfc0a56ce48882ccb80deaf26c62445176bce81ae2caacf051f1cbe42c0de3d3030a10b
   languageName: node
   linkType: hard
 

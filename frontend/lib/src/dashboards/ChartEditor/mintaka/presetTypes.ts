@@ -14,7 +14,21 @@
  * limitations under the License.
  */
 
-export { EditModeElementsContext } from "./EditModeElementsContext"
-export { default as EditDashboardSidebar } from "./EditDashboardSidebar/EditDashboardSidebar"
-export type { ChartEditorDialogProps } from "./ChartEditor/ChartEditorDialog"
-export { ChartEditorDialog } from "./ChartEditor/ChartEditorDialog"
+import { Grouping, json } from "./typeUtil.js"
+
+export interface PresetColumnFilter {
+  type?: Array<string | null>
+  maxUnique?: number
+}
+
+export type FindColumnsSpec = Grouping<PresetColumnFilter>
+export type IfColumnsSpec = Grouping<json>
+
+export interface Preset {
+  mark?: json
+  encoding?: json
+  findColumns?: FindColumnsSpec
+  ifColumn?: IfColumnsSpec
+}
+
+export type Presets = Grouping<Preset>

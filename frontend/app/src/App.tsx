@@ -70,6 +70,7 @@ import {
   ThemeConfig,
   toExportedTheme,
   toThemeInput,
+  VegaLiteChartElement,
   WidgetStateManager,
 } from "@streamlit/lib"
 import {
@@ -1879,8 +1880,24 @@ export class App extends PureComponent<Props, State> {
     }))
   }
 
-  handleSelectedElement = (selectedElement: ElementNode): void => {
+  handleSelectedElement = (selectedElement: ElementNode | null): void => {
     this.setState({ selectedElement })
+  }
+
+  handleChartEditorOpen = (
+    element: ElementNode,
+    onClose: (vegaElement: VegaLiteChartElement) => void
+  ): void => {
+    this.setState({
+      dialog: {
+        type: DialogType.CHART_EDITOR,
+        element,
+        onClose: (vegaElement: VegaLiteChartElement) => {
+          onClose(vegaElement)
+          this.closeDialog()
+        },
+      },
+    })
   }
 
   render(): JSX.Element {
@@ -1979,6 +1996,7 @@ export class App extends PureComponent<Props, State> {
                 replaceElement: this.handleReplaceElement,
                 selectedElement,
                 setSelectedElement: this.handleSelectedElement,
+                openChartEditor: this.handleChartEditorOpen,
               }}
             >
               <Hotkeys
@@ -1995,6 +2013,7 @@ export class App extends PureComponent<Props, State> {
                       : scriptRunState
                   }
                   data-test-connection-state={connectionState}
+                  onClick={() => this.handleSelectedElement(null)}
                 >
                   {/* The tabindex below is required for testing. */}
                   <Header>
