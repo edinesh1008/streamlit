@@ -13,15 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { Element } from "@streamlit/protobuf"
-
-import { chart } from "./chart"
-import { richText } from "./richText"
-
-type ElementType = NonNullable<Element["type"]>
-
-export default {
-  markdown: richText,
-  arrowVegaLiteChart: chart,
-} as Record<ElementType, any>

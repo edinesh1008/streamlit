@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, ReactNode, useRef } from "react"
+import React, {
+  ReactElement,
+  ReactNode,
+  useContext,
+  useEffect,
+  useRef,
+} from "react"
 
 import {
   BarChart,
@@ -42,6 +48,7 @@ import {
 import Icon from "~lib/components/shared/Icon"
 import { ElementNode } from "~lib/AppNode"
 import { VEGA_LITE, VEGA_LITE_LINE_CHART } from "~lib/mocks/arrow"
+import { EditModeElementsContext } from "../EditModeElementsContext"
 
 const StyledListItem = styled.li(({ theme }) => ({
   padding: `${theme.spacing.lg} ${theme.spacing.sm}`,
@@ -427,10 +434,11 @@ function ListItem({
   elementType,
   children,
 }: ListItemProps): ReactElement {
+  const { setSelectedElement } = useContext(EditModeElementsContext)
   const theme = useTheme()
   const defaultElements = useRef(DEFAULT_ELEMENT)
 
-  const [, dragRef] = useDrag({
+  const [{ isDragging }, dragRef] = useDrag({
     type: "element",
     item: () => {
       return DEFAULT_ELEMENT[elementType]
@@ -443,6 +451,12 @@ function ListItem({
       const currentElement = defaultElements.current[elementType]
       defaultElements.current[elementType] = currentElement.clone()
     },
+  })
+
+  useEffect(() => {
+    if (isDragging) {
+      setSelectedElement(null)
+    }
   })
 
   return (

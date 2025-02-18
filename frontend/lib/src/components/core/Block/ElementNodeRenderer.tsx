@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, Suspense, useCallback, useRef } from "react"
+import React, {
+  ReactElement,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react"
 
 import debounceRender from "react-debounce-render"
 import { useDrag, useDrop } from "react-dnd"
@@ -743,7 +749,16 @@ const ElementNodeRenderer = (
   const ref = useRef<HTMLDivElement>(null)
   type Direction = "left" | "right" | "above" | "below"
   const [location, setLocation] = React.useState<Direction | null>(null)
-  const [{ handlerId, isOver }, drop] = useDrop<ElementNode>({
+  interface DropCollectedProps {
+    handlerId: string | symbol | null
+    isOver: boolean
+  }
+
+  const [{ handlerId, isOver }, drop] = useDrop<
+    ElementNode,
+    void,
+    DropCollectedProps
+  >({
     accept: "element",
     collect(monitor) {
       return {
@@ -818,7 +833,7 @@ const ElementNodeRenderer = (
     },
   })
 
-  const [, drag] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     type: "element",
     item: () => {
       return node
@@ -829,6 +844,12 @@ const ElementNodeRenderer = (
   })
   const opacity = isOver ? 0.5 : 1
   drag(drop(ref))
+
+  useEffect(() => {
+    if (isDragging) {
+      setSelectedElement(null)
+    }
+  }, [isDragging, setSelectedElement])
 
   const handleClick = useCallback(() => {
     setSelectedElement(node)
