@@ -198,16 +198,7 @@ const EditDashboardSidebar: React.FC<SidebarProps> = () => {
             }}
           >
             <StyledSidebarHeaderContainer data-testid="stSidebarHeader">
-              <StyledDataSourcesButton>
-                <BaseButton
-                  kind={BaseButtonKind.HEADER_NO_PADDING}
-                  onClick={() => {}}
-                >
-                  &nbsp;
-                  <Icon content={Add} size="xl" />
-                  Data Sources&nbsp;&nbsp;
-                </BaseButton>
-              </StyledDataSourcesButton>
+              <SegmentedButtonGroup value={view} onChange={setView} />
               <StyledCollapseSidebarButton data-testid="stSidebarCollapseButton">
                 <BaseButton
                   kind={BaseButtonKind.HEADER_NO_PADDING}
@@ -218,9 +209,6 @@ const EditDashboardSidebar: React.FC<SidebarProps> = () => {
               </StyledCollapseSidebarButton>
             </StyledSidebarHeaderContainer>
             <StyledSidebarUserContent data-testid="stSidebarUserContent">
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <SegmentedButtonGroup value={view} onChange={setView} />
-              </div>
               {view === "catalog" && <Catalog />}
               {view === "properties" && (
                 <ElementProperties element={selectedElement} />

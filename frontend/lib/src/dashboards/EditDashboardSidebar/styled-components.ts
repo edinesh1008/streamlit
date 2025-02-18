@@ -20,7 +20,6 @@ import { hasLightBackgroundColor } from "~lib/theme"
 
 export const StyledCollapseSidebarButton = styled.div(({ theme }) => {
   return {
-    display: "none",
     transition: "left 300ms",
     transitionDelay: "left 300ms",
     color: hasLightBackgroundColor(theme)
@@ -85,12 +84,6 @@ export const StyledSidebar = styled.section<StyledSidebarProps>(
       [`@media print`]: {
         display: "none",
       },
-
-      "&:hover": {
-        [StyledCollapseSidebarButton as any]: {
-          display: "inline",
-        },
-      },
     }
   }
 )
@@ -128,7 +121,7 @@ export const StyledResizeHandle = styled.div(({ theme }) => ({
 
 export const StyledSidebarHeaderContainer = styled.div(({ theme }) => ({
   display: "flex",
-  flexDirection: "row-reverse",
+  flexDirection: "row",
   justifyContent: "space-between",
   alignItems: "start",
   padding: theme.spacing.lg,
