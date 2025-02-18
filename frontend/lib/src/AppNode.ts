@@ -159,6 +159,32 @@ export interface AppNode {
   getElements(elementSet?: Set<Element>): Set<Element>
 }
 
+function makeEquidistantColumns(
+  activeScriptHash: string,
+  children: AppNode[],
+  scriptRunId: string,
+  fragmentId?: string
+): BlockNode {
+  // eslint-disable-next-line @typescript-eslint/no-use-before-define
+  return new BlockNode(
+    activeScriptHash,
+    children.map(
+      (child: AppNode) =>
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        new BlockNode(
+          activeScriptHash,
+          [child],
+          new BlockProto({ column: { weight: 1 / children.length } }),
+          scriptRunId,
+          fragmentId
+        )
+    ),
+    new BlockProto({ horizontal: { gap: "small" } }),
+    scriptRunId,
+    fragmentId
+  )
+}
+
 /**
  * A leaf AppNode. Contains a single element to render.
  */
@@ -534,54 +560,198 @@ export class BlockNode implements AppNode {
     )
   }
 
-  moveElement(
+  moveElementInHorizontalBlock(
     from: ElementNode,
     to: ElementNode,
     direction: MoveDirection
   ): BlockNode {
-    const newChildren = []
-    for (const child of this.children) {
+    const columns = this.children
+    const weights = columns.reduce((acc, child) => {
+      if (child instanceof BlockNode && child.deltaBlock.column) {
+        return acc.concat([child.deltaBlock.column?.weight ?? 0])
+      }
+
+      return acc
+    }, [] as number[])
+
+    const maxWeight = Math.max(...weights)
+    const newColumns: BlockNode[] = []
+    columns.forEach(column => {
+      if (!(column instanceof BlockNode) || !column.deltaBlock.column) {
+        // eslint-disable-next-line no-console
+        console.error(
+          "Found a item not meant to be a direct child of a horizontal block"
+        )
+        return
+      }
+
+      const allElementsInTree = column.getElements()
+      const hasFrom = allElementsInTree.has(from.element)
+      const hasTo = allElementsInTree.has(to.element)
+
+      if (!hasFrom && !hasTo) {
+        // This column doesn't have either element, so we can just add it
+        newColumns.push(column)
+
+        return
+      }
+
+      // At this point, we know we either need to remove from or add to
+      // We need to remove from, so we don't add this column
+      const newColumnChildren: AppNode[] = []
+      let shouldAddFrom = false
+      column.children.forEach(child => {
+        if (child instanceof BlockNode) {
+          // Inform we are in a horizontal block to not consider horizontal blocks
+          const newBlock = child.moveElement(from, to, direction, true)
+          if (newBlock.children.length > 0) {
+            newColumnChildren.push(newBlock)
+          }
+          return
+        }
+
+        if (child === from) {
+          return
+        }
+
+        if (child === to) {
+          switch (direction) {
+            case "horizontal-before":
+              newColumns.push(
+                new BlockNode(
+                  column.activeScriptHash,
+                  [from],
+                  new BlockProto({ column: { weight: maxWeight } }),
+                  column.scriptRunId,
+                  column.fragmentId
+                )
+              )
+              newColumnChildren.push(to)
+              break
+            case "horizontal-after":
+              newColumnChildren.push(to)
+              shouldAddFrom = true
+              break
+            case "vertical-before":
+              // Push the old item and then the new one
+              newColumnChildren.push(from, to)
+              break
+            case "vertical-after":
+              // Push the new item, and then the
+              newColumnChildren.push(to, from)
+              break
+          }
+        } else {
+          newColumnChildren.push(child)
+        }
+      })
+
+      if (newColumnChildren.length > 0) {
+        newColumns.push(
+          new BlockNode(
+            column.activeScriptHash,
+            newColumnChildren,
+            column.deltaBlock,
+            column.scriptRunId,
+            column.fragmentId
+          )
+        )
+      }
+
+      if (shouldAddFrom) {
+        newColumns.push(
+          new BlockNode(
+            column.activeScriptHash,
+            [from],
+            new BlockProto({ column: { weight: maxWeight } }),
+            column.scriptRunId,
+            column.fragmentId
+          )
+        )
+      }
+    })
+
+    const totalWeight = newColumns.reduce((total, column) => {
+      return total + (column.deltaBlock.column?.weight ?? 0)
+    }, 0)
+
+    const reweightedColumns = newColumns.map(column => {
+      const weight = column.deltaBlock.column?.weight ?? 0
+      return new BlockNode(
+        column.activeScriptHash,
+        column.children,
+        new BlockProto({
+          column: { weight: weight / totalWeight },
+        }),
+        column.scriptRunId,
+        column.fragmentId
+      )
+    })
+
+    return new BlockNode(
+      this.activeScriptHash,
+      reweightedColumns,
+      this.deltaBlock,
+      this.scriptRunId,
+      this.fragmentId,
+      this.deltaMsgReceivedAt
+    )
+  }
+
+  moveElement(
+    from: ElementNode,
+    to: ElementNode,
+    direction: MoveDirection,
+    inHorizontalBlock: boolean = false
+  ): BlockNode {
+    const newChildren: AppNode[] = []
+
+    this.children.forEach(child => {
       if (child instanceof BlockNode) {
-        newChildren.push(child.moveElement(from, to, direction))
+        let newBlock: BlockNode | null = null
+        if (!child.deltaBlock.horizontal && !child.deltaBlock.column) {
+          newBlock = child.moveElement(from, to, direction, inHorizontalBlock)
+        } else if (child instanceof BlockNode && child.deltaBlock.horizontal) {
+          if (inHorizontalBlock) {
+            // eslint-disable-next-line no-console
+            console.error("Found a nested horizontal block")
+            return
+          }
+
+          newBlock = child.moveElementInHorizontalBlock(from, to, direction)
+        } else if (child instanceof BlockNode && child.deltaBlock.column) {
+          // eslint-disable-next-line no-console
+          console.error("Found a column not in a horizontal block")
+        }
+
+        // Remove the block if there's nothing in it
+        if (newBlock && newBlock.children.length > 0) {
+          newChildren.push(newBlock)
+        }
       } else if (child === from) {
         // We are moving the element, so we want to not add anything
-        continue
+        return
       } else if (child === to) {
         switch (direction) {
           case "horizontal-before":
-            if (this.deltaBlock.horizontal) {
-              // Push the old item and then the new one
-              newChildren.push(from, to)
-            } else {
-              const newBlock = new BlockNode(
+            newChildren.push(
+              makeEquidistantColumns(
                 this.activeScriptHash,
                 [from, to],
-                new BlockProto({
-                  horizontal: {},
-                }),
                 this.scriptRunId,
-                this.fragmentId,
-                this.deltaMsgReceivedAt
+                this.fragmentId
               )
-              newChildren.push(newBlock)
-            }
+            )
             break
           case "horizontal-after":
-            if (this.deltaBlock.horizontal) {
-              const newBlock = new BlockNode(
+            newChildren.push(
+              makeEquidistantColumns(
                 this.activeScriptHash,
                 [to, from],
-                new BlockProto({
-                  horizontal: {},
-                }),
                 this.scriptRunId,
-                this.fragmentId,
-                this.deltaMsgReceivedAt
+                this.fragmentId
               )
-              // Push the new item, and then the
-              newChildren.push(newBlock)
-            } else {
-            }
+            )
             break
           case "vertical-before":
             // Push the old item and then the new one
@@ -595,7 +765,7 @@ export class BlockNode implements AppNode {
       } else {
         newChildren.push(child)
       }
-    }
+    })
 
     return new BlockNode(
       this.activeScriptHash,
