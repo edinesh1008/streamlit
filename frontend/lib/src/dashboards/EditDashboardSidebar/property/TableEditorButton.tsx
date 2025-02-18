@@ -14,22 +14,30 @@
  * limitations under the License.
  */
 
-import { ComponentType } from "react"
+import React, { FC } from "react"
 
 import { ElementNode } from "~lib/AppNode"
+import { VegaLiteChartElement } from "~lib/components/elements/ArrowVegaLiteChart"
+import BaseButton, { BaseButtonKind } from "~lib/components/shared/BaseButton"
 
 import { PropertyDefinition } from "./types"
-import { default as ChartEditorButton } from "./ChartEditorButton"
-import { default as TextArea } from "./TextArea"
-import { default as TableEditorButton } from "./TableEditorButton"
 
-export type { PropertyDefinition } from "./types"
-type Props = PropertyDefinition<any> & {
+interface TableEditorButtonProps
+  extends PropertyDefinition<VegaLiteChartElement> {
   element: ElementNode
 }
 
-export default {
-  text_area: TextArea,
-  chart_editor: ChartEditorButton,
-  table_editor: TableEditorButton,
-} as Record<string, ComponentType<Props>>
+const TableEditorButton: FC<TableEditorButtonProps> = ({
+  element,
+  getValue,
+  label,
+  setValue: setPropertyValue,
+}) => {
+  return (
+    <BaseButton kind={BaseButtonKind.PRIMARY} fluidWidth={true}>
+      {label}
+    </BaseButton>
+  )
+}
+
+export default TableEditorButton

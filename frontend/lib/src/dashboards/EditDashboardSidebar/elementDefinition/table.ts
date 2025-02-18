@@ -13,3 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import { Element } from "@streamlit/protobuf"
+
+import { ElementNode } from "~lib/AppNode"
+import { Quiver } from "~lib/dataframes/Quiver"
+
+export const table = [
+  {
+    type: "table_editor",
+    label: "Edit Table...",
+    getValue: (element: ElementNode): Quiver => {
+      return element.quiverElement
+    },
+    setValue: (element: ElementNode, value: Quiver): ElementNode => {
+      const { arrowDataFrame } = element.element
+
+      if (arrowDataFrame) {
+        const newElement = element.clone()
+
+        // @ts-expect-error
+        newElement.element = new Element({
+          ...element.element,
+          arrowDataFrame: {
+            ...arrowDataFrame,
+            data: value.bytes,
+          },
+        })
+        return newElement
+      }
+
+      return element
+    },
+  },
+]

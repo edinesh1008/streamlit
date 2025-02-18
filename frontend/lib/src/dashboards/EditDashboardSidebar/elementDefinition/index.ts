@@ -18,10 +18,12 @@ import { Element } from "@streamlit/protobuf"
 
 import { chart } from "./chart"
 import { richText } from "./richText"
+import { table } from "./table"
 
 type ElementType = NonNullable<Element["type"]>
 
 export default {
   markdown: richText,
   arrowVegaLiteChart: chart,
+  arrowDataFrame: table,
 } as Record<ElementType, any>
