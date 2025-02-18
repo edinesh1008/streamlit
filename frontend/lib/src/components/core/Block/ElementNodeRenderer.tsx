@@ -741,6 +741,8 @@ const ElementNodeRenderer = (
   const userKey = getKeyFromId(elementId)
 
   const ref = useRef<HTMLDivElement>(null)
+  type Direction = "left" | "right" | "above" | "below"
+  const [location, setLocation] = React.useState<Direction | null>(null)
   const [{ handlerId, isOver }, drop] = useDrop<ElementNode>({
     accept: "element",
     collect(monitor) {
@@ -776,32 +778,43 @@ const ElementNodeRenderer = (
       const HORIZONTAL_THRESHOLD = 0.1
       const horizontalAreaSize = HORIZONTAL_THRESHOLD * hoverMiddleX
       if (hoverClientX < horizontalAreaSize) {
-        updateElements(
-          elements.moveElement(draggedItem, node, "horizontal-before")
-        )
+        setLocation("left")
         return
       }
 
       if (hoverClientX > 2 * hoverMiddleX - horizontalAreaSize) {
-        updateElements(
-          elements.moveElement(draggedItem, node, "horizontal-after")
-        )
+        setLocation("right")
         return
       }
 
       if (hoverClientY <= hoverMiddle) {
-        updateElements(
-          elements.moveElement(draggedItem, node, "vertical-before")
-        )
+        setLocation("above")
         return
       }
 
       if (hoverClientY > hoverMiddle) {
-        updateElements(
-          elements.moveElement(draggedItem, node, "vertical-after")
-        )
+        setLocation("below")
         return
       }
+
+      setLocation(null)
+    },
+    drop: item => {
+      switch (location) {
+        case "left":
+          updateElements(elements.moveElement(item, node, "horizontal-before"))
+          break
+        case "right":
+          updateElements(elements.moveElement(item, node, "horizontal-after"))
+          break
+        case "above":
+          updateElements(elements.moveElement(item, node, "vertical-before"))
+          break
+        case "below":
+          updateElements(elements.moveElement(item, node, "vertical-after"))
+          break
+      }
+      setLocation(null)
     },
   })
 
@@ -845,6 +858,7 @@ const ElementNodeRenderer = (
         elementType={elementType}
         isSelected={selectedElement === node}
         onClick={handleClick}
+        location={isOver ? location : null}
       >
         <ErrorBoundary width={width}>
           <Suspense

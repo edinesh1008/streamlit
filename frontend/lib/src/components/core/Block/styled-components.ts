@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from "react"
+import React, { CSSProperties } from "react"
 
 import styled from "@emotion/styled"
 
@@ -53,17 +53,52 @@ export const StyledHorizontalBlock = styled.div<StyledHorizontalBlockProps>(
   }
 )
 
+type MoveLocation = "left" | "right" | "above" | "below" | null
 export interface StyledElementContainerProps {
   isStale: boolean
   width: number
   elementType: string
   isSelected: boolean
+  location: MoveLocation
+}
+
+const allBorderDefault = "transparent solid 2px"
+
+function getMoveBorder(
+  location: MoveLocation,
+  theme: EmotionTheme
+): CSSProperties {
+  if (location === "left") {
+    return {
+      borderLeft: `4px solid ${theme.colors.primary}`,
+    }
+  }
+
+  if (location === "right") {
+    return {
+      borderRight: `4px solid ${theme.colors.primary}`,
+    }
+  }
+
+  if (location === "above") {
+    return {
+      borderTop: `4px solid ${theme.colors.primary}`,
+    }
+  }
+
+  if (location === "below") {
+    return {
+      borderBottom: `4px solid ${theme.colors.primary}`,
+    }
+  }
+
+  return {}
 }
 
 const GLOBAL_ELEMENTS = ["balloons", "snow"]
 // TODO(edit-mode)
 export const StyledElementContainer = styled.div<StyledElementContainerProps>(
-  ({ theme, isStale, width, elementType, isSelected }) => ({
+  ({ theme, isStale, width, elementType, isSelected, location }) => ({
     width,
     // Allows to have absolutely-positioned nodes inside app elements, like
     // floating buttons.
@@ -71,6 +106,7 @@ export const StyledElementContainer = styled.div<StyledElementContainerProps>(
     // eslint-disable-next-line streamlit-custom/no-hardcoded-theme-values
     border: isSelected ? "red dashed 2px" : "transparent solid 2px",
     boxSizing: "content-box",
+    ...getMoveBorder(location, theme),
 
     // Target all children
     "& > *": {
