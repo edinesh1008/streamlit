@@ -218,25 +218,25 @@ interface SpecUpdateProps {
   baseSpec?: VLSpec
 }
 
-function useTrackedEffect(effect, dependencies, name = "useTrackedEffect") {
-  const prevDependenciesRef = useRef([])
+// function useTrackedEffect(effect, dependencies, name = "useTrackedEffect") {
+//   const prevDependenciesRef = useRef([])
 
-  useEffect(() => {
-    if (prevDependenciesRef.current.length > 0) {
-      dependencies.forEach((dep, index) => {
-        if (dep !== prevDependenciesRef.current[index]) {
-          console.log(`[${name}] Dependency at index ${index} changed:`, {
-            previous: prevDependenciesRef.current[index],
-            current: dep,
-          })
-        }
-      })
-    }
+//   useEffect(() => {
+//     if (prevDependenciesRef.current.length > 0) {
+//       dependencies.forEach((dep, index) => {
+//         if (dep !== prevDependenciesRef.current[index]) {
+//           console.log(`[${name}] Dependency at index ${index} changed:`, {
+//             previous: prevDependenciesRef.current[index],
+//             current: dep,
+//           })
+//         }
+//       })
+//     }
 
-    prevDependenciesRef.current = dependencies
-    return effect()
-  }, dependencies)
-}
+//     prevDependenciesRef.current = dependencies
+//     return effect()
+//   }, dependencies)
+// }
 
 function SpecUpdater({
   setGeneratedSpec,

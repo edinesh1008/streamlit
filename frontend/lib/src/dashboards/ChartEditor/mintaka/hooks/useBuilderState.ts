@@ -23,27 +23,27 @@ import { Presets } from "../presetTypes.js"
 
 import { BuilderState } from "../BuilderState.js"
 
-function useTrackedMemo(factory, dependencies, name = "useTrackedMemo") {
-  const prevDependenciesRef = useRef([])
+// function useTrackedMemo(factory, dependencies, name = "useTrackedMemo") {
+//   const prevDependenciesRef = useRef([])
 
-  const result = useMemo(() => {
-    if (prevDependenciesRef.current.length > 0) {
-      dependencies.forEach((dep, index) => {
-        if (dep !== prevDependenciesRef.current[index]) {
-          console.log(`[${name}] Dependency at index ${index} changed:`, {
-            previous: prevDependenciesRef.current[index],
-            current: dep,
-          })
-        }
-      })
-    }
+//   const result = useMemo(() => {
+//     if (prevDependenciesRef.current.length > 0) {
+//       dependencies.forEach((dep, index) => {
+//         if (dep !== prevDependenciesRef.current[index]) {
+//           console.log(`[${name}] Dependency at index ${index} changed:`, {
+//             previous: prevDependenciesRef.current[index],
+//             current: dep,
+//           })
+//         }
+//       })
+//     }
 
-    prevDependenciesRef.current = dependencies
-    return factory()
-  }, dependencies)
+//     prevDependenciesRef.current = dependencies
+//     return factory()
+//   }, dependencies)
 
-  return result
-}
+//   return result
+// }
 
 export function useBuilderState(
   columnTypes: ColumnTypes,
@@ -57,7 +57,7 @@ export function useBuilderState(
     preset: null,
   })
 
-  const state = useTrackedMemo(
+  const state = useMemo(
     () =>
       new BuilderState(columnTypes, config, initialState, presets, v =>
         setStateValue(v)

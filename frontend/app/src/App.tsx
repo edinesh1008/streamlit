@@ -1884,18 +1884,12 @@ export class App extends PureComponent<Props, State> {
     this.setState({ selectedElement })
   }
 
-  handleChartEditorOpen = (
-    element: ElementNode,
-    onClose: (vegaElement: VegaLiteChartElement) => void
-  ): void => {
+  handleChartEditorOpen = (element: ElementNode): void => {
     this.setState({
       dialog: {
         type: DialogType.CHART_EDITOR,
         element,
-        onClose: (vegaElement: VegaLiteChartElement) => {
-          onClose(vegaElement)
-          this.closeDialog()
-        },
+        onClose: this.closeDialog,
       },
     })
   }

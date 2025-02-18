@@ -14,15 +14,25 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, useCallback, useMemo, useState } from "react"
+import React, {
+  ReactElement,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react"
 
 import zip from "lodash/zip"
 import { Vega, VisualizationSpec } from "react-vega"
 import { useTheme } from "@emotion/react"
 
 import { ElementNode } from "~lib/AppNode"
-import Modal, { ModalBody, ModalHeader } from "~lib/components/shared/Modal"
-import { VegaLiteChartElement } from "~lib/components/elements/ArrowVegaLiteChart"
+import Modal, {
+  ModalBody,
+  ModalButton,
+  ModalFooter,
+  ModalHeader,
+} from "~lib/components/shared/Modal"
 import {
   ArrowType,
   isDatetimeType,
@@ -32,6 +42,8 @@ import {
 } from "~lib/dataframes/arrowTypeUtils"
 import { getDataArrays } from "~lib/components/elements/ArrowVegaLiteChart/arrowUtils"
 import { applyStreamlitTheme } from "~lib/components/elements/ArrowVegaLiteChart/CustomTheme"
+import { BaseButtonKind } from "~lib/components/shared/BaseButton"
+import { EditModeElementsContext } from "~lib/dashboards/EditModeElementsContext"
 
 import { Mintaka, VLSpec } from "./mintaka"
 import {
@@ -50,7 +62,7 @@ import styles from "./ChartEditorDialog.module.css"
 
 export interface ChartEditorDialogProps {
   element: ElementNode
-  onClose: (el: VegaLiteChartElement) => void
+  onClose: () => void
 }
 
 type ColumnType = "nominal" | "quantitative" | "temporal"
@@ -76,9 +88,10 @@ export function ChartEditorDialog({
   onClose,
 }: ChartEditorDialogProps): ReactElement {
   const theme = useTheme()
-  const handleCallback = useCallback(() => {
-    onClose(element.element.arrowVegaLiteChart as VegaLiteChartElement)
-  }, [element, onClose])
+  const { replaceElement } = useContext(EditModeElementsContext)
+  const handleCancel = useCallback(() => {
+    onClose()
+  }, [onClose])
 
   const { spec: originalSpec, datasets } = element.vegaLiteChartElement
   const baseSpec = useMemo(() => {
@@ -96,6 +109,16 @@ export function ChartEditorDialog({
   }, [originalSpec, theme])
 
   const [spec, setSpec] = useState(baseSpec)
+
+  const handleConfirmChange = useCallback(() => {
+    const newElement = element.clone()
+    newElement.element.arrowVegaLiteChart = {
+      ...element.element.arrowVegaLiteChart,
+      spec: JSON.stringify(spec),
+    }
+    replaceElement(element, newElement)
+    onClose()
+  }, [element, replaceElement, spec, onClose])
 
   const layer = useMemo(() => {
     return {
@@ -129,7 +152,7 @@ export function ChartEditorDialog({
   const presets = useMemo(() => ({}), [])
 
   return (
-    <Modal isOpen={true} closeable={true} onClose={handleCallback} size="auto">
+    <Modal isOpen={true} closeable={true} onClose={handleCancel} size="auto">
       <div onClick={e => e.stopPropagation()}>
         <ModalHeader>Chart Editor</ModalHeader>
         <ModalBody>
@@ -161,6 +184,18 @@ export function ChartEditorDialog({
             />
           </div>
         </ModalBody>
+        <ModalFooter>
+          <ModalButton kind={BaseButtonKind.GHOST} onClick={handleCancel}>
+            Cancel
+          </ModalButton>
+          <ModalButton
+            autoFocus
+            kind={BaseButtonKind.PRIMARY}
+            onClick={handleConfirmChange}
+          >
+            Save
+          </ModalButton>
+        </ModalFooter>
       </div>
     </Modal>
   )
