@@ -78,6 +78,8 @@ function getNonEmptyString(
 const getInitialValue = (
   props: Pick<Props, "element" | "widgetMgr">
 ): number | null => {
+  console.log("=============== getInitialValue ===============")
+  // TODO: NEED THE CHECK HERE
   const isIntData = props.element.dataType === NumberInputProto.DataType.INT
   const storedValue = isIntData
     ? props.widgetMgr.getIntValue(props.element)
@@ -290,6 +292,7 @@ const NumberInput: React.FC<Props> = ({
   }, [])
 
   const updateFromProtobuf = useCallback((): void => {
+    console.log("=============== updateFromProtobuf ===============")
     const { value } = element
     element.setValue = false
     setValue(value ?? null)

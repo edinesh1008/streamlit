@@ -19,6 +19,7 @@ import React, {
   ReactElement,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react"
@@ -46,6 +47,8 @@ import {
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import { Placement } from "~lib/components/shared/Tooltip"
 import { LibContext } from "~lib/components/core/LibContext"
+import AlertElement from "~lib/components/elements/AlertElement"
+import { Kind } from "~lib/components/shared/AlertContainer"
 import { EmotionTheme } from "~lib/theme"
 
 import { useIntlLocale } from "./useIntlLocale"
@@ -99,6 +102,7 @@ function DateInput({
   })
 
   const [isEmpty, setIsEmpty] = useState(false)
+  const [errorState, setErrorState] = useState("")
 
   const { colors, fontSizes, lineHeights, spacing, sizes } = useTheme()
 
@@ -130,12 +134,35 @@ function DateInput({
     [element.format]
   )
 
+  useEffect(() => {
+    // setErrorState("")
+    // if (Array.isArray(value)) {
+    //   value.forEach((dt: Date | null | undefined) => {
+    //     if (dt) {
+    //       if (maxDate && dt > maxDate) {
+    //         setErrorState(maxDate)
+    //       } else if (dt < minDate) {
+    //         setErrorState(minDate)
+    //       }
+    //     }
+    //   })
+    // } else {
+    //   if (maxDate && value > maxDate) {
+    //     setErrorState(maxDate)
+    //   } else if (value < minDate) {
+    //     setErrorState(minDate)
+    //   }
+    // }
+  }, [value])
+
   const handleChange = useCallback(
     ({
       date,
     }: {
       date: Date | (Date | null | undefined)[] | null | undefined
     }): void => {
+      setErrorState("")
+
       if (isNullOrUndefined(date)) {
         setValueWithSource({ value: [], fromUi: true })
         setIsEmpty(true)
@@ -146,10 +173,26 @@ function DateInput({
       if (Array.isArray(date)) {
         date.forEach((dt: Date | null | undefined) => {
           if (dt) {
+            if (maxDate && dt > maxDate) {
+              setErrorState(maxDate.toLocaleDateString(locale))
+            } else if (dt < minDate) {
+              setErrorState(minDate.toLocaleDateString(locale))
+
+              // setErrorState(minDate.toLocaleDateString(locale, {
+              //   month: 'numeric',
+              //   day: 'numeric',
+              //   year: 'numeric',
+              // }))
+            }
             newValue.push(dt)
           }
         })
       } else {
+        if (maxDate && date > maxDate) {
+          setErrorState(maxDate)
+        } else if (date < minDate) {
+          setErrorState(minDate)
+        }
         newValue.push(date)
       }
 
@@ -186,6 +229,7 @@ function DateInput({
         )}
       </WidgetLabel>
       <UIDatePicker
+        error={errorState ? true : false}
         locale={loadedLocale}
         density={DENSITY.high}
         formatString={dateFormat}
@@ -345,6 +389,12 @@ function DateInput({
         range={element.isRange}
         clearable={clearable}
       />
+      {errorState && (
+        <AlertElement
+          kind={Kind.ERROR}
+          body={"**Streamlit API Error**: Date out of range - " + errorState}
+        />
+      )}
     </div>
   )
 }
@@ -367,6 +417,8 @@ function getDefaultStateFromProto(element: DateInputProto): Date[] {
 }
 
 function getCurrStateFromProto(element: DateInputProto): Date[] {
+  console.log("======== getCurrStateFromProto ========", element.value)
+  // TODO: NEED THE CHECK HERE
   return stringsToDates(element.value) ?? []
 }
 
@@ -376,12 +428,26 @@ function updateWidgetMgrState(
   vws: ValueWithSource<Date[]>,
   fragmentId?: string
 ): void {
-  widgetMgr.setStringArrayValue(
-    element,
-    datesToStrings(vws.value),
-    { fromUi: vws.fromUi },
-    fragmentId
-  )
+  const minDate = moment(element.min, DATE_FORMAT).toDate()
+  const maxDate = getMaxDate(element)
+  const values = [...vws.value]
+  let isValid = true
+
+  values.forEach((dt: Date | null | undefined) => {
+    if ((dt && maxDate && dt > maxDate) || dt < minDate) {
+      isValid = false
+    }
+  })
+
+  if (isValid) {
+    console.log("========", "SETTING THE DATE INPUT VALUE", "========")
+    widgetMgr.setStringArrayValue(
+      element,
+      datesToStrings(vws.value),
+      { fromUi: vws.fromUi },
+      fragmentId
+    )
+  }
 }
 
 function getMaxDate(element: DateInputProto): Date | undefined {
