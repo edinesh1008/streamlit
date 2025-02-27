@@ -19,11 +19,11 @@ import React, {
   ReactElement,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react"
 
+import { format } from "date-fns"
 import moment from "moment"
 import { useTheme } from "@emotion/react"
 import { DENSITY, Datepicker as UIDatePicker } from "baseui/datepicker"
@@ -102,7 +102,7 @@ function DateInput({
   })
 
   const [isEmpty, setIsEmpty] = useState(false)
-  const [errorState, setErrorState] = useState("")
+  const [errorState, setErrorState] = useState<string>("")
 
   const { colors, fontSizes, lineHeights, spacing, sizes } = useTheme()
 
@@ -134,26 +134,51 @@ function DateInput({
     [element.format]
   )
 
-  useEffect(() => {
-    // setErrorState("")
-    // if (Array.isArray(value)) {
-    //   value.forEach((dt: Date | null | undefined) => {
-    //     if (dt) {
-    //       if (maxDate && dt > maxDate) {
-    //         setErrorState(maxDate)
-    //       } else if (dt < minDate) {
-    //         setErrorState(minDate)
-    //       }
-    //     }
-    //   })
-    // } else {
-    //   if (maxDate && value > maxDate) {
-    //     setErrorState(maxDate)
-    //   } else if (value < minDate) {
-    //     setErrorState(minDate)
-    //   }
-    // }
-  }, [value])
+  // Dates can be entered outside of min/max in UI, we check for this and set an error state if date invalid
+  // Issue #8475
+  const checkDateInRange = useCallback(
+    (date: Date): void => {
+      const minDateString = format(minDate, dateFormat, {
+        locale: loadedLocale,
+      })
+      const maxDateString = maxDate
+        ? format(maxDate, dateFormat, { locale: loadedLocale })
+        : ""
+
+      if (element.isRange) {
+        if (maxDate && date > maxDate) {
+          setErrorState(
+            `**Streamlit API Error**: Max date set outside of allowed range. Please select a date before ${maxDateString}.`
+          )
+        } else if (date < minDate) {
+          setErrorState(
+            `**Streamlit API Error**: Min date set outside of allowed range. Please select a date after ${minDateString}.`
+          )
+        }
+      } else {
+        if (maxDate && date > maxDate) {
+          setErrorState(
+            `**Streamlit API Error**: Date set outside of allowed range. Please select a date between ${minDateString} and ${maxDateString}.`
+          )
+        } else if (date < minDate) {
+          const messageEnding = maxDate
+            ? `between ${minDateString} and ${maxDateString}.`
+            : `after ${minDateString}.`
+          setErrorState(
+            `**Streamlit API Error**: Date set outside of allowed range. ${messageEnding}`
+          )
+        }
+      }
+    },
+    [
+      element.isRange,
+      maxDate,
+      minDate,
+      dateFormat,
+      loadedLocale,
+      setErrorState,
+    ]
+  )
 
   const handleChange = useCallback(
     ({
@@ -173,33 +198,19 @@ function DateInput({
       if (Array.isArray(date)) {
         date.forEach((dt: Date | null | undefined) => {
           if (dt) {
-            if (maxDate && dt > maxDate) {
-              setErrorState(maxDate.toLocaleDateString(locale))
-            } else if (dt < minDate) {
-              setErrorState(minDate.toLocaleDateString(locale))
-
-              // setErrorState(minDate.toLocaleDateString(locale, {
-              //   month: 'numeric',
-              //   day: 'numeric',
-              //   year: 'numeric',
-              // }))
-            }
+            checkDateInRange(dt)
             newValue.push(dt)
           }
         })
       } else {
-        if (maxDate && date > maxDate) {
-          setErrorState(maxDate)
-        } else if (date < minDate) {
-          setErrorState(minDate)
-        }
+        checkDateInRange(date)
         newValue.push(date)
       }
 
       setValueWithSource({ value: newValue, fromUi: true })
       setIsEmpty(!newValue)
     },
-    [setValueWithSource]
+    [setValueWithSource, checkDateInRange]
   )
 
   const handleClose = useCallback((): void => {
@@ -389,12 +400,7 @@ function DateInput({
         range={element.isRange}
         clearable={clearable}
       />
-      {errorState && (
-        <AlertElement
-          kind={Kind.ERROR}
-          body={"**Streamlit API Error**: Date out of range - " + errorState}
-        />
-      )}
+      {errorState && <AlertElement kind={Kind.ERROR} body={errorState} />}
     </div>
   )
 }
@@ -417,8 +423,6 @@ function getDefaultStateFromProto(element: DateInputProto): Date[] {
 }
 
 function getCurrStateFromProto(element: DateInputProto): Date[] {
-  console.log("======== getCurrStateFromProto ========", element.value)
-  // TODO: NEED THE CHECK HERE
   return stringsToDates(element.value) ?? []
 }
 
@@ -430,17 +434,17 @@ function updateWidgetMgrState(
 ): void {
   const minDate = moment(element.min, DATE_FORMAT).toDate()
   const maxDate = getMaxDate(element)
-  const values = [...vws.value]
   let isValid = true
 
-  values.forEach((dt: Date | null | undefined) => {
-    if ((dt && maxDate && dt > maxDate) || dt < minDate) {
+  // Check if date(s) outside of allowed min/max
+  vws.value.forEach((dt: Date | null | undefined) => {
+    if (dt && ((maxDate && dt > maxDate) || dt < minDate)) {
       isValid = false
     }
   })
 
+  // Only update widget state if date(s) valid
   if (isValid) {
-    console.log("========", "SETTING THE DATE INPUT VALUE", "========")
     widgetMgr.setStringArrayValue(
       element,
       datesToStrings(vws.value),

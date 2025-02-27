@@ -303,8 +303,6 @@ function getDefaultStateFromProto(element: SliderProto): number[] {
 }
 
 function getCurrStateFromProto(element: SliderProto): number[] {
-  console.log("============ getCurrStateFromProto ===========", element.value)
-  // TODO: NEED THE CHECK HERE
   return element.value
 }
 
