@@ -20,6 +20,8 @@ import {
   BaseButtonKind,
   ChartEditorDialog,
   ChartEditorDialogProps,
+  DataExplorerDialog,
+  DataExplorerDialogProps,
   Modal,
   ModalBody,
   ModalButton,
@@ -58,6 +60,10 @@ interface ChartEditorProps extends ChartEditorDialogProps {
   type: DialogType.CHART_EDITOR
 }
 
+interface DataExplorerProps extends DataExplorerDialogProps {
+  type: DialogType.DATA_EXPLORER
+}
+
 export type DialogProps =
   | AboutProps
   | ClearCacheProps
@@ -68,6 +74,7 @@ export type DialogProps =
   | DeployErrorProps
   | DeployDialogProps
   | ChartEditorProps
+  | DataExplorerProps
 
 export function StreamlitDialog(dialogProps: DialogProps): ReactNode {
   switch (dialogProps.type) {
@@ -89,6 +96,8 @@ export function StreamlitDialog(dialogProps: DialogProps): ReactNode {
       return deployErrorDialog(dialogProps)
     case DialogType.CHART_EDITOR:
       return <ChartEditorDialog {...dialogProps} />
+    case DialogType.DATA_EXPLORER:
+      return <DataExplorerDialog {...dialogProps} />
     case undefined:
       return noDialog(dialogProps)
     default:

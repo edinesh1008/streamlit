@@ -43,7 +43,6 @@ import { EditModeElementsContext } from "~lib/dashboards/EditModeElementsContext
 import {
   RESIZE_HANDLE_WIDTH,
   StyledCollapseSidebarButton,
-  StyledDataSourcesButton,
   StyledOpenSidebarButton,
   StyledResizeHandle,
   StyledSidebar,

@@ -70,15 +70,16 @@ import {
   ThemeConfig,
   toExportedTheme,
   toThemeInput,
-  VegaLiteChartElement,
   WidgetStateManager,
 } from "@streamlit/lib"
 import {
+  Arrow,
   AuthRedirect,
   AutoRerun,
   BackMsg,
   Config,
   CustomThemeConfig,
+  DataFetchResponse,
   Delta,
   FileURLsResponse,
   ForwardMsg,
@@ -198,6 +199,7 @@ interface State {
   autoReruns: NodeJS.Timeout[]
   inputsDisabled: boolean
   selectedElement: ElementNode | null
+  dataQueryRegistry: Record<string, Arrow>
 }
 
 const ELEMENT_LIST_BUFFER_TIMEOUT_MS = 10
@@ -747,6 +749,14 @@ export class App extends PureComponent<Props, State> {
           this.handleLogo(logo, msgProto.metadata as ForwardMsgMetadata),
         navigation: (navigation: Navigation) =>
           this.handleNavigation(navigation),
+        fetchDataResponse: (response: DataFetchResponse) => {
+          this.setState({
+            dataQueryRegistry: {
+              ...this.state.dataQueryRegistry,
+              [response.fetchId]: response.dataResponse as Arrow,
+            },
+          })
+        },
         authRedirect: (authRedirect: AuthRedirect) => {
           if (isInChildFrame()) {
             this.hostCommunicationMgr.sendMessageToSameOriginHost({
@@ -1894,6 +1904,16 @@ export class App extends PureComponent<Props, State> {
     })
   }
 
+  handleDataExplorerOpen = (element: ElementNode): void => {
+    this.setState({
+      dialog: {
+        type: DialogType.DATA_EXPLORER,
+        element,
+        onClose: this.closeDialog,
+      },
+    })
+  }
+
   render(): JSX.Element {
     const {
       allowRunOnSave,
@@ -1922,6 +1942,7 @@ export class App extends PureComponent<Props, State> {
       appPages,
       navSections,
       selectedElement,
+      dataQueryRegistry,
     } = this.state
     const developmentMode = showDevelopmentOptions(
       this.state.isOwner,
@@ -1991,6 +2012,8 @@ export class App extends PureComponent<Props, State> {
                 selectedElement,
                 setSelectedElement: this.handleSelectedElement,
                 openChartEditor: this.handleChartEditorOpen,
+                openDataExplorer: this.handleDataExplorerOpen,
+                dataQueryRegistry,
               }}
             >
               <Hotkeys

@@ -1,4 +1,4 @@
-/**
+/**!
  * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,3 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+syntax = "proto3";
+
+option java_package = "com.snowflake.apps.streamlit";
+option java_outer_classname = "DataFetchResponseProto";
+
+import "streamlit/proto/Arrow.proto";
+
+// A message provided in response to a data fetch
+message DataFetchResponse {
+  // The name of the connection used for the query
+  string connection_name = 1;
+  string fetch_id = 2;
+  optional string error = 3;
+  optional Arrow data_response = 4;
+}

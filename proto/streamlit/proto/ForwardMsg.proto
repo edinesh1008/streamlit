@@ -35,6 +35,7 @@ import "streamlit/proto/ParentMessage.proto";
 import "streamlit/proto/SessionEvent.proto";
 import "streamlit/proto/SessionStatus.proto";
 import "streamlit/proto/AuthRedirect.proto";
+import "streamlit/proto/DataFetchResponse.proto";
 
 // A message sent from Proxy to the browser
 message ForwardMsg {
@@ -90,6 +91,9 @@ message ForwardMsg {
     // Platform - message to host
     ParentMessage parent_message = 20;
 
+    // Response from a data fetch
+    DataFetchResponse data_fetch_response = 25;
+
     // A reference to a ForwardMsg that has already been delivered.
     // The client should substitute the message with the given hash
     // for this one. If the client does not have the referenced message
@@ -103,7 +107,7 @@ message ForwardMsg {
   string debug_last_backmsg_id = 17;
 
   reserved 7, 8;
-  // Next: 25
+  // Next: 26
 }
 
 // ForwardMsgMetadata contains all data that does _not_ get hashed (or cached)

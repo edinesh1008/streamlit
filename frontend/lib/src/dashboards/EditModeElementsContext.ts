@@ -16,6 +16,8 @@
 
 import { createContext } from "react"
 
+import { Arrow } from "@streamlit/protobuf"
+
 import { AppRoot, ElementNode } from "~lib/AppNode"
 import { VegaLiteChartElement } from "~lib/components/elements/ArrowVegaLiteChart"
 
@@ -29,6 +31,8 @@ export interface EditModeElementsContextValue {
     element: ElementNode,
     onClose: (newElement: VegaLiteChartElement) => void
   ) => void
+  openDataExplorer: (element: ElementNode, onClose: () => void) => void
+  dataQueryRegistry: Record<string, Arrow>
 }
 
 export const EditModeElementsContext =
@@ -39,4 +43,6 @@ export const EditModeElementsContext =
     setSelectedElement: () => {},
     replaceElement: () => {},
     openChartEditor: () => {},
+    openDataExplorer: () => {},
+    dataQueryRegistry: {},
   })

@@ -791,7 +791,7 @@ const ElementNodeRenderer = (
       // When dragging downwards, only move when the cursor is below 50%
       // When dragging upwards, only move when the cursor is above 50%
       // Dragging downwards
-      const HORIZONTAL_THRESHOLD = 0.1
+      const HORIZONTAL_THRESHOLD = 0.2
       const horizontalAreaSize = HORIZONTAL_THRESHOLD * hoverMiddleX
       if (hoverClientX < horizontalAreaSize) {
         setLocation("left")

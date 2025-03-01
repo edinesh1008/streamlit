@@ -21,6 +21,8 @@ option java_outer_classname = "BackMsgProto";
 
 import "streamlit/proto/ClientState.proto";
 import "streamlit/proto/Common.proto";
+import "streamlit/proto/DataFetch.proto";
+import "streamlit/proto/WriteFile.proto";
 
 // A message from the browser to the server.
 message BackMsg {
@@ -73,6 +75,10 @@ message BackMsg {
 
     // Sends an app heartbeat message through the websocket
     bool app_heartbeat = 17;
+
+    DataFetch data_fetch = 18;
+
+    WriteFile write_file = 19;
   }
 
   // An ID used to associate this BackMsg with the corresponding ForwardMsgs

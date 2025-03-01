@@ -259,6 +259,43 @@ class AppSession:
             # generally already done so by the time we get here.
             self.disconnect_file_watchers()
 
+    def _handle_data_fetch_request(self, data_fetch: ForwardMsg.DataFetch) -> None:
+        connection_name = data_fetch.connection_name
+        if not connection_name:
+            raise ValueError("Connection name must be provided")
+
+        forward_msg = ForwardMsg()
+        forward_msg.data_fetch_response.connection_name = connection_name
+        forward_msg.data_fetch_response.fetch_id = data_fetch.fetch_id
+
+        try:
+            from streamlit.dataframe_util import dataframe_util
+            from streamlit.proto.Arrow_pb2 import Arrow as ArrowProto
+            from streamlit.runtime.connection_factory import connection_factory
+
+            connection = connection_factory(connection_name)
+            query_type = data_fetch.WhichOneof("type")
+            if query_type == "sql":
+                results_df = connection.query(data_fetch.sql)
+                arrow_proto = ArrowProto()
+                arrow_proto.use_container_width = True
+                arrow_proto.editing_mode = ArrowProto.EditingMode.READ_ONLY
+                # Convert the input data into a pandas.DataFrame
+                data_df = dataframe_util.convert_anything_to_pandas_df(
+                    results_df, ensure_copy=False
+                )
+                # Serialize the data to bytes:
+                arrow_proto.data = dataframe_util.convert_pandas_df_to_arrow_bytes(
+                    data_df
+                )
+                forward_msg.data_fetch_response.data_response = arrow_proto
+            else:
+                raise NotImplementedError("Python code execution not yet supported")
+        except Exception as e:
+            forward_msg.data_fetch_response.error = str(e)
+
+        self._enqueue_forward_msg(forward_msg)
+
     def _enqueue_forward_msg(self, msg: ForwardMsg) -> None:
         """Enqueue a new ForwardMsg to our browser queue.
 
@@ -300,6 +337,8 @@ class AppSession:
                 self._handle_stop_script_request()
             elif msg_type == "file_urls_request":
                 self._handle_file_urls_request(msg.file_urls_request)
+            elif msg_type == "data_fetch":
+                self._handle_data_fetch_request(msg.data_fetch)
             else:
                 _LOGGER.warning('No handler for "%s"', msg_type)
 
