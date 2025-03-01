@@ -71,8 +71,16 @@ def elements(all_elements: Any, indent=0):
             elements_running_contents += f"{' ' * indent}st.dataframe({view_id}_df)\n"
         elif block["type"] == "horizontal-block":
             weights = block["weights"]
-            elements_running_contents += f"{' ' * indent}with st.columns({weights}):\n"
-            elements_running_contents += elements(block["elements"], indent=indent + 4)
+            col_names = ", ".join([f"col_{i}" for i in range(len(weights))])
+            elements_running_contents += (
+                f"{' ' * indent}{col_names} = st.columns({weights}):\n"
+            )
+            cols = block["columns"]
+            for index, col in enumerate(cols):
+                f"{' ' * indent}{col_names} with col_{index}:\n"
+                elements_running_contents += elements(col, indent=indent + 4)
+                elements_running_contents += "\n"
+
             elements_running_contents += "\n"
         elif block["type"] == "vertical-block":
             elements_running_contents += f"{' ' * indent}with st.container():\n"

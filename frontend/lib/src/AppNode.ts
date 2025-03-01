@@ -36,6 +36,7 @@ import {
   makeAppSkeletonElement,
   makeElementWithErrorText,
   makeElementWithInfoText,
+  notNullOrUndefined,
   notUndefined,
 } from "~lib/util/utils"
 
@@ -45,6 +46,7 @@ import {
 } from "./components/elements/ArrowVegaLiteChart"
 import { Quiver } from "./dataframes/Quiver"
 import { ensureError } from "./util/ErrorHandling"
+import { instance } from "apache-arrow/visitor/typecomparator"
 
 const NO_SCRIPT_RUN_ID = "NO_SCRIPT_RUN_ID"
 
@@ -157,6 +159,8 @@ export interface AppNode {
    * Otherwise, a new Set will be created and will be returned.
    */
   getElements(elementSet?: Set<Element>): Set<Element>
+
+  getWriteableFileElement(): any[]
 }
 
 function makeEquidistantColumns(
@@ -288,6 +292,35 @@ export class ElementNode implements AppNode {
     }
 
     return this
+  }
+
+  public getWriteableFileElement(): any[] {
+    switch (this.element.type) {
+      case "arrowVegaLiteChart":
+        return [
+          {
+            type: "chart",
+            view_id: "", // TODO
+            chart_spec: this.vegaLiteChartElement.spec,
+          },
+        ]
+      case "arrowDataFrame":
+        return [
+          {
+            type: "table",
+            view_id: "", // TODO
+          },
+        ]
+      case "markdown":
+        return [
+          {
+            type: "markdown",
+            body: this.element?.markdown?.body,
+          },
+        ]
+      default:
+        return []
+    }
   }
 
   public clearStaleNodes(
@@ -777,6 +810,32 @@ export class BlockNode implements AppNode {
     )
   }
 
+  public getWriteableFileElement(): any[] {
+    if (this.deltaBlock.horizontal) {
+      const weights = this.children
+        .map(child => {
+          if (child instanceof BlockNode && child.deltaBlock.column) {
+            return child.deltaBlock.column?.weight ?? undefined
+          }
+
+          return undefined
+        })
+        .filter(notNullOrUndefined)
+      return [
+        {
+          type: "horizontal-block",
+          weights,
+        },
+      ]
+    }
+
+    return [
+      {
+        type: "vertical-block",
+      },
+    ]
+  }
+
   public clearStaleNodes(
     currentScriptRunId: string,
     fragmentIdsThisRun?: Array<string>,
@@ -1241,6 +1300,19 @@ export class AppRoot {
       this.root.setIn(deltaPath, elementNode, scriptRunId),
       this.appLogo
     )
+  }
+
+  public getWriteableFileElements(): any[] {
+    const arr = []
+
+    for (const child of this.main.children) {
+      const writeableElement = child.getWriteableFileElement()
+      if (writeableElement !== null) {
+        arr.push(writeableElement)
+      }
+    }
+
+    return arr
   }
 }
 
