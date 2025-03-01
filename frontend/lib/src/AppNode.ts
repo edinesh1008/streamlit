@@ -46,7 +46,6 @@ import {
 } from "./components/elements/ArrowVegaLiteChart"
 import { Quiver } from "./dataframes/Quiver"
 import { ensureError } from "./util/ErrorHandling"
-import { instance } from "apache-arrow/visitor/typecomparator"
 
 const NO_SCRIPT_RUN_ID = "NO_SCRIPT_RUN_ID"
 
@@ -205,6 +204,8 @@ export class ElementNode implements AppNode {
 
   private lazyVegaLiteChartElement?: VegaLiteChartElement
 
+  private viewId?: string
+
   // The hash of the script that created this element.
   public readonly activeScriptHash: string
 
@@ -221,6 +222,14 @@ export class ElementNode implements AppNode {
     this.scriptRunId = scriptRunId
     this.activeScriptHash = activeScriptHash
     this.fragmentId = fragmentId
+  }
+
+  public setViewId(viewId: string): void {
+    this.viewId = viewId
+  }
+
+  public getViewId(): string | undefined {
+    return this.viewId
   }
 
   public get quiverElement(): Quiver {
@@ -297,18 +306,28 @@ export class ElementNode implements AppNode {
   public getWriteableFileElement(): any[] {
     switch (this.element.type) {
       case "arrowVegaLiteChart":
+        if (this.getViewId() === undefined) {
+          // There's not much to do here TODO handle some placeholder perhaps?
+          break
+        }
+
         return [
           {
             type: "chart",
-            view_id: "", // TODO
+            view_id: this.getViewId(),
             chart_spec: this.vegaLiteChartElement.spec,
           },
         ]
       case "arrowDataFrame":
+        if (this.getViewId() === undefined) {
+          // There's not much to do here TODO handle some placeholder perhaps?
+          break
+        }
+
         return [
           {
             type: "table",
-            view_id: "", // TODO
+            view_id: this.getViewId(),
           },
         ]
       case "markdown":
@@ -318,9 +337,9 @@ export class ElementNode implements AppNode {
             body: this.element?.markdown?.body,
           },
         ]
-      default:
-        return []
     }
+
+    return []
   }
 
   public clearStaleNodes(
@@ -825,6 +844,7 @@ export class BlockNode implements AppNode {
         {
           type: "horizontal-block",
           weights,
+          columns: this.children.map(child => child.getWriteableFileElement()),
         },
       ]
     }
@@ -832,6 +852,9 @@ export class BlockNode implements AppNode {
     return [
       {
         type: "vertical-block",
+        elements: this.children.flatMap(child =>
+          child.getWriteableFileElement()
+        ),
       },
     ]
   }
