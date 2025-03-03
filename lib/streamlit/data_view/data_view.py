@@ -23,7 +23,9 @@ from streamlit.runtime.connection_factory import connection_factory
 
 # TODO consider threading as an option here. We would likely need to handle
 #      some logic of ensuring all items are ready at the end of the script.
-def data_view(data_view_type: Literal["sql", "python"], connection_name: str):
+def data_view(
+    data_view_type: Literal["sql", "python"], connection_name: str, friendly_name: str
+):
     def decorator(func):
         if data_view_type == "sql":
             # In this case, we expect the data to produce a string that we use to query

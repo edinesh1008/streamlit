@@ -36,8 +36,9 @@ def data_views(views: Any):
         if view_type == "sql":
             sql = view["sql"]
             query_id = view["query_id"].replace("-", "_")
+            friendly_name = view["friendly_name"].replace('"', '\\"')
             view_ids.append(query_id)
-            data_views_contents += f"""@st.data_view(type="sql", connection_name="{connection_name}")
+            data_views_contents += f"""@st.data_view(type="sql", connection_name="{connection_name}", friendly_name="{friendly_name}")
 def {query_id}():
     return "{sql.replace('"', '\\"')}"
 
