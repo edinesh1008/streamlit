@@ -54,6 +54,56 @@ export interface TooltipProps {
   overrides?: PopoverOverrides
 }
 
+// Allows re-use/customization of default tooltip overrides
+export const generateDefaultTooltipOverrides = (
+  theme: EmotionTheme,
+  bodyOverrides?: PopoverOverrides["Body"],
+  innerOverrides?: PopoverOverrides["Inner"]
+): PopoverOverrides => {
+  const { colors, fontSizes, radii, fontWeights } = theme
+
+  return {
+    Body: {
+      style: {
+        // This is annoying, but a bunch of warnings get logged when the
+        // shorthand version `borderRadius` is used here since the long
+        // names are used by BaseWeb and mixing the two is apparently
+        // bad :(
+        borderTopLeftRadius: radii.default,
+        borderTopRightRadius: radii.default,
+        borderBottomLeftRadius: radii.default,
+        borderBottomRightRadius: radii.default,
+
+        paddingTop: "0 !important",
+        paddingBottom: "0 !important",
+        paddingLeft: "0 !important",
+        paddingRight: "0 !important",
+
+        backgroundColor: "transparent",
+      },
+      ...bodyOverrides,
+    },
+    Inner: {
+      style: {
+        backgroundColor: hasLightBackgroundColor(theme)
+          ? colors.bgColor
+          : colors.secondaryBg,
+        color: colors.bodyText,
+        fontSize: fontSizes.sm,
+        fontWeight: fontWeights.normal,
+
+        // See the long comment about `borderRadius`. The same applies here
+        // to `padding`.
+        paddingTop: "0 !important",
+        paddingBottom: "0 !important",
+        paddingLeft: "0 !important",
+        paddingRight: "0 !important",
+      },
+      ...innerOverrides,
+    },
+  }
+}
+
 function Tooltip({
   content,
   placement,
@@ -64,9 +114,10 @@ function Tooltip({
   overrides,
 }: TooltipProps): ReactElement {
   const theme: EmotionTheme = useTheme()
-  const { colors, fontSizes, radii, fontWeights } = theme
 
   const tooltipRef = useRef<HTMLDivElement>(null)
+
+  const tooltipOverrides = generateDefaultTooltipOverrides(theme)
 
   return (
     <StatefulTooltip
@@ -123,44 +174,8 @@ function Tooltip({
       popoverMargin={10}
       onMouseEnterDelay={onMouseEnterDelay}
       overrides={{
-        ...{
-          Body: {
-            style: {
-              // This is annoying, but a bunch of warnings get logged when the
-              // shorthand version `borderRadius` is used here since the long
-              // names are used by BaseWeb and mixing the two is apparently
-              // bad :(
-              borderTopLeftRadius: radii.default,
-              borderTopRightRadius: radii.default,
-              borderBottomLeftRadius: radii.default,
-              borderBottomRightRadius: radii.default,
-
-              paddingTop: "0 !important",
-              paddingBottom: "0 !important",
-              paddingLeft: "0 !important",
-              paddingRight: "0 !important",
-
-              backgroundColor: "transparent",
-            },
-          },
-          Inner: {
-            style: {
-              backgroundColor: hasLightBackgroundColor(theme)
-                ? colors.bgColor
-                : colors.secondaryBg,
-              color: colors.bodyText,
-              fontSize: fontSizes.sm,
-              fontWeight: fontWeights.normal,
-
-              // See the long comment about `borderRadius`. The same applies here
-              // to `padding`.
-              paddingTop: "0 !important",
-              paddingBottom: "0 !important",
-              paddingLeft: "0 !important",
-              paddingRight: "0 !important",
-            },
-          },
-        },
+        ...tooltipOverrides,
+        // overrides prop replaces tooltip subcomponent overrides
         ...overrides,
       }}
     >

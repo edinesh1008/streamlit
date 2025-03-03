@@ -23,8 +23,10 @@ import React, {
   useState,
 } from "react"
 
+import { transparentize } from "color2k"
 import { format } from "date-fns"
 import moment from "moment"
+import { AlertTriangle as AlertTriangleIcon } from "react-feather"
 import { useTheme } from "@emotion/react"
 import { DENSITY, Datepicker as UIDatePicker } from "baseui/datepicker"
 import { PLACEMENT } from "baseui/popover"
@@ -45,13 +47,15 @@ import {
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
-import { Placement } from "~lib/components/shared/Tooltip"
+import Tooltip, {
+  Placement,
+  generateDefaultTooltipOverrides,
+} from "~lib/components/shared/Tooltip"
 import { LibContext } from "~lib/components/core/LibContext"
-import AlertElement from "~lib/components/elements/AlertElement"
-import { Kind } from "~lib/components/shared/AlertContainer"
-import { EmotionTheme } from "~lib/theme"
+import { hasLightBackgroundColor, EmotionTheme } from "~lib/theme"
 
 import { useIntlLocale } from "./useIntlLocale"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 
 export interface Props {
   disabled: boolean
@@ -148,24 +152,24 @@ function DateInput({
       if (element.isRange) {
         if (maxDate && date > maxDate) {
           setErrorState(
-            `**Streamlit API Error**: Max date set outside of allowed range. Please select a date before ${maxDateString}.`
+            `**:material/report_problem: Error**: Max date set outside allowed range. Please select a date before ${maxDateString}.`
           )
         } else if (date < minDate) {
           setErrorState(
-            `**Streamlit API Error**: Min date set outside of allowed range. Please select a date after ${minDateString}.`
+            `**:material/report_problem: Error**: Min date set outside allowed range. Please select a date after ${minDateString}.`
           )
         }
       } else {
         if (maxDate && date > maxDate) {
           setErrorState(
-            `**Streamlit API Error**: Date set outside of allowed range. Please select a date between ${minDateString} and ${maxDateString}.`
+            `**:material/report_problem: Error**: Date set outside allowed range. Please select a date between ${minDateString} and ${maxDateString}.`
           )
         } else if (date < minDate) {
           const messageEnding = maxDate
             ? `between ${minDateString} and ${maxDateString}.`
             : `after ${minDateString}.`
           setErrorState(
-            `**Streamlit API Error**: Date set outside of allowed range. ${messageEnding}`
+            `**:material/report_problem: Error**: Date set outside allowed range. Please select a date ${messageEnding}`
           )
         }
       }
@@ -221,6 +225,19 @@ function DateInput({
     setIsEmpty(!newValue)
   }, [isEmpty, element, setValueWithSource])
 
+  const errorTooltipBody = { style: { backgroundColor: colors.bgColor } }
+  const errorTooltipInner = {
+    style: {
+      backgroundColor: colors.dangerBg,
+      color: hasLightBackgroundColor(theme) ? colors.red100 : colors.red20,
+    },
+  }
+  const errorTooltipOverrides = generateDefaultTooltipOverrides(
+    theme,
+    errorTooltipBody,
+    errorTooltipInner
+  )
+
   return (
     <div className="stDateInput" data-testid="stDateInput">
       <WidgetLabel
@@ -239,168 +256,185 @@ function DateInput({
           </StyledWidgetLabelHelp>
         )}
       </WidgetLabel>
-      <UIDatePicker
-        error={errorState ? true : false}
-        locale={loadedLocale}
-        density={DENSITY.high}
-        formatString={dateFormat}
-        mask={element.isRange ? `${dateMask} – ${dateMask}` : dateMask}
-        placeholder={
-          element.isRange
-            ? `${element.format} – ${element.format}`
-            : element.format
+      <Tooltip
+        content={
+          errorState ? (
+            <StreamlitMarkdown
+              style={{
+                fontSize: theme.fontSizes.sm,
+                color: theme.colors.danger,
+              }}
+              source={errorState}
+              allowHTML={false}
+            />
+          ) : null
         }
-        disabled={disabled}
-        onChange={handleChange}
-        onClose={handleClose}
-        overrides={{
-          Popover: {
-            props: {
-              placement: PLACEMENT.bottomLeft,
-              overrides: {
-                Body: {
-                  style: {
-                    marginTop: theme.spacing.px,
+        placement={Placement.TOP_RIGHT}
+        overrides={errorTooltipOverrides}
+      >
+        <UIDatePicker
+          error={errorState ? true : false}
+          locale={loadedLocale}
+          density={DENSITY.high}
+          formatString={dateFormat}
+          mask={element.isRange ? `${dateMask} – ${dateMask}` : dateMask}
+          placeholder={
+            element.isRange
+              ? `${element.format} – ${element.format}`
+              : element.format
+          }
+          disabled={disabled}
+          onChange={handleChange}
+          onClose={handleClose}
+          overrides={{
+            Popover: {
+              props: {
+                placement: PLACEMENT.bottomLeft,
+                overrides: {
+                  Body: {
+                    style: {
+                      marginTop: theme.spacing.px,
+                    },
                   },
                 },
               },
             },
-          },
-          CalendarContainer: {
-            style: {
-              fontSize: fontSizes.sm,
-              paddingRight: spacing.sm,
-              paddingLeft: spacing.sm,
-              paddingBottom: spacing.sm,
-              paddingTop: spacing.sm,
-            },
-          },
-          Week: {
-            style: {
-              fontSize: fontSizes.sm,
-            },
-          },
-          Day: {
-            style: ({
-              // Due to a bug in BaseWeb, where the range selection defaults to mono300 and can't be changed, we need to override the background colors for all these shared props:
-              // $pseudoHighlighted: Styles the range selection when you click an initial date, and hover over the end one, but NOT click it.
-              // $pseudoSelected: Styles when a range was selected, click outide, and click the calendar again.
-              // $selected: Styles the background below the red circle from the start and end dates.
-              // $isHovered: Styles the background below the end date when hovered.
-              $pseudoHighlighted,
-              $pseudoSelected,
-              $selected,
-              $isHovered,
-            }) => ({
-              fontSize: fontSizes.sm,
-              lineHeight: lineHeights.base,
-
-              "::before": {
-                backgroundColor:
-                  $selected ||
-                  $pseudoSelected ||
-                  $pseudoHighlighted ||
-                  $isHovered
-                    ? `${colors.secondaryBg} !important`
-                    : colors.transparent,
-              },
-
-              "::after": {
-                borderColor: colors.transparent,
-              },
-            }),
-          },
-          PrevButton: {
-            style: () => ({
-              // Align icon to the center of the button.
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              // Remove primary-color click effect.
-              ":active": {
-                backgroundColor: colors.transparent,
-              },
-              ":focus": {
-                backgroundColor: colors.transparent,
-                outline: 0,
-              },
-            }),
-          },
-          NextButton: {
-            style: {
-              // Align icon to the center of the button.
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              // Remove primary-color click effect.
-              ":active": {
-                backgroundColor: colors.transparent,
-              },
-              ":focus": {
-                backgroundColor: colors.transparent,
-                outline: 0,
+            CalendarContainer: {
+              style: {
+                fontSize: fontSizes.sm,
+                paddingRight: spacing.sm,
+                paddingLeft: spacing.sm,
+                paddingBottom: spacing.sm,
+                paddingTop: spacing.sm,
               },
             },
-          },
-          Input: {
-            props: {
-              // The default maskChar ` ` causes empty dates to display as ` / / `
-              // Clearing the maskChar so empty dates will not display
-              maskChar: null,
+            Week: {
+              style: {
+                fontSize: fontSizes.sm,
+              },
+            },
+            Day: {
+              style: ({
+                // Due to a bug in BaseWeb, where the range selection defaults to mono300 and can't be changed, we need to override the background colors for all these shared props:
+                // $pseudoHighlighted: Styles the range selection when you click an initial date, and hover over the end one, but NOT click it.
+                // $pseudoSelected: Styles when a range was selected, click outide, and click the calendar again.
+                // $selected: Styles the background below the red circle from the start and end dates.
+                // $isHovered: Styles the background below the end date when hovered.
+                $pseudoHighlighted,
+                $pseudoSelected,
+                $selected,
+                $isHovered,
+              }) => ({
+                fontSize: fontSizes.sm,
+                lineHeight: lineHeights.base,
 
-              overrides: {
-                Root: {
-                  style: {
-                    // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
-                    borderLeftWidth: sizes.borderWidth,
-                    borderRightWidth: sizes.borderWidth,
-                    borderTopWidth: sizes.borderWidth,
-                    borderBottomWidth: sizes.borderWidth,
-                    paddingRight: spacing.twoXS,
-                  },
+                "::before": {
+                  backgroundColor:
+                    $selected ||
+                    $pseudoSelected ||
+                    $pseudoHighlighted ||
+                    $isHovered
+                      ? `${colors.secondaryBg} !important`
+                      : colors.transparent,
                 },
-                ClearIcon: {
-                  props: {
-                    overrides: {
-                      Svg: {
-                        style: {
-                          color: colors.darkGray,
-                          // setting this width and height makes the clear-icon align with dropdown arrows of other input fields
-                          padding: spacing.threeXS,
-                          height: sizes.clearIconSize,
-                          width: sizes.clearIconSize,
-                          ":hover": {
-                            fill: colors.bodyText,
+
+                "::after": {
+                  borderColor: colors.transparent,
+                },
+              }),
+            },
+            PrevButton: {
+              style: () => ({
+                // Align icon to the center of the button.
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                // Remove primary-color click effect.
+                ":active": {
+                  backgroundColor: colors.transparent,
+                },
+                ":focus": {
+                  backgroundColor: colors.transparent,
+                  outline: 0,
+                },
+              }),
+            },
+            NextButton: {
+              style: {
+                // Align icon to the center of the button.
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                // Remove primary-color click effect.
+                ":active": {
+                  backgroundColor: colors.transparent,
+                },
+                ":focus": {
+                  backgroundColor: colors.transparent,
+                  outline: 0,
+                },
+              },
+            },
+            Input: {
+              props: {
+                // The default maskChar ` ` causes empty dates to display as ` / / `
+                // Clearing the maskChar so empty dates will not display
+                maskChar: null,
+
+                overrides: {
+                  Root: {
+                    style: {
+                      // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
+                      borderLeftWidth: sizes.borderWidth,
+                      borderRightWidth: sizes.borderWidth,
+                      borderTopWidth: sizes.borderWidth,
+                      borderBottomWidth: sizes.borderWidth,
+                      paddingRight: spacing.twoXS,
+                    },
+                  },
+                  ClearIcon: {
+                    props: {
+                      overrides: {
+                        Svg: {
+                          style: {
+                            color: colors.darkGray,
+                            // setting this width and height makes the clear-icon align with dropdown arrows of other input fields
+                            padding: spacing.threeXS,
+                            height: sizes.clearIconSize,
+                            width: sizes.clearIconSize,
+                            ":hover": {
+                              fill: colors.bodyText,
+                            },
                           },
                         },
                       },
                     },
                   },
-                },
-                Input: {
-                  style: {
-                    // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
-                    paddingRight: spacing.sm,
-                    paddingLeft: spacing.sm,
-                    paddingBottom: spacing.sm,
-                    paddingTop: spacing.sm,
-                    lineHeight: lineHeights.inputWidget,
-                  },
-                  props: {
-                    "data-testid": "stDateInputField",
+                  Input: {
+                    style: {
+                      // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
+                      paddingRight: spacing.sm,
+                      paddingLeft: spacing.sm,
+                      paddingBottom: spacing.sm,
+                      paddingTop: spacing.sm,
+                      lineHeight: lineHeights.inputWidget,
+                    },
+                    props: {
+                      "data-testid": "stDateInputField",
+                    },
                   },
                 },
               },
             },
-          },
-        }}
-        value={value}
-        minDate={minDate}
-        maxDate={maxDate}
-        range={element.isRange}
-        clearable={clearable}
-      />
-      {errorState && <AlertElement kind={Kind.ERROR} body={errorState} />}
+          }}
+          value={value}
+          minDate={minDate}
+          maxDate={maxDate}
+          range={element.isRange}
+          clearable={clearable}
+        />
+      </Tooltip>
+      {/* {errorState && <AlertElement kind={Kind.ERROR} body={errorState} />} */}
     </div>
   )
 }
