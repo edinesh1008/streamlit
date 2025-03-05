@@ -284,5 +284,9 @@ class ContextProxy:
     def ip_address(self) -> str | None:
         """The IP address of the user, read-only"""
         session_client_request = _get_request()
+        if session_client_request is not None:
+            remote_ip = session_client_request.remote_ip
+            if remote_ip == "::1":
+                return "127.0.0.1"
 
         return session_client_request.remote_ip
