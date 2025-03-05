@@ -278,3 +278,11 @@ class ContextProxy:
         if ctx is None or ctx.context_info is None:
             return None
         return ctx.context_info.locale
+
+    @property
+    @gather_metrics("context.ip_address")
+    def ip_address(self) -> str | None:
+        """The IP address of the user, read-only"""
+        session_client_request = _get_request()
+
+        return session_client_request.remote_ip
