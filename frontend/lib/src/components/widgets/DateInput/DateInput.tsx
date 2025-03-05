@@ -23,10 +23,9 @@ import React, {
   useState,
 } from "react"
 
-import { transparentize } from "color2k"
+import { ErrorOutline } from "@emotion-icons/material-outlined"
 import { format } from "date-fns"
 import moment from "moment"
-import { AlertTriangle as AlertTriangleIcon } from "react-feather"
 import { useTheme } from "@emotion/react"
 import { DENSITY, Datepicker as UIDatePicker } from "baseui/datepicker"
 import { PLACEMENT } from "baseui/popover"
@@ -46,16 +45,17 @@ import {
   StyledWidgetLabelHelp,
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
+import Icon from "~lib/components/shared/Icon"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import Tooltip, {
-  Placement,
   generateDefaultTooltipOverrides,
+  Placement,
 } from "~lib/components/shared/Tooltip"
 import { LibContext } from "~lib/components/core/LibContext"
-import { hasLightBackgroundColor, EmotionTheme } from "~lib/theme"
+import { EmotionTheme, hasLightBackgroundColor } from "~lib/theme"
 
 import { useIntlLocale } from "./useIntlLocale"
-import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 
 export interface Props {
   disabled: boolean
@@ -149,29 +149,29 @@ function DateInput({
         ? format(maxDate, dateFormat, { locale: loadedLocale })
         : ""
 
-      if (element.isRange) {
-        if (maxDate && date > maxDate) {
-          setErrorState(
-            `**:material/report_problem: Error**: Max date set outside allowed range. Please select a date before ${maxDateString}.`
-          )
-        } else if (date < minDate) {
-          setErrorState(
-            `**:material/report_problem: Error**: Min date set outside allowed range. Please select a date after ${minDateString}.`
-          )
-        }
-      } else {
-        if (maxDate && date > maxDate) {
-          setErrorState(
-            `**:material/report_problem: Error**: Date set outside allowed range. Please select a date between ${minDateString} and ${maxDateString}.`
-          )
-        } else if (date < minDate) {
-          const messageEnding = maxDate
-            ? `between ${minDateString} and ${maxDateString}.`
-            : `after ${minDateString}.`
-          setErrorState(
-            `**:material/report_problem: Error**: Date set outside allowed range. Please select a date ${messageEnding}`
-          )
-        }
+      let error = ""
+      if (maxDate && date > maxDate) {
+        error = "Max"
+      } else if (date < minDate) {
+        error = "Min"
+      }
+
+      if (element.isRange && error) {
+        const messageEnding =
+          error === "Max"
+            ? `before ${maxDateString}`
+            : `after ${minDateString}`
+        setErrorState(
+          `**Error**: ${error} date set outside allowed range. Please select a date ${messageEnding}.`
+        )
+      } else if (!element.isRange && error) {
+        const messageEnding =
+          error === "Min" && maxDate
+            ? `between ${minDateString} and ${maxDateString}`
+            : `after ${minDateString}`
+        setErrorState(
+          `**Error**: Date set outside allowed range. Please select a date ${messageEnding}.`
+        )
       }
     },
     [
@@ -228,8 +228,10 @@ function DateInput({
   const errorTooltipBody = { style: { backgroundColor: colors.bgColor } }
   const errorTooltipInner = {
     style: {
-      backgroundColor: colors.dangerBg,
+      // backgroundColor: colors.dangerBg,
+      backgroundColor: "transparent",
       color: hasLightBackgroundColor(theme) ? colors.red100 : colors.red20,
+      padding: "0",
     },
   }
   const errorTooltipOverrides = generateDefaultTooltipOverrides(
@@ -259,17 +261,19 @@ function DateInput({
       <Tooltip
         content={
           errorState ? (
-            <StreamlitMarkdown
+            <div
               style={{
-                fontSize: theme.fontSizes.sm,
-                color: theme.colors.danger,
+                display: "flex",
+                alignItems: "center",
+                gap: theme.spacing.twoXS,
               }}
-              source={errorState}
-              allowHTML={false}
-            />
+            >
+              <Icon content={ErrorOutline} size="base" />
+              <StreamlitMarkdown source={errorState} allowHTML={false} />
+            </div>
           ) : null
         }
-        placement={Placement.TOP_RIGHT}
+        placement={Placement.TOP}
         overrides={errorTooltipOverrides}
       >
         <UIDatePicker
@@ -434,7 +438,6 @@ function DateInput({
           clearable={clearable}
         />
       </Tooltip>
-      {/* {errorState && <AlertElement kind={Kind.ERROR} body={errorState} />} */}
     </div>
   )
 }
