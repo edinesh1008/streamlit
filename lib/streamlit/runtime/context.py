@@ -289,4 +289,5 @@ class ContextProxy:
             if remote_ip == "::1":
                 return "127.0.0.1"
 
-        return session_client_request.remote_ip
+            return session_client_request.remote_ip
+        return None
