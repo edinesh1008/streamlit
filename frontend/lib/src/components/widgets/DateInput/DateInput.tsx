@@ -198,6 +198,8 @@ function DateInput({
         return
       }
 
+      // TODO: Refactor checkDateInRange to handle iteration over multiple dates
+      // Handle scenario where start after end date etc.
       const newValue: Date[] = []
       if (Array.isArray(date)) {
         date.forEach((dt: Date | null | undefined) => {
@@ -231,7 +233,10 @@ function DateInput({
       // backgroundColor: colors.dangerBg,
       backgroundColor: "transparent",
       color: hasLightBackgroundColor(theme) ? colors.red100 : colors.red20,
-      padding: "0",
+      paddingLeft: "0",
+      paddingRight: "0",
+      paddingTop: "0",
+      paddingBottom: "0",
     },
   }
   const errorTooltipOverrides = generateDefaultTooltipOverrides(
