@@ -290,9 +290,9 @@ class SelectboxMixin:
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         placeholder: str = "Choose an option",
+        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
         ctx: ScriptRunContext | None = None,
     ) -> T | None:
         key = to_key(key)
@@ -317,6 +317,7 @@ class SelectboxMixin:
             index=index,
             help=help,
             placeholder=placeholder,
+            filter=filter,
         )
 
         if not isinstance(index, int) and index is not None:
