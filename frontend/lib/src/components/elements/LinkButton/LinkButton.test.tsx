@@ -22,7 +22,7 @@ import { LinkButton as LinkButtonProto } from "@streamlit/protobuf"
 
 import { render } from "~lib/test_util"
 
-import LinkButton, { Props } from "./LinkButton"
+import { LinkButton, Props } from "./LinkButton"
 
 const getProps = (
   elementProps: Partial<LinkButtonProto> = {},
@@ -33,6 +33,7 @@ const getProps = (
     url: "https://streamlit.io",
     ...elementProps,
   }),
+  width: 250,
   disabled: false,
   ...widgetProps,
 })

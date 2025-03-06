@@ -28,7 +28,10 @@ import {
   WidgetStateManager,
 } from "~lib/WidgetStateManager"
 
-import { FormSubmitButton, Props } from "./FormSubmitButton"
+import {
+  InnerFormSubmitButton as FormSubmitButton,
+  Props,
+} from "./FormSubmitButton"
 
 // Required by ImmerJS
 enableAllPlugins()
@@ -62,6 +65,7 @@ describe("FormSubmitButton", () => {
       }),
       disabled: false,
       hasInProgressUpload: false,
+      width: 250,
       widgetMgr,
       ...props,
     }

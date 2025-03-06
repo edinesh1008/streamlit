@@ -25,17 +25,19 @@ import BaseButton, {
   DynamicButtonLabel,
 } from "~lib/components/shared/BaseButton"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
-import { Box } from "~lib/components/shared/Base/styled-components"
+import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
 
 export interface Props {
   disabled: boolean
   element: ButtonProto
   widgetMgr: WidgetStateManager
   fragmentId?: string
+  width: number
 }
 
-function Button(props: Props): ReactElement {
-  const { disabled, element, widgetMgr, fragmentId } = props
+export function Button(props: Props): ReactElement {
+  const { disabled, element, widgetMgr, fragmentId, width } = props
+  const style = { width }
 
   let kind = BaseButtonKind.SECONDARY
   if (element.type === "primary") {
@@ -44,14 +46,18 @@ function Button(props: Props): ReactElement {
     kind = BaseButtonKind.TERTIARY
   }
 
+  // When useContainerWidth true & has help tooltip,
+  // we need to pass the container width down to the button
+  const fluidWidth = element.help ? width : true
+
   return (
-    <Box className="stButton" data-testid="stButton">
+    <div className="stButton" data-testid="stButton" style={style}>
       <BaseButtonTooltip help={element.help}>
         <BaseButton
           kind={kind}
           size={BaseButtonSize.SMALL}
           disabled={disabled}
-          fluidWidth={element.useContainerWidth || !!element.help}
+          fluidWidth={element.useContainerWidth ? fluidWidth : false}
           onClick={() =>
             widgetMgr.setTriggerValue(element, { fromUi: true }, fragmentId)
           }
@@ -59,8 +65,8 @@ function Button(props: Props): ReactElement {
           <DynamicButtonLabel icon={element.icon} label={element.label} />
         </BaseButton>
       </BaseButtonTooltip>
-    </Box>
+    </div>
   )
 }
 
-export default memo(Button)
+export default withCalculatedWidth(memo(Button))

@@ -35,7 +35,7 @@ export interface BaseLinkButtonProps {
   size?: BaseButtonSize
   disabled?: boolean
   // If true, the button should take up container's full width
-  fluidWidth?: boolean
+  fluidWidth?: boolean | number
   children: ReactNode
   autoFocus?: boolean
   href: string
@@ -70,6 +70,9 @@ function getSizeStyle(size: BaseButtonSize, theme: EmotionTheme): CSSObject {
 
 export const StyledBaseLinkButton = styled.a<RequiredBaseLinkButtonProps>(
   ({ fluidWidth, size, theme }) => {
+    const buttonWidth =
+      typeof fluidWidth == "number" ? `${fluidWidth}px` : "100%"
+
     return {
       display: "inline-flex",
       alignItems: "center",
@@ -82,7 +85,7 @@ export const StyledBaseLinkButton = styled.a<RequiredBaseLinkButtonProps>(
       lineHeight: theme.lineHeights.base,
       color: theme.colors.primary,
       textDecoration: "none",
-      width: fluidWidth ? "100%" : "auto",
+      width: fluidWidth ? buttonWidth : "auto",
       userSelect: "none",
       "&:visited": {
         color: theme.colors.primary,

@@ -25,7 +25,7 @@ import { render } from "~lib/test_util"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
 import { mockEndpoints } from "~lib/mocks/mocks"
 
-import DownloadButton, { createDownloadLink, Props } from "./DownloadButton"
+import { createDownloadLink, DownloadButton, Props } from "./DownloadButton"
 
 vi.mock("~lib/WidgetStateManager")
 vi.mock("~lib/StreamlitEndpoints")
@@ -40,6 +40,7 @@ const getProps = (
     url: "/media/mockDownloadURL",
     ...elementProps,
   }),
+  width: 250,
   disabled: false,
   widgetMgr: new WidgetStateManager({
     sendRerunBackMsg: vi.fn(),

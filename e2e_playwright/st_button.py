@@ -73,6 +73,8 @@ st.button("Disabled Tertiary Button", type="tertiary", disabled=True)
 st.button("Button with material icon containing a digit", icon=":material/1k:")
 st.button("Button with material icon containing a digit in label :material/1k:")
 
+st.button("button + help", help="help text")
+
 
 cols = st.columns(3)
 

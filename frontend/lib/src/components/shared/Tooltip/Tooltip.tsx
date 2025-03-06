@@ -156,7 +156,6 @@ function Tooltip({
           display: "flex",
           flexDirection: "row",
           justifyContent: inline ? "flex-end" : "",
-          width: "100%",
           ...style,
         }}
         data-testid="stTooltipHoverTarget"

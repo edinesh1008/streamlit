@@ -24,7 +24,7 @@ import { Button as ButtonProto } from "@streamlit/protobuf"
 import { render } from "~lib/test_util"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
 
-import Button, { Props } from "./Button"
+import { Button, Props } from "./Button"
 
 vi.mock("~lib/WidgetStateManager")
 
@@ -39,6 +39,7 @@ const getProps = (
     label: "Label",
     ...elementProps,
   }),
+  width: 250,
   disabled: false,
   // @ts-expect-error
   widgetMgr: new WidgetStateManager(sendBackMsg),
@@ -139,6 +140,6 @@ describe("Button widget", () => {
     )
 
     const buttonWidget = screen.getByRole("button")
-    expect(buttonWidget).toHaveStyle(`width: 100%`)
+    expect(buttonWidget).toHaveStyle(`width: 250px`)
   })
 })

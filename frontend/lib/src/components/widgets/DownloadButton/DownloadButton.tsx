@@ -28,6 +28,7 @@ import BaseButton, {
 import { WidgetStateManager } from "~lib/WidgetStateManager"
 import { StreamlitEndpoints } from "~lib/StreamlitEndpoints"
 import { LibContext } from "~lib/components/core/LibContext"
+import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
 
 export interface Props {
   endpoints: StreamlitEndpoints
@@ -35,6 +36,7 @@ export interface Props {
   element: DownloadButtonProto
   widgetMgr: WidgetStateManager
   fragmentId?: string
+  width: number
 }
 
 export function createDownloadLink(
@@ -49,8 +51,9 @@ export function createDownloadLink(
   })
 }
 
-function DownloadButton(props: Props): ReactElement {
-  const { disabled, element, widgetMgr, endpoints, fragmentId } = props
+export function DownloadButton(props: Props): ReactElement {
+  const { disabled, element, widgetMgr, endpoints, fragmentId, width } = props
+  const style = { width }
 
   const {
     libConfig: { enforceDownloadInNewTab = false }, // Default to false, if no libConfig, e.g. for tests
@@ -77,15 +80,23 @@ function DownloadButton(props: Props): ReactElement {
     link.click()
   }
 
+  // When useContainerWidth true & has help tooltip,
+  // we need to pass the container width down to the button
+  const fluidWidth = element.help ? width : true
+
   return (
-    <div className="stDownloadButton" data-testid="stDownloadButton">
+    <div
+      className="stDownloadButton"
+      data-testid="stDownloadButton"
+      style={style}
+    >
       <BaseButtonTooltip help={element.help}>
         <BaseButton
           kind={kind}
           size={BaseButtonSize.SMALL}
           disabled={disabled}
           onClick={handleDownloadClick}
-          fluidWidth={element.useContainerWidth || !!element.help}
+          fluidWidth={element.useContainerWidth ? fluidWidth : false}
         >
           <DynamicButtonLabel icon={element.icon} label={element.label} />
         </BaseButton>
@@ -94,4 +105,4 @@ function DownloadButton(props: Props): ReactElement {
   )
 }
 
-export default memo(DownloadButton)
+export default withCalculatedWidth(memo(DownloadButton))
