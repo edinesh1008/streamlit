@@ -44,6 +44,7 @@ import {
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import { Placement } from "~lib/components/shared/Tooltip"
 import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
+import { useExecuteWhenChanged } from "~lib/hooks/useExecuteWhenChanged"
 
 import {
   StyledThumb,
@@ -103,9 +104,7 @@ function Slider({
 
   // When resetting a form, `value` will change so we need to change `uiValue`
   // to match.
-  useEffect(() => {
-    setUiValue(value)
-  }, [value])
+  useExecuteWhenChanged(([newValue]) => setUiValue(newValue), [value])
 
   // TODO: Update to match React best practices
   // eslint-disable-next-line react-compiler/react-compiler

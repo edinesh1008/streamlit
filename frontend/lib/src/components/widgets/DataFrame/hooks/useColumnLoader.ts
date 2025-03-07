@@ -39,6 +39,7 @@ import {
 import { Quiver } from "~lib/dataframes/Quiver"
 import { convertRemToPx, EmotionTheme } from "~lib/theme"
 import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
+import { useExecuteWhenChanged } from "~lib/hooks/useExecuteWhenChanged"
 
 // Using this ID for column config will apply the config to all index columns
 export const INDEX_IDENTIFIER = "_index"
@@ -293,9 +294,10 @@ function useColumnLoader(
     React.useState<Map<string, any>>(parsedColumnConfig)
 
   // Resync state whenever the parsed column config from the proto changes:
-  React.useEffect(() => {
-    setColumnConfigMapping(parsedColumnConfig)
-  }, [parsedColumnConfig])
+  useExecuteWhenChanged(
+    ([newMapping]) => setColumnConfigMapping(newMapping),
+    [parsedColumnConfig]
+  )
 
   const stretchColumns: boolean =
     element.useContainerWidth ||
