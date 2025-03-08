@@ -25,7 +25,6 @@ import React, {
 import { Video } from "@emotion-icons/open-iconic"
 import { useTheme } from "@emotion/react"
 import { isMobile } from "react-device-detect"
-import Webcam from "react-webcam"
 
 import { debounce } from "~lib/util/utils"
 import Icon from "~lib/components/shared/Icon"
@@ -34,6 +33,7 @@ import themeColors from "~lib/theme/emotionBaseTheme/themeColors"
 import { CAMERA_PERMISSION_URL } from "~lib/urls"
 
 import CameraInputButton from "./CameraInputButton"
+import CustomWebcam, { getScreenshot } from "./CustomWebcam"
 import SwitchFacingModeButton, { FacingMode } from "./SwitchFacingModeButton"
 import {
   StyledBox,
@@ -97,7 +97,7 @@ const WebcamComponent = ({
   const [webcamPermission, setWebcamPermissionState] = useState(
     testOverride || WebcamPermission.PENDING
   )
-  const videoRef = useRef<Webcam>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const [debouncedWidth, setDebouncedWidth] = useState(width)
 
@@ -114,8 +114,8 @@ const WebcamComponent = ({
   }, [width, memoizedSetDebouncedCallback])
 
   function capture(): void {
-    if (videoRef.current !== null) {
-      const imageSrc = videoRef.current.getScreenshot()
+    if (videoRef.current) {
+      const imageSrc = getScreenshot(videoRef.current)
       handleCapture(imageSrc)
     }
   }
@@ -141,8 +141,7 @@ const WebcamComponent = ({
         width={debouncedWidth}
       >
         {!disabled && (
-          <Webcam
-            audio={false}
+          <CustomWebcam
             ref={videoRef}
             screenshotFormat="image/jpeg"
             screenshotQuality={1}
@@ -160,10 +159,7 @@ const WebcamComponent = ({
               setWebcamPermissionState(WebcamPermission.SUCCESS)
               setClearPhotoInProgress(false)
             }}
-            videoConstraints={{
-              width: { ideal: debouncedWidth },
-              facingMode,
-            }}
+            facingMode={facingMode}
           />
         )}
       </StyledBox>

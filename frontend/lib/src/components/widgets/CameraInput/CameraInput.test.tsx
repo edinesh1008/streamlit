@@ -31,7 +31,23 @@ import { WidgetStateManager } from "~lib/WidgetStateManager"
 
 import CameraInput, { Props } from "./CameraInput"
 
-vi.mock("react-webcam")
+// Mock the CustomWebcam component
+vi.mock("./CustomWebcam", () => {
+  return {
+    __esModule: true,
+    default: vi.fn().mockImplementation(({ onUserMedia }) => {
+      // Simulate the component mounting and calling onUserMedia
+      React.useEffect(() => {
+        if (onUserMedia) {
+          onUserMedia()
+        }
+      }, [onUserMedia])
+      return <video data-testid="stCustomWebcam" />
+    }),
+    getScreenshot: () => "mock-screenshot-data-url",
+  }
+})
+
 const fetchMocker = createFetchMock(vi)
 
 const getProps = (

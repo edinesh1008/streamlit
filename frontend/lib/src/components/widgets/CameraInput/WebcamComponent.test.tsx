@@ -24,7 +24,22 @@ import { render } from "~lib/test_util"
 import { FacingMode } from "./SwitchFacingModeButton"
 import WebcamComponent, { Props, WebcamPermission } from "./WebcamComponent"
 
-vi.mock("react-webcam")
+// Mock the CustomWebcam component and getScreenshot function
+vi.mock("./CustomWebcam", () => {
+  return {
+    __esModule: true,
+    default: vi.fn().mockImplementation(({ onUserMedia }) => {
+      // Simulate the component mounting and calling onUserMedia
+      React.useEffect(() => {
+        if (onUserMedia) {
+          onUserMedia()
+        }
+      }, [onUserMedia])
+      return <video data-testid="stCustomWebcam" />
+    }),
+    getScreenshot: () => "mock-screenshot-data-url",
+  }
+})
 
 vi.mock("react-device-detect", () => {
   return {
