@@ -658,9 +658,9 @@ class StreamlitButtonInFormError(LocalizableStreamlitException):
     """Exception raised when a button is used incorrectly with forms."""
 
     def __init__(self, button_name: str, in_form: bool):
-        message = f"`{button_name}` can't be used in an `st.form()`."
+        message = "`{button_name}` can't be used in an `st.form()`."
         if not in_form:
-            message = f"`{button_name}` must be used inside an `st.form()`."
+            message = "`{button_name}` must be used inside an `st.form()`."
 
         super().__init__(
             message
@@ -1344,16 +1344,21 @@ class StreamlitInvalidTimeFormatError(LocalizableStreamlitException):
     """Raised when an invalid time format is provided."""
 
     def __init__(self, param_name: str, expected_formats: str):
-        msg = f"Invalid {param_name} format. Expected formats: {expected_formats}"
-        super().__init__(msg)
+        super().__init__(
+            "Invalid {param_name} format. Expected formats: {expected_formats}",
+            param_name=param_name,
+            expected_formats=expected_formats,
+        )
 
 
 class StreamlitInvalidTextInputTypeError(LocalizableStreamlitException):
     """Raised when an invalid text input type is provided."""
 
     def __init__(self, invalid_type: str):
-        msg = f"'{invalid_type}' is not a valid text_input type. Valid types are 'default' and 'password'."
-        super().__init__(msg)
+        super().__init__(
+            "'{invalid_type}' is not a valid text_input type. Valid types are 'default' and 'password'.",
+            invalid_type=invalid_type,
+        )
 
 
 class StreamlitInvalidTextAreaHeightError(LocalizableStreamlitException):
@@ -1380,16 +1385,21 @@ class StreamlitInvalidFeedbackOptionsError(LocalizableStreamlitException):
     """Raised when invalid options are provided for feedback widget."""
 
     def __init__(self, options: str):
-        msg = f"The options argument to st.feedback must be one of ['thumbs', 'faces', 'stars']. The argument passed was '{options}'."
-        super().__init__(msg)
+        super().__init__(
+            "The options argument to st.feedback must be one of ['thumbs', 'faces', 'stars']. The argument passed was '{options}'.",
+            options=options,
+        )
 
 
 class StreamlitInvalidDefaultValueError(LocalizableStreamlitException):
     """Raised when an invalid default value is provided for a widget."""
 
     def __init__(self, widget_name: str, selection_mode: str):
-        msg = f"The default argument to `st.{widget_name}` must be a single value when `selection_mode='{selection_mode}'`."
-        super().__init__(msg)
+        super().__init__(
+            "The default argument to `st.{widget_name}` must be a single value when `selection_mode='{selection_mode}'`.",
+            widget_name=widget_name,
+            selection_mode=selection_mode,
+        )
 
 
 class StreamlitInvalidStyleError(LocalizableStreamlitException):
@@ -1397,8 +1407,11 @@ class StreamlitInvalidStyleError(LocalizableStreamlitException):
 
     def __init__(self, style: str, valid_styles: list[str]):
         valid_styles_str = "', '".join(valid_styles)
-        msg = f"The style argument must be one of ['{valid_styles_str}']. The argument passed was '{style}'."
-        super().__init__(msg)
+        super().__init__(
+            "The style argument must be one of ['{valid_styles_str}']. The argument passed was '{style}'.",
+            valid_styles_str=valid_styles_str,
+            style=style,
+        )
 
 
 class StreamlitInvalidDividerColorError(LocalizableStreamlitException):
