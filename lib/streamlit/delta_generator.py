@@ -92,7 +92,14 @@ from streamlit.elements.widgets.slider import SliderMixin
 from streamlit.elements.widgets.text_widgets import TextWidgetsMixin
 from streamlit.elements.widgets.time_widgets import TimeWidgetsMixin
 from streamlit.elements.write import WriteMixin
-from streamlit.errors import StreamlitAPIException
+from streamlit.errors import (
+    StreamlitAPIException,
+    StreamlitNestedChatMessageError,
+    StreamlitNestedColumnsError,
+    StreamlitNestedExpanderError,
+    StreamlitNestedPopoverError,
+    StreamlitSidebarNestedColumnsError,
+)
 from streamlit.proto import Block_pb2, ForwardMsg_pb2
 from streamlit.proto.RootContainer_pb2 import RootContainer
 from streamlit.runtime import caching
@@ -583,20 +590,12 @@ def _check_nested_element_violation(
     if block_type == "column":
         num_of_parent_columns = dg._count_num_of_parent_columns(ancestor_block_types)
         if dg._root_container == RootContainer.SIDEBAR and num_of_parent_columns > 0:
-            raise StreamlitAPIException(
-                "Columns cannot be placed inside other columns in the sidebar. This is only possible in the main area of the app."
-            )
+            raise StreamlitSidebarNestedColumnsError()
         if num_of_parent_columns > 1:
-            raise StreamlitAPIException(
-                "Columns can only be placed inside other columns up to one level of nesting."
-            )
+            raise StreamlitNestedColumnsError()
     if block_type == "chat_message" and block_type in ancestor_block_types:
-        raise StreamlitAPIException(
-            "Chat messages cannot nested inside other chat messages."
-        )
+        raise StreamlitNestedChatMessageError()
     if block_type == "expandable" and block_type in ancestor_block_types:
-        raise StreamlitAPIException(
-            "Expanders may not be nested inside other expanders."
-        )
+        raise StreamlitNestedExpanderError()
     if block_type == "popover" and block_type in ancestor_block_types:
-        raise StreamlitAPIException("Popovers may not be nested inside other popovers.")
+        raise StreamlitNestedPopoverError()

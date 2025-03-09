@@ -46,7 +46,7 @@ from streamlit.elements.lib.event_utils import AttributeDictionary
 from streamlit.elements.lib.form_utils import current_form_id
 from streamlit.elements.lib.policies import check_widget_policies
 from streamlit.elements.lib.utils import Key, compute_and_register_element_id, to_key
-from streamlit.errors import StreamlitAPIException
+from streamlit.errors import StreamlitAPIException, StreamlitEmptyVegaLiteSpecError
 from streamlit.proto.ArrowVegaLiteChart_pb2 import (
     ArrowVegaLiteChart as ArrowVegaLiteChartProto,
 )
@@ -266,7 +266,7 @@ def _prepare_vega_lite_spec(
         spec = dict(spec)
 
     if len(spec) == 0:
-        raise StreamlitAPIException("Vega-Lite charts require a non-empty spec dict.")
+        raise StreamlitEmptyVegaLiteSpecError()
 
     if "autosize" not in spec:
         # type fit does not work for many chart types. This change focuses
