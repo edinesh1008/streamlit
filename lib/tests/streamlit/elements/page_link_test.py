@@ -155,7 +155,7 @@ class PageLinkTest(DeltaGeneratorTestCase):
         assert c.help == ""
 
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
-    def test_st_page_icon_override(self):
+    def test_icon_passed_to_page_link_takes_precedence(self):
         """Test that st.page_link icon param overrides page icon"""
         page = st.Page("foo.py", title="Bar Test", icon="🎈")
         st.page_link(page=page, icon="🌟")
@@ -170,7 +170,7 @@ class PageLinkTest(DeltaGeneratorTestCase):
         assert c.help == ""
 
     @patch("pathlib.Path.is_file", MagicMock(return_value=True))
-    def test_st_page_without_label_with_icon(self):
+    def test_st_page_with_icon(self):
         """Test that st.page_link accepts an st.Page, will use its icon"""
         page = st.Page("foo.py", title="Bar Test", icon="🎈")
         st.page_link(page=page)
