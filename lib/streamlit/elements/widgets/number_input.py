@@ -97,7 +97,7 @@ class NumberInputMixin:
         max_value: int | None = None,
         value: IntOrNone | Literal["min"] = "min",
         step: int | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", width: Literal["stretch"] | int = "stretch", scale: int = 1
     ) -> int | IntOrNone:
         ...
 
@@ -114,7 +114,7 @@ class NumberInputMixin:
         max_value: int,
         value: IntOrNone | Literal["min"] = "min",
         step: int | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", width: Literal["stretch"] | int = "stretch", scale: int = 1
     ) -> int | IntOrNone:
         ...
 
@@ -129,7 +129,7 @@ class NumberInputMixin:
         *,
         value: int,
         step: int | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", width: Literal["stretch"] | int = "stretch", scale: int = 1
     ) -> int:
         ...
 
@@ -146,7 +146,7 @@ class NumberInputMixin:
         value: IntOrNone | Literal["min"] = "min",
         *,
         step: int,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", width: Literal["stretch"] | int = "stretch", scale: int = 1
     ) -> int | IntOrNone:
         ...
 
@@ -162,7 +162,7 @@ class NumberInputMixin:
         max_value: float | None = None,
         value: FloatOrNone | Literal["min"] = "min",
         step: float | None = None,
-        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, flex: str | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible"
+        format: str | None = None, key: Key | None = None, help: str | None = None, on_change: WidgetCallback | None = None, args: WidgetArgs | None = None, kwargs: WidgetKwargs | None = None, *, placeholder: str | None = None, disabled: bool = False, label_visibility: LabelVisibility = "visible", width: Literal["stretch"] | int = "stretch", scale: int = 1
     ) -> float | FloatOrNone:
         ...
     # # fmt: on
@@ -179,13 +179,14 @@ class NumberInputMixin:
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
-        flex: str | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         placeholder: str | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch"] | int = "stretch",
+        scale: int = 1,
     ) -> Number | None:
         r"""Display a numeric input widget.
 
@@ -285,6 +286,15 @@ class NumberInputMixin:
             label, which can help keep the widget alligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
+        width : "stretch" or int
+            The width of the number input widget. If "stretch", the widget will
+            stretch to fill the available space. If an integer, the widget will
+            have a fixed width.
+
+        scale : int
+            The scale of the number input widget. This is used to adjust the
+            size of the widget based on the value range.
+
         Returns
         -------
         int or float or None
@@ -327,12 +337,13 @@ class NumberInputMixin:
             key=key,
             help=help,
             on_change=on_change,
-            flex=flex,
             args=args,
             kwargs=kwargs,
             placeholder=placeholder,
             disabled=disabled,
             label_visibility=label_visibility,
+            width=width,
+            scale=scale,
             ctx=ctx,
         )
 
@@ -347,13 +358,14 @@ class NumberInputMixin:
         key: Key | None = None,
         help: str | None = None,
         on_change: WidgetCallback | None = None,
-        flex: str | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
         placeholder: str | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch"] | int = "stretch",
+        scale: int = 1,
         ctx: ScriptRunContext | None = None,
     ) -> Number | None:
         key = to_key(key)
@@ -510,9 +522,8 @@ class NumberInputMixin:
         number_input_proto.label_visibility.value = get_label_visibility_proto_value(
             label_visibility
         )
-
-        if flex is not None:
-            number_input_proto.flex = flex
+        number_input_proto.width = str(width)
+        number_input_proto.scale = scale
 
         if help is not None:
             number_input_proto.help = dedent(help)
