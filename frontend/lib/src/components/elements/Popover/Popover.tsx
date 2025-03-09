@@ -54,8 +54,39 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
 
   const [width, elementRef] = useCalculatedWidth()
 
+  let boxWidth
+  if (element.useContainerWidth || element.width === "stretch") {
+    boxWidth = "100%"
+  } else if (element.width === "content") {
+    boxWidth = "auto"
+  } else {
+    boxWidth = `${element.width}px`
+  }
+
+  let boxFlex = ""
+  if (element.scale) {
+    boxFlex = `${element.scale}`
+  }
+
+  let flexWidth
+  if (
+    element.width === "stretch" ||
+    element.useContainerWidth ||
+    Number.isInteger(Number(element.width))
+  ) {
+    flexWidth = true
+  } else if (element.width === "content") {
+    flexWidth = false
+  }
+
   return (
-    <Box data-testid="stPopover" className="stPopover" ref={elementRef}>
+    <Box
+      data-testid="stPopover"
+      className="stPopover"
+      ref={elementRef}
+      width={boxWidth}
+      flex={boxFlex}
+    >
       <UIPopover
         triggerType={TRIGGER_TYPE.click}
         placement={PLACEMENT.bottomLeft}
@@ -136,7 +167,7 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
               kind={BaseButtonKind.SECONDARY}
               size={BaseButtonSize.SMALL}
               disabled={empty || element.disabled}
-              containerWidth={element.useContainerWidth}
+              containerWidth={flexWidth}
               onClick={() => setOpen(!open)}
             >
               <DynamicButtonLabel icon={element.icon} label={element.label} />

@@ -63,7 +63,7 @@ class LayoutsMixin:
             "bottom",
             "distribute",
         ] = "top",
-        width: Literal["stretch", "content"] | int = "content",
+        width: Literal["stretch", "content"] | int = "stretch",
         scale: int = 1,
     ) -> DeltaGenerator:
         """Insert a multi-element container.
@@ -696,6 +696,8 @@ class LayoutsMixin:
         icon: str | None = None,
         disabled: bool = False,
         use_container_width: bool = False,
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> DeltaGenerator:
         r"""Insert a popover container.
 
@@ -775,6 +777,15 @@ class LayoutsMixin:
             button. The popover container may be wider than its button to fit
             the container's contents.
 
+        width : "stretch", "content", or int
+            The width of the popover container. If "content" (default), the
+            container will adjust its width to fit the content. If "stretch",
+            the container will expand to fill the available space. If an
+            integer, the container will have a fixed width in pixels.
+
+        scale : int
+            An integer scaling factor for the popover container. Default is 1.
+
         Examples
         --------
         You can use the ``with`` notation to insert any element into a popover:
@@ -820,6 +831,8 @@ class LayoutsMixin:
             popover_proto.help = str(help)
         if icon is not None:
             popover_proto.icon = validate_icon_or_emoji(icon)
+        popover_proto.width = str(width)
+        popover_proto.scale = scale
 
         block_proto = BlockProto()
         block_proto.allow_empty = True
