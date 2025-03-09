@@ -931,6 +931,8 @@ class ButtonMixin:
             page_link_proto.page = page.url_path
             if label is None:
                 page_link_proto.label = page.title
+            if icon is None:
+                page_link_proto.icon = page.icon
         else:
             # Convert Path to string if necessary
             if isinstance(page, Path):
