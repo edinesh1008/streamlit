@@ -153,3 +153,33 @@ class PageLinkTest(DeltaGeneratorTestCase):
         assert not c.disabled
         assert c.icon == ""
         assert c.help == ""
+
+    @patch("pathlib.Path.is_file", MagicMock(return_value=True))
+    def test_st_page_icon_override(self):
+        """Test that st.page_link icon param overrides page icon"""
+        page = st.Page("foo.py", title="Bar Test", icon="🎈")
+        st.page_link(page=page, icon="🌟")
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Bar Test"
+        assert c.page_script_hash == page._script_hash
+        assert c.page == "foo"
+        assert not c.external
+        assert not c.disabled
+        assert c.icon == "🌟"  # Icon parameter of st.page_link takes precedence
+        assert c.help == ""
+
+    @patch("pathlib.Path.is_file", MagicMock(return_value=True))
+    def test_st_page_without_label_with_icon(self):
+        """Test that st.page_link accepts an st.Page, will use its icon"""
+        page = st.Page("foo.py", title="Bar Test", icon="🎈")
+        st.page_link(page=page)
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Bar Test"
+        assert c.page_script_hash == page._script_hash
+        assert c.page == "foo"
+        assert not c.external
+        assert not c.disabled
+        assert c.icon == "🎈"
+        assert c.help == ""
