@@ -24,14 +24,24 @@ import { StyledCheckbox } from "~lib/components/widgets/Checkbox/styled-componen
 import { EmotionTheme, STALE_STYLES } from "~lib/theme"
 import { assertNever } from "~lib/util/assertNever"
 
-function translateGapWidth(gap: string, theme: EmotionTheme): string {
-  let gapWidth = theme.spacing.lg
-  if (gap === "medium") {
-    gapWidth = theme.spacing.threeXL
-  } else if (gap === "large") {
-    gapWidth = theme.spacing.fourXL
+function translateGapWidth(
+  gap: string | undefined,
+  theme: EmotionTheme
+): string {
+  // If gap is an empty string (from gap=None in Python), return zero gap
+  if (gap === "") {
+    return "0px"
   }
-  return gapWidth
+
+  // Handle the predefined gap sizes
+  if (gap === "medium") {
+    return theme.spacing.threeXL
+  } else if (gap === "large") {
+    return theme.spacing.fourXL
+  }
+
+  // Default for "small" and any other values (including undefined)
+  return theme.spacing.lg
 }
 
 const getAlignItems = (
@@ -282,7 +292,7 @@ export const StyledFlexContainerWrapper =
       width,
       maxWidth,
     }) => {
-      const gapWidth = gap ? translateGapWidth(gap, theme) : theme.spacing.lg
+      const gapWidth = translateGapWidth(gap, theme)
       return {
         display: "flex",
         width: width,

@@ -48,7 +48,7 @@ class LayoutsMixin:
         border: bool | None = None,
         key: Key | None = None,
         # TODO: Move this Literal definition to somewhere shared
-        gap: Literal["small", "medium", "large"] = "small",
+        gap: Literal["small", "medium", "large"] | None = "small",
         direction: Literal["vertical", "horizontal"] = "vertical",
         wrap: bool = True,
         horizontal_alignment: Literal[
@@ -101,13 +101,41 @@ class LayoutsMixin:
             Additionally, if ``key`` is provided, it will be used as CSS
             class name prefixed with ``st-key-``.
 
-        width : "stretch", "content", or int
-            The width of the container. If "stretch", the element will expand to fill its parent container.
-            If "content", the element will be sized to fit its contents. If an integer, the element will have
-            that specific width in pixels. Defaults to "content".
+        gap : "small", "medium", "large", or None
+            The size of the gap between elements in the container.
+            If None, there will be no gap between elements.
+            The default is "small".
 
-        scale : int or None
-            An optional integer scale factor to apply to the element.
+        direction : "vertical" or "horizontal"
+            The flow direction of the elements in the container.
+            If "vertical" (default), elements are stacked from top to bottom.
+            If "horizontal", elements are stacked from left to right.
+
+        wrap : bool
+            Whether to wrap elements in a horizontal container when they overflow.
+            Applicable only when direction="horizontal". Default is True.
+
+        horizontal_alignment : "left", "center", "right", or "distribute"
+            How items are aligned horizontally in the container.
+            Default varies based on the direction of the container. For vertical
+            containers, the default is "left"; for horizontal containers, the default
+            is "distribute".
+
+        vertical_alignment : "top", "center", "bottom", or "distribute"
+            How items are aligned vertically in the container.
+            Default varies based on the direction of the container. For vertical
+            containers, the default is "distribute"; for horizontal containers,
+            the default is "top".
+
+        width : "stretch", "content", or int
+            The width of the container. If "stretch" (default), the container
+            will expand to fill the available space. If "content", the container
+            will adjust its width to fit the content. If an integer, the container
+            will have a fixed width in pixels.
+
+        scale : int
+            An integer scaling factor for the container. Default is 1.
+
 
         Examples
         --------
@@ -181,7 +209,7 @@ class LayoutsMixin:
             raise StreamlitAPIException("scale must be a positive integer")
         block_proto.flex_container.scale = scale
 
-        block_proto.flex_container.gap = gap
+        block_proto.flex_container.gap = "" if gap is None else gap
         block_proto.flex_container.wrap = wrap
 
         if height:
@@ -265,7 +293,7 @@ class LayoutsMixin:
         self,
         spec: SpecType,
         *,
-        gap: Literal["small", "medium", "large"] = "small",
+        gap: Literal["small", "medium", "large"] | None = "small",
         vertical_alignment: Literal["top", "center", "bottom"] = "top",
         border: bool = False,
     ) -> list[DeltaGenerator]:
@@ -439,6 +467,8 @@ class LayoutsMixin:
             )
 
         def column_gap(gap):
+            if gap is None:
+                return ""
             if isinstance(gap, str):
                 gap_size = gap.lower()
                 valid_sizes = ["small", "medium", "large"]
