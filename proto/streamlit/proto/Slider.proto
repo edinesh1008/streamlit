@@ -60,4 +60,6 @@ message Slider {
   Type type = 17;
 
   string flex = 18;
+  string width = 19;
+  int32 scale = 20;
 }
