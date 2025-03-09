@@ -1738,6 +1738,9 @@ class StreamlitInvalidMaterialIconError(LocalizableStreamlitException):
     """Raised when an invalid Material icon is provided."""
 
     def __init__(self, icon: str):
+        # Since our markdown processing needs to change the `/` to `_` in order to
+        # correctly render the icon, we need to add a zero-width space before the
+        # `/` to avoid this transformation here.
         invisible_white_space = "\u200b"
         super().__init__(
             'The value `"{icon}"` is not a valid Material icon. '
@@ -1751,6 +1754,9 @@ class StreamlitInvalidMaterialIconPackError(LocalizableStreamlitException):
     """Raised when an invalid Material icon pack or icon name is provided."""
 
     def __init__(self, icon: str):
+        # Since our markdown processing needs to change the `/` to `_` in order to
+        # correctly render the icon, we need to add a zero-width space before the
+        # `/` to avoid this transformation here.
         invisible_white_space = "\u200b"
         super().__init__(
             'The value `"{icon}"` is not a valid Material icon.'

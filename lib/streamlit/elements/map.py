@@ -347,9 +347,6 @@ def _get_lat_or_lon_col_name(
                 break
 
         if candidate_col_name is None:
-            formatted_allowed_col_name = ", ".join(map(repr, sorted(default_col_names)))
-            formmated_col_names = ", ".join(map(repr, list(data.columns)))
-
             raise StreamlitMissingMapColumnError(
                 human_readable_name, sorted(default_col_names), list(data.columns)
             )
