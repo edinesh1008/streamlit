@@ -133,6 +133,8 @@ message Block {
     string help = 3;
     bool disabled = 4;
     string icon = 5;
+    string width = 6;
+    int32 scale = 7;
   }
 
 
