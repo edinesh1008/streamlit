@@ -25,7 +25,10 @@ from typing import TYPE_CHECKING, Final, Literal, Union, cast
 from typing_extensions import TypeAlias
 
 from streamlit import runtime, url_util
-from streamlit.errors import StreamlitAPIException, StreamlitInvalidNumpyShapeError
+from streamlit.errors import (
+    StreamlitBGRChannelsRequireThreeColorChannelsError,
+    StreamlitInvalidNumpyShapeError,
+)
 from streamlit.runtime import caching
 from streamlit.type_util import NumpyShape
 
@@ -317,10 +320,7 @@ def image_to_url(
             if len(cast(NumpyShape, image.shape)) == 3:
                 image = image[:, :, [2, 1, 0]]
             else:
-                raise StreamlitAPIException(
-                    'When using `channels="BGR"`, the input image should '
-                    "have exactly 3 color channels"
-                )
+                raise StreamlitBGRChannelsRequireThreeColorChannelsError()
 
         image_data = _np_array_to_bytes(array=image, output_format=output_format)
 

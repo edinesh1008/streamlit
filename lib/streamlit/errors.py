@@ -1047,7 +1047,7 @@ class StreamlitConflictingSelectionModesError(LocalizableStreamlitException):
 
 
 class StreamlitInvalidOnSelectError(LocalizableStreamlitException):
-    """Exception raised when an invalid on_select value is passed to a deck_gl chart."""
+    """Exception raised when an invalid on_select value is passed to a chart."""
 
     def __init__(self, on_select: Any):
         super().__init__(
@@ -1802,10 +1802,412 @@ class StreamlitQueryParamsAPIConflictError(LocalizableStreamlitException):
 
 
 class StreamlitUnsupportedPersistOptionError(LocalizableStreamlitException):
-    """Raised when an unsupported persist option is provided to cache_data."""
-
     def __init__(self, persist: str):
         super().__init__(
-            "Unsupported persist option '{persist}'. Valid values are 'disk' or None.",
+            "Unsupported persist option: {persist}. Valid options are 'disk' and 'memory'.",
             persist=persist,
+        )
+
+
+# New error classes to replace direct StreamlitAPIException usage
+
+
+class StreamlitReservedKeyError(LocalizableStreamlitException):
+    """Raised when a user tries to use a reserved key name for a widget or other element."""
+
+    def __init__(self, key: str, prefix: str):
+        super().__init__(
+            "Keys beginning with {prefix} are reserved.",
+            key=key,
+            prefix=prefix,
+        )
+
+
+class StreamlitWidgetStateModificationError(LocalizableStreamlitException):
+    """Raised when attempting to modify a widget's state after the widget has been instantiated."""
+
+    def __init__(self, user_key: str):
+        super().__init__(
+            "`st.session_state.{user_key}` cannot be modified after the widget with key `{user_key}` is instantiated.",
+            user_key=user_key,
+        )
+
+
+class StreamlitMultiViewChartSelectionsNotSupportedError(LocalizableStreamlitException):
+    """Raised when attempting to use selections with multi-view charts, which is not yet supported."""
+
+    def __init__(self):
+        super().__init__(
+            "Selections are not yet supported for multi-view charts (chart compositions). "
+            "If you would like to use selections on multi-view charts, please upvote "
+            "this [Github issue](https://github.com/streamlit/streamlit/issues/8643)."
+        )
+
+
+class StreamlitInvalidStackParameterError(LocalizableStreamlitException):
+    """Raised when an invalid value is provided for the stack parameter in a chart."""
+
+    def __init__(self, stack: Any, command: str, docs_link: str):
+        super().__init__(
+            'Invalid value for stack parameter: {stack}. Stack must be one of True, False, "normalize", "center", "layered" or None. '
+            "See documentation for `{command}` [here]({docs_link}) for more information.",
+            stack=stack,
+            command=command,
+            docs_link=docs_link,
+        )
+
+
+class StreamlitColumnNotFoundError(LocalizableStreamlitException):
+    """Raised when a specified column name is not found in the input dataframe."""
+
+    def __init__(self, column_name: str, available_columns: list[str]):
+        super().__init__(
+            "Column '{column_name}' not found in the input dataframe. Available columns: {available_columns}",
+            column_name=column_name,
+            available_columns=available_columns,
+        )
+
+
+class StreamlitChartInvalidColorError(LocalizableStreamlitException):
+    """Raised when an invalid color value is provided to a chart or visual element."""
+
+    def __init__(self, color_value: Any):
+        super().__init__(
+            "Invalid color value: {color_value}. Expected a string color name, CSS color code, or a list of colors.",
+            color_value=color_value,
+        )
+
+
+class StreamlitColorLengthError(LocalizableStreamlitException):
+    """Raised when the length of a color list doesn't match the number of columns to be colored."""
+
+    def __init__(self, color_values: list[Any], y_column_count: int):
+        super().__init__(
+            "Length of color list ({color_length}) must match the number of y columns ({y_column_count}).",
+            color_length=len(color_values),
+            y_column_count=y_column_count,
+        )
+
+
+class StreamlitRangeIndexStepError(LocalizableStreamlitException):
+    """Raised when attempting to access the step attribute of a RangeIndex that doesn't have one."""
+
+    def __init__(self):
+        super().__init__("'RangeIndex' object has no attribute 'step'")
+
+
+class StreamlitRangeIndexStopError(LocalizableStreamlitException):
+    """Raised when attempting to access the stop attribute of a RangeIndex that doesn't have one."""
+
+    def __init__(self):
+        super().__init__("'RangeIndex' object has no attribute 'stop'")
+
+
+class StreamlitInvalidSizeValueError(LocalizableStreamlitException):
+    """Raised when an invalid size value is provided to a chart element."""
+
+    def __init__(self, size_value: Any):
+        super().__init__(
+            "Invalid size value: {size_value}. Expected a number or a column name.",
+            size_value=size_value,
+        )
+
+
+class StreamlitMixedColumnTypesError(LocalizableStreamlitException):
+    """Raised when chart columns contain too many values with mixed types."""
+
+    def __init__(self):
+        super().__init__(
+            "The columns used for rendering the chart contain too many values with mixed types. "
+            "Please select the columns manually via the y parameter."
+        )
+
+
+class StreamlitInvalidXParameterTypeError(LocalizableStreamlitException):
+    """Raised when an invalid type is provided for the x parameter in a chart."""
+
+    def __init__(self, x_from_user: Any):
+        super().__init__(
+            "x parameter should be a column name (str) or None to use the dataframe's index. "
+            "Value given: {x_from_user} (type {x_type})",
+            x_from_user=x_from_user,
+            x_type=type(x_from_user),
+        )
+
+
+class StreamlitMissingChartSelectionsError(LocalizableStreamlitException):
+    """Raised when selections are activated but the chart spec doesn't have any selections defined."""
+
+    def __init__(self):
+        super().__init__(
+            "Selections are activated, but the provided chart spec does not "
+            "have any selections defined. To add selections to `st.altair_chart`, check out the documentation "
+            "[here](https://altair-viz.github.io/user_guide/interactions.html#selections-capturing-chart-interactions). "
+            "For adding selections to `st.vega_lite_chart`, take a look "
+            "[here](https://vega.github.io/vega-lite/docs/selection.html)."
+        )
+
+
+class StreamlitUndefinedSelectionParameterError(LocalizableStreamlitException):
+    """Raised when a selection parameter is specified but not defined in the chart spec."""
+
+    def __init__(self, selection_name: str, available_params: set[str]):
+        super().__init__(
+            "Selection parameter '{selection_name}' is not defined in the chart spec. "
+            "Available selection parameters are: {available_params}.",
+            selection_name=selection_name,
+            available_params=available_params,
+        )
+
+
+class StreamlitAltairVersionError(LocalizableStreamlitException):
+    """Raised when a feature requires a newer version of Altair."""
+
+    def __init__(self, feature: str):
+        super().__init__(
+            "Streamlit does not support {feature} with Altair 4.x. Please upgrade "
+            "to Version 5.",
+            feature=feature,
+        )
+
+
+class StreamlitAltairSelectionsVersionError(LocalizableStreamlitException):
+    """Raised when selections are used with an older version of Altair."""
+
+    def __init__(self):
+        super().__init__(
+            "Streamlit does not support selections with Altair 4.x. Please upgrade "
+            "to Version 5. "
+            "If you would like to use Altair 4.x with selections, please upvote "
+            "this [Github issue](https://github.com/streamlit/streamlit/issues/8516)."
+        )
+
+
+class StreamlitInvalidThemeError(LocalizableStreamlitException):
+    """Raised when an invalid theme is specified for a chart."""
+
+    def __init__(self, theme: str):
+        super().__init__(
+            'You set theme="{theme}" while Streamlit charts only support '
+            'theme="streamlit" or theme=None to fallback to the default '
+            "library theme.",
+            theme=theme,
+        )
+
+
+class StreamlitDefaultValueNotInOptionsError(LocalizableStreamlitException):
+    """Raised when a default value is not part of the provided options."""
+
+    def __init__(self, value: Any):
+        super().__init__(
+            "The default value '{value}' is not part of the options. "
+            "Please make sure that every default values also exists in the options.",
+            value=value,
+        )
+
+
+class StreamlitInvalidEnumCoercionConfigError(LocalizableStreamlitException):
+    """Raised when an invalid enum coercion config value is provided."""
+
+    def __init__(self, coercion_type: str, allowed_settings: set[str]):
+        super().__init__(
+            "Invalid value for config option runner.enumCoercion. "
+            "Expected one of {allowed_settings}, but got '{coercion_type}'.",
+            coercion_type=coercion_type,
+            allowed_settings=allowed_settings,
+        )
+
+
+class StreamlitPandasStylerMaxElementsError(LocalizableStreamlitException):
+    """Raised when a pandas styler exceeds the maximum number of elements allowed."""
+
+    def __init__(self, cells_count: int, max_elements: int):
+        super().__init__(
+            "The dataframe has `{cells_count}` cells, but the maximum number "
+            "of cells allowed to be rendered by Pandas Styler is configured to "
+            "`{max_elements}`. To allow more cells to be "
+            'styled, you can change the `"styler.render.max_elements"` config. For example: '
+            '`pd.set_option("styler.render.max_elements", {cells_count})`',
+            cells_count=cells_count,
+            max_elements=max_elements,
+        )
+
+
+class StreamlitBGRChannelsRequireThreeColorChannelsError(LocalizableStreamlitException):
+    """Raised when BGR channels are specified but the image doesn't have exactly 3 color channels."""
+
+    def __init__(self):
+        super().__init__(
+            'When using `channels="BGR"`, the input image should have exactly 3 color channels'
+        )
+
+
+class StreamlitInvalidColumnConfigTypeError(LocalizableStreamlitException):
+    """Raised when an invalid column config type is provided."""
+
+    def __init__(self, column: str, config_type: type):
+        super().__init__(
+            "Invalid column config for column `{column}`. "
+            "Expected `None`, `str` or `dict`, but got `{config_type}`.",
+            column=column,
+            config_type=config_type,
+        )
+
+
+class StreamlitColumnConfigSerializationError(LocalizableStreamlitException):
+    """Raised when a column config cannot be serialized to JSON."""
+
+    def __init__(self, error_message: str):
+        super().__init__(
+            "The provided column config cannot be serialized into JSON: {error_message}",
+            error_message=error_message,
+        )
+
+
+class StreamlitMissingSnowflakeConfigError(LocalizableStreamlitException):
+    """Raised when Snowflake connection configuration is missing."""
+
+    def __init__(self):
+        super().__init__(
+            "Missing Snowflake connection configuration. "
+            "Did you forget to set this in `secrets.toml`, a Snowflake configuration file, "
+            "or as kwargs to `st.connection`? "
+            "See the [SnowflakeConnection configuration documentation](https://docs.streamlit.io/st.connections.snowflakeconnection-configuration) "
+            "for more details and examples."
+        )
+
+
+class StreamlitInvalidComponentConfigError(LocalizableStreamlitException):
+    """Raised when a custom component has invalid configuration."""
+
+    def __init__(self):
+        super().__init__("Either 'path' or 'url' must be set, but not both.")
+
+
+class StreamlitPageFileNotFoundError(LocalizableStreamlitException):
+    """Raised when a page file cannot be found."""
+
+    def __init__(self, page_name: str):
+        super().__init__(
+            "Unable to create Page. The file `{page_name}` could not be found.",
+            page_name=page_name,
+        )
+
+
+class StreamlitMissingPageTitleError(LocalizableStreamlitException):
+    """Raised when a page title cannot be inferred for a callable page."""
+
+    def __init__(self):
+        super().__init__(
+            "Cannot infer page title for Callable. Set the `title=` keyword argument."
+        )
+
+
+class StreamlitEmptyPageTitleError(LocalizableStreamlitException):
+    """Raised when a page title is empty or consists only of underscores/spaces."""
+
+    def __init__(self):
+        super().__init__(
+            "The title of the page cannot be empty or consist of underscores/spaces only"
+        )
+
+
+class StreamlitEmptyPageUrlPathError(LocalizableStreamlitException):
+    """Raised when a page URL path is empty and the page is not the default page."""
+
+    def __init__(self):
+        super().__init__(
+            "The URL path cannot be an empty string unless the page is the default page."
+        )
+
+
+class StreamlitNestedPageUrlPathError(LocalizableStreamlitException):
+    """Raised when a page URL path contains a nested path."""
+
+    def __init__(self):
+        super().__init__("The URL path cannot contain a nested path (e.g. foo/bar).")
+
+
+class StreamlitPageCannotBeCalledDirectlyError(LocalizableStreamlitException):
+    """Raised when a page is called directly instead of through st.navigation."""
+
+    def __init__(self):
+        super().__init__(
+            "This page cannot be called directly. Only the page returned from st.navigation can be called once."
+        )
+
+
+class StreamlitInvalidCommandError(LocalizableStreamlitException):
+    """Raised when an invalid Streamlit command is used."""
+
+    def __init__(self, command_name: str, suggestion: str | None = None):
+        if suggestion:
+            super().__init__(
+                "Method `{command_name}()` does not exist for "
+                "`DeltaGenerator` objects. Did you mean "
+                "`st.{suggestion}()`?",
+                command_name=command_name,
+                suggestion=suggestion,
+            )
+        else:
+            super().__init__(
+                "`{command_name}()` is not a valid Streamlit command.",
+                command_name=command_name,
+            )
+
+
+class StreamlitSidebarInFragmentError(LocalizableStreamlitException):
+    """Raised when st.sidebar is called in a function wrapped with st.fragment."""
+
+    def __init__(self):
+        super().__init__(
+            "Calling `st.sidebar` in a function wrapped with `st.fragment` is not "
+            "supported. Please use `st.sidebar` outside of the fragment function."
+        )
+
+
+class StreamlitBuiltinNameError(LocalizableStreamlitException):
+    """Raised when a builtin name is used with st prefix."""
+
+    def __init__(self, name: str):
+        super().__init__(
+            "Did you mean `{name}` instead of `st.{name}`?",
+            name=name,
+        )
+
+
+class StreamlitSidebarMethodError(LocalizableStreamlitException):
+    """Raised when a method is incorrectly called on st.sidebar."""
+
+    def __init__(self, name: str):
+        super().__init__(
+            "Method `{name}()` does not exist for `st.sidebar`. Did you mean `st.{name}()`?",
+            name=name,
+        )
+
+
+class StreamlitUnsupportedLabelVisibilityError(LocalizableStreamlitException):
+    """Raised when an unsupported label_visibility option is provided."""
+
+    def __init__(self, label_visibility: str):
+        super().__init__(
+            "Unsupported label_visibility option '{label_visibility}'. "
+            "Valid values are 'visible', 'hidden' or 'collapsed'.",
+            label_visibility=label_visibility,
+        )
+
+
+class StreamlitDataFrameConversionError(LocalizableStreamlitException):
+    """Raised when an object cannot be converted to a pandas DataFrame."""
+
+    def __init__(self, data: Any):
+        super().__init__(
+            """
+Unable to convert object of type `{data_type}` to `pandas.DataFrame`.
+Offending object:
+```py
+{data}
+```""",
+            data_type=type(data),
+            data=data,
         )
