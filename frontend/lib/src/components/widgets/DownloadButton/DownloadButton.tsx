@@ -68,6 +68,17 @@ function DownloadButton(props: Props): ReactElement {
     // to catch src url load errors. Catch with direct check instead.
     endpoints.checkSourceUrlResponse(element.url, "Download Button")
   }, [element.url, endpoints])
+  
+  let fluidWidth = true
+  if (
+    element.width === "stretch" ||
+    element.useContainerWidth ||
+    !!element.help
+  ) {
+    fluidWidth = true
+  } else if (element.width === "content") {
+    fluidWidth = false
+  }
 
   const handleDownloadClick: () => void = () => {
     if (!element.ignoreRerun) {
@@ -94,7 +105,7 @@ function DownloadButton(props: Props): ReactElement {
           size={BaseButtonSize.SMALL}
           disabled={disabled}
           onClick={handleDownloadClick}
-          containerWidth={element.useContainerWidth}
+          containerWidth={fluidWidth}
         >
           <DynamicButtonLabel icon={element.icon} label={element.label} />
         </BaseButton>
