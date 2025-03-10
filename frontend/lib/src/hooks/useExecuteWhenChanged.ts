@@ -34,7 +34,7 @@ export const arrayComparator = <T>(
  *
  * This hook follows React's best practices for adjusting state when props change
  * without using useEffect, as recommended in the React documentation:
- * https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+ * @see {@link https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes | You Might Not Need an Effect}
  *
  * Instead of using an Effect to watch for changes and update state, this hook directly
  * compares the current and previous values during render, which is more efficient.
@@ -45,7 +45,7 @@ export const arrayComparator = <T>(
  * @param comparator Optional custom comparison function to determine if the value has changed.
  *                   By default, uses Object.is() to detect changes.
  *                   If the comparator returns true, the callback will not be executed as
- *                   it indicates that the value has not changed.
+ *                   it indicates that the values are the same across renders.
  * @example
  * // Execute a function when a prop changes
  * useExecuteWhenChanged(

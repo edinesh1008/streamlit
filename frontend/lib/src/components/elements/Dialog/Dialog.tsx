@@ -21,7 +21,6 @@ import { Block as BlockProto } from "@streamlit/protobuf"
 import Modal, { ModalBody, ModalHeader } from "~lib/components/shared/Modal"
 import IsDialogContext from "~lib/components/core/IsDialogContext"
 import { notNullOrUndefined } from "~lib/util/utils"
-import { useExecuteWhenChanged } from "~lib/hooks/useExecuteWhenChanged"
 
 export interface Props {
   element: BlockProto.Dialog
@@ -30,25 +29,11 @@ export interface Props {
 
 const Dialog: React.FC<React.PropsWithChildren<Props>> = ({
   element,
-  deltaMsgReceivedAt,
   children,
 }): ReactElement => {
   const { title, dismissible, width, isOpen: initialIsOpen } = element
   const [isOpen, setIsOpen] = useState<boolean>(() =>
     notNullOrUndefined(initialIsOpen) ? initialIsOpen : false
-  )
-
-  useExecuteWhenChanged(
-    // when the deltaMsgReceivedAt changes, we might want to open the dialog again.
-    // since dismissing is a UI-only action, the initialIsOpen prop might not have
-    // changed which would lead to the dialog not opening again.
-    () => {
-      // Only apply the open state if it was actually set in the proto.
-      if (notNullOrUndefined(initialIsOpen)) {
-        setIsOpen(initialIsOpen)
-      }
-    },
-    [initialIsOpen, deltaMsgReceivedAt]
   )
 
   // don't use the Modal's isOpen prop as it feels laggy when using it
@@ -72,9 +57,22 @@ const Dialog: React.FC<React.PropsWithChildren<Props>> = ({
 function DialogWithProvider(
   props: React.PropsWithChildren<Props>
 ): ReactElement {
+  const { element, deltaMsgReceivedAt } = props
+  const { isOpen: initialIsOpen } = element
+
+  /**
+   * Using a key to reset the Dialog component's internal state when
+   * initialIsOpen or deltaMsgReceivedAt changes. This is a React pattern that
+   * avoids the need for useEffect to reset state when props change. When the
+   * key changes, React will unmount and remount the component, creating a fresh
+   * instance with new state initialized from the current props.
+   * @see {@link https://react.dev/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes | You Might Not Need an Effect}
+   */
+  const key = `${initialIsOpen}-${deltaMsgReceivedAt}`
+
   return (
     <IsDialogContext.Provider value={true}>
-      <Dialog {...props} />
+      <Dialog {...props} key={key} />
     </IsDialogContext.Provider>
   )
 }

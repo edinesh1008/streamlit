@@ -98,7 +98,8 @@ export function useBasicWidgetClientState<
       fromUi: false,
     })
 
-  // Process nextValueWithSource changes directly during render instead of using an effect
+  // Updates internal state and tells the widget manager to update its state
+  // too.
   const processNextValueWithSource = useCallback(
     (value: ValueWithSource<T> | null) => {
       if (isNullOrUndefined(value)) return
@@ -110,6 +111,8 @@ export function useBasicWidgetClientState<
     [element, widgetMgr, fragmentId, updateWidgetMgrState]
   )
 
+  // When someone calls setNextValueWithSource, call
+  // `processNextValueWithSource` to handle state updates.
   useExecuteWhenChanged(
     ([value]) => {
       processNextValueWithSource(value)
