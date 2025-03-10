@@ -193,7 +193,7 @@ describe("Radio widget", () => {
     vi.spyOn(props.widgetMgr, "setIntValue")
     render(<Radio {...props} />)
 
-    let radioOptions = screen.getAllByRole("radio")
+    const radioOptions = screen.getAllByRole("radio")
     const secondOption = radioOptions[1]
 
     // Change the widget value
@@ -212,7 +212,6 @@ describe("Radio widget", () => {
       props.widgetMgr.submitForm("form", undefined)
     })
 
-    radioOptions = screen.getAllByRole("radio")
     // Our widget should be reset, and the widgetMgr should be updated
     // @ts-expect-error
     const defaultValue = radioOptions[props.element.default]
