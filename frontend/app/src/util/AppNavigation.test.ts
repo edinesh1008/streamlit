@@ -318,7 +318,7 @@ describe("AppNavigation", () => {
       appNavigation.handleNavigation(navigation)
     })
 
-    it("continues to set hideSidebarNav on new session", () => {
+    it("continues to set currentPageScriptHash & hideSidebarNav on new session", () => {
       const cleanAppNavigation = new AppNavigation(
         hostCommunicationMgr,
         onUpdatePageUrl,
@@ -356,6 +356,7 @@ describe("AppNavigation", () => {
 
       const [newState] = maybeState!
       expect(newState).toEqual({
+        currentPageScriptHash: "page_script_hash",
         hideSidebarNav: true,
       })
     })
