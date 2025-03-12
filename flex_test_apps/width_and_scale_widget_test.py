@@ -21,6 +21,7 @@ This app demonstrates how the new `width` and `scale` parameters affect the appe
 - Radio buttons
 - Color pickers
 - Button group widgets (Feedback, Pills, Segmented Control)
+- File Upload widgets (audio_input, camera_input, file_uploader)
 
 Compare the different width options: 'content' (default), 'stretch', and fixed pixel width, as well as different scale values.
 """)
@@ -699,7 +700,7 @@ if bg_widget_type == "Feedback":
 elif bg_widget_type == "Pills":
     with st.container(border=True, direction="horizontal", gap="large"):
         interactive_pills = st.pills(
-            f"Pills (width='{width_option}', scale={scale_value})",
+            f"Pills (width='{width_value}', scale={scale_value})",
             options=["Option A", "Option B", "Option C"],
             width=width_value,
             scale=scale_value,
@@ -708,9 +709,170 @@ elif bg_widget_type == "Pills":
 else:  # Segmented Control
     with st.container(border=True, direction="horizontal", gap="large"):
         interactive_segmented = st.segmented_control(
-            f"Segmented (width='{width_option}', scale={scale_value})",
+            f"Segmented (width='{width_value}', scale={scale_value})",
             options=["Option A", "Option B", "Option C"],
             width=width_value,
             scale=scale_value,
             key="interactive_segmented",
         )
+
+# Section for Audio Input Test
+st.header("Audio Input Tests")
+
+st.subheader("Audio Input with Different Width Options")
+st.write("Compare different width options:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Stretch width (default for audio_input)
+    st.audio_input("Default width='stretch'", key="audio_default")
+
+    # Fixed pixel width
+    st.audio_input("Width=300px", width=300, key="audio_300px")
+
+st.subheader("Audio Input with Different Scale Values")
+st.write("All scaled elements use width='stretch':")
+with st.container(border=True, direction="horizontal", gap="large"):
+    # Scale 1 (default)
+    st.audio_input("Scale=1", scale=1, width="stretch", key="audio_scale1")
+
+    # Scale 2
+    st.audio_input("Scale=2", scale=2, width="stretch", key="audio_scale2")
+
+    # Scale 3
+    st.audio_input("Scale=3", scale=3, width="stretch", key="audio_scale3")
+
+# Section for Camera Input Test
+st.header("Camera Input Tests")
+
+st.subheader("Camera Input with Different Width Options")
+st.write("Compare different width options:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Stretch width (default for camera_input)
+    st.camera_input("Default width='stretch'", key="camera_default")
+
+    # Fixed pixel width
+    st.camera_input("Width=300px", width=300, key="camera_300px")
+
+st.subheader("Camera Input with Different Scale Values")
+st.write("All scaled elements use width='stretch':")
+with st.container(border=True, direction="horizontal", gap="large"):
+    # Scale 1 (default)
+    st.camera_input("Scale=1", scale=1, width="stretch", key="camera_scale1")
+
+    # Scale 2
+    st.camera_input("Scale=2", scale=2, width="stretch", key="camera_scale2")
+
+    # Scale 3
+    st.camera_input("Scale=3", scale=3, width="stretch", key="camera_scale3")
+
+# Section for File Uploader Test
+st.header("File Uploader Tests")
+
+st.subheader("File Uploader with Different Width Options")
+st.write("Compare different width options:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Stretch width (default for file_uploader)
+    st.file_uploader("Default width='stretch'", key="file_default")
+
+    # Fixed pixel width
+    st.file_uploader("Width=300px", width=300, key="file_300px")
+
+    # Multiple files
+    st.file_uploader(
+        "Multiple files with width='stretch'",
+        accept_multiple_files=True,
+        width="stretch",
+        key="file_multi_stretch",
+    )
+
+st.subheader("File Uploader with Different Scale Values")
+st.write("All scaled elements use width='stretch':")
+with st.container(border=True, direction="horizontal", gap="large"):
+    # Scale 1 (default)
+    st.file_uploader("Scale=1", scale=1, width="stretch", key="file_scale1")
+
+    # Scale 2
+    st.file_uploader("Scale=2", scale=2, width="stretch", key="file_scale2")
+
+    # Scale 3
+    st.file_uploader("Scale=3", scale=3, width="stretch", key="file_scale3")
+
+st.subheader("File Uploader with Different Types")
+st.write("Demonstrating width and scale with different file types:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Image files with stretched width
+    st.file_uploader(
+        "Image files (width='stretch')",
+        type=["png", "jpg", "jpeg"],
+        width="stretch",
+        key="file_img_stretch",
+    )
+
+    # PDF files with fixed width
+    st.file_uploader(
+        "PDF files (width=300px)", type=["pdf"], width=300, key="file_pdf_300px"
+    )
+
+    # Text files with scaled size
+    st.file_uploader(
+        "Text files (scale=2, width='stretch')",
+        type=["txt", "md"],
+        scale=2,
+        width="stretch",
+        key="file_txt_scale2",
+    )
+
+# Update the interactive demo section to include file widgets
+st.header("Interactive Demo")
+st.write("Try different width and scale settings:")
+
+# Width selection
+width_option = st.radio(
+    "Select width option:",
+    options=["stretch", "300", "400", "500"],
+    key="demo_width_option",
+)
+
+# Determine actual width
+if width_option == "stretch":
+    demo_width = "stretch"
+else:
+    demo_width = int(width_option)
+
+# Scale selection
+demo_scale = st.slider(
+    "Select scale (1-5):", min_value=1, max_value=5, value=1, key="demo_scale"
+)
+
+# Ensure width is stretch if scale > 1
+if demo_scale > 1 and demo_width != "stretch":
+    st.warning("When scale > 1, width is automatically set to 'stretch'")
+    demo_width = "stretch"
+
+# Display demo widgets
+st.subheader("Demo Widgets")
+with st.container(border=True, direction="vertical", gap="large"):
+    st.write(f"**Current Settings:** width='{demo_width}', scale={demo_scale}")
+
+    # Standard widgets
+    st.checkbox(
+        "Demo Checkbox", width=demo_width, scale=demo_scale, key="demo_checkbox"
+    )
+    st.toggle("Demo Toggle", width=demo_width, scale=demo_scale, key="demo_toggle")
+    st.radio(
+        "Demo Radio",
+        options=["A", "B", "C"],
+        width=demo_width,
+        scale=demo_scale,
+        key="demo_radio",
+    )
+
+    # File widgets
+    st.file_uploader(
+        "Demo File Uploader", width=demo_width, scale=demo_scale, key="demo_file"
+    )
+    st.audio_input(
+        "Demo Audio Input", width=demo_width, scale=demo_scale, key="demo_audio"
+    )
+    st.camera_input(
+        "Demo Camera Input", width=demo_width, scale=demo_scale, key="demo_camera"
+    )
