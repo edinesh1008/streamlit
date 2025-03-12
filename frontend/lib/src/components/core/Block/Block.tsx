@@ -424,22 +424,11 @@ const HorizontalBlock = (props: BlockPropsWithWidth): ReactElement => {
 }
 
 const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
-  const {
-    values: [calculatedWidth],
-    elementRef: wrapperElement,
-    forceRecalculate,
-  } = useResizeObserver(useMemo(() => ["width"], []))
-
   const border = props.node.deltaBlock.flexContainer?.border ?? false
-  const height = props.node.deltaBlock.flexContainer?.height || undefined
   const gap = props.node.deltaBlock.flexContainer?.gap ?? undefined
   const align = props.node.deltaBlock.flexContainer?.align ?? undefined
   const justify = props.node.deltaBlock.flexContainer?.justify ?? undefined
-  const wrap =
-    props.node.deltaBlock.flexContainer?.wrap ??
-    // "true" is the current behavior today and preserves it when there is no
-    // explicit flex value.
-    true
+  const wrap = props.node.deltaBlock.flexContainer?.wrap ?? true
   let flexDirection: React.CSSProperties["flexDirection"] | undefined
   if (
     props.node.deltaBlock.flexContainer?.direction ===
@@ -456,7 +445,6 @@ const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
   // Extract the user-specified key from the block ID (if provided):
   const userKey = getKeyFromId(props.node.deltaBlock.id)
   const styles = useLayoutStyles({
-    width: calculatedWidth,
     element: props.node.deltaBlock.flexContainer,
     isFlexContainer: true,
   })
@@ -469,31 +457,20 @@ const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
   // To apply a border, we need to wrap the StyledVerticalBlockWrapper again, otherwise the width
   // calculation would not take the padding into consideration.
   return (
-    <StyledVerticalBlockBorderWrapper
+    <StyledFlexContainerWrapper
       border={border}
-      height={styles.height}
-      data-testid="stVerticalBlockBorderWrapper"
-      data-test-scroll-behavior="normal"
+      data-test-flex-container-type="flex_container"
+      className={classNames("stFlexContainer", convertKeyToClassName(userKey))}
+      data-testid="stFlexContainer"
+      flexDirection={flexDirection}
+      align={align}
+      justify={justify}
+      gap={gap}
+      wrap={wrap}
       {...styles}
     >
-      <StyledFlexContainerWrapper
-        className={classNames(
-          "stFlexContainer",
-          convertKeyToClassName(userKey)
-        )}
-        data-testid="stFlexContainer"
-        ref={wrapperElement}
-        flexDirection={flexDirection}
-        align={align}
-        justify={justify}
-        gap={gap}
-        wrap={wrap}
-        height={"100%"}
-        width={"100%"}
-      >
-        <ChildRenderer {...propsWithCalculatedWidth} />
-      </StyledFlexContainerWrapper>
-    </StyledVerticalBlockBorderWrapper>
+      <ChildRenderer {...propsWithCalculatedWidth} />
+    </StyledFlexContainerWrapper>
   )
 }
 

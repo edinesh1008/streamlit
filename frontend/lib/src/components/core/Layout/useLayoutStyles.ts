@@ -43,6 +43,7 @@ export type UseLayoutStylesShape = {
   flex?: React.CSSProperties["flex"]
   height?: React.CSSProperties["height"]
   marginLeft?: React.CSSProperties["marginLeft"]
+  verticalScroll?: boolean
 }
 
 const validateWidth = (
@@ -98,7 +99,7 @@ const getWidth = (
   }
   if (commandWidth === "stretch") {
     return "100%"
-  } else if (Number.isInteger(Number(commandWidth))) {
+  } else if (!Number.isNaN(Number(commandWidth))) {
     return `${validateWidth(commandWidth)}px`
   } else if (commandWidth === "content") {
     return "auto"
@@ -109,7 +110,7 @@ const getWidth = (
 const getHeight = (commandHeight: string | number) => {
   if (commandHeight === "stretch") {
     return "100%"
-  } else if (Number.isInteger(Number(commandHeight))) {
+  } else if (!Number.isNaN(Number(commandHeight))) {
     return `${validateWidth(commandHeight)}px`
   } else if (commandHeight === "content") {
     return "auto"
@@ -140,15 +141,19 @@ const getFlex = (
     direction === "column"
   ) {
     return `${scale}`
-  } else if (Number.isInteger(Number(commandWidth)) && direction === "row") {
-    return `0 0 ${validateWidth(commandWidth)}px`
+  } else if (!Number.isNaN(Number(commandWidth)) && direction === "row") {
+    return `0 1 ${validateWidth(commandWidth)}px`
   } else if (
     Number.isInteger(Number(commandHeight)) &&
     direction === "column"
   ) {
-    return `0 0 ${validateWidth(commandHeight)}px`
+    return `0 1 ${validateWidth(commandHeight)}px`
   }
   return undefined
+}
+
+const getVerticalScroll = (height: string | number) => {
+  return !Number.isNaN(Number(height)) && Number(height) > 0
 }
 
 /**
@@ -219,13 +224,14 @@ export const useLayoutStyles = <T>({
       element?.scale
     )
     const height = getHeight(commandHeight)
-
+    const verticalScroll = getVerticalScroll(commandHeight)
     const styles = {
       width,
       height,
       maxWidth: "100%",
       maxHeight: "100%",
       flex,
+      verticalScroll,
     }
 
     return styles
