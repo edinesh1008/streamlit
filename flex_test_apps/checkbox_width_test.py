@@ -14,9 +14,9 @@
 
 import streamlit as st
 
-st.title("Checkbox and Toggle Width and Scale Test")
+st.title("Checkbox, Toggle, Radio, and Color Picker Width and Scale Test")
 st.write("""
-This app demonstrates how the new `width` and `scale` parameters affect the appearance of checkbox and toggle widgets.
+This app demonstrates how the new `width` and `scale` parameters affect the appearance of checkbox, toggle, radio, and color picker widgets.
 Compare the different width options: 'content' (default), 'stretch', and fixed pixel width, as well as different scale values.
 """)
 
@@ -394,7 +394,92 @@ with st.container(border=True, direction="horizontal", gap="large"):
         key="interactive_radio",
     )
 
-# Section 9: In a sidebar
+    interactive_color = st.color_picker(
+        f"Color (width='{width_option}', scale={scale_value})",
+        value="#2ecc71",
+        width=width_value,
+        scale=scale_value,
+        key="interactive_color",
+    )
+
+# Section 9: Color Picker Tests
+st.header("9. Color Picker Tests")
+
+st.subheader("Color Picker with Different Width Options")
+st.write("Compare different width options:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Content width (default)
+    st.color_picker(
+        "Default width='content'", value="#1abc9c", key="color_picker_default"
+    )
+
+    # Stretch width
+    st.color_picker(
+        "Width='stretch'", value="#3498db", width="stretch", key="color_picker_stretch"
+    )
+
+    # Fixed pixel width
+    st.color_picker("Width=300px", value="#9b59b6", width=300, key="color_picker_300px")
+
+st.subheader("Color Picker with Different Scale Values")
+st.write("All scaled elements use width='stretch':")
+with st.container(border=True, direction="horizontal", gap="large"):
+    # Scale 1 (default)
+    st.color_picker(
+        "Scale=1", value="#e74c3c", scale=1, width="stretch", key="color_picker_scale1"
+    )
+
+    # Scale 2
+    st.color_picker(
+        "Scale=2", value="#f1c40f", scale=2, width="stretch", key="color_picker_scale2"
+    )
+
+    # Scale 3
+    st.color_picker(
+        "Scale=3", value="#2ecc71", scale=3, width="stretch", key="color_picker_scale3"
+    )
+
+st.subheader("Color Picker with Long Labels")
+st.write("Compare how different width options affect long labels:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Content width (default)
+    st.color_picker(
+        "This is a very long color picker label that demonstrates how text wrapping works with the default content width setting.",
+        value="#e67e22",
+        key="color_picker_long_default",
+    )
+
+    # Stretch width
+    st.color_picker(
+        "This is a very long color picker label with width='stretch'.",
+        value="#16a085",
+        width="stretch",
+        key="color_picker_long_stretch",
+    )
+
+    # Fixed pixel width
+    st.color_picker(
+        "This is a very long color picker label with width=300px.",
+        value="#8e44ad",
+        width=300,
+        key="color_picker_long_300px",
+    )
+
+# Update sidebar to include color pickers
+st.sidebar.subheader("Color Pickers")
+with st.sidebar.container(gap="small"):
+    st.sidebar.color_picker("Default width", value="#3498db", key="sb_color_picker1")
+    st.sidebar.color_picker(
+        "Stretch width", value="#e74c3c", width="stretch", key="sb_color_picker2"
+    )
+    st.sidebar.color_picker(
+        "200px width", value="#2ecc71", width=200, key="sb_color_picker3"
+    )
+    st.sidebar.color_picker(
+        "Scale=2", value="#f1c40f", scale=2, width="stretch", key="sb_color_picker4"
+    )
+
+# Section 10: In a sidebar
 st.sidebar.header("Sidebar Tests")
 st.sidebar.subheader("Checkboxes")
 with st.sidebar.container(gap="small"):
