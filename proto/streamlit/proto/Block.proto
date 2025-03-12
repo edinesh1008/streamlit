@@ -42,7 +42,7 @@ message Block {
   message FlexContainer {
     bool border = 1;
     // Height of the container, activates scrolling
-    uint32 height = 2;
+    string height = 2;
     string gap = 3;
     string width = 4;
     int32 scale = 5;
