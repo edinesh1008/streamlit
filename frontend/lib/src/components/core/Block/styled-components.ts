@@ -278,12 +278,15 @@ export interface StyledFlexContainerWrapperProps {
   width?: React.CSSProperties["width"]
   height?: React.CSSProperties["height"]
   maxWidth?: React.CSSProperties["maxWidth"]
+  border?: boolean
+  verticalScroll?: boolean
 }
 
 export const StyledFlexContainerWrapper =
   styled.div<StyledFlexContainerWrapperProps>(
     ({
       flexDirection,
+      border,
       align,
       justify,
       wrap,
@@ -293,14 +296,22 @@ export const StyledFlexContainerWrapper =
       width,
       height,
       maxWidth,
+      verticalScroll,
     }) => {
       const gapWidth = translateGapWidth(gap, theme)
+      const overflowY = verticalScroll ? "auto" : undefined
       return {
+        ...(border && {
+          border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+          borderRadius: theme.radii.default,
+          padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
+        }),
         display: "flex",
-        width: width,
         height: height,
-        maxWidth: maxWidth,
+        overflowY: overflowY,
+        width: width,
         flex: flex,
+        maxWidth: maxWidth,
         flexDirection: flexDirection,
         alignItems: getAlignItems(align),
         justifyContent: getJustifyContent(justify),
