@@ -200,15 +200,18 @@ def _build_proto(
     label: str | None = None,
     label_visibility: LabelVisibility = "visible",
     help: str | None = None,
+    width: Literal["stretch", "content"] | int = "content",
+    scale: int = 1,
 ) -> ButtonGroupProto:
     proto = ButtonGroupProto()
-
     proto.id = widget_id
     proto.default[:] = default_values
     proto.form_id = current_form_id
     proto.disabled = disabled
     proto.click_mode = click_mode
     proto.style = ButtonGroupProto.Style.Value(style.upper())
+    proto.width = str(width)
+    proto.scale = scale
 
     # not passing the label looks the same as a collapsed label
     if label is not None:
@@ -251,7 +254,9 @@ class ButtonGroupMixin:
         on_change: WidgetCallback | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
-    ) -> Literal[0, 1] | None: ...
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
+    ) -> int | None: ...
     @overload
     def feedback(
         self,
@@ -262,7 +267,9 @@ class ButtonGroupMixin:
         on_change: WidgetCallback | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
-    ) -> Literal[0, 1, 2, 3, 4] | None: ...
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
+    ) -> int | None: ...
     @gather_metrics("feedback")
     def feedback(
         self,
@@ -273,6 +280,8 @@ class ButtonGroupMixin:
         on_change: WidgetCallback | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> int | None:
         """Display a feedback widget.
 
@@ -312,6 +321,16 @@ class ButtonGroupMixin:
 
         kwargs : dict
             An optional dict of kwargs to pass to the callback.
+
+        width : "content", "stretch", or int
+            The width of the feedback widget. The default is "content".
+            - "content" (default): The widget has a width that fits its content.
+            - "stretch": The widget stretches to fill the available space.
+            - int: A specific width in pixels (e.g. 200).
+
+        scale : int
+            The scale of the feedback widget. The default is 1. Must be >= 1.
+            If scale > 1, width must be set to "stretch".
 
         Returns
         -------
@@ -383,6 +402,8 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             selection_visualization=selection_visualization,
             style="borderless",
+            width=width,
+            scale=scale,
         )
         return sentiment.value
 
@@ -402,6 +423,8 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> V | None: ...
     @overload
     def pills(
@@ -419,6 +442,8 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> list[V]: ...
     @gather_metrics("pills")
     def pills(
@@ -436,6 +461,8 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> list[V] | V | None:
         r"""Display a pills widget.
 
@@ -528,6 +555,16 @@ class ButtonGroupMixin:
             label, which can help keep the widget alligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
+        width: "content", "stretch", or int
+            The width of the pills widget. The default is "content".
+            - "content" (default): The widget has a width that fits its content.
+            - "stretch": The widget stretches to fill the available space.
+            - int: A specific width in pixels (e.g. 200).
+
+        scale : int
+            The scale of the pills widget. The default is 1. Must be >= 1.
+            If scale > 1, width must be set to "stretch".
+
         Returns
         -------
         list of V, V, or None
@@ -593,6 +630,8 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             disabled=disabled,
             label_visibility=label_visibility,
+            width=width,
+            scale=scale,
         )
 
     @overload
@@ -611,6 +650,8 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> V | None: ...
     @overload
     def segmented_control(
@@ -628,6 +669,8 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> list[V]: ...
 
     @gather_metrics("segmented_control")
@@ -646,6 +689,8 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> list[V] | V | None:
         r"""Display a segmented control widget.
 
@@ -737,6 +782,16 @@ class ButtonGroupMixin:
             label, which can help keep the widget alligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
+        width: "content", "stretch", or int
+            The width of the segmented control widget. The default is "content".
+            - "content" (default): The widget has a width that fits its content.
+            - "stretch": The widget stretches to fill the available space.
+            - int: A specific width in pixels (e.g. 200).
+
+        scale : int
+            The scale of the segmented control widget. The default is 1. Must be >= 1.
+            If scale > 1, width must be set to "stretch".
+
         Returns
         -------
         list of V, V, or None
@@ -805,6 +860,8 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             disabled=disabled,
             label_visibility=label_visibility,
+            width=width,
+            scale=scale,
         )
 
     @gather_metrics("_internal_button_group")
@@ -824,6 +881,8 @@ class ButtonGroupMixin:
         label: str | None = None,
         label_visibility: LabelVisibility = "visible",
         help: str | None = None,
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> list[V] | V | None:
         maybe_raise_label_warnings(label, label_visibility)
 
@@ -877,6 +936,8 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             label=label,
             label_visibility=label_visibility,
+            width=width,
+            scale=scale,
         )
 
         if selection_mode == "multi":
@@ -907,6 +968,8 @@ class ButtonGroupMixin:
         label: str | None = None,
         label_visibility: LabelVisibility = "visible",
         help: str | None = None,
+        width: Literal["stretch", "content"] | int = "content",
+        scale: int = 1,
     ) -> RegisterWidgetResult[T]:
         _maybe_raise_selection_mode_warning(selection_mode)
 
@@ -977,6 +1040,8 @@ class ButtonGroupMixin:
             label=label,
             label_visibility=label_visibility,
             help=help,
+            width=width,
+            scale=scale,
         )
 
         widget_state = register_widget(

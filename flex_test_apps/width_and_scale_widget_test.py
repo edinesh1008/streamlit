@@ -14,9 +14,14 @@
 
 import streamlit as st
 
-st.title("Checkbox, Toggle, Radio, and Color Picker Width and Scale Test")
+st.title("Width and Scale Parameters Test App")
 st.write("""
-This app demonstrates how the new `width` and `scale` parameters affect the appearance of checkbox, toggle, radio, and color picker widgets.
+This app demonstrates how the new `width` and `scale` parameters affect the appearance of various Streamlit widgets:
+- Checkboxes and Toggles
+- Radio buttons
+- Color pickers
+- Button group widgets (Feedback, Pills, Segmented Control)
+
 Compare the different width options: 'content' (default), 'stretch', and fixed pixel width, as well as different scale values.
 """)
 
@@ -514,3 +519,198 @@ with st.sidebar.container(gap="small"):
         width="stretch",
         key="sb_radio4",
     )
+
+# Section 11: Button Group Tests
+st.header("11. Button Group Tests")
+
+st.subheader("Feedback Widget Tests")
+st.write("Compare different width options for feedback widgets:")
+
+with st.container(border=True, direction="vertical", gap="large"):
+    st.write("Thumbs feedback with different width options:")
+    with st.container(border=True, direction="vertical", gap="large"):
+        # Content width (default)
+        st.feedback("thumbs", key="feedback_thumbs_default")
+
+        # Stretch width
+        st.feedback("thumbs", width="stretch", key="feedback_thumbs_stretch")
+
+        # Fixed pixel width
+        st.feedback("thumbs", width=300, key="feedback_thumbs_300px")
+
+    st.write("Stars feedback with different width options:")
+    with st.container(border=True, direction="vertical", gap="large"):
+        # Content width (default)
+        st.feedback("stars", key="feedback_stars_default")
+
+        # Stretch width
+        st.feedback("stars", width="stretch", key="feedback_stars_stretch")
+
+        # Fixed pixel width
+        st.feedback("stars", width=300, key="feedback_stars_300px")
+
+    st.write("Feedback widgets with different scale values (width='stretch'):")
+    with st.container(border=True, direction="vertical", gap="large"):
+        # Scale 1 (default)
+        st.feedback("thumbs", scale=1, width="stretch", key="feedback_scale1")
+
+        # Scale 2
+        st.feedback("thumbs", scale=2, width="stretch", key="feedback_scale2")
+
+        # Scale 3
+        st.feedback("thumbs", scale=3, width="stretch", key="feedback_scale3")
+
+st.subheader("Pills Widget Tests")
+st.write("Compare different width options for pills widgets:")
+
+with st.container(border=True, direction="vertical", gap="large"):
+    st.write("Single-select pills with different width options:")
+    with st.container(border=True, direction="vertical", gap="large"):
+        # Content width (default)
+        st.pills(
+            "Default width='content'",
+            options=["Option 1", "Option 2", "Option 3"],
+            key="pills_default",
+        )
+
+        # Stretch width
+        st.pills(
+            "Width='stretch'",
+            options=["Option 1", "Option 2", "Option 3"],
+            width="stretch",
+            key="pills_stretch",
+        )
+
+        # Fixed pixel width
+        st.pills(
+            "Width=300px",
+            options=["Option 1", "Option 2", "Option 3"],
+            width=300,
+            key="pills_300px",
+        )
+
+    st.write("Pills with different scale values (width='stretch'):")
+    with st.container(border=True, direction="vertical", gap="large"):
+        # Scale 1 (default)
+        st.pills(
+            "Scale=1",
+            options=["Option 1", "Option 2"],
+            scale=1,
+            width="stretch",
+            key="pills_scale1",
+        )
+
+        # Scale 2
+        st.pills(
+            "Scale=2",
+            options=["Option 1", "Option 2"],
+            scale=2,
+            width="stretch",
+            key="pills_scale2",
+        )
+
+        # Scale 3
+        st.pills(
+            "Scale=3",
+            options=["Option 1", "Option 2"],
+            scale=3,
+            width="stretch",
+            key="pills_scale3",
+        )
+
+st.subheader("Segmented Control Widget Tests")
+st.write("Compare different width options for segmented control widgets:")
+
+with st.container(border=True, direction="vertical", gap="large"):
+    st.write("Single-select segmented control with different width options:")
+    with st.container(border=True, direction="horizontal", gap="large"):
+        # Content width (default)
+        st.segmented_control(
+            "Default width='content'",
+            options=["Option 1", "Option 2", "Option 3"],
+            key="segmented_default",
+        )
+
+        # Stretch width
+        st.segmented_control(
+            "Width='stretch'",
+            options=["Option 1", "Option 2", "Option 3"],
+            width="stretch",
+            key="segmented_stretch",
+        )
+
+        # Fixed pixel width
+        st.segmented_control(
+            "Width=300px",
+            options=["Option 1", "Option 2", "Option 3"],
+            width=300,
+            key="segmented_300px",
+        )
+
+    st.write("Segmented control with different scale values (width='stretch'):")
+    with st.container(border=True, direction="horizontal", gap="large"):
+        # Scale 1 (default)
+        st.segmented_control(
+            "Scale=1",
+            options=["Option 1", "Option 2"],
+            scale=1,
+            width="stretch",
+            key="segmented_scale1",
+        )
+
+        # Scale 2
+        st.segmented_control(
+            "Scale=2",
+            options=["Option 1", "Option 2"],
+            scale=2,
+            width="stretch",
+            key="segmented_scale2",
+        )
+
+        # Scale 3
+        st.segmented_control(
+            "Scale=3",
+            options=["Option 1", "Option 2"],
+            scale=3,
+            width="stretch",
+            key="segmented_scale3",
+        )
+
+# Update the interactive demo to include button group widgets
+st.header("Interactive Demo with Button Group Widgets")
+st.write("Try the same width and scale settings with a button group widget:")
+
+st.write("Select a button group widget type:")
+bg_widget_type = st.radio(
+    "Widget type:",
+    ["Feedback", "Pills", "Segmented Control"],
+    horizontal=True,
+    key="bg_widget_type_selector",
+)
+
+if bg_widget_type == "Feedback":
+    with st.container(border=True, direction="horizontal", gap="large"):
+        interactive_feedback = st.feedback(
+            "thumbs",
+            width=width_value,
+            scale=scale_value,
+            key="interactive_feedback",
+        )
+elif bg_widget_type == "Pills":
+    with st.container(border=True, direction="horizontal", gap="large"):
+        interactive_pills = st.pills(
+            f"Pills (width='{width_option}', scale={scale_value})",
+            options=["Option A", "Option B", "Option C"],
+            width=width_value,
+            scale=scale_value,
+            key="interactive_pills",
+        )
+else:  # Segmented Control
+    with st.container(border=True, direction="horizontal", gap="large"):
+        interactive_segmented = st.segmented_control(
+            f"Segmented (width='{width_option}', scale={scale_value})",
+            options=["Option A", "Option B", "Option C"],
+            width=width_value,
+            scale=scale_value,
+            key="interactive_segmented",
+        )
