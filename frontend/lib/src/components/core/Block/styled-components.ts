@@ -254,7 +254,7 @@ export const StyledVerticalBlockBorderWrapper =
         padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
       }),
       ...(height && {
-        height: `${height}px`,
+        height: `${height}`,
         overflow: "auto",
       }),
       ...(width && {
@@ -276,6 +276,7 @@ export interface StyledFlexContainerWrapperProps {
   gap?: string
   flex?: React.CSSProperties["flex"]
   width?: React.CSSProperties["width"]
+  height?: React.CSSProperties["height"]
   maxWidth?: React.CSSProperties["maxWidth"]
 }
 
@@ -290,12 +291,14 @@ export const StyledFlexContainerWrapper =
       theme,
       flex,
       width,
+      height,
       maxWidth,
     }) => {
       const gapWidth = translateGapWidth(gap, theme)
       return {
         display: "flex",
         width: width,
+        height: height,
         maxWidth: maxWidth,
         flex: flex,
         flexDirection: flexDirection,

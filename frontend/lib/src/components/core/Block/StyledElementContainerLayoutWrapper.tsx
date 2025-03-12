@@ -31,6 +31,7 @@ export const StyledElementContainerLayoutWrapper: FC<
     width,
     element:
       (node.element?.type && node.element[node.element.type]) || undefined,
+    isFlexContainer: false,
   })
 
   return <StyledElementContainer {...rest} {...styles} />

@@ -44,7 +44,7 @@ class LayoutsMixin:
     def container(
         self,
         *,
-        height: int | None = None,
+        height: Literal["stretch", "content"] | int = "content",
         border: bool | None = None,
         key: Key | None = None,
         # TODO: Move this Literal definition to somewhere shared
@@ -212,15 +212,18 @@ class LayoutsMixin:
         block_proto.flex_container.gap = "" if gap is None else gap
         block_proto.flex_container.wrap = wrap
 
-        if height:
-            # Activate scrolling container behavior:
+        if isinstance(height, int):
+            # Activate scrolling container behavior for fixed pixel heights
             block_proto.allow_empty = True
-            block_proto.flex_container.height = height
+            block_proto.flex_container.height = str(height)
             if border is None:
                 # If border is None, we activated the
                 # border as default setting for scrolling
                 # containers.
                 block_proto.flex_container.border = True
+
+        # Convert height to string for the proto when it's "content" or "stretch"
+        block_proto.flex_container.height = str(height)
 
         if key:
             # At the moment, the ID is only used for extracting the

@@ -37,10 +37,13 @@ import ChatMessage from "~lib/components/elements/ChatMessage"
 import Dialog from "~lib/components/elements/Dialog"
 import Expander from "~lib/components/elements/Expander"
 import { useScrollToBottom } from "~lib/hooks/useScrollToBottom"
+import {
+  FlexContext,
+  FlexContextProvider,
+} from "~lib/components/core/Flex/FlexContext"
 import { useResizeObserver } from "~lib/hooks/useResizeObserver"
 import { useLayoutStyles as useLayoutStylesOld } from "~lib/components/core/Layout/useLayoutStyles"
 import { useLayoutStyles as useLayoutStyles } from "~lib/components/core/Flex/useLayoutStyles"
-import { FlexContextProvider } from "~lib/components/core/Flex/FlexContext"
 
 import {
   assignDividerColor,
@@ -205,8 +208,14 @@ const BlockNodeRenderer = (props: BlockPropsWithWidth): ReactElement => {
     return <Tabs {...tabsProps} />
   }
 
+  const flexContext = useContext(FlexContext)
+
   if (notNullOrUndefined(node.deltaBlock.flexContainer?.direction)) {
-    let direction
+    let direction: "column" | "row" | undefined
+    let parentContainerDirection: "column" | "row" | undefined
+    if (flexContext?.direction) {
+      parentContainerDirection = flexContext.direction
+    }
     if (
       node.deltaBlock.flexContainer.direction ==
       BlockProto.FlexContainer.Direction.VERTICAL
@@ -221,12 +230,7 @@ const BlockNodeRenderer = (props: BlockPropsWithWidth): ReactElement => {
     return (
       <FlexContextProvider
         direction={direction}
-        // horizontalAlignment={
-        //   node.deltaBlock.flexContainer?.align ?? null
-        // }
-        // verticalAlignment={
-        //   node.deltaBlock.flexContainer?.verticalAlignment ?? null
-        // }
+        parentContainerDirection={parentContainerDirection}
       >
         {child}
       </FlexContextProvider>
@@ -454,6 +458,7 @@ const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
   const styles = useLayoutStyles({
     width: calculatedWidth,
     element: props.node.deltaBlock.flexContainer,
+    isFlexContainer: true,
   })
 
   const propsWithCalculatedWidth = {
@@ -466,7 +471,7 @@ const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
   return (
     <StyledVerticalBlockBorderWrapper
       border={border}
-      height={height}
+      height={styles.height}
       data-testid="stVerticalBlockBorderWrapper"
       data-test-scroll-behavior="normal"
       {...styles}
@@ -483,6 +488,8 @@ const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
         justify={justify}
         gap={gap}
         wrap={wrap}
+        height={"100%"}
+        width={"100%"}
       >
         <ChildRenderer {...propsWithCalculatedWidth} />
       </StyledFlexContainerWrapper>

@@ -27,8 +27,10 @@ export type UseLayoutStylesArgs<T> = {
         flex?: string
         scale?: number
         floatLeft?: boolean
+        type?: string
       })
     | undefined
+  isFlexContainer: boolean
 }
 
 const isNonZeroPositiveNumber = (value: unknown): value is number =>
@@ -37,6 +39,7 @@ const isNonZeroPositiveNumber = (value: unknown): value is number =>
 export type UseLayoutStylesShape = {
   width: React.CSSProperties["width"]
   maxWidth?: React.CSSProperties["maxWidth"]
+  maxHeight?: React.CSSProperties["maxHeight"]
   flex?: React.CSSProperties["flex"]
   height?: React.CSSProperties["height"]
   marginLeft?: React.CSSProperties["marginLeft"]
@@ -85,12 +88,76 @@ const checkAndFixOverflow = (
   return width
 }
 
+const getWidth = (
+  useContainerWidth: boolean | undefined,
+  commandWidth: string | number,
+  containerWidth: string | number
+) => {
+  if (useContainerWidth !== undefined && useContainerWidth) {
+    return validateWidth(containerWidth)
+  }
+  if (commandWidth === "stretch") {
+    return "100%"
+  } else if (Number.isInteger(Number(commandWidth))) {
+    return `${validateWidth(commandWidth)}px`
+  } else if (commandWidth === "content") {
+    return "auto"
+  }
+  return "auto"
+}
+
+const getHeight = (commandHeight: string | number) => {
+  if (commandHeight === "stretch") {
+    return "100%"
+  } else if (Number.isInteger(Number(commandHeight))) {
+    return `${validateWidth(commandHeight)}px`
+  } else if (commandHeight === "content") {
+    return "auto"
+  }
+  return "auto"
+}
+
+const getFlex = (
+  useContainerWidth: boolean | undefined,
+  commandWidth: string | number,
+  commandHeight: string | number,
+  containerWidth: string | number,
+  direction: "row" | "column" | undefined,
+  scale: number | undefined
+) => {
+  if (useContainerWidth !== undefined && useContainerWidth) {
+    return `1 0 ${validateWidth(containerWidth)}px`
+  }
+  if (
+    commandWidth === "stretch" &&
+    scale !== undefined &&
+    direction === "row"
+  ) {
+    return `${scale}`
+  } else if (
+    commandHeight === "stretch" &&
+    scale !== undefined &&
+    direction === "column"
+  ) {
+    return `${scale}`
+  } else if (Number.isInteger(Number(commandWidth)) && direction === "row") {
+    return `0 0 ${validateWidth(commandWidth)}px`
+  } else if (
+    Number.isInteger(Number(commandHeight)) &&
+    direction === "column"
+  ) {
+    return `0 0 ${validateWidth(commandHeight)}px`
+  }
+  return undefined
+}
+
 /**
  * Returns the contextually-aware style values for an element container
  */
 export const useLayoutStyles = <T>({
   width: containerWidth,
   element,
+  isFlexContainer,
 }: UseLayoutStylesArgs<T>): UseLayoutStylesShape => {
   /**
    * The width set from the `st.<command>`
@@ -100,9 +167,13 @@ export const useLayoutStyles = <T>({
   const useContainerWidth = element?.useContainerWidth
   const flexContext = useContext(FlexContext)
 
-  let direction
+  let direction: "column" | "row" | undefined
   if (flexContext) {
-    direction = flexContext.direction
+    if (isFlexContainer) {
+      direction = flexContext.parentContainerDirection
+    } else {
+      direction = flexContext.direction
+    }
   }
 
   // Note: Consider rounding the width to the nearest pixel so we don't have
@@ -138,87 +209,26 @@ export const useLayoutStyles = <T>({
       }
     }
 
-    if (useContainerWidth) {
-      let validatedContainerWidth = validateWidth(containerWidth)
+    const width = getWidth(useContainerWidth, commandWidth, containerWidth)
+    const flex = getFlex(
+      useContainerWidth,
+      commandWidth,
+      commandHeight,
+      containerWidth,
+      direction,
+      element?.scale
+    )
+    const height = getHeight(commandHeight)
 
-    if (width === 0) {
-      // An element with no width should be treated as if it has no width set
-      // This is likely from the proto, where the default value is 0
-      width = undefined
+    const styles = {
+      width,
+      height,
+      maxWidth: "100%",
+      maxHeight: "100%",
+      flex,
     }
 
-    if (width && width < 0) {
-      // If we have an invalid width, we should treat it as if it has no width set
-      width = undefined
-    }
-
-    if (width !== undefined && isNaN(width)) {
-      // If we have an invalid width, we should treat it as if it has no width set
-      width = undefined
-    }
-
-    if (
-      width !== undefined &&
-      containerWidth !== undefined &&
-      typeof containerWidth === "number" &&
-      width > containerWidth
-    ) {
-      // If the width is greater than the container width, we should use the
-      // container width to prevent overflows
-      width = containerWidth
-    }
-
-    const widthWithFallback = width ?? "auto"
-
-    if (element.flex) {
-      return {
-        width: validatedContainerWidth,
-        maxWidth: "100%",
-        flex: `1 0 ${validatedContainerWidth}px`,
-      }
-    }
-
-    if (Number.isInteger(Number(commandWidth))) {
-      let validatedCommandWidth = validateWidth(commandWidth)
-      // This causes some issues with width on containers and doesn't seem to make
-      // Sense in a situation where there is more than one element in a row.
-      // validatedCommandWidth = checkAndFixOverflow(
-      //   validatedCommandWidth,
-      //   containerWidth
-      // )
-
-      if (direction && direction === "row") {
-        return {
-          width: `${validatedCommandWidth}px`,
-          maxWidth: "100%",
-          flex: `0 0 ${validatedCommandWidth}px`,
-        }
-      } else {
-        return {
-          width: `${validatedCommandWidth}px`,
-          maxWidth: "100%",
-        }
-      }
-    }
-
-    if (typeof commandWidth === "string" && commandWidth === "stretch") {
-      if (element.scale) {
-        return {
-          width: "100%",
-          maxWidth: "100%",
-          flex: `${element.scale}`,
-        }
-      }
-
-      return {
-        width: "100%",
-        maxWidth: "100%",
-      }
-    }
-
-    return {
-      width: widthWithFallback,
-    }
+    return styles
   }, [useContainerWidth, commandWidth, containerWidth, element])
 
   return layoutStyles
