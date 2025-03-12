@@ -19,7 +19,7 @@ import json
 import sys
 import uuid
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, Final
+from typing import TYPE_CHECKING, Any, Callable, Final
 
 from google.protobuf.json_format import ParseDict
 
@@ -914,17 +914,58 @@ def _populate_config_msg(msg: Config) -> None:
     msg.toolbar_mode = _get_toolbar_mode()
 
 
-def _populate_theme_msg(msg: CustomThemeConfig) -> None:
-    theme_opts = config.get_options_for_section("theme")
-
-    if not any(theme_opts.values()):
+def _populate_font_faces(
+    msg: CustomThemeConfig, font_faces: Any, is_sidebar: bool = False
+) -> None:
+    if font_faces is None:
         return
 
+    section = "theme.sidebar" if is_sidebar else "theme"
+
+    # If fontFaces was configured via config.toml, it's already a parsed list of
+    # dictionaries. However, if it was provided via env variable or via CLI arg,
+    # it's a json string that still needs to be parsed.
+    if isinstance(font_faces, str):
+        try:
+            font_faces = json.loads(font_faces)
+        except Exception as e:
+            _LOGGER.warning(
+                f"Failed to parse the {section}.fontFaces config option with json.loads: "
+                f"{font_faces}.",
+                exc_info=e,
+            )
+            return
+
+    for font_face in font_faces:
+        try:
+            msg_font_faces = msg.sidebar_font_faces if is_sidebar else msg.font_faces
+            msg_font_faces.append(ParseDict(font_face, FontFace()))
+        except Exception as e:
+            _LOGGER.warning(
+                f"Failed to parse the {section}.fontFaces config option: {font_face}.",
+                exc_info=e,
+            )
+
+
+def _populate_theme_msg(msg: CustomThemeConfig) -> None:
+    theme_opts = config.get_options_for_section("theme")
+    sidebar_theme_opts = config.get_options_for_section("theme.sidebar")
+
+    if not any(theme_opts.values()) or not any(sidebar_theme_opts.values()):
+        return
+
+    # Options that need special handling and cannot be directly set on the protobuf
+    special_handling_options = {"base", "font", "fontFaces"}
+
+    # Process main theme options
     for option_name, option_val in theme_opts.items():
-        # We need to ignore some config options here that need special handling
-        # and cannot directly be set on the protobuf.
-        if option_name not in {"base", "font", "fontFaces"} and option_val is not None:
+        if option_name not in special_handling_options and option_val is not None:
             setattr(msg, to_snake_case(option_name), option_val)
+
+    # Process sidebar theme options
+    for option_name, option_val in sidebar_theme_opts.items():
+        if option_name not in special_handling_options and option_val is not None:
+            setattr(msg, f"sidebar_{to_snake_case(option_name)}", option_val)
 
     # NOTE: If unset, base and font will default to the protobuf enum zero
     # values, which are BaseTheme.LIGHT and FontFamily.SANS_SERIF,
@@ -951,30 +992,8 @@ def _populate_theme_msg(msg: CustomThemeConfig) -> None:
     if body_font:
         msg.body_font = body_font
 
-    font_faces = theme_opts["fontFaces"]
-    # If fontFaces was configured via config.toml, it's already a parsed list of
-    # dictionaries. However, if it was provided via env variable or via CLI arg,
-    # it's a json string that still needs to be parsed.
-    if isinstance(font_faces, str):
-        try:
-            font_faces = json.loads(font_faces)
-        except Exception as e:
-            _LOGGER.warning(
-                "Failed to parse the theme.fontFaces config option with json.loads: "
-                f"{font_faces}.",
-                exc_info=e,
-            )
-            font_faces = None
-
-    if font_faces is not None:
-        for font_face in font_faces:
-            try:
-                msg.font_faces.append(ParseDict(font_face, FontFace()))
-            except Exception as e:
-                _LOGGER.warning(
-                    f"Failed to parse the theme.fontFaces config option: {font_face}.",
-                    exc_info=e,
-                )
+    _populate_font_faces(msg, theme_opts["fontFaces"])
+    _populate_font_faces(msg, sidebar_theme_opts.get("fontFaces"), is_sidebar=True)
 
 
 def _populate_user_info_msg(msg: UserInfo) -> None:

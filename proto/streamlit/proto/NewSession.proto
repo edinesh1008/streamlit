@@ -173,6 +173,22 @@ message CustomThemeConfig {
   optional string link_color = 21;
   optional int32 base_font_size = 22;
   optional bool show_sidebar_separator = 23;
+
+  string sidebar_primary_color = 1001;
+  string sidebar_secondary_background_color = 1002;
+  string sidebar_background_color = 1003;
+  string sidebar_text_color = 1004;
+  // Separate base theme is not supported in the sidebar.
+  string sidebar_heading_font = 1012;
+  string sidebar_body_font = 1013;
+  string sidebar_code_font = 1014;
+  repeated FontFace sidebar_font_faces = 1015;
+  optional string sidebar_base_radius = 1018;
+  optional string sidebar_border_color = 1019;
+  optional bool sidebar_show_border_around_inputs = 1020;
+  optional string sidebar_link_color = 1021;
+  optional int32 sidebar_base_font_size = 1022;
+  // show_sidebar_separator is not supported in the sidebar.
 }
 
 message FontFace {

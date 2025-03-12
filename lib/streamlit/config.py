@@ -293,6 +293,53 @@ def _create_option(
     return option
 
 
+def _create_theme_option(
+    key: str,
+    description: str | None = None,
+    default_val: Any | None = None,
+    scriptable: bool = False,
+    visibility: str = "visible",
+    deprecated: bool = False,
+    deprecation_text: str | None = None,
+    expiration_date: str | None = None,
+    replaced_by: str | None = None,
+    type_: type = str,
+    sensitive: bool = False,
+    supports_in_sidebar: bool = False,
+) -> None:
+    assert key.startswith("theme."), 'Theme options must start with "theme."'
+
+    # For theme options that supports sidebar, also create a sidebar option
+    if supports_in_sidebar:
+        _create_option(
+            key.replace("theme.", "theme.sidebar."),
+            description=description,
+            default_val=default_val,
+            scriptable=scriptable,
+            visibility=visibility,
+            deprecated=deprecated,
+            deprecation_text=deprecation_text,
+            expiration_date=expiration_date,
+            replaced_by=replaced_by,
+            type_=type_,
+            sensitive=sensitive,
+        )
+
+    _create_option(
+        key,
+        description=description,
+        default_val=default_val,
+        scriptable=scriptable,
+        visibility=visibility,
+        deprecated=deprecated,
+        deprecation_text=deprecation_text,
+        expiration_date=expiration_date,
+        replaced_by=replaced_by,
+        type_=type_,
+        sensitive=sensitive,
+    )
+
+
 def _delete_option(key: str) -> None:
     """Remove a ConfigOption by key from the global store.
 
@@ -973,6 +1020,7 @@ _create_option(
 
 _create_section("magic", "Settings for how Streamlit pre-processes your script")
 
+
 _create_option(
     "magic.displayRootDocString",
     description="""
@@ -1003,41 +1051,49 @@ _create_option(
 
 _create_section("theme", "Settings to define a custom theme for your Streamlit app.")
 
-_create_option(
+
+_create_section(
+    "theme.sidebar",
+    "Settings to define a custom theme for the sidebar in Streamlit app.",
+)
+
+
+_create_theme_option(
     "theme.base",
     description="""
         The preset Streamlit theme that your custom theme inherits from.
         One of "light" or "dark".
     """,
+    supports_in_sidebar=False,
 )
 
-_create_option(
+_create_theme_option(
     "theme.primaryColor",
     description="Primary accent color for interactive elements.",
 )
 
-_create_option(
+_create_theme_option(
     "theme.backgroundColor",
     description="Background color for the main content area.",
 )
 
-_create_option(
+_create_theme_option(
     "theme.secondaryBackgroundColor",
     description="Background color used for the sidebar and most interactive widgets.",
 )
 
-_create_option(
+_create_theme_option(
     "theme.textColor",
     description="Color used for almost all text.",
 )
 
-_create_option(
+_create_theme_option(
     "theme.linkColor",
     description="Color used for all links.",
     visibility="hidden",
 )
 
-_create_option(
+_create_theme_option(
     "theme.font",
     description="""
         The font family for all text in the app, except code blocks. One of "sans serif",
@@ -1046,7 +1102,7 @@ _create_option(
     """,
 )
 
-_create_option(
+_create_theme_option(
     "theme.codeFont",
     description="""
         The font family to use for code (monospace) in the app.
@@ -1055,7 +1111,7 @@ _create_option(
     visibility="hidden",
 )
 
-_create_option(
+_create_theme_option(
     "theme.headingFont",
     description="""
         The font family to use for headings in the app.
@@ -1064,7 +1120,7 @@ _create_option(
     visibility="hidden",
 )
 
-_create_option(
+_create_theme_option(
     "theme.fontFaces",
     description="""
     Configure a list of font faces that you can use for the app & code fonts.
@@ -1073,7 +1129,7 @@ _create_option(
 )
 
 
-_create_option(
+_create_theme_option(
     "theme.baseRadius",
     description="""
         The radius used as basis for the corners of most UI elements. Can be:
@@ -1083,7 +1139,7 @@ _create_option(
     visibility="hidden",
 )
 
-_create_option(
+_create_theme_option(
     "theme.borderColor",
     description="""
         The color of the border around elements.
@@ -1091,7 +1147,7 @@ _create_option(
     visibility="hidden",
 )
 
-_create_option(
+_create_theme_option(
     "theme.showBorderAroundInputs",
     description="""
         Whether to show a border around input elements (e.g. text_input, number_input,
@@ -1101,7 +1157,7 @@ _create_option(
     visibility="hidden",
 )
 
-_create_option(
+_create_theme_option(
     "theme.baseFontSize",
     description="""
         Sets the root font size (in pixels) for the app, which determines the overall
@@ -1111,13 +1167,14 @@ _create_option(
     visibility="hidden",
 )
 
-_create_option(
+_create_theme_option(
     "theme.showSidebarSeparator",
     description="""
         Whether to show a vertical separator between the sidebar and the main content.
     """,
     type_=bool,
     visibility="hidden",
+    supports_in_sidebar=False,
 )
 
 # Config Section: Secrets #
