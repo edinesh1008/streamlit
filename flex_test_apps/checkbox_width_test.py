@@ -217,8 +217,137 @@ with st.container(border=True, direction="horizontal", gap="large"):
         key="tg_long_scale3",
     )
 
-# Section 7: Interactive demo
-st.header("7. Interactive Demo")
+# Section 7: Radio Button Tests
+st.header("7. Radio Button Tests")
+
+st.subheader("Radio with Different Width Options")
+st.write("Compare different width options:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Content width (default)
+    st.radio(
+        "Default width='content'",
+        options=["Option 1", "Option 2", "Option 3"],
+        key="radio_default",
+    )
+
+    # Stretch width
+    st.radio(
+        "Width='stretch'",
+        options=["Option 1", "Option 2", "Option 3"],
+        width="stretch",
+        key="radio_stretch",
+    )
+
+    # Fixed pixel width
+    st.radio(
+        "Width=300px",
+        options=["Option 1", "Option 2", "Option 3"],
+        width=300,
+        key="radio_300px",
+    )
+
+st.subheader("Radio with Different Scale Values")
+st.write("All scaled elements use width='stretch':")
+with st.container(border=True, direction="horizontal", gap="small"):
+    # Scale 1 (default)
+    st.radio(
+        "Scale=1",
+        options=["Option 1", "Option 2"],
+        scale=1,
+        width="stretch",
+        key="radio_scale1",
+        horizontal=True,
+    )
+
+    # Scale 2
+    st.radio(
+        "Scale=2",
+        options=["Option 1", "Option 2"],
+        scale=2,
+        width="stretch",
+        key="radio_scale2",
+        horizontal=True,
+    )
+
+    # Scale 3
+    st.radio(
+        "Scale=3",
+        options=["Option 1", "Option 2"],
+        scale=3,
+        width="stretch",
+        key="radio_scale3",
+        horizontal=True,
+    )
+
+st.subheader("Radio with Horizontal Layout")
+st.write("Horizontal layout with different width options:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Content width horizontal
+    st.radio(
+        "Default width='content' (horizontal)",
+        options=["Option 1", "Option 2", "Option 3"],
+        horizontal=True,
+        key="radio_horizontal_default",
+    )
+
+    # Stretch width horizontal
+    st.radio(
+        "Width='stretch' (horizontal)",
+        options=["Option 1", "Option 2", "Option 3"],
+        horizontal=True,
+        width="stretch",
+        key="radio_horizontal_stretch",
+    )
+
+    # Fixed width horizontal
+    st.radio(
+        "Width=400px (horizontal)",
+        options=["Option 1", "Option 2", "Option 3"],
+        horizontal=True,
+        width=400,
+        key="radio_horizontal_400px",
+    )
+
+st.subheader("Radio with Long Labels")
+st.write("Compare how different width options affect long labels:")
+with st.container(border=True, direction="vertical", gap="large"):
+    # Content width (default)
+    st.radio(
+        "This is a very long radio group label that demonstrates how text wrapping works with the default content width setting.",
+        options=[
+            "This is a long option that demonstrates wrapping",
+            "Another long option that should wrap properly when needed",
+            "A third option with enough text to force wrapping behavior",
+        ],
+        key="radio_long_default",
+    )
+
+    # Stretch width
+    st.radio(
+        "This is a very long radio group label with width='stretch'.",
+        options=[
+            "This is a long option that demonstrates wrapping with stretch",
+            "Another long option that should wrap properly when stretched",
+            "A third option with enough text to force wrapping behavior",
+        ],
+        width="stretch",
+        key="radio_long_stretch",
+    )
+
+    # Fixed pixel width
+    st.radio(
+        "This is a very long radio group label with width=300px.",
+        options=[
+            "This is a long option that demonstrates wrapping with fixed width",
+            "Another long option that should wrap when width is constrained",
+            "A third option with enough text to force wrapping behavior",
+        ],
+        width=300,
+        key="radio_long_300px",
+    )
+
+# Section 8: Interactive demo
+st.header("8. Interactive Demo")
 
 # Replace columns with regular layout
 width_option = st.radio(
@@ -257,7 +386,15 @@ with st.container(border=True, direction="horizontal", gap="large"):
         key="interactive_tg",
     )
 
-# Section 8: In a sidebar
+    interactive_radio = st.radio(
+        f"Radio (width='{width_option}', scale={scale_value})",
+        options=["Option A", "Option B"],
+        width=width_value,
+        scale=scale_value,
+        key="interactive_radio",
+    )
+
+# Section 9: In a sidebar
 st.sidebar.header("Sidebar Tests")
 st.sidebar.subheader("Checkboxes")
 with st.sidebar.container(gap="small"):
@@ -272,3 +409,23 @@ with st.sidebar.container(gap="small"):
     st.sidebar.toggle("Stretch width", width="stretch", key="sb_tg2")
     st.sidebar.toggle("200px width", width=200, key="sb_tg3")
     st.sidebar.toggle("Scale=2", scale=2, width="stretch", key="sb_tg4")
+
+st.sidebar.subheader("Radio Buttons")
+with st.sidebar.container(gap="small"):
+    st.sidebar.radio("Default width", options=["Option 1", "Option 2"], key="sb_radio1")
+    st.sidebar.radio(
+        "Stretch width",
+        options=["Option 1", "Option 2"],
+        width="stretch",
+        key="sb_radio2",
+    )
+    st.sidebar.radio(
+        "200px width", options=["Option 1", "Option 2"], width=200, key="sb_radio3"
+    )
+    st.sidebar.radio(
+        "Scale=2",
+        options=["Option 1", "Option 2"],
+        scale=2,
+        width="stretch",
+        key="sb_radio4",
+    )
