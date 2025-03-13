@@ -99,7 +99,7 @@ export function DeployDialog(
     if (!gitInfo) {
       const dialog = NoRepositoryDetected()
 
-      showDeployError(dialog.title, dialog.body)
+      showDeployError(dialog.title, dialog.body, "No repository detected")
 
       return
     }
@@ -116,7 +116,7 @@ export function DeployDialog(
     if (hasMissingGitInfo && gitState === GitStates.DEFAULT) {
       const dialog = NoRepositoryDetected()
 
-      showDeployError(dialog.title, dialog.body)
+      showDeployError(dialog.title, dialog.body, "No repository detected")
 
       return
     }
@@ -124,7 +124,7 @@ export function DeployDialog(
     if (gitState === GitStates.HEAD_DETACHED) {
       const dialog = DetachedHead()
 
-      showDeployError(dialog.title, dialog.body)
+      showDeployError(dialog.title, dialog.body, "Detached head")
 
       return
     }
@@ -132,7 +132,7 @@ export function DeployDialog(
     if (module && untrackedFiles?.includes(module)) {
       const dialog = ModuleIsNotAdded(module)
 
-      showDeployError(dialog.title, dialog.body)
+      showDeployError(dialog.title, dialog.body, "Module not added")
 
       return
     }

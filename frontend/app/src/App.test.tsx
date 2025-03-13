@@ -2708,6 +2708,7 @@ describe("App", () => {
           enableCustomParentMessages: false,
           mapboxToken: "",
           metricsUrl: "test.streamlit.io",
+          blockErrorDialogs: false,
           ...options,
         })
       })
@@ -3373,6 +3374,17 @@ describe("App", () => {
 
       // Ensure rerun back message triggered
       expect(sendUpdateWidgetsMessageSpy).toHaveBeenCalled()
+    })
+
+    // TODO: Implement this test
+    it("blocks error dialogs when the host config option is set", () => {
+      prepareHostCommunicationManager({
+        blockErrorDialogs: true,
+      })
+
+      //   expect(hostCommunicationMgr.sendMessageToHost).toHaveBeenCalledWith({
+      //     type: "ERROR",
+      //     message: "random string",
     })
   })
 

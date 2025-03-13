@@ -82,6 +82,7 @@ import {
   GitInfo,
   IAppPage,
   ICustomThemeConfig,
+  IException,
   IGitInfo,
   Initialize,
   Logo,
@@ -424,12 +425,14 @@ export class App extends PureComponent<Props, State> {
           mapboxToken,
           enforceDownloadInNewTab,
           metricsUrl,
+          blockErrorDialogs,
         } = response
 
         const appConfig: AppConfig = {
           allowedOrigins,
           useExternalAuthToken,
           enableCustomParentMessages,
+          blockErrorDialogs,
         }
         const libConfig: LibConfig = {
           mapboxToken,
@@ -550,30 +553,69 @@ export class App extends PureComponent<Props, State> {
     window.removeEventListener("popstate", this.onHistoryChange, false)
   }
 
+  /**
+   * Checks whether to show error dialog or send error info
+   * to be handled by the host.
+   */
+  maybeShowErrorDialog(
+    newDialog: DialogProps,
+    errorMsg: string | IException | null | undefined
+  ): void {
+    const { blockErrorDialogs } = this.state.appConfig
+
+    if (!blockErrorDialogs) {
+      // Show dialog as normal
+      this.openDialog(newDialog)
+    } else {
+      const { title, type } = newDialog
+      let message = ""
+      if (typeof errorMsg === "string") {
+        message = errorMsg
+      } else if (errorMsg?.message) {
+        // If errorMsg is IException, use the message property
+        message = errorMsg.message
+      }
+      // Send error info to host via postMessage instead
+      this.hostCommunicationMgr.sendMessageToHost({
+        type: "CLIENT_ERROR",
+        dialog: true,
+        error: title ?? type,
+        message,
+      })
+    }
+  }
+
   showError(title: string, errorMarkdown: string): void {
     LOG.error(errorMarkdown)
+
     const newDialog: DialogProps = {
       type: DialogType.WARNING,
       title,
       msg: <StreamlitMarkdown source={errorMarkdown} allowHTML={false} />,
       onClose: () => {},
     }
-    this.openDialog(newDialog)
+
+    // Check if host configured blocking of error dialogs
+    this.maybeShowErrorDialog(newDialog, errorMarkdown)
   }
 
   showDeployError = (
     title: string,
     errorNode: ReactNode,
+    errorMsg: string,
     onContinue?: () => void
   ): void => {
-    this.openDialog({
+    const newDialog: DialogProps = {
       type: DialogType.DEPLOY_ERROR,
       title,
       msg: errorNode,
       onContinue,
       onClose: () => {},
       onTryAgain: this.sendLoadGitInfoBackMsg,
-    })
+    }
+
+    // Check if host configured blocking of error dialogs
+    this.maybeShowErrorDialog(newDialog, errorMsg)
   }
 
   /**
@@ -956,7 +998,11 @@ export class App extends PureComponent<Props, State> {
         exception: sessionEvent.scriptCompilationException,
         onClose: () => {},
       }
-      this.openDialog(newDialog)
+      // Check if host configured blocking of error dialogs
+      this.maybeShowErrorDialog(
+        newDialog,
+        sessionEvent.scriptCompilationException
+      )
     }
   }
 
