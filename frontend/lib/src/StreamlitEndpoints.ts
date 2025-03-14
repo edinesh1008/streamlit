@@ -33,6 +33,15 @@ export interface StreamlitEndpoints {
   setStaticConfigUrl(url: string): void
 
   /**
+   * Checks if the src has successful response - used for media & custom components
+   * Also checks if file upload/delete successful.
+   * Sends CLIENT_ERROR message if error.
+   * @param source The source to check.
+   * @param componentName The component for which the source is being checked.
+   */
+  checkSourceResponse(source: string, componentName?: string): Promise<void>
+
+  /**
    * Return a URL to fetch data for the given custom component.
    * @param componentName The registered name of the component.
    * @param path The path of the component resource to fetch, e.g. "index.html".

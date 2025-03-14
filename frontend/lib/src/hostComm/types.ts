@@ -239,6 +239,8 @@ export type IGuestToHostMessage =
       dialog: boolean
       error: string
       message?: string
+      componentName?: string
+      url?: string
     }
 
 export type VersionedMessage<Message> = {

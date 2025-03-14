@@ -375,6 +375,7 @@ export class App extends PureComponent<Props, State> {
     this.endpoints = new DefaultStreamlitEndpoints({
       getServerUri: this.getBaseUriParts,
       csrfEnabled: true,
+      sendMessageToHost: this.hostCommunicationMgr.sendMessageToHost,
     })
 
     this.uploadClient = new FileUploadClient({

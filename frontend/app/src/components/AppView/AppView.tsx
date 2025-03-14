@@ -189,6 +189,10 @@ function AppView(props: AppViewProps): ReactElement {
         alt="Logo"
         className="stLogo"
         data-testid="stLogo"
+        onError={e => {
+          // error message source componentName
+          endpoints.checkSourceResponse(source, "logo - image")
+        }}
       />
     )
 
@@ -199,6 +203,9 @@ function AppView(props: AppViewProps): ReactElement {
           target="_blank"
           rel="noreferrer"
           data-testid="stLogoLink"
+          onError={e => {
+            endpoints.checkSourceResponse(appLogo.link, "logo - link")
+          }}
         >
           {logo}
         </StyledLogoLink>

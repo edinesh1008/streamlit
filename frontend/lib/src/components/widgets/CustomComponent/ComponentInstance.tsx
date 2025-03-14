@@ -220,6 +220,23 @@ function ComponentInstance(props: Props): ReactElement {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const onBackMsgRef = useRef<IframeMessageHandlerProps>()
 
+  useEffect(() => {
+    // Iframe has no onerror event, so check source here to catch errors
+    registry.checkSourceResponse(
+      getSrc(componentName, registry, url),
+      componentName
+    )
+  }, [])
+
+  useEffect(() => {
+    if (isReadyTimeout) {
+      registry.triggerTimeoutError(
+        getSrc(componentName, registry, url),
+        componentName
+      )
+    }
+  }, [isReadyTimeout])
+
   // Show a log in the console as a soft-warning to the developer before showing the more disrupting warning element
   const clearTimeoutLog = useTimeout(
     () => LOG.warn(getWarnMessage(componentName, url)),

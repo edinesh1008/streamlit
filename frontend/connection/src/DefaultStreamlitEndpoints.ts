@@ -23,12 +23,13 @@ import {
   makePath,
   notNullOrUndefined,
 } from "@streamlit/utils"
-
+import { IGuestToHostMessage } from "@streamlit/lib"
 import { FileUploadClientConfig, StreamlitEndpoints } from "./types"
 
 interface Props {
   getServerUri: () => URL | undefined
   csrfEnabled: boolean
+  sendMessageToHost: (message: IGuestToHostMessage) => void
 }
 
 const MEDIA_ENDPOINT = "/media"
@@ -40,6 +41,8 @@ const FORWARD_MSG_CACHE_ENDPOINT = "/_stcore/message"
 export class DefaultStreamlitEndpoints implements StreamlitEndpoints {
   private readonly getServerUri: () => URL | undefined
 
+  private readonly sendMessageToHost: (message: IGuestToHostMessage) => void
+
   private readonly csrfEnabled: boolean
 
   private cachedServerUri?: URL
@@ -50,6 +53,7 @@ export class DefaultStreamlitEndpoints implements StreamlitEndpoints {
 
   public constructor(props: Props) {
     this.getServerUri = props.getServerUri
+    this.sendMessageToHost = props.sendMessageToHost
     this.csrfEnabled = props.csrfEnabled
     this.staticConfigUrl = null
   }
@@ -58,11 +62,74 @@ export class DefaultStreamlitEndpoints implements StreamlitEndpoints {
     this.staticConfigUrl = url
   }
 
+  public sendClientError(
+    error: string | number,
+    message: string,
+    source: string,
+    componentName?: string
+  ): void {
+    // TESTING:
+    console.log("======== ERROR", {
+      type: "CLIENT_ERROR",
+      dialog: false,
+      error,
+      message,
+      componentName,
+      url: source,
+    })
+    // this.sendMessageToHost({
+    //   type: "CLIENT_ERROR",
+    //   dialog: false,
+    //   error,
+    //   message,
+    //   componentName,
+    //   url: source,
+    // })
+  }
+
+  public async checkSourceResponse(
+    source: string,
+    componentName?: string
+  ): Promise<void> {
+    // axios.get(source).catch(function (error) {
+    //   if (error.response) {
+
+    //     console.log("RESPONSE", error)
+    //   } else if (error.request) {
+    //     // The request was made but no response was received
+    //     console.log("REQUEST", error)
+    //   } else {
+    //     // Something happened in setting up the request that triggered an Error
+    //     console.log('Error', error)
+    //   }
+    //   console.log(error.config)
+    // })
+
+    fetch(source)
+      .then(response => {
+        if (!response.ok) {
+          // If the request returns an unsuccessful status code, send a client error
+          this.sendClientError(
+            response.status,
+            response.statusText,
+            source,
+            componentName
+          )
+        }
+        // If the request returns a successful status code, do nothing
+      })
+      .catch(error => {
+        // If no response was received, also send a client error
+        this.sendClientError(error.message, "", source, componentName)
+      })
+  }
+
   public buildComponentURL(componentName: string, path: string): string {
-    return buildHttpUri(
+    const source = buildHttpUri(
       this.requireServerUri(),
       `${COMPONENT_ENDPOINT_BASE}/${componentName}/${path}`
     )
+    return source
   }
 
   public setFileUploadClientConfig({
@@ -95,8 +162,12 @@ export class DefaultStreamlitEndpoints implements StreamlitEndpoints {
       return this.buildStaticUrl(url)
     }
     if (url.startsWith(MEDIA_ENDPOINT)) {
+      // // TESTING - break media urls:
+      // url = url.replace(MEDIA_ENDPOINT, "")
       return buildHttpUri(this.requireServerUri(), url)
     }
+    // // TESTING - break external urls:
+    // url = url.replace(".png", ".jpg")
     return url
   }
 
