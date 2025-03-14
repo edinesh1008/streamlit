@@ -46,15 +46,7 @@ const ElementFullscreenWrapper: FC<ElementFullscreenWrapperProps> = ({
       expand: zoomIn,
       collapse: zoomOut,
     }
-  }, [
-    expanded,
-    fullHeight,
-    fullWidth,
-    height,
-    width,
-    zoomIn,
-    zoomOut,
-  ])
+  }, [expanded, fullHeight, fullWidth, height, width, zoomIn, zoomOut])
 
   return (
     <ElementFullscreenContext.Provider value={fullscreenContextValue}>

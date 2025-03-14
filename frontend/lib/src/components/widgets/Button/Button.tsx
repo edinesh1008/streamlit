@@ -39,10 +39,7 @@ function Button(props: Props): ReactElement {
   const { disabled, element, widgetMgr, fragmentId } = props
 
   let fluidWidth = true
-  if (
-    element.width === "stretch" ||
-    element.useContainerWidth
-  ) {
+  if (element.width === "stretch" || element.useContainerWidth) {
     fluidWidth = true
   } else if (element.width === "content") {
     fluidWidth = false
