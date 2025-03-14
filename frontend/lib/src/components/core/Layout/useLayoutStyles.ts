@@ -127,7 +127,11 @@ const getFlex = (
   scale: number | undefined
 ) => {
   if (useContainerWidth !== undefined && useContainerWidth) {
-    return `1 0 ${validateWidth(containerWidth)}px`
+    if (!Number.isNaN(Number(commandWidth))) {
+      return `1 1 ${validateWidth(containerWidth)}px`
+    } else {
+      return `1 1 ${containerWidth}`
+    }
   }
   if (
     commandWidth === "stretch" &&

@@ -42,8 +42,7 @@ import {
   FlexContextProvider,
 } from "~lib/components/core/Flex/FlexContext"
 import { useResizeObserver } from "~lib/hooks/useResizeObserver"
-import { useLayoutStyles as useLayoutStylesOld } from "~lib/components/core/Layout/useLayoutStyles"
-import { useLayoutStyles as useLayoutStyles } from "~lib/components/core/Flex/useLayoutStyles"
+import { useLayoutStyles as useLayoutStyles } from "~lib/components/core/Layout/useLayoutStyles"
 
 import {
   assignDividerColor,
@@ -368,9 +367,10 @@ const VerticalBlock = (props: BlockPropsWithoutWidth): ReactElement => {
 
   // Extract the user-specified key from the block ID (if provided):
   const userKey = getKeyFromId(props.node.deltaBlock.id)
-  const styles = useLayoutStylesOld({
+  const styles = useLayoutStyles({
     width: calculatedWidth,
     element: undefined,
+    isFlexContainer: false,
   })
 
   const propsWithCalculatedWidth = {
