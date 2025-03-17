@@ -41,7 +41,7 @@ message Selectbox {
   optional bool accept_new_options = 12;
 
   string width = 14;
-  int32 scale = 15;
+  float scale = 15;
 
   // Next: 16
 }
