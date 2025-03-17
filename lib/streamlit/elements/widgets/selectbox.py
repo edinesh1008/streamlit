@@ -92,8 +92,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-        width: Literal["stretch", "content"] | int = "content",
-        scale: int = 1,
+        width: Literal["stretch"] | int = "stretch",
+        scale: float | int = 1,
     ) -> T: ...
 
     @overload
@@ -112,8 +112,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-        width: Literal["stretch", "content"] | int = "content",
-        scale: int = 1,
+        width: Literal["stretch"] | int = "stretch",
+        scale: float | int = 1,
     ) -> T | None: ...
 
     @gather_metrics("selectbox")
@@ -132,8 +132,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-        width: Literal["stretch", "content"] | int = "content",
-        scale: int = 1,
+        width: Literal["stretch"] | int = "stretch",
+        scale: float | int = 1,
     ) -> T | None:
         r"""Display a select widget.
 
@@ -215,13 +215,15 @@ class SelectboxMixin:
             label, which can help keep the widget alligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
-        width : "stretch", "content", or int
-            The width of the selectbox. If "stretch", the element will expand to fill its parent container.
-            If "content", the element will be sized to fit its contents. If an integer, the element will have
-            that specific width in pixels. Defaults to "content".
+        width : "stretch" or int
+            The width of the selectbox. If "stretch" (default), the selectbox will expand
+            to fill its parent container. If an integer, the selectbox will have
+            the given width in pixels.
 
-        scale : int or None
-            An optional integer scale factor to apply to the element.
+        scale : float or int
+            A scale factor to multiply the width by. This parameter only has an
+            effect when width="stretch" and the parent container is a horizontal
+            container. Default is 1.0.
 
         Returns
         -------
@@ -295,8 +297,8 @@ class SelectboxMixin:
         placeholder: str = "Choose an option",
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
-        width: Literal["stretch", "content"] | int = "content",
-        scale: int = 1,
+        width: Literal["stretch"] | int = "stretch",
+        scale: float | int = 1,
         ctx: ScriptRunContext | None = None,
     ) -> T | None:
         key = to_key(key)
@@ -351,8 +353,7 @@ class SelectboxMixin:
         )
 
         selectbox_proto.width = str(width)
-        if scale is not None:
-            selectbox_proto.scale = scale
+        selectbox_proto.scale = float(scale)
 
         if help is not None:
             selectbox_proto.help = dedent(help)

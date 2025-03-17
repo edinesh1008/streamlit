@@ -105,3 +105,28 @@ st.selectbox(
     "selectbox 13 -> :material/check: :rainbow[Fancy] _**markdown** `label` _support_",
     options=options,
 )
+
+v14 = st.selectbox(
+    "selectbox 14 (width=stretch, no container)",
+    options,
+    width="stretch",
+    key="selectbox14",
+)
+st.write("value 14:", v14)
+
+v15 = st.selectbox(
+    "selectbox 15 (width=200, no container)",
+    options,
+    width=200,
+    key="selectbox15",
+)
+st.write("value 15:", v15)
+
+with st.container():
+    v16 = st.selectbox(
+        "selectbox 16 (width=stretch, in container)",
+        options,
+        width="stretch",
+        key="selectbox16",
+    )
+    st.write("value 16:", v16)
