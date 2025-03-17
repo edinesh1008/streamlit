@@ -49,15 +49,16 @@ export const arrayComparator = <T>(
  * @example
  * // Execute a function when a prop changes
  * useExecuteWhenChanged(
- *   ([newUserId]) => {
- *     // Do something with the new user ID
- *     loadUserData(newUserId);
- *   }
+ *   () => {
+ *     // This callback is executed when props.userId has changed.
+ *     // Do something with the props.userId:
+ *     loadUserData(props.userId);
+ *   },
  *   [props.userId]
  * );
  */
 export const useExecuteWhenChanged = <T extends unknown[]>(
-  callback: (currentValue: T) => void,
+  callback: () => void,
   currentValue: T,
   comparator: (previousValue: T, currentValue: T) => boolean = arrayComparator
 ): void => {
@@ -65,6 +66,6 @@ export const useExecuteWhenChanged = <T extends unknown[]>(
 
   if (!comparator(previousValue, currentValue)) {
     setPreviousValue(currentValue)
-    callback(currentValue)
+    callback()
   }
 }

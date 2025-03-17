@@ -295,7 +295,7 @@ function useColumnLoader(
 
   // Resync state whenever the parsed column config from the proto changes:
   useExecuteWhenChanged(
-    ([newMapping]) => setColumnConfigMapping(newMapping),
+    () => setColumnConfigMapping(parsedColumnConfig),
     [parsedColumnConfig]
   )
 

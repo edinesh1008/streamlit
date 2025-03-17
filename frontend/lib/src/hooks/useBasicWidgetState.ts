@@ -114,8 +114,8 @@ export function useBasicWidgetClientState<
   // When someone calls setNextValueWithSource, call
   // `processNextValueWithSource` to handle state updates.
   useExecuteWhenChanged(
-    ([value]) => {
-      processNextValueWithSource(value)
+    () => {
+      processNextValueWithSource(nextValueWithSource)
     },
     [nextValueWithSource],
     // Use a custom comparator that only triggers when nextValueWithSource is not null
@@ -201,12 +201,14 @@ export function useBasicWidgetState<
   // Respond to value changes via session_state. This is also set via an
   // "event", this time using the .setValue property of the proto.
   useExecuteWhenChanged(
-    ([el]) => {
-      if (!el.setValue) return
-      el.setValue = false
+    () => {
+      if (!element.setValue) return
+      // TODO: Update to match React best practices
+      // eslint-disable-next-line react-compiler/react-compiler
+      element.setValue = false
 
       setNextValueWithSource({
-        value: getCurrStateFromProto(el),
+        value: getCurrStateFromProto(element),
         fromUi: false,
       })
     },

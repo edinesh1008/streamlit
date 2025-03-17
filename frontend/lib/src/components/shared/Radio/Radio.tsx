@@ -54,10 +54,7 @@ function Radio({
 }: Readonly<Props>): ReactElement {
   const [value, setValue] = useState(defaultValue ?? null)
 
-  useExecuteWhenChanged(
-    ([newValue]) => setValue(newValue ?? null),
-    [defaultValue]
-  )
+  useExecuteWhenChanged(() => setValue(defaultValue ?? null), [defaultValue])
 
   const onChangeCallback = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {

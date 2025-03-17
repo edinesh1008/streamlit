@@ -102,187 +102,185 @@ describe("Dialog container", () => {
     expect(screen.queryByLabelText("Close")).not.toBeInTheDocument()
   })
 
-  describe("Key behavior", () => {
-    it("should reset internal state when initialIsOpen changes", async () => {
-      const user = userEvent.setup()
+  it("should reset internal state when initialIsOpen changes", async () => {
+    const user = userEvent.setup()
 
-      // Initial render with dialog open
-      const initialProps = getProps({ isOpen: true })
-      const { rerender } = render(
-        <Dialog {...initialProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Initial render with dialog open
+    const initialProps = getProps({ isOpen: true })
+    const { rerender } = render(
+      <Dialog {...initialProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Close the dialog by clicking the close button
-      expect(screen.getByText("test content")).toBeVisible()
-      await user.click(screen.getByLabelText("Close"))
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
+    // Close the dialog by clicking the close button
+    expect(screen.getByText("test content")).toBeVisible()
+    await user.click(screen.getByLabelText("Close"))
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
 
-      // Change initialIsOpen prop to true again, which should reset the internal state
-      const updatedProps = getProps({ isOpen: false })
-      rerender(
-        <Dialog {...updatedProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Change initialIsOpen prop to true again, which should reset the internal state
+    const updatedProps = getProps({ isOpen: false })
+    rerender(
+      <Dialog {...updatedProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should remain closed as the new initialIsOpen is false
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
+    // Dialog should remain closed as the new initialIsOpen is false
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
 
-      // Change initialIsOpen back to true, which should open the dialog again
-      const reopenProps = getProps({ isOpen: true })
-      rerender(
-        <Dialog {...reopenProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Change initialIsOpen back to true, which should open the dialog again
+    const reopenProps = getProps({ isOpen: true })
+    rerender(
+      <Dialog {...reopenProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should be open again
-      expect(screen.getByText("test content")).toBeVisible()
-    })
+    // Dialog should be open again
+    expect(screen.getByText("test content")).toBeVisible()
+  })
 
-    it("should reset internal state when deltaMsgReceivedAt changes", async () => {
-      const user = userEvent.setup()
+  it("should reset internal state when deltaMsgReceivedAt changes", async () => {
+    const user = userEvent.setup()
 
-      // Initial render with dialog open and a timestamp
-      const initialProps = getProps(
-        { isOpen: true },
-        { deltaMsgReceivedAt: 1000 }
-      )
-      const { rerender } = render(
-        <Dialog {...initialProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Initial render with dialog open and a timestamp
+    const initialProps = getProps(
+      { isOpen: true },
+      { deltaMsgReceivedAt: 1000 }
+    )
+    const { rerender } = render(
+      <Dialog {...initialProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Close the dialog by clicking the close button
-      expect(screen.getByText("test content")).toBeVisible()
-      await user.click(screen.getByLabelText("Close"))
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
+    // Close the dialog by clicking the close button
+    expect(screen.getByText("test content")).toBeVisible()
+    await user.click(screen.getByLabelText("Close"))
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
 
-      // Change deltaMsgReceivedAt prop, which should reset the internal state
-      const updatedProps = getProps(
-        { isOpen: true },
-        { deltaMsgReceivedAt: 2000 }
-      )
-      rerender(
-        <Dialog {...updatedProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Change deltaMsgReceivedAt prop, which should reset the internal state
+    const updatedProps = getProps(
+      { isOpen: true },
+      { deltaMsgReceivedAt: 2000 }
+    )
+    rerender(
+      <Dialog {...updatedProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should be open again because initialIsOpen is true and the key changed
-      expect(screen.getByText("test content")).toBeVisible()
-    })
+    // Dialog should be open again because initialIsOpen is true and the key changed
+    expect(screen.getByText("test content")).toBeVisible()
+  })
 
-    it("should reset internal state when both initialIsOpen and deltaMsgReceivedAt change", async () => {
-      const user = userEvent.setup()
+  it("should reset internal state when both initialIsOpen and deltaMsgReceivedAt change", async () => {
+    const user = userEvent.setup()
 
-      // Initial render with dialog open and a timestamp
-      const initialProps = getProps(
-        { isOpen: true },
-        { deltaMsgReceivedAt: 1000 }
-      )
-      const { rerender } = render(
-        <Dialog {...initialProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Initial render with dialog open and a timestamp
+    const initialProps = getProps(
+      { isOpen: true },
+      { deltaMsgReceivedAt: 1000 }
+    )
+    const { rerender } = render(
+      <Dialog {...initialProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Close the dialog by clicking the close button
-      expect(screen.getByText("test content")).toBeVisible()
-      await user.click(screen.getByLabelText("Close"))
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
+    // Close the dialog by clicking the close button
+    expect(screen.getByText("test content")).toBeVisible()
+    await user.click(screen.getByLabelText("Close"))
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
 
-      // Change both initialIsOpen and deltaMsgReceivedAt props
-      const updatedProps = getProps(
-        { isOpen: false },
-        { deltaMsgReceivedAt: 2000 }
-      )
-      rerender(
-        <Dialog {...updatedProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Change both initialIsOpen and deltaMsgReceivedAt props
+    const updatedProps = getProps(
+      { isOpen: false },
+      { deltaMsgReceivedAt: 2000 }
+    )
+    rerender(
+      <Dialog {...updatedProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should remain closed as the new initialIsOpen is false
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
+    // Dialog should remain closed as the new initialIsOpen is false
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
 
-      // Change both props again, with initialIsOpen now true
-      const reopenProps = getProps(
-        { isOpen: true },
-        { deltaMsgReceivedAt: 3000 }
-      )
-      rerender(
-        <Dialog {...reopenProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Change both props again, with initialIsOpen now true
+    const reopenProps = getProps(
+      { isOpen: true },
+      { deltaMsgReceivedAt: 3000 }
+    )
+    rerender(
+      <Dialog {...reopenProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should be open again
-      expect(screen.getByText("test content")).toBeVisible()
-    })
+    // Dialog should be open again
+    expect(screen.getByText("test content")).toBeVisible()
+  })
 
-    it("should not show dialog when deltaMsgReceivedAt changes but initialIsOpen is false", async () => {
-      // Initial render with dialog closed and a timestamp
-      const initialProps = getProps(
-        { isOpen: false },
-        { deltaMsgReceivedAt: 1000 }
-      )
-      const { rerender } = render(
-        <Dialog {...initialProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+  it("should not show dialog when deltaMsgReceivedAt changes but initialIsOpen is false", async () => {
+    // Initial render with dialog closed and a timestamp
+    const initialProps = getProps(
+      { isOpen: false },
+      { deltaMsgReceivedAt: 1000 }
+    )
+    const { rerender } = render(
+      <Dialog {...initialProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should be closed
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
+    // Dialog should be closed
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
 
-      // Change deltaMsgReceivedAt prop, but keep initialIsOpen as false
-      const updatedProps = getProps(
-        { isOpen: false },
-        { deltaMsgReceivedAt: 2000 }
-      )
-      rerender(
-        <Dialog {...updatedProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Change deltaMsgReceivedAt prop, but keep initialIsOpen as false
+    const updatedProps = getProps(
+      { isOpen: false },
+      { deltaMsgReceivedAt: 2000 }
+    )
+    rerender(
+      <Dialog {...updatedProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should still be closed
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
-    })
+    // Dialog should still be closed
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
+  })
 
-    it("should handle when deltaMsgReceivedAt changes from undefined to defined", async () => {
-      const user = userEvent.setup()
+  it("should handle when deltaMsgReceivedAt changes from undefined to defined", async () => {
+    const user = userEvent.setup()
 
-      // Initial render with dialog open and no timestamp
-      const initialProps = getProps({ isOpen: true })
-      const { rerender } = render(
-        <Dialog {...initialProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Initial render with dialog open and no timestamp
+    const initialProps = getProps({ isOpen: true })
+    const { rerender } = render(
+      <Dialog {...initialProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Close the dialog by clicking the close button
-      expect(screen.getByText("test content")).toBeVisible()
-      await user.click(screen.getByLabelText("Close"))
-      expect(screen.queryByText("test content")).not.toBeInTheDocument()
+    // Close the dialog by clicking the close button
+    expect(screen.getByText("test content")).toBeVisible()
+    await user.click(screen.getByLabelText("Close"))
+    expect(screen.queryByText("test content")).not.toBeInTheDocument()
 
-      // Add deltaMsgReceivedAt prop, which should reset the internal state
-      const updatedProps = getProps(
-        { isOpen: true },
-        { deltaMsgReceivedAt: 1000 }
-      )
-      rerender(
-        <Dialog {...updatedProps}>
-          <div>test content</div>
-        </Dialog>
-      )
+    // Add deltaMsgReceivedAt prop, which should reset the internal state
+    const updatedProps = getProps(
+      { isOpen: true },
+      { deltaMsgReceivedAt: 1000 }
+    )
+    rerender(
+      <Dialog {...updatedProps}>
+        <div>test content</div>
+      </Dialog>
+    )
 
-      // Dialog should be open again
-      expect(screen.getByText("test content")).toBeVisible()
-    })
+    // Dialog should be open again
+    expect(screen.getByText("test content")).toBeVisible()
   })
 })

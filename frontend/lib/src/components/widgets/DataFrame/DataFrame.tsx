@@ -238,7 +238,7 @@ function DataFrame({
   // Update the column order if the element.columnOrder value changes
   // e.g. if the user has applied changes to the column order in the code.
   useExecuteWhenChanged(
-    setColumnOrder,
+    () => setColumnOrder(element.columnOrder),
     element.columnOrder,
     detectColumnOrderChange
   )
@@ -677,14 +677,11 @@ function DataFrame({
   }, [resizableSize, numRows, glideColumns])
 
   // Hide the column visibility menu if all columns are visible:
-  useExecuteWhenChanged(
-    ([allColumnsLength, columnsLength]) => {
-      if (allColumnsLength == columnsLength) {
-        setShowColumnVisibilityMenu(false)
-      }
-    },
-    [allColumns.length, columns.length]
-  )
+  useExecuteWhenChanged(() => {
+    if (allColumns.length == columns.length) {
+      setShowColumnVisibilityMenu(false)
+    }
+  }, [allColumns.length, columns.length])
 
   return (
     <StyledResizableContainer

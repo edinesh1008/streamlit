@@ -26,7 +26,7 @@ describe("#useExecuteWhenChanged", () => {
   it("should not call the callback when the value is the same", () => {
     const callback = vi.fn()
     const { rerender } = renderHook(
-      ({ value }) => useExecuteWhenChanged(([v]) => callback(v), [value]),
+      ({ value }) => useExecuteWhenChanged(() => callback(value), [value]),
       { initialProps: { value: 1 } }
     )
 
@@ -41,7 +41,7 @@ describe("#useExecuteWhenChanged", () => {
   it("should execute the callback when the value changes", () => {
     const callback = vi.fn()
     const { rerender } = renderHook(
-      ({ value }) => useExecuteWhenChanged(([v]) => callback(v), [value]),
+      ({ value }) => useExecuteWhenChanged(() => callback(value), [value]),
       { initialProps: { value: 1 } }
     )
 
@@ -64,7 +64,7 @@ describe("#useExecuteWhenChanged", () => {
     const callback = vi.fn()
     const value = { id: 1, name: "test" }
     const { rerender } = renderHook(
-      ({ value }) => useExecuteWhenChanged(([v]) => callback(v), [value]),
+      ({ value }) => useExecuteWhenChanged(() => callback(value), [value]),
       { initialProps: { value } }
     )
 
@@ -81,7 +81,11 @@ describe("#useExecuteWhenChanged", () => {
 
     const { rerender } = renderHook(
       ({ value }) =>
-        useExecuteWhenChanged(([v]) => callback(v), [value], customComparator),
+        useExecuteWhenChanged(
+          () => callback(value),
+          [value],
+          customComparator
+        ),
       { initialProps: { value: "test value" } }
     )
 
