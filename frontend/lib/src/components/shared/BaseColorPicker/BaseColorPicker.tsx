@@ -90,7 +90,9 @@ const BaseColorPicker = (props: BaseColorPickerProps): React.ReactElement => {
   const theme: EmotionTheme = useTheme()
 
   // Reset the value when the prop value changes
-  useExecuteWhenChanged(() => setValue(propValue), [propValue])
+  useExecuteWhenChanged(() => {
+    setValue(propValue)
+  }, [propValue])
 
   // Note: This is a "local" onChange handler used to update the color preview
   // (allowing the user to click and drag). this.props.onChange is only called

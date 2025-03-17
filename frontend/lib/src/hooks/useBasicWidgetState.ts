@@ -205,7 +205,7 @@ export function useBasicWidgetState<
       if (!element.setValue) return
       // TODO: Update to match React best practices
       // eslint-disable-next-line react-compiler/react-compiler
-      element.setValue = false
+      element.setValue = false // Clear "event".
 
       setNextValueWithSource({
         value: getCurrStateFromProto(element),
