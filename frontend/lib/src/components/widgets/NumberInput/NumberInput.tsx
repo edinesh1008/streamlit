@@ -115,10 +115,9 @@ const NumberInput: React.FC<Props> = ({
     isFocused && width > theme.breakpoints.hideWidgetDetails
 
   // Update the step if the props change
-  useExecuteWhenChanged(
-    () => setStep(getStep({ step: element.step, dataType: element.dataType })),
-    [element.dataType, element.step]
-  )
+  useExecuteWhenChanged(() => {
+    setStep(getStep({ step: element.step, dataType: element.dataType }))
+  }, [element.dataType, element.step])
 
   const commitValue = useCallback(
     ({ value, source }: { value: number | null; source: Source }) => {

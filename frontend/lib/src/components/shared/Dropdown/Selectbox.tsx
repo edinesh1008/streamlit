@@ -32,6 +32,7 @@ import {
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
 import { EmotionTheme } from "~lib/theme"
+import { useExecuteWhenChanged } from "~lib/hooks/useExecuteWhenChanged"
 
 const NO_OPTIONS_MSG = "No options to select."
 
@@ -86,6 +87,10 @@ const Selectbox: React.FC<Props> = ({
 }) => {
   const theme: EmotionTheme = useTheme()
   const [value, setValue] = useState<number | null>(propValue)
+
+  useExecuteWhenChanged(() => {
+    setValue(propValue)
+  }, [propValue])
 
   const handleChange = useCallback(
     (params: OnChangeParams): void => {
@@ -253,19 +258,4 @@ const Selectbox: React.FC<Props> = ({
   )
 }
 
-const SelectboxWrapper = (props: Props): React.ReactElement => {
-  const { value } = props
-  /**
-   * Using a key to reset the Selectbox component's internal state when value
-   * changes. This is a React pattern that avoids the need for useEffect to
-   * reset state when props change. When the key changes, React will unmount and
-   * remount the component, creating a fresh instance with new state initialized
-   * from the current props.
-   * @see {@link https://react.dev/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes | You Might Not Need an Effect}
-   */
-  const key = `${value}`
-
-  return <Selectbox {...props} key={key} />
-}
-
-export default memo(SelectboxWrapper)
+export default memo(Selectbox)

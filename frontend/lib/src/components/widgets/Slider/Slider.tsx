@@ -104,7 +104,9 @@ function Slider({
 
   // When resetting a form, `value` will change so we need to change `uiValue`
   // to match.
-  useExecuteWhenChanged(() => setUiValue(value), [value])
+  useExecuteWhenChanged(() => {
+    setUiValue(value)
+  }, [value])
 
   // TODO: Update to match React best practices
   // eslint-disable-next-line react-compiler/react-compiler

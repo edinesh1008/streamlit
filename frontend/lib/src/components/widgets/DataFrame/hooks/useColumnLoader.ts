@@ -294,10 +294,9 @@ function useColumnLoader(
     React.useState<Map<string, any>>(parsedColumnConfig)
 
   // Resync state whenever the parsed column config from the proto changes:
-  useExecuteWhenChanged(
-    () => setColumnConfigMapping(parsedColumnConfig),
-    [parsedColumnConfig]
-  )
+  useExecuteWhenChanged(() => {
+    setColumnConfigMapping(parsedColumnConfig)
+  }, [parsedColumnConfig])
 
   const stretchColumns: boolean =
     element.useContainerWidth ||
