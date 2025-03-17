@@ -103,6 +103,7 @@ describe("Dialog container", () => {
   })
 
   it("should reopen dialog when deltaMsgReceivedAt changes even if isOpen hasn't changed", async () => {
+    const user = userEvent.setup()
     // Initial render with dialog open
     const initialProps = getProps()
     const { rerender } = render(
@@ -114,7 +115,7 @@ describe("Dialog container", () => {
     expect(screen.getByText("test")).toBeVisible()
 
     // User closes the dialog
-    await userEvent.click(screen.getByLabelText("Close"))
+    await user.click(screen.getByLabelText("Close"))
     expect(screen.queryByText("test")).not.toBeInTheDocument()
 
     // New message arrives with same isOpen=true but different deltaMsgReceivedAt
@@ -154,6 +155,7 @@ describe("Dialog container", () => {
   })
 
   it("should maintain closed state when only title changes", async () => {
+    const user = userEvent.setup()
     // Initial render with dialog open
     const initialProps = getProps()
     const { rerender } = render(
@@ -166,7 +168,7 @@ describe("Dialog container", () => {
     expect(screen.getByText("test")).toBeVisible()
 
     // User closes the dialog
-    await userEvent.click(screen.getByLabelText("Close"))
+    await user.click(screen.getByLabelText("Close"))
     expect(screen.queryByText("test")).not.toBeInTheDocument()
 
     // Only title changes
@@ -201,6 +203,7 @@ describe("Dialog container", () => {
   })
 
   it("should handle multiple deltaMsgReceivedAt changes", async () => {
+    const user = userEvent.setup()
     // Initial render with dialog open
     const initialProps = getProps()
     const { rerender } = render(
@@ -212,7 +215,7 @@ describe("Dialog container", () => {
     expect(screen.getByText("test")).toBeVisible()
 
     // User closes the dialog
-    await userEvent.click(screen.getByLabelText("Close"))
+    await user.click(screen.getByLabelText("Close"))
     expect(screen.queryByText("test")).not.toBeInTheDocument()
 
     // First message arrives
@@ -227,7 +230,7 @@ describe("Dialog container", () => {
     expect(screen.getByText("test")).toBeVisible()
 
     // User closes the dialog again
-    await userEvent.click(screen.getByLabelText("Close"))
+    await user.click(screen.getByLabelText("Close"))
     expect(screen.queryByText("test")).not.toBeInTheDocument()
 
     // Second message arrives
