@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-import React, {
-  ComponentType,
-  ReactElement,
-  useCallback,
-  useMemo,
-  useState,
-} from "react"
+import React, { ComponentType, ReactElement, useEffect, useState } from "react"
 
 import hoistNonReactStatics from "hoist-non-react-statics"
 
@@ -46,48 +40,38 @@ const withPagination = (
     resetOnAdd,
     ...props
   }: Props): ReactElement => {
-    const [currentPageState, setCurrentPage] = useState<number>(0)
+    const [currentPage, updateCurrentPage] = useState<number>(0)
+    const [totalPages, updateTotalPages] = useState<number>(() =>
+      calculateNumPages(items, pageSize)
+    )
 
     const prevItems: any[] = usePrevious(items)
-    const totalPages = calculateNumPages(items, pageSize)
 
-    // Calculate the correct current page based on current state and props
-    let currentPage = currentPageState
-
-    // Handle item additions (if resetOnAdd is true)
-    if (prevItems && prevItems.length < items.length && resetOnAdd) {
-      currentPage = 0
-
-      // Only update state if needed to avoid unnecessary renders
-      if (currentPageState !== 0) {
-        setCurrentPage(0)
+    useEffect(() => {
+      if (prevItems && prevItems.length !== items.length) {
+        updateTotalPages(calculateNumPages(items, pageSize))
       }
-    }
-    // Handle when current page is out of bounds
-    else if (currentPage >= totalPages && totalPages > 0) {
-      currentPage = totalPages - 1
-
-      // Only update state if needed
-      if (currentPageState !== totalPages - 1) {
-        setCurrentPage(totalPages - 1)
+      if (prevItems && prevItems.length < items.length) {
+        if (resetOnAdd) {
+          updateCurrentPage(0)
+        }
+      } else if (currentPage + 1 >= totalPages) {
+        updateCurrentPage(totalPages - 1)
       }
+    }, [items, currentPage, pageSize, prevItems, resetOnAdd, totalPages])
+
+    const onNext = (): void => {
+      updateCurrentPage(Math.min(currentPage + 1, totalPages - 1))
     }
 
-    const onNext = useCallback(() => {
-      setCurrentPage(Math.min(currentPage + 1, totalPages - 1))
-    }, [currentPage, totalPages])
+    const onPrevious = (): void => {
+      updateCurrentPage(Math.max(0, currentPage - 1))
+    }
 
-    const onPrevious = useCallback(() => {
-      setCurrentPage(Math.max(0, currentPage - 1))
-    }, [currentPage])
-
-    const paginatedItems = useMemo(() => {
-      return items.slice(
-        currentPage * pageSize,
-        currentPage * pageSize + pageSize
-      )
-    }, [currentPage, items, pageSize])
-
+    const paginatedItems = items.slice(
+      currentPage * pageSize,
+      currentPage * pageSize + pageSize
+    )
     return (
       <>
         <WrappedComponent items={paginatedItems} {...props} />
