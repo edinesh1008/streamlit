@@ -37,6 +37,7 @@ import {
   StyledImageContainer,
   StyledImageList,
 } from "./styled-components"
+import { useEvaluatedCssProperty } from "~lib/hooks/useEvaluatedCssProperty"
 
 const LOG = getLogger("ImageList")
 
