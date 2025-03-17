@@ -112,10 +112,10 @@ const NumberInput: React.FC<Props> = ({
   const allowEnterToSubmit = inForm
     ? widgetMgr.allowFormEnterToSubmit(elementFormId)
     : dirty
+
   // Hide input instructions for small widget sizes.
   const shouldShowInstructions =
-    isFocused &&
-    parseInt(width || "0", 10) > theme.breakpoints.hideWidgetDetails
+    isFocused && width > theme.breakpoints.hideWidgetDetails
 
   // Update the step if the props change
   useEffect(() => {
@@ -462,7 +462,7 @@ const NumberInput: React.FC<Props> = ({
           }}
         />
         {/* We only want to show the increment/decrement controls when there is sufficient room to display the value and these controls. */}
-        {parseInt(width || "0", 10) > numberInputControlBreakpoint && (
+        {width > numberInputControlBreakpoint && (
           <StyledInputControls>
             <StyledInputControl
               data-testid="stNumberInputStepDown"
