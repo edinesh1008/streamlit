@@ -32,7 +32,7 @@ class TextMixin:
         body: SupportsStr,
         *,  # keyword-only arguments:
         help: str | None = None,
-        width: Literal["stretch", "content"] | int = "stretch",
+        width: Literal["stretch", "content"] | int = "content",
         scale: int = 1,
     ) -> DeltaGenerator:
         r"""Write text without Markdown or HTML parsing.
