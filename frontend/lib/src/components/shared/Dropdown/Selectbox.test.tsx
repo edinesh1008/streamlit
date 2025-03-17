@@ -52,7 +52,7 @@ describe("Selectbox widget", () => {
 
   it("renders without crashing", () => {
     render(<Selectbox {...props} />)
-    expect(screen.getByRole("combobox")).toBeInTheDocument()
+    expect(screen.getByRole("combobox")).toBeVisible()
   })
 
   it("has correct className", () => {
@@ -92,7 +92,7 @@ describe("Selectbox widget", () => {
       placeholder: "Please select",
     })
     render(<Selectbox {...props} />)
-    expect(screen.getByText("Please select")).toBeInTheDocument()
+    expect(screen.getByText("Please select")).toBeVisible()
   })
 
   it("renders a placeholder with empty options", () => {
@@ -101,7 +101,7 @@ describe("Selectbox widget", () => {
     })
     render(<Selectbox {...props} />)
 
-    expect(screen.getByText("No options to select.")).toBeInTheDocument()
+    expect(screen.getByText("No options to select.")).toBeVisible()
     expect(screen.getByRole("combobox")).toBeDisabled()
   })
 
@@ -115,6 +115,7 @@ describe("Selectbox widget", () => {
     expect(options).toHaveLength(props.options.length)
     options.forEach((option, index) => {
       expect(option).toHaveTextContent(props.options[index])
+      expect(option).toBeVisible()
     })
   })
 
@@ -138,7 +139,7 @@ describe("Selectbox widget", () => {
     fireEvent.click(options[2])
 
     expect(props.onChange).toHaveBeenCalledWith(2)
-    expect(screen.getByText(props.options[2])).toBeInTheDocument()
+    expect(screen.getByText(props.options[2])).toBeVisible()
   })
 
   it("doesn't filter options based on index", async () => {
@@ -146,7 +147,7 @@ describe("Selectbox widget", () => {
     render(<Selectbox {...props} />)
 
     await user.type(screen.getByRole("combobox"), "1")
-    expect(screen.getByText("No results")).toBeInTheDocument()
+    expect(screen.getByText("No results")).toBeVisible()
   })
 
   it("filters options based on label with case insensitive", async () => {
@@ -158,12 +159,14 @@ describe("Selectbox widget", () => {
     let options = screen.getAllByRole("option")
     expect(options).toHaveLength(1)
     expect(options[0]).toHaveTextContent("b")
+    expect(options[0]).toBeVisible()
 
     await user.clear(selectbox)
     await user.type(selectbox, "B")
     options = screen.getAllByRole("option")
     expect(options).toHaveLength(1)
     expect(options[0]).toHaveTextContent("b")
+    expect(options[0]).toBeVisible()
   })
 
   it("fuzzy filters options correctly", () => {
@@ -203,11 +206,43 @@ describe("Selectbox widget", () => {
   it("updates value if new value provided from parent", () => {
     const { rerender } = render(<Selectbox {...props} />)
     // Original value passed is 0
-    expect(screen.getByText(props.options[0])).toBeInTheDocument()
+    expect(screen.getByText(props.options[0])).toBeVisible()
 
     props = getProps({ value: 1 })
     rerender(<Selectbox {...props} />)
-    expect(screen.getByText(props.options[1])).toBeInTheDocument()
+    expect(screen.getByText(props.options[1])).toBeVisible()
+  })
+
+  it("initializes with null value when prop value is null", () => {
+    props = getProps({ value: null })
+    render(<Selectbox {...props} />)
+
+    // When value is null, the placeholder should be shown
+    expect(screen.getByText(props.placeholder as string)).toBeVisible()
+  })
+
+  it("updates internal state when prop value changes to null", () => {
+    const { rerender } = render(<Selectbox {...props} />)
+    // Original value passed is 0
+    expect(screen.getByText(props.options[0])).toBeVisible()
+
+    props = getProps({ value: null })
+    rerender(<Selectbox {...props} />)
+
+    // When value is changed to null, the placeholder should be shown
+    expect(screen.getByText(props.placeholder as string)).toBeVisible()
+  })
+
+  it("calls onChange with null when selection is cleared", async () => {
+    const user = userEvent.setup()
+    props = getProps({ clearable: true })
+    render(<Selectbox {...props} />)
+
+    // Find and click the clear button
+    const clearButton = screen.getByRole("button", { name: "Clear value" })
+    await user.click(clearButton)
+
+    expect(props.onChange).toHaveBeenCalledWith(null)
   })
 })
 
@@ -224,6 +259,6 @@ describe("Selectbox widget with optional props", () => {
     const props = getProps({ help: "help text" })
     render(<Selectbox {...props} />)
 
-    expect(screen.getByTestId("stTooltipIcon")).toBeInTheDocument()
+    expect(screen.getByTestId("stTooltipIcon")).toBeVisible()
   })
 })

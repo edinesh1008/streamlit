@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { memo, useCallback, useEffect, useState } from "react"
+import React, { memo, useCallback, useState } from "react"
 
 import { isMobile } from "react-device-detect"
 import { ChevronDown } from "baseui/icon"
@@ -73,7 +73,7 @@ export function fuzzyFilterSelectOptions(
   ).reverse()
 }
 
-const Selectbox: React.FC<Props> = ({
+const SelectboxInner: React.FC<Props> = ({
   disabled,
   value: propValue,
   onChange,
@@ -86,12 +86,6 @@ const Selectbox: React.FC<Props> = ({
 }) => {
   const theme: EmotionTheme = useTheme()
   const [value, setValue] = useState<number | null>(propValue)
-
-  // Update the value whenever the value provided by the props changes
-  // TODO: Find a better way to handle this to prevent unneeded re-renders
-  useEffect(() => {
-    setValue(propValue)
-  }, [propValue])
 
   const handleChange = useCallback(
     (params: OnChangeParams): void => {
@@ -257,6 +251,14 @@ const Selectbox: React.FC<Props> = ({
       />
     </div>
   )
+}
+
+const Selectbox: React.FC<Props> = props => {
+  // Generate a key based on the value to force re-render when value changes
+  // so that the internal state is reset to match the prop value
+  const key = `${props.value}`
+
+  return <SelectboxInner key={key} {...props} />
 }
 
 export default memo(Selectbox)
