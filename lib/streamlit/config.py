@@ -831,7 +831,7 @@ _create_option(
     description="""
         Enables support for websocket compression.
     """,
-    default_val=False,
+    default_val=True,
     type_=bool,
 )
 
