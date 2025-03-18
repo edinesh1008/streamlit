@@ -16,6 +16,4 @@
 
 import styled from "@emotion/styled"
 
-export const StyledSpace = styled.div`
-  margin-left: auto;
-`
+export const StyledSpace = styled.div``

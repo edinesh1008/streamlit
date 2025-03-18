@@ -20,5 +20,7 @@ option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "SpaceProto";
 
 message Space {
-  bool float_left = 1;
+  // Size value, can be an integer as string (pixel value) or "stretch"
+  string size = 1;
+
 }
