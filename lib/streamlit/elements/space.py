@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 from streamlit.proto.Space_pb2 import Space as SpaceProto
 from streamlit.runtime.metrics_util import gather_metrics
@@ -25,18 +25,57 @@ if TYPE_CHECKING:
 
 class SpaceMixin:
     @gather_metrics("space")
-    def space(self) -> DeltaGenerator:
-        """
+    def space(
+        self,
+        *,
+        size: Literal["stretch"] | int = "stretch",
+    ) -> DeltaGenerator:
+        """Insert a flexible space.
+
+        Parameters
+        ----------
+        size : "stretch" or int
+            The size of the space. The behavior depends on the parent container's direction:
+
+            - In vertical containers (default):
+              - If an integer, creates a space with that many pixels of height.
+              - If "stretch", creates a space that pushes content apart vertically.
+
+            - In horizontal containers:
+              - If an integer, creates a space with that many pixels of width.
+              - If "stretch", creates a space that pushes content apart horizontally.
+
+            Default is 50 pixels.
 
         Example
         -------
         >>> import streamlit as st
         >>>
-        >>> st.space()
+        >>> # In vertical layout (default):
+        >>> st.write("This text is before the space.")
+        >>> st.space(size=100)  # 100px tall space
+        >>> st.write("This text is after the space.")
+        >>>
+        >>> # Using "stretch" to push content to the edges of a container
+        >>> with st.container(height=200):
+        >>>     st.write("Top")
+        >>>     st.space(size="stretch")  # Pushes content to top and bottom
+        >>>     st.write("Bottom")
+        >>>
+        >>> # In horizontal layout:
+        >>> with st.container(direction="horizontal"):
+        >>>     st.write("Left")
+        >>>     st.space(size=50)  # 50px wide space
+        >>>     st.write("Middle")
+        >>>     st.space(size="stretch")  # Pushes "Middle" to the left and "Right" to the right
+        >>>     st.write("Right")
 
         """
         space_proto = SpaceProto()
-        space_proto.float_left = True
+
+        # Set size parameter as string
+        space_proto.size = str(size)
+
         return self.dg._enqueue("space", space_proto)
 
     @property

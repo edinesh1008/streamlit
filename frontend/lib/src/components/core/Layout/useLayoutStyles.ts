@@ -26,7 +26,7 @@ export type UseLayoutStylesArgs<T> = {
         useContainerWidth?: boolean | null
         flex?: string
         scale?: number
-        floatLeft?: boolean
+        size?: number | "stretch"
         type?: string
       })
     | undefined
@@ -43,6 +43,7 @@ export type UseLayoutStylesShape = {
   flex?: React.CSSProperties["flex"]
   height?: React.CSSProperties["height"]
   marginLeft?: React.CSSProperties["marginLeft"]
+  marginTop?: React.CSSProperties["marginTop"]
   verticalScroll?: boolean
 }
 
@@ -127,7 +128,7 @@ const getFlex = (
   scale: number | undefined
 ) => {
   if (useContainerWidth !== undefined && useContainerWidth) {
-    if (!Number.isNaN(Number(commandWidth))) {
+    if (!Number.isNaN(Number(containerWidth))) {
       return `1 1 ${validateWidth(containerWidth)}px`
     } else {
       return `1 1 ${containerWidth}`
@@ -197,10 +198,46 @@ export const useLayoutStyles = <T>({
       }
     }
 
-    if (element.floatLeft) {
-      return {
-        marginLeft: "auto",
+    if ("size" in element) {
+      const size = element.size
+      const isNumeric = !isNaN(Number(size))
+      const isStretch = size === "stretch"
+
+      const isHorizontal = direction === "row"
+
+      if (isNumeric) {
+        // Fixed size space
+        const sizeValue = `${validateWidth(size)}px`
+
+        if (isHorizontal) {
+          // In horizontal container, set width
+          return {
+            width: sizeValue,
+          }
+        } else {
+          // In vertical container, set height
+          return {
+            width: "100%",
+            height: sizeValue,
+          }
+        }
+      } else if (isStretch) {
+        // Stretch space - push content to edges
+        if (isHorizontal) {
+          // In horizontal container, push horizontally
+          return {
+            marginLeft: "auto",
+          }
+        } else {
+          // In vertical container, push vertically
+          return {
+            marginTop: "auto",
+          }
+        }
       }
+
+      // Default fallback if size is not recognized
+      return {}
     }
 
     if ("imgs" in element) {
