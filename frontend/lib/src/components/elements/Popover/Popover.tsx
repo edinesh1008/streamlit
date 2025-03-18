@@ -63,11 +63,7 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
     boxWidth = `${element.width}px`
   }
 
-  let boxFlex = ""
-  if (element.scale) {
-    boxFlex = `${element.scale}`
-  }
-
+  let boxFlex = undefined
   let flexWidth
   if (
     element.width === "stretch" ||
@@ -75,6 +71,9 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
     Number.isInteger(Number(element.width))
   ) {
     flexWidth = true
+    if (element.scale) {
+      boxFlex = `${element.scale}`
+    }
   } else if (element.width === "content") {
     flexWidth = false
   }
