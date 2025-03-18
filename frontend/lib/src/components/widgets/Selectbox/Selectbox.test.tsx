@@ -23,15 +23,12 @@ import {
   within,
   waitFor,
 } from "@testing-library/react"
-import { prettyDOM } from "@testing-library/dom"
 
 import { Selectbox as SelectboxProto } from "@streamlit/protobuf"
 import { ElementNode } from "~lib/AppNode"
 
 import { render } from "~lib/test_util"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
-import * as Utils from "~lib/theme/utils"
-import { mockConvertRemToPx } from "~lib/mocks/mocks"
 import ElementNodeRenderer from "~lib/components/core/Block/ElementNodeRenderer"
 import { ScriptRunState } from "~lib/ScriptRunState"
 import { FlexContextProvider } from "~lib/components/core/Flex/FlexContext"
@@ -82,36 +79,6 @@ const createSelectboxElementNode = (
     quiverElement: null,
     vegaLiteChartElement: null,
   } as unknown as ElementNode
-}
-
-// Create a proper mock of the FileUploadClient
-const createMockUploadClient = () => {
-  return {
-    uploadFile: vi.fn().mockResolvedValue("mock-upload-url"),
-    uploadBytes: vi.fn().mockResolvedValue("mock-upload-url"),
-    // Remove sessionInfo as it's private
-    endpoints: {
-      buildMediaURL: () => "",
-      buildMediaQueryString: () => "",
-      buildComponentURL: () => "",
-    },
-    formsWithPendingRequests: new Set(),
-    pendingFormUploadsChanged: vi.fn(),
-    markFormUploaderPending: vi.fn(),
-    clearPendingFormUploads: vi.fn(),
-    removeFormUploader: vi.fn(),
-    isPendingUpload: vi.fn().mockReturnValue(false),
-    fileUploaderStateChanged: vi.fn(),
-    reset: vi.fn(),
-    pendingFileURLsRequests: new Map(),
-    deleteFile: vi.fn().mockResolvedValue(true),
-    fetchFileURLs: vi.fn().mockResolvedValue({}),
-    onFileURLsResponse: vi.fn(),
-    emitFileURLsResponse: vi.fn(),
-    clearPendingFileURLsRequests: vi.fn(),
-    getFormIdSet: vi.fn().mockReturnValue(new Set()),
-    offsetPendingRequestCount: vi.fn(),
-  }
 }
 
 const getElementNodeRendererProps = (elementNode: any): any => ({
