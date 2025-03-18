@@ -85,6 +85,15 @@ export interface Args {
   resetHostAuthToken: () => void
 
   /**
+   * Function to send a client error message to the host.
+   */
+  sendClientError: (
+    error: string | number,
+    message: string,
+    url: string
+  ) => void
+
+  /**
    * Function to set the host config and allowed-message-origins for this app (if in a relevant deployment
    * scenario).
    */
@@ -240,6 +249,12 @@ export class WebsocketConnection {
       event === "FATAL_ERROR" &&
       this.state !== ConnectionState.DISCONNECTED_FOREVER
     ) {
+      this.args.sendClientError(
+        "Fatal error occurred",
+        // @ts-expect-error - errMsg always passed with FATAL_ERROR event
+        errMsg,
+        "Websocket Connection"
+      )
       // If we get a fatal error, we transition to DISCONNECTED_FOREVER
       // regardless of our current state.
       this.setFsmState(ConnectionState.DISCONNECTED_FOREVER, errMsg)
@@ -312,6 +327,7 @@ export class WebsocketConnection {
       this.args.baseUriPartsList,
       PING_MINIMUM_RETRY_PERIOD_MS,
       PING_MAXIMUM_RETRY_PERIOD_MS,
+      this.args.sendClientError,
       this.args.onRetry,
       this.args.onHostConfigResp
     )
@@ -404,9 +420,14 @@ export class WebsocketConnection {
       }
     })
 
-    this.websocket.addEventListener("error", () => {
+    this.websocket.addEventListener("error", (event: unknown) => {
       if (checkWebsocket()) {
         LOG.error("WebSocket onerror")
+        this.args.sendClientError(
+          "Websocket onerror triggered",
+          `Error: ${event}`,
+          "Websocket Connection"
+        )
         this.closeConnection()
         this.stepFsm("CONNECTION_ERROR")
       }
@@ -444,6 +465,11 @@ export class WebsocketConnection {
 
       if (this.websocket.readyState === 0 /* CONNECTING */) {
         LOG.info(`${uri} timed out`)
+        this.args.sendClientError(
+          "Websocket Connection timed out",
+          `${uri} timed out`,
+          "Websocket Connection"
+        )
         this.closeConnection()
         this.stepFsm("CONNECTION_TIMED_OUT")
       }

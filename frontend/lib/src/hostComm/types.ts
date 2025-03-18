@@ -237,7 +237,7 @@ export type IGuestToHostMessage =
   | {
       type: "CLIENT_ERROR"
       dialog: boolean
-      error: string
+      error: string | number
       message?: string
       componentName?: string
       url?: string

@@ -417,6 +417,20 @@ export class App extends PureComponent<Props, State> {
       connectionStateChanged: this.handleConnectionStateChanged,
       claimHostAuthToken: this.hostCommunicationMgr.claimAuthToken,
       resetHostAuthToken: this.hostCommunicationMgr.resetAuthToken,
+      sendClientError: (
+        error: string | number,
+        message: string,
+        url: string
+      ) => {
+        this.hostCommunicationMgr.sendMessageToHost({
+          type: "CLIENT_ERROR",
+          dialog: false,
+          componentName: "Websocket Connection",
+          error,
+          message,
+          url,
+        })
+      },
       onHostConfigResp: (response: IHostConfigResponse) => {
         const {
           allowedOrigins,

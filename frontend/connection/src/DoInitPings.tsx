@@ -40,6 +40,11 @@ export function doInitPings(
   uriPartsList: URL[],
   minimumTimeoutMs: number,
   maximumTimeoutMs: number,
+  sendClientError: (
+    error: string | number,
+    message: string,
+    url: string
+  ) => void,
   retryCallback: OnRetry,
   onHostConfigResp: (resp: IHostConfigResponse) => void
 ): Promise<number> {
@@ -129,6 +134,7 @@ If you are trying to access a Streamlit app running on another server, this coul
       })
       .catch(error => {
         if (error.code === "ECONNABORTED") {
+          LOG.error("Connection attempt timed out")
           return retry("Connection timed out.")
         }
 
@@ -136,7 +142,16 @@ If you are trying to access a Streamlit app running on another server, this coul
           // The request was made and the server responded with a status code
           // that falls out of the range of 2xx
 
-          const { data, status } = error.response
+          const { data, status, statusText } = error.response
+
+          // If its our 6th try (the retry count at which we show the connection error dialog), send a client error
+          if (totalTries === 6) {
+            const source = new URL(error.response.config.url)
+            LOG.error(
+              `Client Error: Websocket connection - ${status} when attempting to reach ${source.pathname}`
+            )
+            sendClientError(status, statusText, source.pathname)
+          }
 
           if (status === /* NO RESPONSE */ 0) {
             return retryWhenTheresNoResponse()
@@ -153,9 +168,34 @@ If you are trying to access a Streamlit app running on another server, this coul
           // The request was made but no response was received
           // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
           // http.ClientRequest in node.js
+
+          if (totalTries === 6) {
+            // If its our 6th try, send a client error
+            const source = new URL(error.config.url)
+            LOG.error(
+              `Client Error: Websocket connection - No response received from server when attempting to reach ${source.pathname}`
+            )
+            sendClientError(
+              "No response received from server",
+              error.request,
+              source.pathname
+            )
+          }
           return retryWhenTheresNoResponse()
         }
         // Something happened in setting up the request that triggered an Error
+        if (totalTries === 6) {
+          // If its our 6th try, send a client error
+          const source = new URL(error.config.url)
+          LOG.error(
+            `Client Error: Websocket connection - Error pinging server when attempting to reach ${source.pathname}`
+          )
+          sendClientError(
+            "Error pinging server",
+            error.message,
+            source.pathname
+          )
+        }
         return retry(error.message)
       })
   }
