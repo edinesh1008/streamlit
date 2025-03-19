@@ -15,24 +15,18 @@
  */
 
 import {
-  getTypeName,
-  IndexTypeName,
-} from "@streamlit/lib/src/dataframes/arrowTypeUtils"
-import { Quiver } from "@streamlit/lib/src/dataframes/Quiver"
-import { isNullOrUndefined } from "@streamlit/lib/src/util/utils"
+  DataFrameCellType,
+  getTimezone,
+  isDatetimeType,
+  isDateType,
+  isNumericType,
+} from "~lib/dataframes/arrowTypeUtils"
+import { Quiver } from "~lib/dataframes/Quiver"
+import { isNullOrUndefined } from "~lib/util/utils"
 
 const MagicFields = {
   DATAFRAME_INDEX: "(index)",
 }
-
-/** Types of dataframe-indices that are supported as x axis. */
-const SUPPORTED_INDEX_TYPES = new Set([
-  IndexTypeName.DatetimeIndex,
-  IndexTypeName.Float64Index,
-  IndexTypeName.Int64Index,
-  IndexTypeName.RangeIndex,
-  IndexTypeName.UInt64Index,
-])
 
 /** All of the data that makes up a VegaLite chart. */
 export interface VegaLiteChartElement {
@@ -86,7 +80,7 @@ export interface WrappedNamedDataset {
 export function getInlineData(
   quiverData: Quiver | null
 ): { [field: string]: any }[] | null {
-  if (!quiverData || quiverData.data.numRows === 0) {
+  if (!quiverData || quiverData.dimensions.numDataRows === 0) {
     return null
   }
 
@@ -142,47 +136,63 @@ export function getDataArray(
   quiverData: Quiver,
   startIndex = 0
 ): { [field: string]: any }[] {
-  if (quiverData.isEmpty()) {
+  if (quiverData.dimensions.numDataRows === 0) {
     return []
   }
 
   const dataArr = []
-  const { dataRows: rows, dataColumns: cols } = quiverData.dimensions
+  const { numDataRows, numDataColumns, numIndexColumns } =
+    quiverData.dimensions
 
-  const indexType = getTypeName(quiverData.types.index[0])
-  const hasSupportedIndex = SUPPORTED_INDEX_TYPES.has(
-    indexType as IndexTypeName
-  )
+  // This currently only implemented to work with a single index column.
+  // If the dataframe is multi-index, the remaining index columns will be ignored.
+  const firstIndexColumnType = quiverData.columnTypes[0] ?? undefined
+  const hasSupportedIndex =
+    firstIndexColumnType &&
+    firstIndexColumnType.type === DataFrameCellType.INDEX &&
+    (isNumericType(firstIndexColumnType) ||
+      isDatetimeType(firstIndexColumnType) ||
+      isDateType(firstIndexColumnType))
 
-  for (let rowIndex = startIndex; rowIndex < rows; rowIndex++) {
+  for (let rowIndex = startIndex; rowIndex < numDataRows; rowIndex++) {
     const row: { [field: string]: any } = {}
 
     if (hasSupportedIndex) {
-      const indexValue = quiverData.getIndexValue(rowIndex, 0)
+      const { content: indexValue } = quiverData.getCell(rowIndex, 0)
       // VegaLite can't handle BigInts, so they have to be converted to Numbers first
+      // Converting to numbers here might loses accuracy for numbers larger than the max safe integer.
       row[MagicFields.DATAFRAME_INDEX] =
         typeof indexValue === "bigint" ? Number(indexValue) : indexValue
     }
 
-    for (let colIndex = 0; colIndex < cols; colIndex++) {
-      const dataValue = quiverData.getDataValue(rowIndex, colIndex)
-      const dataType = quiverData.types.data[colIndex]
-      const typeName = getTypeName(dataType)
+    for (let colIndex = 0; colIndex < numDataColumns; colIndex++) {
+      // The underlying dataframe expects the column position to start at 0 with
+      // the index columns first. Therefore, we need to adjust the position
+      // to account for the index columns.
+      const colPos = colIndex + numIndexColumns
+      const { content: dataValue, contentType: dataType } = quiverData.getCell(
+        rowIndex,
+        colPos
+      )
 
       if (
-        typeName !== "datetimetz" &&
-        (dataValue instanceof Date || Number.isFinite(dataValue)) &&
-        (typeName.startsWith("datetime") || typeName === "date")
+        (dataValue instanceof Date ||
+          (typeof dataValue === "number" && Number.isFinite(dataValue))) &&
+        (isDatetimeType(dataType) || isDateType(dataType)) &&
+        // Only convert dates without timezone information
+        // to utc timezone
+        !getTimezone(dataType)
       ) {
         // For dates that do not contain timezone information.
         // Vega JS assumes dates in the local timezone, so we need to convert
         // UTC date to be the same date in the local timezone.
         const offset = new Date(dataValue).getTimezoneOffset() * 60 * 1000 // minutes to milliseconds
-        row[quiverData.columns[0][colIndex]] = dataValue.valueOf() + offset
-      } else if (typeof dataValue === "bigint") {
-        row[quiverData.columns[0][colIndex]] = Number(dataValue)
+        row[quiverData.columnNames[0][colPos]] = dataValue.valueOf() + offset
       } else {
-        row[quiverData.columns[0][colIndex]] = dataValue
+        // VegaLite can't handle BigInts, so they have to be converted to Numbers first.
+        // Converting to numbers here might loses accuracy for numbers larger than the max safe integer.
+        row[quiverData.columnNames[0][colPos]] =
+          typeof dataValue === "bigint" ? Number(dataValue) : dataValue
       }
     }
     dataArr.push(row)

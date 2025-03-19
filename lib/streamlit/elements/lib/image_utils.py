@@ -17,9 +17,10 @@ from __future__ import annotations
 import io
 import os
 import re
+from collections.abc import Sequence
 from enum import IntEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, Literal, Sequence, Union, cast
+from typing import TYPE_CHECKING, Final, Literal, Union, cast
 
 from typing_extensions import TypeAlias
 
@@ -240,7 +241,7 @@ def image_to_url(
     If `image` is already a URL, return it unmodified.
     Otherwise, add the image to the MediaFileManager and return the URL.
     (When running in "raw" mode, we won't actually load data into the
-    MediaFileManager, and we'll return an empty URL.)
+    MediaFileManager, and we'll return an empty URL).
     """
     import numpy as np
     from PIL import Image, ImageFile
@@ -343,7 +344,7 @@ def image_to_url(
 
 
 def _4d_to_list_3d(array: npt.NDArray[Any]) -> list[npt.NDArray[Any]]:
-    return [array[i, :, :, :] for i in range(0, array.shape[0])]
+    return [array[i, :, :, :] for i in range(array.shape[0])]
 
 
 def marshall_images(
@@ -358,6 +359,7 @@ def marshall_images(
 ) -> None:
     """Fill an ImageListProto with a list of images and their captions.
     The images will be resized and reformatted as necessary.
+
     Parameters
     ----------
     coordinates
@@ -403,7 +405,7 @@ def marshall_images(
     elif isinstance(image, np.ndarray) and len(cast(NumpyShape, image.shape)) == 4:
         images = _4d_to_list_3d(image)
     else:
-        images = [image]  # type: ignore
+        images = cast(Sequence[AtomicImage], [image])
 
     if isinstance(caption, list):
         captions: Sequence[str | None] = caption
@@ -416,9 +418,9 @@ def marshall_images(
     else:
         captions = [str(caption)]
 
-    assert isinstance(
-        captions, list
-    ), "If image is a list then caption should be as well"
+    assert isinstance(captions, list), (
+        "If image is a list then caption should be as well"
+    )
     assert len(captions) == len(images), "Cannot pair %d captions with %d images." % (
         len(captions),
         len(images),

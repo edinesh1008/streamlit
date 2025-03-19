@@ -22,7 +22,7 @@ import secrets
 import threading
 from collections import OrderedDict
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from blinker import Signal
 
@@ -84,6 +84,12 @@ class ShowErrorDetailsConfigOptions(str, Enum):
         # Config options can be set from several places including the command-line and
         # the user's script. Legacy config options (true/false) will have type string when set via
         # command-line and bool when set via user script (e.g. st.set_option("client.showErrorDetails", False)).
+
+
+class CustomThemeCategories(str, Enum):
+    """Theme categories that can be set with custom theme config."""
+
+    SIDEBAR = "sidebar"
 
 
 def set_option(key: str, value: Any, where_defined: str = _USER_DEFINED) -> None:
@@ -215,9 +221,9 @@ def get_options_for_section(section: str) -> dict[str, Any]:
 
 def _create_section(section: str, description: str) -> None:
     """Create a config section and store it globally in this module."""
-    assert (
-        section not in _section_descriptions
-    ), f'Cannot define section "{section}" twice.'
+    assert section not in _section_descriptions, (
+        f'Cannot define section "{section}" twice.'
+    )
     _section_descriptions[section] = description
 
 
@@ -282,15 +288,45 @@ def _create_option(
         type_=type_,
         sensitive=sensitive,
     )
-    assert (
-        option.section in _section_descriptions
-    ), 'Section "{}" must be one of {}.'.format(
-        option.section,
-        ", ".join(_section_descriptions.keys()),
+    assert option.section in _section_descriptions, (
+        'Section "{}" must be one of {}.'.format(
+            option.section,
+            ", ".join(_section_descriptions.keys()),
+        )
     )
     assert key not in _config_options_template, f'Cannot define option "{key}" twice.'
     _config_options_template[key] = option
     return option
+
+
+def _create_theme_options(
+    name: str,
+    categories: list[Literal["theme"] | CustomThemeCategories],
+    description: str | None = None,
+    default_val: Any | None = None,
+    visibility: str = "visible",
+    type_: type = str,
+) -> None:
+    """
+    Create ConfigOption(s) for a theme-related config option and store it globally in this module.
+    The same config option can be supported for multiple categories, e.g. "theme" and "theme.sidebar".
+    """
+    for cat in categories:
+        section = cat if cat == "theme" else f"theme.{cat.value}"
+
+        _create_option(
+            f"{section}.{name}",
+            description=description,
+            default_val=default_val,
+            scriptable=False,
+            visibility=visibility,
+            deprecated=False,
+            deprecation_text=None,
+            expiration_date=None,
+            replaced_by=None,
+            type_=type_,
+            sensitive=False,
+        )
 
 
 def _delete_option(key: str) -> None:
@@ -300,9 +336,9 @@ def _delete_option(key: str) -> None:
     """
     try:
         del _config_options_template[key]
-        assert (
-            _config_options is not None
-        ), "_config_options should always be populated here."
+        assert _config_options is not None, (
+            "_config_options should always be populated here."
+        )
         del _config_options[key]
     except Exception:
         # We don't care if the option already doesn't exist.
@@ -420,6 +456,20 @@ _create_option(
     type_=bool,
 )
 
+_create_option(
+    "global.includeFragmentRunsInForwardMessageCacheCount",
+    description="""
+        If True, the server will include fragment runs in the count for the
+        forward message cache. The implication is that apps with fragments may
+        see messages being removed from the cache faster. This aligns the server
+        count with the frontend count. This is a temporary fix while we assess the
+        design of the cache.
+    """,
+    visibility="hidden",
+    default_val=False,
+    type_=bool,
+)
+
 
 # Config Section: Logger #
 _create_section("logger", "Settings to customize Streamlit log messages.")
@@ -441,8 +491,9 @@ def _logger_log_level() -> str:
 @_create_option("logger.messageFormat", type_=str)
 def _logger_message_format() -> str:
     """String format for logging messages. If logger.datetimeFormat is set,
-    logger messages will default to `%(asctime)s.%(msecs)03d %(message)s`. See
-    Python's documentation for available attributes:
+    logger messages will default to `%(asctime)s.%(msecs)03d %(message)s`.
+
+    See Python's documentation for available attributes:
     https://docs.python.org/3/library/logging.html#formatter-objects
 
     Default: "%(asctime)s %(message)s"
@@ -455,21 +506,35 @@ def _logger_message_format() -> str:
         return "%(asctime)s %(message)s"
 
 
-_create_option(
+@_create_option(
     "logger.enableRich",
-    description="""
-        Controls whether uncaught app exceptions are logged via the rich library.
-
-        If True and if rich is installed, exception tracebacks will be logged with syntax highlighting and formatting.
-        Rich tracebacks are easier to read and show more code than standard Python tracebacks.
-
-        If set to False, the default Python traceback formatting will be used.
-    """,
-    default_val=False,
     visibility="hidden",
     type_=bool,
     scriptable=True,
 )
+def _logger_enable_rich() -> bool:
+    """
+    Controls whether uncaught app exceptions are logged via the rich library.
+
+    If True and if rich is installed, exception tracebacks will be logged with
+    syntax highlighting and formatting. Rich tracebacks are easier to read and
+    show more code than standard Python tracebacks.
+
+    If set to False, the default Python traceback formatting will be used.
+
+    Defaults to True if rich is installed, False otherwise.
+    """
+    try:
+        import rich  # noqa: F401
+
+        # Rich is importable, activate rich logging.
+        return True
+    except Exception:
+        # We are extra broad in catching exceptions here because we don't want
+        # that this causes Streamlit to crash if there is any unexpected
+        # exception thrown by the import
+        return False
+
 
 # Config Section: Client #
 
@@ -975,40 +1040,142 @@ _create_option(
 
 _create_section("theme", "Settings to define a custom theme for your Streamlit app.")
 
-_create_option(
-    "theme.base",
+# Create a section for each custom theme element
+for cat in list(CustomThemeCategories):
+    _create_section(
+        f"theme.{cat.value}",
+        f"Settings to define a custom {cat.value} theme in your Streamlit app.",
+    )
+
+_create_theme_options(
+    "base",
+    categories=["theme"],
     description="""
         The preset Streamlit theme that your custom theme inherits from.
         One of "light" or "dark".
     """,
 )
 
-_create_option(
-    "theme.primaryColor",
+_create_theme_options(
+    "primaryColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
     description="Primary accent color for interactive elements.",
 )
 
-_create_option(
-    "theme.backgroundColor",
+_create_theme_options(
+    "backgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
     description="Background color for the main content area.",
 )
 
-_create_option(
-    "theme.secondaryBackgroundColor",
+_create_theme_options(
+    "secondaryBackgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
     description="Background color used for the sidebar and most interactive widgets.",
 )
 
-_create_option(
-    "theme.textColor",
+_create_theme_options(
+    "textColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
     description="Color used for almost all text.",
 )
 
-_create_option(
-    "theme.font",
+_create_theme_options(
+    "linkColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="Color used for all links.",
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "font",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
-        Font family for all text in the app, except code blocks. One of "sans serif",
+        The font family for all text in the app, except code blocks. One of "sans serif",
         "serif", or "monospace".
+        To use a custom font, it needs to be added via [theme.fontFaces].
     """,
+)
+
+_create_theme_options(
+    "codeFont",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The font family to use for code (monospace) in the app.
+        To use a custom font, it needs to be added via [theme.fontFaces].
+    """,
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "headingFont",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The font family to use for headings in the app.
+        To use a custom font, it needs to be added via [theme.fontFaces].
+    """,
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "fontFaces",
+    categories=["theme"],
+    description="""
+    Configure a list of font faces that you can use for the app & code fonts.
+""",
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "baseRadius",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The radius used as basis for the corners of most UI elements. Can be:
+        "none", "small", "medium", "large", "full", or the number in pixel or rem.
+        For example: "10px", "0.5rem", "1.2rem", "2rem".
+    """,
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "borderColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The color of the border around elements.
+    """,
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "showBorderAroundInputs",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Whether to show a border around input elements (e.g. text_input, number_input,
+        file_uploader, etc).
+    """,
+    type_=bool,
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "baseFontSize",
+    categories=["theme"],
+    description="""
+        Sets the root font size (in pixels) for the app, which determines the overall
+        scale of text and UI elements. The default base font size is 16.
+    """,
+    type_=int,
+    visibility="hidden",
+)
+
+_create_theme_options(
+    "showSidebarSeparator",
+    categories=["theme"],
+    description="""
+        Whether to show a vertical separator between the sidebar and the main content.
+    """,
+    type_=bool,
+    visibility="hidden",
 )
 
 # Config Section: Secrets #
@@ -1091,9 +1258,9 @@ def is_manually_set(option_name: str) -> bool:
 def show_config() -> None:
     """Print all config options to the terminal."""
     with _config_lock:
-        assert (
-            _config_options is not None
-        ), "_config_options should always be populated here."
+        assert _config_options is not None, (
+            "_config_options should always be populated here."
+        )
         config_util.show_config(_section_descriptions, _config_options)
 
 
@@ -1116,9 +1283,9 @@ def _set_option(key: str, value: Any, where_defined: str) -> None:
         Tells the config system where this was set.
 
     """
-    assert (
-        _config_options is not None
-    ), "_config_options should always be populated here."
+    assert _config_options is not None, (
+        "_config_options should always be populated here."
+    )
     if key not in _config_options:
         # Import logger locally to prevent circular references
         from streamlit.logger import get_logger
@@ -1126,7 +1293,8 @@ def _set_option(key: str, value: Any, where_defined: str) -> None:
         LOGGER = get_logger(__name__)
 
         LOGGER.warning(
-            f'"{key}" is not a valid config option. If you previously had this config option set, it may have been removed.'
+            f'"{key}" is not a valid config option. If you previously had this config '
+            "option set, it may have been removed."
         )
 
     else:
@@ -1164,10 +1332,52 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
 
     parsed_config_file = toml.loads(raw_toml)
 
+    def process_section(section_path: str, section_data: dict[str, Any]) -> None:
+        """Recursively process nested sections of the config file.
+
+        Parameters
+        ----------
+        section_path : str
+            The dot-separated path to the current section (e.g., "server" or "theme")
+        section_data : dict[str, Any]
+            The dictionary containing configuration values for this section
+
+        Notes
+        -----
+        TOML's hierarchical structure gets parsed into nested dictionaries.
+        For example:
+            [main]
+            option = "value"
+
+            [main.subsection]
+            another = "value2"
+
+        Will be loaded by the TOML parser as:
+            {
+                "main": {
+                    "option": "value",
+                    "subsection": {
+                        "another": "value2"
+                    }
+                }
+            }
+
+        This function traverses these nested dictionaries and converts them
+        to dot-notation config options.
+        """
+
+        for name, value in section_data.items():
+            option_name = f"{section_path}.{name}"
+            # Process it as a nested config section if it's a custom theme sub-category
+            if name in [CustomThemeCategories.SIDEBAR.value]:
+                process_section(option_name, value)
+            else:
+                # It's a regular config option, set it
+                value = _maybe_read_env_variable(value)
+                _set_option(option_name, value, where_defined)
+
     for section, options in parsed_config_file.items():
-        for name, value in options.items():
-            value = _maybe_read_env_variable(value)
-            _set_option(f"{section}.{name}", value, where_defined)
+        process_section(section, options)
 
 
 def _maybe_read_env_variable(value: Any) -> Any:
@@ -1197,7 +1407,7 @@ def _maybe_read_env_variable(value: Any) -> Any:
 
             LOGGER = get_logger(__name__)
 
-            LOGGER.error("No environment variable called %s" % var_name)
+            LOGGER.error("No environment variable called %s", var_name)
         else:
             return _maybe_convert_to_number(env_var)
 
@@ -1321,13 +1531,13 @@ def _check_conflicts() -> None:
     LOGGER = get_logger(__name__)
 
     if get_option("global.developmentMode"):
-        assert _is_unset(
-            "server.port"
-        ), "server.port does not work when global.developmentMode is true."
+        assert _is_unset("server.port"), (
+            "server.port does not work when global.developmentMode is true."
+        )
 
-        assert _is_unset(
-            "browser.serverPort"
-        ), "browser.serverPort does not work when global.developmentMode is true."
+        assert _is_unset("browser.serverPort"), (
+            "browser.serverPort does not work when global.developmentMode is true."
+        )
 
     # XSRF conflicts
     if get_option("server.enableXsrfProtection"):

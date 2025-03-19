@@ -18,7 +18,7 @@ import React, { MouseEvent, ReactElement, ReactNode } from "react"
 
 import ProgressBar, {
   Size as ProgressBarSize,
-} from "@streamlit/lib/src/components/shared/ProgressBar"
+} from "~lib/components/shared/ProgressBar"
 
 import {
   StyledCameraInputBaseButton,
@@ -46,7 +46,7 @@ function CameraInputButton({
       data-testid="stCameraInputButton"
     >
       {children}
-      {progress && (
+      {progress ? (
         <StyledProgressBar>
           <ProgressBar
             value={progress}
@@ -73,7 +73,7 @@ function CameraInputButton({
             }}
           />
         </StyledProgressBar>
-      )}
+      ) : null}
     </StyledCameraInputBaseButton>
   )
 }

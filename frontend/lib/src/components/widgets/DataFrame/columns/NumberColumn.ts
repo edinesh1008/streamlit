@@ -16,15 +16,14 @@
 
 import { GridCell, GridCellKind, NumberCell } from "@glideapps/glide-data-grid"
 
+import { format as formatArrowCell } from "~lib/dataframes/arrowFormatUtils"
 import {
-  getTypeName,
+  isDurationType,
   isIntegerType,
+  isPeriodType,
   isUnsignedIntegerType,
-} from "@streamlit/lib/src/dataframes/arrowTypeUtils"
-import {
-  isNullOrUndefined,
-  notNullOrUndefined,
-} from "@streamlit/lib/src/util/utils"
+} from "~lib/dataframes/arrowTypeUtils"
+import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
 
 import {
   BaseColumn,
@@ -58,15 +57,6 @@ export interface NumberColumnParams {
  * This supports float, integer, and unsigned integer types.
  */
 function NumberColumn(props: BaseColumnProps): BaseColumn {
-  const arrowTypeName = getTypeName(props.arrowType)
-  let format = undefined
-  if (arrowTypeName === "timedelta64[ns]") {
-    // Use duration formatting for timedelta64[ns] type:
-    format = "duration[ns]"
-  } else if (arrowTypeName.startsWith("period[")) {
-    // Use period formatting for period types:
-    format = arrowTypeName
-  }
   const parameters = mergeColumnParameters(
     // Default parameters:
     {
@@ -74,11 +64,16 @@ function NumberColumn(props: BaseColumnProps): BaseColumn {
       step: isIntegerType(props.arrowType) ? 1 : undefined,
       // if uint (unsigned int), only positive numbers are allowed
       min_value: isUnsignedIntegerType(props.arrowType) ? 0 : undefined,
-      format,
     } as NumberColumnParams,
     // User parameters:
     props.columnTypeOptions
   ) as NumberColumnParams
+
+  // If no custom format is provided & the column type is duration or period,
+  // instruct the column to use the arrow formatting for the display value.
+  const useArrowFormatting =
+    !parameters.format &&
+    (isDurationType(props.arrowType) || isPeriodType(props.arrowType))
 
   const allowNegative =
     isNullOrUndefined(parameters.min_value) || parameters.min_value < 0
@@ -94,7 +89,8 @@ function NumberColumn(props: BaseColumnProps): BaseColumn {
     displayData: "",
     readonly: !props.isEditable,
     allowOverlay: true,
-    contentAlign: props.contentAlignment || "right",
+    contentAlign:
+      props.contentAlignment || useArrowFormatting ? "left" : "right",
     // The text in pinned columns should be faded.
     style: props.isPinned ? "faded" : "normal",
     allowNegative,
@@ -194,11 +190,16 @@ function NumberColumn(props: BaseColumnProps): BaseColumn {
         }
 
         try {
-          displayData = formatNumber(
-            cellData,
-            parameters.format,
-            fixedDecimals
-          )
+          if (useArrowFormatting) {
+            // Use arrow formatting for some selected types (see above)
+            displayData = formatArrowCell(cellData, props.arrowType)
+          } else {
+            displayData = formatNumber(
+              cellData,
+              parameters.format,
+              fixedDecimals
+            )
+          }
         } catch (error) {
           return getErrorCell(
             toSafeString(cellData),

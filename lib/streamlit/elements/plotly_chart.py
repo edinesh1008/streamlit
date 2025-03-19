@@ -21,10 +21,7 @@ from dataclasses import dataclass
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Final,
-    Iterable,
-    List,
     Literal,
     TypedDict,
     Union,
@@ -50,7 +47,9 @@ from streamlit.runtime.scriptrunner_utils.script_run_context import get_script_r
 from streamlit.runtime.state import WidgetCallback, register_widget
 
 if TYPE_CHECKING:
-    import matplotlib
+    from collections.abc import Iterable
+
+    import matplotlib as mpl
     import plotly.graph_objs as go
     from plotly.basedatatypes import BaseFigure
 
@@ -65,13 +64,13 @@ _AtomicFigureOrData: TypeAlias = Union[
 ]
 FigureOrData: TypeAlias = Union[
     _AtomicFigureOrData,
-    List[_AtomicFigureOrData],
+    list[_AtomicFigureOrData],
     # It is kind of hard to figure out exactly what kind of dict is supported
     # here, as plotly hasn't embraced typing yet. This version is chosen to
     # align with the docstring.
-    Dict[str, _AtomicFigureOrData],
+    dict[str, _AtomicFigureOrData],
     "BaseFigure",
-    "matplotlib.figure.Figure",
+    "mpl.figure.Figure",
 ]
 
 SelectionMode: TypeAlias = Literal["lasso", "points", "box"]

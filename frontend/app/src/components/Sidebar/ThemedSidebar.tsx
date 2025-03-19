@@ -23,20 +23,23 @@ import {
   ThemeProvider,
 } from "@streamlit/lib"
 import { AppContext } from "@streamlit/app/src/components/AppContext"
+import { notNullOrUndefined } from "@streamlit/utils"
 
 import Sidebar, { SidebarProps } from "./Sidebar"
 
 const createSidebarTheme = (theme: ThemeConfig): ThemeConfig => {
+  let sidebarOverride = {}
+  if (notNullOrUndefined(theme.themeInput?.sidebar)) {
+    sidebarOverride = theme.themeInput.sidebar
+  }
+
   return createTheme(
     "Sidebar",
     {
+      ...theme.themeInput,
       secondaryBackgroundColor: theme.emotion.colors.bgColor,
       backgroundColor: theme.emotion.colors.secondaryBg,
-
-      // Explictly pass these props to the sidebar theming as well.
-      // This ensures custom fonts passed through postMessage propagate to the sidebar as well.
-      bodyFont: theme.emotion.genericFonts.bodyFont,
-      codeFont: theme.emotion.genericFonts.codeFont,
+      ...sidebarOverride,
     },
     theme,
     // inSidebar
@@ -47,7 +50,7 @@ const createSidebarTheme = (theme: ThemeConfig): ThemeConfig => {
 const ThemedSidebar = ({
   children,
   ...sidebarProps
-}: Omit<SidebarProps, "chevronDownshift" | "theme">): ReactElement => {
+}: Omit<SidebarProps, "chevronDownshift">): ReactElement => {
   const { sidebarChevronDownshift: chevronDownshift } =
     React.useContext(AppContext)
   const { activeTheme } = React.useContext(LibContext)

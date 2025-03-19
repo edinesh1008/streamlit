@@ -15,7 +15,7 @@
 from __future__ import annotations
 
 import os
-from typing import Final, Sequence
+from typing import TYPE_CHECKING, Final
 
 import tornado.web
 
@@ -26,6 +26,9 @@ from streamlit.web.server.server_util import (
     emit_endpoint_deprecation_notice,
     is_xsrf_enabled,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 _LOGGER: Final = get_logger(__name__)
 
@@ -138,7 +141,7 @@ class _SpecialRequestHandler(tornado.web.RequestHandler):
 
 class HealthHandler(_SpecialRequestHandler):
     def initialize(self, callback):
-        """Initialize the handler
+        """Initialize the handler.
 
         Parameters
         ----------
@@ -239,7 +242,7 @@ class HostConfigHandler(_SpecialRequestHandler):
 
 
 class MessageCacheHandler(tornado.web.RequestHandler):
-    """Returns ForwardMsgs from our MessageCache"""
+    """Returns ForwardMsgs from our MessageCache."""
 
     def initialize(self, cache):
         """Initializes the handler.

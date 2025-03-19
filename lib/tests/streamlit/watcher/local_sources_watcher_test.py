@@ -45,7 +45,6 @@ def NOOP_CALLBACK(_filepath):
     pass
 
 
-@patch("streamlit.source_util._cached_pages", new=None)
 @patch("streamlit.file_util.file_in_pythonpath", MagicMock(return_value=False))
 class LocalSourcesWatcherTest(unittest.TestCase):
     def setUp(self):
@@ -178,7 +177,8 @@ class LocalSourcesWatcherTest(unittest.TestCase):
         fob.assert_called_once()  # Just __init__.py
 
         patched_logger.warning.assert_called_once_with(
-            "Examining the path of MisbehavedModule raised: Oh noes!"
+            "Examining the path of MisbehavedModule raised:",
+            exc_info=True,
         )
 
     @patch("streamlit.watcher.local_sources_watcher.PathWatcher")
