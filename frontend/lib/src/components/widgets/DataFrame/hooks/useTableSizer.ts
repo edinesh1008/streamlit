@@ -37,7 +37,7 @@ export type AutoSizerReturn = {
   // The minimum width of the data grid can be resized to
   minWidth: number
   // The maximum width of the data grid can be resized to
-  maxWidth: number
+  maxWidth: number | "100%"
   // The row height of the data grid
   rowHeight: number
   // The current (or initial) size of the data grid
@@ -149,6 +149,8 @@ function useTableSizer(
       Math.max(Number(element.width), maxWidth),
       availableWidth
     )
+  } else if (element.width === "content") {
+    maxWidth = "100%"
   }
 
   const [resizableSize, setResizableSize] = React.useState<ResizableSize>({
