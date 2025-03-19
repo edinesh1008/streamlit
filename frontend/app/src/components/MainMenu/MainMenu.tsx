@@ -198,7 +198,7 @@ function buildMenuItemComponent(
 }
 
 const SubMenu = (props: SubMenuProps): ReactElement => {
-  const { colors, sizes, spacing }: EmotionTheme = useTheme()
+  const { spacing }: EmotionTheme = useTheme()
   const StyledMenuItemType = props.isDevMenu ? StyledDevItem : StyledCoreItem
 
   return (
@@ -217,18 +217,12 @@ const SubMenu = (props: SubMenuProps): ReactElement => {
           style: {
             backgroundColor: "inherit",
 
-            borderBottomRadius: 0,
-            borderTopRadius: 0,
-            borderLeftRadius: 0,
-            borderRightRadius: 0,
-
             paddingBottom: spacing.sm,
             paddingTop: spacing.sm,
 
             ":focus": {
               outline: "none",
             },
-            border: `${sizes.borderWidth} solid ${colors.borderColor}`,
           },
         },
       }}
@@ -478,6 +472,19 @@ function MainMenu(props: Readonly<Props>): ReactElement {
           props: {
             "data-testid": "stMainMenuPopover",
             className: "stMainMenuPopover",
+          },
+          style: {
+            border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+            // This is annoying, but a bunch of warnings get logged when the
+            // shorthand version `borderRadius` is used here since the long
+            // names are used by BaseWeb and mixing the two is apparently
+            // bad :(
+            borderTopLeftRadius: theme.radii.default,
+            borderTopRightRadius: theme.radii.default,
+            borderBottomLeftRadius: theme.radii.default,
+            borderBottomRightRadius: theme.radii.default,
+            overflow: "auto",
+            marginTop: theme.spacing.sm,
           },
         },
       }}
