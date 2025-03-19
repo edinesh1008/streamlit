@@ -103,7 +103,7 @@ const getWidth = (
   } else if (!Number.isNaN(Number(commandWidth))) {
     return `${validateWidth(commandWidth)}px`
   } else if (commandWidth === "content") {
-    return "auto"
+    return "fit-content"
   }
   return "auto"
 }
@@ -114,7 +114,7 @@ const getHeight = (commandHeight: string | number) => {
   } else if (!Number.isNaN(Number(commandHeight))) {
     return `${validateWidth(commandHeight)}px`
   } else if (commandHeight === "content") {
-    return "auto"
+    return "fit-content"
   }
   return "auto"
 }
