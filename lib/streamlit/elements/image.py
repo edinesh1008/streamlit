@@ -41,7 +41,6 @@ if TYPE_CHECKING:
     from streamlit.delta_generator import DeltaGenerator
 
 UseColumnWith: TypeAlias = Union[Literal["auto", "always", "never"], bool, None]
-Width: TypeAlias = int | Literal["stretch", "content"]
 
 
 class ImageMixin:
@@ -52,7 +51,7 @@ class ImageMixin:
         # TODO: Narrow type of caption, dependent on type of image,
         #  by way of overload
         caption: str | list[str] | None = None,
-        width: Width = "content",
+        width: int | Literal["stretch", "content"] = "content",
         use_column_width: UseColumnWith = None,
         clamp: bool = False,
         channels: Channels = "RGB",
