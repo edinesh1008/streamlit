@@ -267,6 +267,8 @@ def app_server(
             "none",
             "--server.enableStaticServing",
             "true",
+            "--global.minCachedMessageSize",
+            "1000000000",
             *app_server_extra_args,
         ],
         cwd=".",
