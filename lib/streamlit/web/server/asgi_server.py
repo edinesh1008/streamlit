@@ -279,9 +279,9 @@ class Server:
 
     @property
     def is_running_hello(self) -> bool:
-        from streamlit.hello import Hello
+        from streamlit.hello import streamlit_app
 
-        return self._main_script_path == Hello.__file__
+        return self._main_script_path == streamlit_app.__file__
 
     def stop(self) -> None:
         # TODO: [Kajarenc], continuetion of IDEA, implemented
