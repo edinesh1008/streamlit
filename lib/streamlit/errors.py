@@ -65,6 +65,10 @@ class NoSessionContext(Error):
     pass
 
 
+class UncaughtAppException(Error):
+    pass
+
+
 class MarkdownFormattedException(Error):
     """Exceptions with Markdown in their description.
 
