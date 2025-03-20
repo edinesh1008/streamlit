@@ -100,7 +100,7 @@ def init_tornado_logs() -> None:
         get_logger(f"tornado.{log}")
 
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: str, level: str) -> logging.Logger:
     """Return a logger.
 
     Parameters
