@@ -625,7 +625,7 @@ class Runtime:
                         msg_list = active_session_info.session.flush_browser_queue()
                         for msg in msg_list:
                             try:
-                                await self._send_message(active_session_info, msg)
+                                self._send_message(active_session_info, msg)
                             except SessionClientDisconnectedError:
                                 self._session_mgr.disconnect_session(
                                     active_session_info.session.id
@@ -675,9 +675,7 @@ Please report this bug at https://github.com/streamlit/streamlit/issues.
 """
             )
 
-    async def _send_message(
-        self, session_info: ActiveSessionInfo, msg: ForwardMsg
-    ) -> None:
+    def _send_message(self, session_info: ActiveSessionInfo, msg: ForwardMsg) -> None:
         """Send a message to a client.
 
         If the client is likely to have already cached the message, we may
@@ -734,7 +732,7 @@ Please report this bug at https://github.com/streamlit/streamlit/issues.
             )
 
         # Ship it off!
-        await session_info.client.write_forward_msg(msg_to_send)
+        session_info.client.write_forward_msg(msg_to_send)
 
     def _enqueued_some_message(self) -> None:
         """Callback called by AppSession after the AppSession has enqueued a

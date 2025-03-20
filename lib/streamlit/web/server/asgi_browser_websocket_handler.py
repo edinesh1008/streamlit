@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import binascii
 import json
@@ -38,17 +39,14 @@ _LOGGER: Final = get_logger(__name__)
 class ASGISessionClient(SessionClient):
     """An ASGI session client that can send messages to the browser."""
 
-    def __init__(self, websocket: WebSocket) -> None:
-        self.websocket = websocket
+    def __init__(self, queue: asyncio.Queue) -> None:
+        self._queue = queue
 
-    async def write_forward_msg(self, msg: ForwardMsg) -> None:
+    def write_forward_msg(self, msg: ForwardMsg) -> None:
         """Send a ForwardMsg to the browser."""
         try:
-            await self.websocket.send_bytes(serialize_forward_msg(msg))
-        except (
-            starlette.websockets.WebSocketDisconnect,
-            RuntimeError,
-        ) as e:
+            self._queue.put_nowait(msg)
+        except (RuntimeError,) as e:
             raise SessionClientDisconnectedError from e
 
 
@@ -120,7 +118,10 @@ class ASGIBrowserWebSocketHandler(WebSocketEndpoint):
 
         await websocket.accept(subprotocol=self.select_subprotocol(ws_protocols))
 
-        client = ASGISessionClient(websocket)
+        self._queue: asyncio.Queue = asyncio.Queue()
+        client = ASGISessionClient(queue=self._queue)
+
+        self._drain_queue_task = asyncio.create_task(self._drain_queue(websocket))
 
         _session_id = websocket.state.runtime.connect_session(
             client=client,
@@ -129,11 +130,24 @@ class ASGIBrowserWebSocketHandler(WebSocketEndpoint):
         )
         websocket.state._session_id = _session_id
 
+    async def _drain_queue(self, websocket: WebSocket) -> None:
+        while True:
+            msg = await self._queue.get()
+            try:
+                serialized_msg = serialize_forward_msg(msg)
+                await websocket.send_bytes(serialized_msg)
+            except starlette.websockets.WebSocketDisconnect:
+                break
+            finally:
+                self._queue.task_done()
+
     async def on_disconnect(self, websocket: WebSocket, close_code: int) -> None:
         try:
             websocket.state.runtime.disconnect_session(websocket.state._session_id)
         except AttributeError:
             pass
+
+        self._drain_queue_task.cancel()
 
     # def get_compression_options(self) -> dict[Any, Any] | None:
     #     """Enable WebSocket compression.
