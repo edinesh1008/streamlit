@@ -68,7 +68,7 @@ function DownloadButton(props: Props): ReactElement {
     // to catch src url load errors. Catch with direct check instead.
     endpoints.checkSourceUrlResponse(element.url, "Download Button")
   }, [element.url, endpoints])
-  
+
   let fluidWidth = true
   if (
     element.width === "stretch" ||
