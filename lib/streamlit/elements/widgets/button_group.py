@@ -287,7 +287,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         width: Literal["stretch", "content"] | int = "content",
         scale: int = 1,
-    ) -> int | None: ...
+    ) -> Literal[0, 1] | None: ...
     @overload
     def feedback(
         self,
@@ -300,7 +300,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         width: Literal["stretch", "content"] | int = "content",
         scale: int = 1,
-    ) -> int | None: ...
+    ) -> Literal[0, 1, 2, 3, 4] | None: ...
     @gather_metrics("feedback")
     def feedback(
         self,
