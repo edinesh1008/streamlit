@@ -59,6 +59,8 @@ enum WidthBehavior {
   AutoWidth = -3,
   MinImageOrContainer = -4,
   MaxImageOrContainer = -5,
+  Stretch = -6,
+  Content = -7,
 }
 
 /**
@@ -91,14 +93,17 @@ function ImageList({
       WidthBehavior.OriginalWidth,
       WidthBehavior.AutoWidth,
       WidthBehavior.MinImageOrContainer,
+      WidthBehavior.Content,
     ].includes(protoWidth)
   ) {
     // Use the original image width.
     imageWidth = undefined
   } else if (
-    [WidthBehavior.ColumnWidth, WidthBehavior.MaxImageOrContainer].includes(
-      protoWidth
-    )
+    [
+      WidthBehavior.ColumnWidth,
+      WidthBehavior.MaxImageOrContainer,
+      WidthBehavior.Stretch,
+    ].includes(protoWidth)
   ) {
     // Use the full element width (which handles the full screen case)
     imageWidth = elementWidth
