@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from streamlit.delta_generator import DeltaGenerator
 
 UseColumnWith: TypeAlias = Union[Literal["auto", "always", "never"], bool, None]
-Width: TypeAlias = Union[int, Literal["stretch", "content"]]
+Width: TypeAlias = int | Literal["stretch", "content"]
 
 
 class ImageMixin:
