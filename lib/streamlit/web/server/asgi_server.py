@@ -25,8 +25,9 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route, WebSocketRoute
+from starlette.staticfiles import StaticFiles
 
-from streamlit import cli_util, config, file_util, source_util, util
+from streamlit import cli_util, config, file_util, util
 from streamlit.config_option import ConfigOption
 from streamlit.logger import get_logger
 from streamlit.runtime import Runtime, RuntimeConfig, RuntimeState
@@ -41,7 +42,6 @@ from streamlit.web.server.asgi_browser_websocket_handler import (
 from streamlit.web.server.asgi_routes import (
     ASGIHealthHandler,
     ASGIHostConfigHandler,
-    ASGIStaticFiles,
 )
 from streamlit.web.server.server_util import DEVELOPMENT_PORT
 
@@ -65,6 +65,7 @@ METRIC_ENDPOINT: Final = r"(?:st-metrics|_stcore/metrics)"
 MESSAGE_ENDPOINT: Final = r"_stcore/message"
 HEALTH_ENDPOINT: Final = r"(?:healthz|_stcore/health)"
 HOST_CONFIG_ENDPOINT: Final = r"_stcore/host-config"
+NEW_HEALTH_ENDPOINT: Final = "_stcore/health"
 SCRIPT_HEALTH_CHECK_ENDPOINT: Final = (
     r"(?:script-health-check|_stcore/script-health-check)"
 )
@@ -248,15 +249,9 @@ class Server:
             starlette_routes.append(
                 Mount(
                     "/",
-                    app=ASGIStaticFiles(
+                    app=StaticFiles(
                         directory=file_util.get_static_dir(),
                         html=True,
-                        get_pages=lambda: {
-                            page_info["page_name"]
-                            for page_info in source_util.get_pages(
-                                self.main_script_path
-                            ).values()
-                        },
                     ),
                 ),
             )
