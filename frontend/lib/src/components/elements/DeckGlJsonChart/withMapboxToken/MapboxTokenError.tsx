@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 
 import React, { ReactElement } from "react"
-import ErrorElement from "@streamlit/lib/src/components/shared/ErrorElement"
+
+import ErrorElement from "~lib/components/shared/ErrorElement"
+import { StyledInlineCode } from "~lib/components/elements/CodeBlock/styled-components"
+
 import {
   MapboxTokenFetchingError,
   MapboxTokenNotProvidedError,
@@ -24,24 +27,19 @@ import {
 interface Props {
   error: Error | MapboxTokenFetchingError | MapboxTokenNotProvidedError
   deltaType: string
-  width: number
 }
 
-const MapboxTokenError = ({
-  error,
-  width,
-  deltaType,
-}: Props): ReactElement => {
+const MapboxTokenError = ({ error, deltaType }: Props): ReactElement => {
   if (error instanceof MapboxTokenNotProvidedError) {
     return (
       <ErrorElement
-        width={width}
         name="No Mapbox token provided"
         message={
           <>
             <p>
-              To use <code>st.{deltaType}</code> or <code>st.map</code> you
-              need to set up a Mapbox access token.
+              To use <StyledInlineCode>st.{deltaType}</StyledInlineCode> or{" "}
+              <StyledInlineCode>st.map</StyledInlineCode> you need to set up a
+              Mapbox access token.
             </p>
 
             <p>
@@ -52,14 +50,14 @@ const MapboxTokenError = ({
 
             <p>
               Once you have a token, just set it using the Streamlit config
-              option <code>mapbox.token</code> and don't forget to restart your
-              Streamlit server at this point if it's still running, then reload
-              this tab.
+              option <StyledInlineCode>mapbox.token</StyledInlineCode> and
+              don't forget to restart your Streamlit server at this point if
+              it's still running, then reload this tab.
             </p>
 
             <p>
               See{" "}
-              <a href="https://docs.streamlit.io/library/advanced-features/configuration#view-all-configuration-options">
+              <a href="https://docs.streamlit.io/develop/api-reference/configuration/config.toml">
                 our documentation
               </a>{" "}
               for more info on how to set config options.
@@ -73,7 +71,6 @@ const MapboxTokenError = ({
   if (error instanceof MapboxTokenFetchingError) {
     return (
       <ErrorElement
-        width={width}
         name="Error fetching Streamlit Mapbox token"
         message={
           <>
@@ -94,7 +91,6 @@ const MapboxTokenError = ({
 
   return (
     <ErrorElement
-      width={width}
       name="Error fetching Streamlit Mapbox token"
       message={error.message}
     />

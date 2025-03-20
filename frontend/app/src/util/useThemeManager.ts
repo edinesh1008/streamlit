@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,21 @@
  */
 
 import { useCallback, useEffect, useState } from "react"
+
 import {
   AUTO_THEME_NAME,
-  CUSTOM_THEME_NAME,
   createAutoTheme,
   createPresetThemes,
+  createTheme,
+  CUSTOM_THEME_NAME,
   getDefaultTheme,
+  getHostSpecifiedTheme,
   isPresetTheme,
   removeCachedTheme,
   setCachedTheme,
   ThemeConfig,
-  createTheme,
-  CustomThemeConfig,
-  ICustomThemeConfig,
 } from "@streamlit/lib"
+import { CustomThemeConfig, ICustomThemeConfig } from "@streamlit/protobuf"
 
 export interface ThemeManager {
   activeTheme: ThemeConfig
@@ -42,7 +43,7 @@ export function useThemeManager(): [ThemeManager, object[]] {
   const defaultTheme = getDefaultTheme()
   const [theme, setTheme] = useState<ThemeConfig>(defaultTheme)
   const [fontFaces, setFontFaces] = useState<object[]>([])
-  const [availableThemes, setAvailableThemes] = useState<ThemeConfig[]>([
+  const [availableThemes, setAvailableThemes] = useState<ThemeConfig[]>(() => [
     ...createPresetThemes(),
     ...(isPresetTheme(defaultTheme) ? [] : [defaultTheme]),
   ])
@@ -70,7 +71,7 @@ export function useThemeManager(): [ThemeManager, object[]] {
 
   const updateAutoTheme = useCallback((): void => {
     if (theme.name === AUTO_THEME_NAME) {
-      updateTheme(createAutoTheme())
+      updateTheme(getHostSpecifiedTheme())
     }
     const constantThemes = availableThemes.filter(
       theme => theme.name !== AUTO_THEME_NAME
@@ -96,7 +97,13 @@ export function useThemeManager(): [ThemeManager, object[]] {
   useEffect(() => {
     const mediaMatch = window.matchMedia("(prefers-color-scheme: dark)")
     mediaMatch.addEventListener("change", updateAutoTheme)
-    return () => mediaMatch.removeEventListener("change", updateAutoTheme)
+    // Browsers do not revert back to a dark theme after printing, so we
+    // should check and update the theme after printing if necessary.
+    window.addEventListener("afterprint", updateAutoTheme)
+    return () => {
+      window.removeEventListener("afterprint", updateAutoTheme)
+      mediaMatch.removeEventListener("change", updateAutoTheme)
+    }
   }, [theme, availableThemes, updateAutoTheme])
 
   return [

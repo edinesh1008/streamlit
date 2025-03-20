@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from unittest.mock import patch
+
 import streamlit as st
+from streamlit.runtime.caching import cached_message_replay
 from tests.delta_generator_test_case import DeltaGeneratorTestCase
 
 
@@ -38,6 +41,35 @@ class StMarkdownAPITest(DeltaGeneratorTestCase):
         el = self.get_delta_from_queue().new_element
         self.assertEqual(el.markdown.body, "some markdown")
         self.assertEqual(el.markdown.help, "help text")
+
+    def test_works_with_element_replay(self):
+        """Test that element replay works for a markdown element."""
+
+        @st.cache_data
+        def cache_element():
+            st.markdown("some markdown")
+
+        with patch(
+            "streamlit.runtime.caching.cache_utils.replay_cached_messages",
+            wraps=cached_message_replay.replay_cached_messages,
+        ) as replay_cached_messages_mock:
+            cache_element()
+            el = self.get_delta_from_queue().new_element.markdown
+            assert el.body == "some markdown"
+            # The first time the cached function is called, the replay function is not called
+            replay_cached_messages_mock.assert_not_called()
+
+            cache_element()
+            el = self.get_delta_from_queue().new_element.markdown
+            assert el.body == "some markdown"
+            # The second time the cached function is called, the replay function is called
+            replay_cached_messages_mock.assert_called_once()
+
+            cache_element()
+            el = self.get_delta_from_queue().new_element.markdown
+            assert el.body == "some markdown"
+            # The third time the cached function is called, the replay function is called
+            replay_cached_messages_mock.assert_called()
 
 
 class StCaptionAPITest(DeltaGeneratorTestCase):
@@ -65,3 +97,27 @@ class StLatexAPITest(DeltaGeneratorTestCase):
         )
         el = self.get_delta_from_queue().new_element
         self.assertEqual(el.markdown.help, "help text")
+
+
+class StBadgeAPITest(DeltaGeneratorTestCase):
+    """Test st.badge API."""
+
+    def test_st_badge(self):
+        """Test st.badge with all parameters."""
+        # Test with all parameters
+        st.badge(
+            "Badge with all params",
+            icon=":material/warning:",
+            color="red",
+        )
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(
+            el.markdown.body, ":red-badge[:material/warning: Badge with all params]"
+        )
+        self.assertFalse(el.markdown.allow_html)
+
+        # Test with default parameters
+        st.badge("Simple badge")
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.markdown.body, ":blue-badge[Simple badge]")

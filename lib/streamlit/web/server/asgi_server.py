@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from __future__ import annotations
 
 import asyncio
@@ -19,15 +18,15 @@ import contextlib
 import errno
 import socket
 import sys
-from typing import TYPE_CHECKING, Any, Awaitable, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import uvicorn
+from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Mount, Route, WebSocketRoute
 
 from streamlit import cli_util, config, file_util, source_util, util
-from streamlit.components.v1.components import ComponentRegistry
 from streamlit.config_option import ConfigOption
 from streamlit.logger import get_logger
 from streamlit.runtime import Runtime, RuntimeConfig, RuntimeState
@@ -36,7 +35,6 @@ from streamlit.runtime.memory_uploaded_file_manager import MemoryUploadedFileMan
 from streamlit.web.cache_storage_manager_config import (
     create_default_cache_storage_manager,
 )
-from streamlit.web.server.app_static_file_handler import AppStaticFileHandler
 from streamlit.web.server.asgi_browser_websocket_handler import (
     ASGIBrowserWebSocketHandler,
 )
@@ -45,23 +43,10 @@ from streamlit.web.server.asgi_routes import (
     ASGIHostConfigHandler,
     ASGIStaticFiles,
 )
-from streamlit.web.server.component_request_handler import ComponentRequestHandler
-from streamlit.web.server.media_file_handler import MediaFileHandler
-from streamlit.web.server.routes import (
-    AddSlashHandler,
-    HealthHandler,
-    HostConfigHandler,
-    MessageCacheHandler,
-    StaticFileHandler,
-)
-from streamlit.web.server.server_util import DEVELOPMENT_PORT, make_url_path_regex
-from streamlit.web.server.stats_request_handler import StatsRequestHandler
-from streamlit.web.server.upload_file_request_handler import UploadFileRequestHandler
+from streamlit.web.server.server_util import DEVELOPMENT_PORT
 
 if TYPE_CHECKING:
-    pass
-
-from starlette.applications import Starlette
+    from collections.abc import Awaitable
 
 _LOGGER: Final = get_logger(__name__)
 
@@ -106,7 +91,7 @@ def get_available_port() -> int:
     while call_count < MAX_PORT_SEARCH_RETRIES:
         address = config.get_option("server.address") or "localhost"
         port = config.get_option("server.port")
-        print(port)
+        # print(port)
 
         if int(port) == DEVELOPMENT_PORT:
             _LOGGER.warning(
@@ -117,7 +102,6 @@ def get_available_port() -> int:
             )
 
         try:
-
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 if s.connect_ex((address, port)) == 0:
                     raise OSError(errno.EADDRINUSE, "Address already in use")
@@ -154,7 +138,7 @@ def get_available_port() -> int:
 
 
 def create_uvicorn_config(app: Starlette) -> uvicorn.Config:
-    # TODO[Kajarenc] instead of searching for available port and then ask uvicorn to run
+    # TODO: [Kajarenc] instead of searching for available port and then ask uvicorn to run
     # on that port, we can bind uvicorn an existing socket we found in get_available_port.
     return uvicorn.Config(
         app=app,
@@ -218,7 +202,7 @@ class Server:
 
         _LOGGER.debug("Starting server...")
 
-        # TODO[Kajarenc], DONE!
+        # TODO: [Kajarenc], DONE!
         # Idea: Prepare uvicorn config, create uvicorn server, start
         # uvicorn server.serve as a event loop task and remember this task.
         # At this point we can return we can return from this coroutine.
@@ -300,7 +284,7 @@ class Server:
         return self._main_script_path == Hello.__file__
 
     def stop(self) -> None:
-        # TODO[Kajarenc], continuetion of IDEA, implemented
+        # TODO: [Kajarenc], continuetion of IDEA, implemented
         # stop uvicorn server task here.
         cli_util.print_to_cli("  Stopping...", fg="blue")
         self.server_task.cancel()

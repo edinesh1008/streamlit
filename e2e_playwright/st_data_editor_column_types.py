@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ import random
 import numpy as np
 
 import streamlit as st
-from tests.streamlit.data_mocks import (
+from shared.data_mocks import (
     BASE_TYPES_DF,
     DATETIME_TYPES_DF,
     INTERVAL_TYPES_DF,
@@ -34,19 +34,19 @@ random.seed(0)
 st.set_page_config(layout="wide")
 
 st.subheader("Base types")
-st.data_editor(BASE_TYPES_DF, use_container_width=True)
+st.data_editor(BASE_TYPES_DF, use_container_width=True, hide_index=True)
 
 st.subheader("Number types")
-st.data_editor(NUMBER_TYPES_DF, use_container_width=True)
+st.data_editor(NUMBER_TYPES_DF, use_container_width=True, hide_index=True)
 
 st.subheader("Date, time and datetime types")
-st.data_editor(DATETIME_TYPES_DF, use_container_width=True)
+st.data_editor(DATETIME_TYPES_DF, use_container_width=True, hide_index=True)
 
 st.subheader("List types")
-st.data_editor(LIST_TYPES_DF, use_container_width=True)
+st.data_editor(LIST_TYPES_DF, use_container_width=True, hide_index=True)
 
 st.subheader("Interval dtypes in pd.DataFrame")
-st.data_editor(INTERVAL_TYPES_DF, use_container_width=True)
+st.data_editor(INTERVAL_TYPES_DF, use_container_width=True, hide_index=True)
 
 st.subheader("Special types")
 st.data_editor(
@@ -56,10 +56,11 @@ st.data_editor(
     # Reason is that the timedelta is provided as nanoseconds as default, which
     # quickly overflows the max value supported by Number in Javascript.
     column_config={"timedelta": st.column_config.NumberColumn()},
+    hide_index=True,
 )
 
 st.subheader("Period dtypes in pd.DataFrame")
-st.data_editor(PERIOD_TYPES_DF, use_container_width=True)
+st.data_editor(PERIOD_TYPES_DF, use_container_width=True, hide_index=True)
 
-st.subheader("Unsupported types")
-st.data_editor(UNSUPPORTED_TYPES_DF, use_container_width=True)
+st.subheader("Unsupported types (string fallback)")
+st.data_editor(UNSUPPORTED_TYPES_DF, use_container_width=True, hide_index=True)

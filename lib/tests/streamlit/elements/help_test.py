@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """st.help unit test."""
+
 import inspect
 import unittest
 from unittest.mock import patch
@@ -58,7 +59,13 @@ class StHelpTest(DeltaGeneratorTestCase):
         self.assertEqual("", ds.name)
         self.assertEqual("None", ds.value)
         self.assertEqual("NoneType", ds.type)
-        self.assertEqual("", ds.doc_string)
+
+        import sys
+
+        if sys.version_info >= (3, 13):
+            self.assertEqual("The type of the None singleton.", ds.doc_string)
+        else:
+            self.assertEqual("", ds.doc_string)
 
     def test_basic_func_with_doc(self):
         """Test basic function with docstring."""
@@ -109,7 +116,7 @@ class StHelpTest(DeltaGeneratorTestCase):
         self.assertEqual("st.audio", ds.name)
         self.assertEqual("method", ds.type)
 
-        signature = "(data: 'MediaData', format: 'str' = 'audio/wav', start_time: 'MediaTime' = 0, *, sample_rate: 'int | None' = None, end_time: 'MediaTime | None' = None, loop: 'bool' = False) -> 'DeltaGenerator'"
+        signature = "(data: 'MediaData', format: 'str' = 'audio/wav', start_time: 'MediaTime' = 0, *, sample_rate: 'int | None' = None, end_time: 'MediaTime | None' = None, loop: 'bool' = False, autoplay: 'bool' = False) -> 'DeltaGenerator'"
 
         self.assertEqual(
             f"streamlit.delta_generator.MediaMixin.audio{signature}", ds.value
@@ -145,7 +152,7 @@ class StHelpTest(DeltaGeneratorTestCase):
         """Test a named variable using walrus operator."""
 
         with patch_varname_getter():
-            st.help(myvar := 123)
+            st.help(myvar := 123)  # noqa: F841
 
         ds = self.get_delta_from_queue().new_element.doc_string
         self.assertEqual("myvar", ds.name)
@@ -200,7 +207,7 @@ class StHelpTest(DeltaGeneratorTestCase):
         """When the object is a class and no docs are defined,
         we expect docs to be None."""
 
-        class MyClass(object):
+        class MyClass:
             pass
 
         with patch_varname_getter():
@@ -221,7 +228,7 @@ class StHelpTest(DeltaGeneratorTestCase):
         """When the type of the object is type and no docs are defined,
         we expect docs to be None."""
 
-        class MyClass(object):
+        class MyClass:
             pass
 
         with patch_varname_getter():
@@ -239,7 +246,7 @@ class StHelpTest(DeltaGeneratorTestCase):
         self.assertEqual("", ds.doc_string)
 
     def test_class_members(self):
-        class MyClass(object):
+        class MyClass:
             a = 1
             b = 2
 
@@ -253,7 +260,7 @@ class StHelpTest(DeltaGeneratorTestCase):
                 return 5
 
             @staticmethod
-            def staticmethod1(self, x=10):
+            def staticmethod1(x=10):
                 "Static method 1"
 
             @classmethod
@@ -281,7 +288,7 @@ class StHelpTest(DeltaGeneratorTestCase):
             self.assertEqual(ds.members[i].type, expected[3])
 
     def test_instance_members(self):
-        class MyClass(object):
+        class MyClass:
             a = 1
             b = 2
 
@@ -295,7 +302,7 @@ class StHelpTest(DeltaGeneratorTestCase):
                 return 5
 
             @staticmethod
-            def staticmethod1(self, x=10):
+            def staticmethod1(x=10):
                 "Static method 1"
 
             @classmethod

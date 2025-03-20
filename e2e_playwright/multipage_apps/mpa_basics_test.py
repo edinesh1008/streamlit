@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ from e2e_playwright.conftest import (
     wait_for_app_loaded,
     wait_for_app_run,
 )
+from e2e_playwright.shared.app_utils import click_button
 
 
 def test_loads_main_script_on_initial_page_load(app: Page):
@@ -57,6 +58,7 @@ def test_can_switch_between_pages_and_edit_widgets(app: Page):
 
     app.get_by_test_id("stSidebarNav").locator("a").nth(2).click()
     wait_for_app_run(app, wait_delay=1000)
+    expect(app.get_by_role("heading", name="Page 3")).to_be_visible()
 
     expect(app.get_by_test_id("stHeading")).to_contain_text("Page 3")
     expect(app.get_by_test_id("stMarkdown")).to_contain_text("x is 0")
@@ -73,13 +75,6 @@ def test_can_switch_to_the_first_page_with_a_duplicate_name(app: Page):
     app.get_by_test_id("stSidebarNav").locator("a").nth(3).click()
     wait_for_app_run(app)
     expect(app.get_by_test_id("stHeading")).to_contain_text("Page 4")
-
-
-def test_can_switch_to_the_second_page_with_a_duplicate_name(app: Page):
-    """Test that we can switch to the second page with a duplicate name."""
-    app.get_by_test_id("stSidebarNav").locator("a").nth(4).click()
-    wait_for_app_run(app)
-    expect(app.get_by_test_id("stHeading")).to_contain_text("Page 5")
 
 
 def test_runs_the_first_page_with_a_duplicate_name_if_navigating_via_url(
@@ -108,30 +103,35 @@ def test_handles_expand_collapse_of_mpa_nav_correctly(
     page.goto(f"http://localhost:{app_port}/page_7")
     wait_for_app_loaded(page)
 
-    separator = page.get_by_test_id("stSidebarNavSeparator")
-    svg = separator.locator("svg")
+    view_button = page.get_by_test_id("stSidebarNavViewButton")
 
-    expect(svg).to_be_visible()
+    expect(view_button).to_be_visible()
 
     # Expand the nav
-    svg.click(force=True)
+    view_button.click(force=True)
     # We apply a quick timeout here so that the UI has some time to
     # adjust for the screenshot after the click
     page.wait_for_timeout(250)
+    # move the mouse out of the way to avoid hover effects
+    page.mouse.move(0, 0)
     assert_snapshot(
         page.get_by_test_id("stSidebarNav"), name="mpa-sidebar_nav_expanded"
     )
 
     # Collapse the nav
-    svg.click(force=True)
+    view_button.click(force=True)
     page.wait_for_timeout(250)
+    # move the mouse out of the way to avoid hover effects
+    page.mouse.move(0, 0)
     assert_snapshot(
         page.get_by_test_id("stSidebarNav"), name="mpa-sidebar_nav_collapsed"
     )
 
     # Expand the nav again
-    svg.click(force=True)
+    view_button.click(force=True)
     page.wait_for_timeout(250)
+    # move the mouse out of the way to avoid hover effects
+    page.mouse.move(0, 0)
     assert_snapshot(
         page.get_by_test_id("stSidebarNav"), name="mpa-sidebar_nav_expanded"
     )
@@ -148,18 +148,37 @@ def test_switch_page(app: Page):
     expect(app.get_by_test_id("stHeading")).to_contain_text("Page 2")
 
     # st.switch_page using relative path & leading /
-    app.get_by_test_id("baseButton-secondary").click()
-    wait_for_app_run(app)
+    click_button(app, "pages/06_page_6.py")
     expect(app.get_by_test_id("stHeading")).to_contain_text("Page 6")
 
     # st.switch_page using relative path & leading ./
-    app.get_by_test_id("baseButton-secondary").click()
-    wait_for_app_run(app)
+    click_button(app, "./mpa_basics.py")
     expect(app.get_by_test_id("stHeading")).to_contain_text("Main Page")
 
 
+def test_switch_page_preserves_embed_params(page: Page, app_port: int):
+    """Test that st.switch_page only preserves embed params."""
+
+    # Start at main page with embed & other query params
+    page.goto(
+        f"http://localhost:{app_port}/?embed=true&embed_options=light_theme&bar=foo"
+    )
+    wait_for_app_loaded(page)
+    expect(page.get_by_test_id("stJson")).to_contain_text('{"bar":"foo"}')
+
+    # Trigger st.switch_page
+    page.get_by_test_id("stButton").nth(0).locator("button").first.click()
+    wait_for_app_loaded(page)
+
+    # Check that only embed query params persist
+    expect(page).to_have_url(
+        f"http://localhost:{app_port}/page2?embed=true&embed_options=light_theme"
+    )
+    expect(page.get_by_test_id("stJson")).not_to_contain_text('{"bar":"foo"}')
+
+
 def test_switch_page_removes_query_params(page: Page, app_port: int):
-    """Test that query params are removed when navigating via st.switch_page"""
+    """Test that query params are removed when navigating via st.switch_page."""
 
     # Start at main page with query params
     page.goto(f"http://localhost:{app_port}/?foo=bar")
@@ -188,8 +207,24 @@ def test_switch_page_switches_immediately_if_second_page_is_slow(app: Page):
     expect(app.get_by_test_id("stHeading")).to_contain_text("Slow page")
 
 
-def test_switch_page_switches_immediately_if_second_page_is_slow(app: Page):
-    app.get_by_test_id("stButton").nth(1).locator("button").first.click()
+def test_widget_state_reset_on_page_switch(app: Page):
+    # Regression test for GH issue 7338
+
+    # Page 3
+    app.get_by_test_id("stSidebarNav").locator("a").nth(2).click()
+
+    expect(app.get_by_role("heading", name="Page 3")).to_be_visible()
+
+    slider = app.locator('.stSlider [role="slider"]')
+    slider.click()
+    slider.press("ArrowRight")
+    wait_for_app_run(app, wait_delay=500)
+    expect(app.get_by_test_id("stMarkdown")).to_contain_text("x is 1")
+
+    # Switch to the slow page
+    app.get_by_test_id("stSidebarNav").locator("a").nth(7).click()
+
+    expect(app.get_by_role("heading", name="slow page")).to_be_visible()
 
     # Wait for the view container and main menu to appear (like in wait_for_app_loaded),
     # but don't wait for the script to finish running.
@@ -198,14 +233,17 @@ def test_switch_page_switches_immediately_if_second_page_is_slow(app: Page):
     )
     app.wait_for_selector("[data-testid='stMainMenu']", timeout=20000, state="attached")
 
-    # We expect to see the page transition to the slow page by the time this call times
-    # out in 5s. Otherwise, the page contents aren't being rendered until the script has
-    # fully completed, and we've run into https://github.com/streamlit/streamlit/issues/7954
-    expect(app.get_by_test_id("stHeading")).to_contain_text("Slow page")
+    # Back to page 3
+    app.get_by_test_id("stSidebarNav").locator("a").nth(2).click()
+    expect(app.get_by_role("heading", name="Page 3")).to_be_visible()
+    wait_for_app_run(app, wait_delay=500)
+
+    # Slider reset
+    expect(app.get_by_test_id("stMarkdown")).to_contain_text("x is 0")
 
 
 def test_removes_query_params_when_swapping_pages(page: Page, app_port: int):
-    """Test that query params are removed when swapping pages"""
+    """Test that query params are removed when swapping pages."""
 
     page.goto(f"http://localhost:{app_port}/page_7?foo=bar")
     wait_for_app_loaded(page)
@@ -216,7 +254,7 @@ def test_removes_query_params_when_swapping_pages(page: Page, app_port: int):
 
 
 def test_removes_non_embed_query_params_when_swapping_pages(page: Page, app_port: int):
-    """Test that query params are removed when swapping pages"""
+    """Test that query params are removed when swapping pages."""
 
     page.goto(
         f"http://localhost:{app_port}/page_7?foo=bar&embed=True&embed_options=show_toolbar&embed_options=show_colored_line"
@@ -228,4 +266,91 @@ def test_removes_non_embed_query_params_when_swapping_pages(page: Page, app_port
 
     expect(page).to_have_url(
         f"http://localhost:{app_port}/page3?embed=true&embed_options=show_toolbar&embed_options=show_colored_line"
+    )
+
+
+def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that logos display properly in sidebar and main sections."""
+
+    # Go to logo page & wait short moment for logo to appear
+    app.get_by_test_id("stSidebarNav").locator("a").nth(8).click()
+    wait_for_app_loaded(app)
+
+    expect(app.get_by_role("heading", name="Logo page")).to_be_visible()
+
+    # Sidebar logo
+    expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
+        "href", "https://www.example.com"
+    )
+    assert_snapshot(app.get_by_test_id("stSidebar"), name="sidebar-logo")
+
+    # Collapse the sidebar
+    app.get_by_test_id("stSidebarContent").hover()
+    app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
+    app.wait_for_timeout(500)
+
+    # Collapsed logo
+    expect(
+        app.get_by_test_id("stSidebarCollapsedControl").locator("a")
+    ).to_have_attribute("href", "https://www.example.com")
+    assert_snapshot(
+        app.get_by_test_id("stSidebarCollapsedControl"), name="collapsed-logo"
+    )
+
+
+def test_renders_small_logos(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that small logos display properly in sidebar and main sections."""
+
+    # Go to small logo page & wait short moment for logo to appear
+    app.get_by_test_id("stSidebarNav").locator("a").nth(9).click()
+    wait_for_app_loaded(app)
+
+    expect(app.get_by_role("heading", name="Logo page")).to_be_visible()
+
+    # Sidebar logo
+    expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
+        "href", "https://www.example.com"
+    )
+    assert_snapshot(app.get_by_test_id("stSidebar"), name="small-sidebar-logo")
+
+    # Collapse the sidebar
+    app.get_by_test_id("stSidebarContent").hover()
+    app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
+    app.wait_for_timeout(500)
+
+    # Collapsed logo
+    expect(
+        app.get_by_test_id("stSidebarCollapsedControl").locator("a")
+    ).to_have_attribute("href", "https://www.example.com")
+    assert_snapshot(
+        app.get_by_test_id("stSidebarCollapsedControl"), name="small-collapsed-logo"
+    )
+
+
+def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that large logos display properly in sidebar and main sections."""
+
+    # Go to large logo page & wait short moment for logo to appear
+    app.get_by_test_id("stSidebarNav").locator("a").nth(10).click()
+    wait_for_app_loaded(app)
+
+    expect(app.get_by_role("heading", name="Logo page")).to_be_visible()
+
+    # Sidebar logo
+    expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
+        "href", "https://www.example.com"
+    )
+    assert_snapshot(app.get_by_test_id("stSidebar"), name="large-sidebar-logo")
+
+    # Collapse the sidebar
+    app.get_by_test_id("stSidebarContent").hover()
+    app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
+    app.wait_for_timeout(500)
+
+    # Collapsed logo
+    expect(
+        app.get_by_test_id("stSidebarCollapsedControl").locator("a")
+    ).to_have_attribute("href", "https://www.example.com")
+    assert_snapshot(
+        app.get_by_test_id("stSidebarCollapsedControl"), name="large-collapsed-logo"
     )

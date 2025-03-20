@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,26 @@
 
 import React, { FC, memo } from "react"
 
+import { Skeleton as SkeletonProto } from "@streamlit/protobuf"
+
 import { SquareSkeleton } from "./styled-components"
 
-interface Props {
-  height?: string
-}
+import { AppSkeleton } from "."
 
-const RawSkeleton: FC<React.PropsWithChildren<Props>> = props => {
-  return <SquareSkeleton data-testid="stSkeleton" {...props} />
+const RawSkeleton: FC<React.PropsWithChildren<{ element: SkeletonProto }>> = ({
+  element,
+}) => {
+  if (element.style == SkeletonProto.SkeletonStyle.APP) {
+    return <AppSkeleton /> // internal-only, does not use any of the element properties
+  }
+
+  return (
+    <SquareSkeleton
+      className="stSkeleton"
+      data-testid="stSkeleton"
+      height={element?.height ? element.height + "px" : undefined}
+    />
+  )
 }
 
 export const Skeleton = memo(RawSkeleton)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,13 +33,15 @@ Variables are saved in 3 places to handle 3 use cases:
 - The standard output, which means the values will be available in the GitHub logs,
   making troubleshooting easier.
 """
+
+from __future__ import annotations
+
 import enum
 import fnmatch
 import json
 import os
 import subprocess
 import sys
-from typing import Dict, List, Optional
 
 if __name__ not in ("__main__", "__mp_main__"):
     raise SystemExit(
@@ -75,7 +77,7 @@ FILES_WITH_PYTHON_DEPENDENCIES = [
     "lib/setup.py",
 ]
 # +1 to make range inclusive.
-ALL_PYTHON_VERSIONS = [f"3.{d}" for d in range(8, 12 + 1)]
+ALL_PYTHON_VERSIONS = [f"3.{d}" for d in range(9, 13 + 1)]
 PYTHON_MIN_VERSION = ALL_PYTHON_VERSIONS[0]
 PYTHON_MAX_VERSION = ALL_PYTHON_VERSIONS[-1]
 
@@ -98,7 +100,7 @@ class GithubEvent(enum.Enum):
     SCHEDULE = "schedule"
 
 
-def get_changed_files() -> List[str]:
+def get_changed_files() -> list[str]:
     """
     Checks the modified files in the last commit.
 
@@ -124,14 +126,14 @@ def get_changed_files() -> List[str]:
             "--no-commit-id",
             "--name-only",
             "-r",
-            f"HEAD^",
+            "HEAD^",
             "HEAD",
         ]
     )
     return [line for line in git_output.decode().splitlines() if line]
 
 
-def get_current_pr_labels() -> List[str]:
+def get_current_pr_labels() -> list[str]:
     """
     Returns a list of all tags associated with the current PR.
 
@@ -146,7 +148,7 @@ def get_current_pr_labels() -> List[str]:
     return [label["name"] for label in GITHUB_EVENT["pull_request"].get("labels", [])]
 
 
-def get_changed_python_dependencies_files() -> List[str]:
+def get_changed_python_dependencies_files() -> list[str]:
     """
     Gets a list of files that contain Python dependency definitions and have
     been modified.
@@ -171,12 +173,12 @@ def check_if_pr_has_label(label: str, action: str) -> bool:
         pr_labels = get_current_pr_labels()
         if label in pr_labels:
             print(f"PR has the following labels: {pr_labels}")
-            print(f"{action}, because PR has {label !r} label.")
+            print(f"{action}, because PR has {label!r} label.")
             return True
     return False
 
 
-def get_github_input(input_key: str) -> Optional[str]:
+def get_github_input(input_key: str) -> str | None:
     """
     Get additional data that the script expects to use during runtime.
 
@@ -254,10 +256,8 @@ def is_canary_build() -> bool:
     return False
 
 
-def get_output_variables() -> Dict[str, str]:
-    """
-    Compute build variables.
-    """
+def get_output_variables() -> dict[str, str]:
+    """Compute build variables."""
     canary_build = is_canary_build()
     python_versions = (
         ALL_PYTHON_VERSIONS
@@ -267,17 +267,10 @@ def get_output_variables() -> Dict[str, str]:
         )
         else [ALL_PYTHON_VERSIONS[0], ALL_PYTHON_VERSIONS[-1]]
     )
-    use_constraints_file = not (
-        canary_build
-        or check_if_pr_has_label(
-            LABEL_UPGRADE_DEPENDENCIES, "Latest dependencies will be used"
-        )
-    )
     variables = {
         "PYTHON_MIN_VERSION": PYTHON_MIN_VERSION,
         "PYTHON_MAX_VERSION": PYTHON_MAX_VERSION,
         "PYTHON_VERSIONS": json.dumps(python_versions),
-        "USE_CONSTRAINTS_FILE": str(use_constraints_file).lower(),
     }
     # Environment variables can be overridden at job level and we don't want
     # to change them then.
@@ -286,16 +279,15 @@ def get_output_variables() -> Dict[str, str]:
     return variables
 
 
-def save_output_variables(variables: Dict[str, str]) -> None:
-    """
-    Saves build variables
-    """
+def save_output_variables(variables: dict[str, str]) -> None:
+    """Saves build variables."""
     print("Saving output variables")
-    with open(
-        os.environ.get(GITHUB_ENV_ENV_VAR, "/dev/null"), "w+"
-    ) as github_env_file, open(
-        os.environ.get(GITHUB_OUTPUT_ENV_VAR, "/dev/null"), "w+"
-    ) as github_output_file:
+    with (
+        open(os.environ.get(GITHUB_ENV_ENV_VAR, "/dev/null"), "w+") as github_env_file,
+        open(
+            os.environ.get(GITHUB_OUTPUT_ENV_VAR, "/dev/null"), "w+"
+        ) as github_output_file,
+    ):
         for target_file in [sys.stdout, github_env_file, github_output_file]:
             for name, value in variables.items():
                 target_file.write(f"{name}={value}\n")

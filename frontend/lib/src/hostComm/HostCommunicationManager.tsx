@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-import { ICustomThemeConfig, WidgetStates } from "@streamlit/lib/src/proto"
+import { ICustomThemeConfig, WidgetStates } from "@streamlit/protobuf"
+
+import { isValidOrigin } from "~lib/util/UriUtil"
+import { PresetThemeName } from "~lib/theme/types"
 
 import {
+  AppConfig,
+  DeployedAppMetadata,
   IGuestToHostMessage,
   IHostToGuestMessage,
-  VersionedMessage,
   IMenuItem,
   IToolbarItem,
-  DeployedAppMetadata,
-  AppConfig,
+  VersionedMessage,
 } from "./types"
-
-import { isValidOrigin } from "@streamlit/lib/src/util/UriUtil"
-
-import Resolver from "@streamlit/lib/src/util/Resolver"
 
 export const HOST_COMM_VERSION = 1
 
 export interface HostCommunicationProps {
+  readonly streamlitExecutionStartedAt: number
   readonly sendRerunBackMsg: (
     widgetStates?: WidgetStates,
     pageScriptHash?: string
@@ -43,12 +43,15 @@ export interface HostCommunicationProps {
   readonly clearCache: () => void
   readonly sendAppHeartbeat: () => void
   readonly setInputsDisabled: (inputsDisabled: boolean) => void
-  readonly themeChanged: (themeInfo: ICustomThemeConfig) => void
+  readonly themeChanged: (
+    themeName?: PresetThemeName,
+    themeInfo?: ICustomThemeConfig
+  ) => void
   readonly pageChanged: (pageScriptHash: string) => void
   readonly isOwnerChanged: (isOwner: boolean) => void
-  readonly jwtHeaderChanged: (jwtPayload: {
-    jwtHeaderName: string
-    jwtHeaderValue: string
+  readonly fileUploadClientConfigChanged: (payload: {
+    prefix: string
+    headers: Record<string, string>
   }) => void
   readonly hostMenuItemsChanged: (menuItems: IMenuItem[]) => void
   readonly hostToolbarItemsChanged: (toolbarItems: IToolbarItem[]) => void
@@ -61,6 +64,8 @@ export interface HostCommunicationProps {
   readonly deployedAppMetadataChanged: (
     deployedAppMetadata: DeployedAppMetadata
   ) => void
+  readonly restartWebsocketConnection: () => void
+  readonly terminateWebsocketConnection: () => void
 }
 
 /**
@@ -71,13 +76,13 @@ export default class HostCommunicationManager {
 
   private allowedOrigins: string[]
 
-  private deferredAuthToken: Resolver<string | undefined>
+  private deferredAuthToken: PromiseWithResolvers<string | undefined>
 
   constructor(props: HostCommunicationProps) {
     this.props = props
 
     this.allowedOrigins = []
-    this.deferredAuthToken = new Resolver()
+    this.deferredAuthToken = Promise.withResolvers<string | undefined>()
   }
 
   /**
@@ -86,7 +91,11 @@ export default class HostCommunicationManager {
    */
   public openHostCommunication = (): void => {
     window.addEventListener("message", this.receiveHostMessage)
-    this.sendMessageToHost({ type: "GUEST_READY" })
+    this.sendMessageToHost({
+      type: "GUEST_READY",
+      streamlitExecutionStartedAt: this.props.streamlitExecutionStartedAt,
+      guestReadyAt: Date.now(),
+    })
   }
 
   /**
@@ -103,7 +112,7 @@ export default class HostCommunicationManager {
    * This should be called in a .then() handler attached to deferredAuthToken.promise.
    */
   public resetAuthToken = (): void => {
-    this.deferredAuthToken = new Resolver()
+    this.deferredAuthToken = Promise.withResolvers<string | undefined>()
   }
 
   /**
@@ -130,6 +139,22 @@ export default class HostCommunicationManager {
     this.allowedOrigins = allowedOrigins
 
     this.openHostCommunication()
+  }
+
+  /**
+   * Register a function to deliver a message to the Host
+   * that is on the same origin as the Guest
+   */
+  public sendMessageToSameOriginHost = (
+    message: IGuestToHostMessage
+  ): void => {
+    window.parent.postMessage(
+      {
+        stCommVersion: HOST_COMM_VERSION,
+        ...message,
+      } as VersionedMessage<IGuestToHostMessage>,
+      window.location.origin
+    )
   }
 
   /**
@@ -201,9 +226,14 @@ export default class HostCommunicationManager {
       // is a no-op, and we already resolved the promise to undefined
       // above.
       this.deferredAuthToken.resolve(message.authToken)
-      if (message.jwtHeaderName !== undefined) {
-        this.props.jwtHeaderChanged(message)
-      }
+    }
+
+    if (message.type === "SET_FILE_UPLOAD_CLIENT_CONFIG") {
+      const { prefix, headers } = message
+      this.props.fileUploadClientConfigChanged({
+        prefix,
+        headers,
+      })
     }
 
     if (message.type === "SET_IS_OWNER") {
@@ -246,7 +276,15 @@ export default class HostCommunicationManager {
     }
 
     if (message.type === "SET_CUSTOM_THEME_CONFIG") {
-      this.props.themeChanged(message.themeInfo)
+      this.props.themeChanged(message.themeName, message.themeInfo)
+    }
+
+    if (message.type === "RESTART_WEBSOCKET_CONNECTION") {
+      this.props.restartWebsocketConnection()
+    }
+
+    if (message.type === "TERMINATE_WEBSOCKET_CONNECTION") {
+      this.props.terminateWebsocketConnection()
     }
   }
 }

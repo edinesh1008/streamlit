@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,71 +14,25 @@
  * limitations under the License.
  */
 
+import { MockInstance } from "vitest"
+
 import {
   EMBED_QUERY_PARAM_KEY,
   EMBED_QUERY_PARAM_VALUES,
-  LoadingScreenType,
-  getCookie,
   getEmbedUrlParams,
   getLoadingScreenType,
-  isEmbed,
-  setCookie,
-  preserveEmbedQueryParams,
   isColoredLineDisplayed,
-  isToolbarDisplayed,
+  isDarkThemeInQueryParams,
+  isEmbed,
+  isLightThemeInQueryParams,
   isPaddingDisplayed,
   isScrollingHidden,
-  isLightTheme,
-  isDarkTheme,
+  isToolbarDisplayed,
+  keysToSnakeCase,
+  LoadingScreenType,
+  preserveEmbedQueryParams,
+  setCookie,
 } from "./utils"
-
-describe("getCookie", () => {
-  afterEach(() => {
-    document.cookie.split(";").forEach(cookie => {
-      const eqPos = cookie.indexOf("=")
-      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT`
-    })
-  })
-
-  it("get existing cookie", () => {
-    document.cookie = "flavor=chocolatechip"
-    const cookie = getCookie("flavor")
-    expect(cookie).toEqual("chocolatechip")
-  })
-
-  it("get missing cookie", () => {
-    document.cookie = "sweetness=medium;"
-    document.cookie = "flavor=chocolatechip;"
-    document.cookie = "type=darkchocolate;"
-    const cookie = getCookie("recipe")
-    expect(cookie).toEqual(undefined)
-  })
-
-  it("find cookie in the front", () => {
-    document.cookie = "flavor=chocolatechip;"
-    document.cookie = "sweetness=medium;"
-    document.cookie = "type=darkchocolate;"
-    const cookie = getCookie("flavor")
-    expect(cookie).toEqual("chocolatechip")
-  })
-
-  it("find cookie in the middle", () => {
-    document.cookie = "sweetness=medium;"
-    document.cookie = "flavor=chocolatechip;"
-    document.cookie = "type=darkchocolate;"
-    const cookie = getCookie("flavor")
-    expect(cookie).toEqual("chocolatechip")
-  })
-
-  it("find cookie in the end", () => {
-    document.cookie = "sweetness=medium;"
-    document.cookie = "type=darkchocolate;"
-    document.cookie = "flavor=chocolatechip;"
-    const cookie = getCookie("flavor")
-    expect(cookie).toEqual("chocolatechip")
-  })
-})
 
 describe("setCookie", () => {
   afterEach(() => {
@@ -137,10 +91,10 @@ describe("embedParamValues", () => {
 })
 
 describe("getEmbedUrlParams", () => {
-  let windowSpy: jest.SpyInstance
+  let windowSpy: MockInstance
 
   beforeEach(() => {
-    windowSpy = jest.spyOn(window, "window", "get")
+    windowSpy = vi.spyOn(window, "window", "get")
   })
 
   afterEach(() => {
@@ -212,10 +166,10 @@ describe("getEmbedUrlParams", () => {
 })
 
 describe("isEmbed", () => {
-  let windowSpy: jest.SpyInstance
+  let windowSpy: MockInstance
 
   beforeEach(() => {
-    windowSpy = jest.spyOn(window, "window", "get")
+    windowSpy = vi.spyOn(window, "window", "get")
   })
 
   afterEach(() => {
@@ -251,8 +205,8 @@ describe("isEmbed", () => {
     expect(isToolbarDisplayed()).toBe(false)
     expect(isPaddingDisplayed()).toBe(false)
     expect(isScrollingHidden()).toBe(false)
-    expect(isLightTheme()).toBe(false)
-    expect(isDarkTheme()).toBe(false)
+    expect(isLightThemeInQueryParams()).toBe(false)
+    expect(isDarkThemeInQueryParams()).toBe(false)
   })
 
   it("embed Options should return false even if ?embed=false", () => {
@@ -290,7 +244,7 @@ describe("isEmbed", () => {
       },
     }))
 
-    expect(isLightTheme()).toBe(true)
+    expect(isLightThemeInQueryParams()).toBe(true)
   })
 
   it("should specify dark theme if in embed options", () => {
@@ -300,7 +254,7 @@ describe("isEmbed", () => {
       },
     }))
 
-    expect(isDarkTheme()).toBe(true)
+    expect(isDarkThemeInQueryParams()).toBe(true)
   })
 
   it("should disable scrolling if in embed options", () => {
@@ -314,8 +268,8 @@ describe("isEmbed", () => {
     expect(isToolbarDisplayed()).toBe(false)
     expect(isPaddingDisplayed()).toBe(false)
     expect(isScrollingHidden()).toBe(true)
-    expect(isLightTheme()).toBe(false)
-    expect(isDarkTheme()).toBe(false)
+    expect(isLightThemeInQueryParams()).toBe(false)
+    expect(isDarkThemeInQueryParams()).toBe(false)
   })
 
   it("should show padding if in embed options", () => {
@@ -329,8 +283,8 @@ describe("isEmbed", () => {
     expect(isToolbarDisplayed()).toBe(false)
     expect(isPaddingDisplayed()).toBe(true)
     expect(isScrollingHidden()).toBe(false)
-    expect(isLightTheme()).toBe(false)
-    expect(isDarkTheme()).toBe(false)
+    expect(isLightThemeInQueryParams()).toBe(false)
+    expect(isDarkThemeInQueryParams()).toBe(false)
   })
 
   it("should show the toolbar if in embed options", () => {
@@ -344,8 +298,8 @@ describe("isEmbed", () => {
     expect(isToolbarDisplayed()).toBe(true)
     expect(isPaddingDisplayed()).toBe(false)
     expect(isScrollingHidden()).toBe(false)
-    expect(isLightTheme()).toBe(false)
-    expect(isDarkTheme()).toBe(false)
+    expect(isLightThemeInQueryParams()).toBe(false)
+    expect(isDarkThemeInQueryParams()).toBe(false)
   })
 
   it("should show the colored line if in embed options", () => {
@@ -359,8 +313,8 @@ describe("isEmbed", () => {
     expect(isToolbarDisplayed()).toBe(false)
     expect(isPaddingDisplayed()).toBe(false)
     expect(isScrollingHidden()).toBe(false)
-    expect(isLightTheme()).toBe(false)
-    expect(isDarkTheme()).toBe(false)
+    expect(isLightThemeInQueryParams()).toBe(false)
+    expect(isDarkThemeInQueryParams()).toBe(false)
   })
 
   it("isEmbed is case insensitive, so should return true when ?embed=TrUe", () => {
@@ -401,69 +355,64 @@ describe("isEmbed", () => {
 })
 
 describe("getLoadingScreenType", () => {
-  let windowSpy: jest.SpyInstance
-
-  beforeEach(() => {
-    windowSpy = jest.spyOn(window, "window", "get")
-  })
-
-  afterEach(() => {
-    windowSpy.mockRestore()
-  })
-
   it("should return v2 by default", () => {
-    windowSpy.mockImplementation(() => ({
+    vi.stubGlobal("window", {
       location: {
         search: null,
       },
-    }))
+    })
 
     expect(getLoadingScreenType()).toBe(LoadingScreenType.V2)
   })
 
   it("should give precendence to 'hide'", () => {
-    windowSpy.mockImplementation(() => ({
+    vi.stubGlobal("window", {
       location: {
         search:
           "?embed_options=hide_loading_screen&show_loading_screen_v1&show_loading_screen_v2",
       },
-    }))
+    })
 
     expect(getLoadingScreenType()).toBe(LoadingScreenType.NONE)
   })
 
   it("should support 'hide'", () => {
-    windowSpy.mockImplementation(() => ({
+    vi.stubGlobal("window", {
       location: {
         search: "?embed_options=hide_loading_screen",
       },
-    }))
+    })
 
     expect(getLoadingScreenType()).toBe(LoadingScreenType.NONE)
   })
 
   it("should support 'v1'", () => {
-    windowSpy.mockImplementation(() => ({
+    vi.stubGlobal("window", {
       location: {
         search: "?embed_options=show_loading_screen_v1",
       },
-    }))
+    })
 
     expect(getLoadingScreenType()).toBe(LoadingScreenType.V1)
   })
 
   it("should support 'v2'", () => {
-    windowSpy.mockImplementation(() => ({
+    vi.stubGlobal("window", {
       location: {
         search: "?embed_options=show_loading_screen_v2",
       },
-    }))
+    })
 
     expect(getLoadingScreenType()).toBe(LoadingScreenType.V2)
   })
 
   describe("preserveEmbedQueryParams", () => {
     let prevWindowLocation: Location
+
+    beforeEach(() => {
+      prevWindowLocation = window.location
+    })
+
     afterEach(() => {
       window.location = prevWindowLocation
     })
@@ -473,7 +422,7 @@ describe("getLoadingScreenType", () => {
       delete window.location
       // @ts-expect-error
       window.location = {
-        assign: jest.fn(),
+        assign: vi.fn(),
         search: "foo=bar",
       }
       expect(preserveEmbedQueryParams()).toBe("")
@@ -484,7 +433,7 @@ describe("getLoadingScreenType", () => {
       delete window.location
       // @ts-expect-error
       window.location = {
-        assign: jest.fn(),
+        assign: vi.fn(),
         search: "embed=true&foo=bar",
       }
       expect(preserveEmbedQueryParams()).toBe("embed=true")
@@ -495,7 +444,7 @@ describe("getLoadingScreenType", () => {
       delete window.location
       // @ts-expect-error
       window.location = {
-        assign: jest.fn(),
+        assign: vi.fn(),
         search:
           "embed=true&embed_options=option1&embed_options=option2&foo=bar",
       }
@@ -503,5 +452,24 @@ describe("getLoadingScreenType", () => {
         "embed=true&embed_options=option1&embed_options=option2"
       )
     })
+  })
+})
+
+describe("keysToSnakeCase", () => {
+  it("should replace . with _", () => {
+    expect(keysToSnakeCase({ "marker.size": "bob" })).toEqual({
+      marker_size: "bob",
+    })
+  })
+
+  it("should return decamelized keys for regular keys", () => {
+    expect(keysToSnakeCase({ aliceName: "alice", bobName: "bob" })).toEqual({
+      alice_name: "alice",
+      bob_name: "bob",
+    })
+  })
+
+  it("should return an empty dictionary when passed an empty dictionary", () => {
+    expect(keysToSnakeCase({})).toEqual({})
   })
 })

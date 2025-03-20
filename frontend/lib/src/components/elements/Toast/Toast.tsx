@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,50 +15,57 @@
  */
 
 import React, {
+  memo,
   ReactElement,
-  useState,
-  useEffect,
   useCallback,
+  useEffect,
   useMemo,
+  useState,
 } from "react"
-import { withTheme } from "@emotion/react"
+
+import { useTheme } from "@emotion/react"
 import { toaster, ToastOverrides } from "baseui/toast"
 
-import {
-  hasLightBackgroundColor,
-  EmotionTheme,
-} from "@streamlit/lib/src/theme"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
-import { Kind } from "@streamlit/lib/src/components/shared/AlertContainer"
-import AlertElement from "@streamlit/lib/src/components/elements/AlertElement/AlertElement"
+import { EmotionTheme, hasLightBackgroundColor } from "~lib/theme"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
+import { Kind } from "~lib/components/shared/AlertContainer"
+import AlertElement from "~lib/components/elements/AlertElement/AlertElement"
+import { DynamicIcon } from "~lib/components/shared/Icon"
 
-import { StyledViewButton, StyledToastMessage } from "./styled-components"
+import {
+  StyledMessageWrapper,
+  StyledToastWrapper,
+  StyledViewButton,
+} from "./styled-components"
 
 export interface ToastProps {
-  theme: EmotionTheme
   body: string
   icon?: string
-  width: number
 }
 
-function generateToastOverrides(
-  expanded: boolean,
-  theme: EmotionTheme
-): ToastOverrides {
+function generateToastOverrides(theme: EmotionTheme): ToastOverrides {
   const lightBackground = hasLightBackgroundColor(theme)
   return {
     Body: {
       props: {
         "data-testid": "stToast",
+        className: "stToast",
       },
       style: {
-        width: "288px",
-        marginTop: "8px",
+        display: "flex",
+        flexDirection: "row",
+        gap: theme.spacing.md,
+        width: theme.sizes.toastWidth,
+        marginTop: theme.spacing.sm,
         // Warnings logged if you use shorthand property here:
-        borderTopLeftRadius: theme.radii.lg,
-        borderTopRightRadius: theme.radii.lg,
-        borderBottomLeftRadius: theme.radii.lg,
-        borderBottomRightRadius: theme.radii.lg,
+        borderTopLeftRadius: theme.radii.default,
+        borderTopRightRadius: theme.radii.default,
+        borderBottomLeftRadius: theme.radii.default,
+        borderBottomRightRadius: theme.radii.default,
+        paddingTop: theme.spacing.lg,
+        paddingBottom: theme.spacing.lg,
+        paddingLeft: theme.spacing.twoXL,
+        paddingRight: theme.spacing.twoXL,
         backgroundColor: lightBackground
           ? theme.colors.gray10
           : theme.colors.gray90,
@@ -69,20 +76,15 @@ function generateToastOverrides(
           : "0px 4px 16px rgba(0, 0, 0, 0.7)",
       },
     },
-    InnerContainer: {
-      style: {
-        maxHeight: expanded ? "none" : "88px",
-        overflow: "hidden",
-        fontSize: theme.fontSizes.sm,
-        lineHeight: "1.4rem",
-      },
-    },
     CloseIcon: {
       style: {
-        color: theme.colors.bodyText,
-        marginRight: "-5px",
-        width: "1.2rem",
-        height: "1.2rem",
+        color: theme.colors.fadedText40,
+        width: theme.fontSizes.lg,
+        height: theme.fontSizes.lg,
+        marginRight: `calc(-1 * ${theme.spacing.lg} / 2)`,
+        ":hover": {
+          color: theme.colors.bodyText,
+        },
       },
     },
   }
@@ -90,10 +92,10 @@ function generateToastOverrides(
 
 // Function used to truncate toast messages that are longer than three lines.
 export function shortenMessage(fullMessage: string): string {
-  const characterLimit = 114
+  const characterLimit = 104
 
   if (fullMessage.length > characterLimit) {
-    let message = fullMessage.replace(/^(.{114}[^\s]*).*/, "$1")
+    let message = fullMessage.replace(/^(.{104}[^\s]*).*/, "$1")
 
     if (message.length > characterLimit) {
       message = message
@@ -109,10 +111,10 @@ export function shortenMessage(fullMessage: string): string {
   return fullMessage
 }
 
-export function Toast({ theme, body, icon, width }: ToastProps): ReactElement {
-  const fullMessage = icon ? `${icon}&ensp;${body}` : body
-  const displayMessage = shortenMessage(fullMessage)
-  const shortened = fullMessage !== displayMessage
+function Toast({ body, icon }: Readonly<ToastProps>): ReactElement {
+  const theme: EmotionTheme = useTheme()
+  const displayMessage = shortenMessage(body)
+  const shortened = body !== displayMessage
 
   const [expanded, setExpanded] = useState(!shortened)
   const [toastKey, setToastKey] = useState<React.Key>(0)
@@ -121,39 +123,44 @@ export function Toast({ theme, body, icon, width }: ToastProps): ReactElement {
     setExpanded(!expanded)
   }, [expanded])
 
-  const styleOverrides = useMemo(
-    () => generateToastOverrides(expanded, theme),
-    [expanded, theme]
-  )
+  const styleOverrides = useMemo(() => generateToastOverrides(theme), [theme])
 
   const toastContent = useMemo(
     () => (
-      <>
-        <StyledToastMessage expanded={expanded}>
+      <StyledToastWrapper expanded={expanded}>
+        {icon && (
+          <DynamicIcon
+            iconValue={icon}
+            size="xl"
+            testid="stToastDynamicIcon"
+          />
+        )}
+        <StyledMessageWrapper>
           <StreamlitMarkdown
-            source={expanded ? fullMessage : displayMessage}
+            source={expanded ? body : displayMessage}
             allowHTML={false}
             isToast
           />
-        </StyledToastMessage>
-        {shortened && (
-          <StyledViewButton
-            data-testid="toastViewButton"
-            className="toastViewButton"
-            onClick={handleClick}
-          >
-            {expanded ? "view less" : "view more"}
-          </StyledViewButton>
-        )}
-      </>
+          {shortened && (
+            <StyledViewButton
+              data-testid="stToastViewButton"
+              onClick={handleClick}
+            >
+              {expanded ? "view less" : "view more"}
+            </StyledViewButton>
+          )}
+        </StyledMessageWrapper>
+      </StyledToastWrapper>
     ),
-    [shortened, expanded, fullMessage, displayMessage, handleClick]
+    [shortened, expanded, body, icon, displayMessage, handleClick]
   )
 
   useEffect(() => {
     // Handles the error case where st.sidebar.toast is called since
     // baseweb would throw error anyway (no toast container in sidebar)
-    if (theme.inSidebar) return
+    if (theme.inSidebar) {
+      return
+    }
 
     // Uses toaster utility to create toast on mount and generate unique key
     // to reference that toast for update/removal
@@ -172,6 +179,8 @@ export function Toast({ theme, body, icon, width }: ToastProps): ReactElement {
     }
 
     // Array must be empty to run as mount/cleanup
+    // TODO: Update to match React best practices
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -187,8 +196,7 @@ export function Toast({ theme, body, icon, width }: ToastProps): ReactElement {
     <AlertElement
       kind={Kind.ERROR}
       body="Streamlit API Error: `st.toast` cannot be called directly on the sidebar with `st.sidebar.toast`.
-        See our `st.toast` API [docs](https://docs.streamlit.io/library/api-reference/status/st.toast) for more information."
-      width={width}
+        See our `st.toast` API [docs](https://docs.streamlit.io/develop/api-reference/status/st.toast) for more information."
     />
   )
   return (
@@ -197,4 +205,4 @@ export function Toast({ theme, body, icon, width }: ToastProps): ReactElement {
   )
 }
 
-export default withTheme(Toast)
+export default memo(Toast)

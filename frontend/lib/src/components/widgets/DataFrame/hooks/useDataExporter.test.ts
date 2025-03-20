@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-import { renderHook } from "@testing-library/react-hooks"
+import { renderHook } from "@testing-library/react"
+import { Field, Int64, Utf8 } from "apache-arrow"
 import { showSaveFilePicker } from "native-file-system-adapter"
 
 import {
   BaseColumn,
-  TextColumn,
   NumberColumn,
-} from "@streamlit/lib/src/components/widgets/DataFrame/columns"
+  TextColumn,
+} from "~lib/components/widgets/DataFrame/columns"
+import { DataFrameCellType } from "~lib/dataframes/arrowTypeUtils"
 
 import useDataExporter, { toCsvRow } from "./useDataExporter"
 
-const mockWrite = jest.fn()
-const mockClose = jest.fn()
+const mockWrite = vi.fn()
+const mockClose = vi.fn()
 
 // The native-file-system-adapter is not available in tests, so we need to mock it.
-jest.mock("native-file-system-adapter", () => ({
-  showSaveFilePicker: jest.fn().mockImplementation((_object: any) => {
+vi.mock("native-file-system-adapter", () => ({
+  showSaveFilePicker: vi.fn().mockImplementation((_object: any) => {
     return {
-      createWritable: jest.fn().mockImplementation(() => {
+      createWritable: vi.fn().mockImplementation(() => {
         return {
           write: mockWrite,
           close: mockClose,
@@ -49,12 +51,20 @@ const MOCK_COLUMNS: BaseColumn[] = [
     title: "column_1",
     indexNumber: 0,
     arrowType: {
-      pandas_type: "int64",
-      numpy_type: "int64",
+      type: DataFrameCellType.DATA,
+      arrowField: new Field("column_1", new Int64(), true),
+      pandasType: {
+        field_name: "column_1",
+        name: "column_1",
+        pandas_type: "int64",
+        numpy_type: "int64",
+        metadata: null,
+      },
     },
     isEditable: false,
     isHidden: false,
     isIndex: false,
+    isPinned: false,
     isStretched: false,
   }),
   TextColumn({
@@ -63,12 +73,20 @@ const MOCK_COLUMNS: BaseColumn[] = [
     title: "column_2",
     indexNumber: 1,
     arrowType: {
-      pandas_type: "unicode",
-      numpy_type: "object",
+      type: DataFrameCellType.DATA,
+      arrowField: new Field("column_2", new Utf8(), true),
+      pandasType: {
+        field_name: "column_2",
+        name: "column_2",
+        pandas_type: "unicode",
+        numpy_type: "object",
+        metadata: null,
+      },
     },
     isEditable: false,
     isHidden: false,
     isIndex: false,
+    isPinned: false,
     isStretched: false,
     columnTypeOptions: {},
   }),
@@ -76,7 +94,7 @@ const MOCK_COLUMNS: BaseColumn[] = [
 
 const NUM_ROWS = 5
 
-const getCellContentMock = jest
+const getCellContentMock = vi
   .fn()
   .mockImplementation(([col]: readonly [number]) => {
     const column = MOCK_COLUMNS[col]
@@ -103,12 +121,12 @@ describe("toCsvRow", () => {
 
 describe("useDataExporter hook", () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   it("correctly writes data row-by-row to writable", async () => {
     const { result } = renderHook(() => {
-      return useDataExporter(getCellContentMock, MOCK_COLUMNS, NUM_ROWS)
+      return useDataExporter(getCellContentMock, MOCK_COLUMNS, NUM_ROWS, false)
     })
 
     if (typeof result.current.exportToCsv !== "function") {
@@ -130,7 +148,7 @@ describe("useDataExporter hook", () => {
 
   it("correctly creates a file picker", async () => {
     const { result } = renderHook(() => {
-      return useDataExporter(getCellContentMock, MOCK_COLUMNS, NUM_ROWS)
+      return useDataExporter(getCellContentMock, MOCK_COLUMNS, NUM_ROWS, false)
     })
 
     if (typeof result.current.exportToCsv !== "function") {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 
 import React from "react"
 
-import { GridCell, DataEditorProps } from "@glideapps/glide-data-grid"
+import { DataEditorProps, GridCell } from "@glideapps/glide-data-grid"
 
-import { Quiver } from "@streamlit/lib/src/dataframes/Quiver"
-import { logError } from "@streamlit/lib/src/util/log"
-
-import { getCellFromArrow } from "@streamlit/lib/src/components/widgets/DataFrame/arrowUtils"
-import EditingState from "@streamlit/lib/src/components/widgets/DataFrame/EditingState"
+import { getCellFromArrow } from "~lib/components/widgets/DataFrame/arrowUtils"
 import {
   BaseColumn,
   getErrorCell,
-} from "@streamlit/lib/src/components/widgets/DataFrame/columns"
+} from "~lib/components/widgets/DataFrame/columns"
+import EditingState from "~lib/components/widgets/DataFrame/EditingState"
+import { getStyledCell } from "~lib/dataframes/pandasStylerUtils"
+import { Quiver } from "~lib/dataframes/Quiver"
+import { notNullOrUndefined } from "~lib/util/utils"
 
 type DataLoaderReturn = Pick<DataEditorProps, "getCellContent">
 
@@ -50,42 +50,66 @@ function useDataLoader(
     ([col, row]: readonly [number, number]): GridCell => {
       if (col > columns.length - 1) {
         return getErrorCell(
-          "Column index out of bounds.",
-          "This should never happen. Please report this bug."
+          "Column index out of bounds",
+          "This error should never happen. Please report this bug."
         )
       }
 
       if (row > numRows - 1) {
         return getErrorCell(
-          "Row index out of bounds.",
-          "This should never happen. Please report this bug."
+          "Row index out of bounds",
+          "This error should never happen. Please report this bug."
         )
       }
       const column = columns[col]
 
       const originalCol = column.indexNumber
       const originalRow = editingState.current.getOriginalRowIndex(row)
-
+      const isAddedRow = editingState.current.isAddedRow(originalRow)
       // Use editing state if editable or if it is an appended row
-      if (column.isEditable || editingState.current.isAddedRow(originalRow)) {
+      if (column.isEditable || isAddedRow) {
         const editedCell = editingState.current.getCell(
           originalCol,
           originalRow
         )
-        if (editedCell !== undefined) {
-          return editedCell
+        if (notNullOrUndefined(editedCell)) {
+          // Create a new representation of the edited cell to apply
+          // changes that might have been applied to the column (e.g. change of format from UI).
+          // TODO(lukasmasuch): We should refactor this at some point to avoid storing
+          // cells in the editing state. It would be enough to store the value and the
+          // last updated timestamp.
+          return {
+            ...column.getCell(column.getCellValue(editedCell), false),
+            // Apply the last updated timestamp stored in the edited cell:
+            lastUpdated: editedCell.lastUpdated,
+          }
+        } else if (isAddedRow) {
+          // This is not expected to happen. All cells to added rows should
+          // be defined. If not, we return a specific error cell.
+          return getErrorCell(
+            "Error during cell creation",
+            "This error should never happen. Please report this bug. " +
+              `No cell found for an added row: col=${originalCol}; row=${originalRow}`
+          )
         }
       }
 
       try {
-        // Arrow has the header in first row
-        const arrowCell = data.getCell(originalRow + 1, originalCol)
-        return getCellFromArrow(column, arrowCell, data.cssStyles)
+        // We skip all header rows to get to to the actual data rows.
+        // in th Arrow data.
+        const arrowCell = data.getCell(originalRow, originalCol)
+        const styledCell = getStyledCell(data, originalRow, originalCol)
+
+        return getCellFromArrow(
+          column,
+          arrowCell,
+          styledCell,
+          data.styler?.cssStyles
+        )
       } catch (error) {
-        logError(error)
         return getErrorCell(
-          "Error during cell creation.",
-          `This should never happen. Please report this bug. \nError: ${error}`
+          "Error during cell creation",
+          `This error should never happen. Please report this bug. \nError: ${error}`
         )
       }
     },

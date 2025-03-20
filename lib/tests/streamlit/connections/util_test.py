@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ class ConnectionUtilTest(unittest.TestCase):
     def test_not_running_in_sis(self):
         assert not running_in_sis()
 
-    @pytest.mark.require_snowflake
+    @pytest.mark.require_integration
     @patch(
         "snowflake.snowpark._internal.utils.is_in_stored_procedure",
         MagicMock(return_value=True),
@@ -47,7 +47,7 @@ class ConnectionUtilTest(unittest.TestCase):
     def test_running_in_sis(self):
         assert running_in_sis()
 
-    @pytest.mark.require_snowflake
+    @pytest.mark.require_integration
     @patch(
         "snowflake.snowpark._internal.utils.is_in_stored_procedure",
         MagicMock(side_effect=ModuleNotFoundError("oh no")),

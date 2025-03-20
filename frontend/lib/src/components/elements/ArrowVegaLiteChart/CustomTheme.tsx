@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,15 @@ import merge from "lodash/merge"
 import mergeWith from "lodash/mergeWith"
 
 import {
-  getGray30,
-  getGray70,
-  hasLightBackgroundColor,
+  convertRemToPx,
+  EmotionTheme,
+  getBlue80,
   getCategoricalColorsArray,
   getDivergingColorsArray,
+  getGray30,
+  getGray70,
   getSequentialColorsArray,
-  EmotionTheme,
-} from "@streamlit/lib/src/theme"
+} from "~lib/theme"
 
 export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
   // This theming config contains multiple hard coded spacing values.
@@ -43,27 +44,27 @@ export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
       color: theme.colors.headingColor,
       titleFontStyle: "normal",
       fontWeight: theme.fontWeights.bold,
-      fontSize: theme.fontSizes.smPx + 2,
+      fontSize: convertRemToPx(theme.fontSizes.md),
       orient: "top",
       offset: 26,
     },
     header: {
       titleFontWeight: theme.fontWeights.normal,
-      titleFontSize: theme.fontSizes.mdPx,
+      titleFontSize: convertRemToPx(theme.fontSizes.md),
       titleColor: getGray70(theme),
       titleFontStyle: "normal",
-      labelFontSize: theme.fontSizes.twoSmPx,
+      labelFontSize: convertRemToPx(theme.fontSizes.twoSm),
       labelFontWeight: theme.fontWeights.normal,
       labelColor: getGray70(theme),
       labelFontStyle: "normal",
     },
     axis: {
-      labelFontSize: theme.fontSizes.twoSmPx,
+      labelFontSize: convertRemToPx(theme.fontSizes.twoSm),
       labelFontWeight: theme.fontWeights.normal,
       labelColor: getGray70(theme),
       labelFontStyle: "normal",
       titleFontWeight: theme.fontWeights.normal,
-      titleFontSize: theme.fontSizes.smPx,
+      titleFontSize: convertRemToPx(theme.fontSizes.sm),
       titleColor: getGray70(theme),
       titleFontStyle: "normal",
       ticks: false,
@@ -75,25 +76,30 @@ export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
       labelFlushOffset: 1,
       labelBound: false,
       labelLimit: 100,
-      titlePadding: theme.spacing.lgPx,
-      labelPadding: theme.spacing.lgPx,
-      labelSeparation: theme.spacing.twoXSPx,
+      titlePadding: convertRemToPx(theme.spacing.lg),
+      labelPadding: convertRemToPx(theme.spacing.lg),
+      labelSeparation: convertRemToPx(theme.spacing.twoXS),
       labelOverlap: true,
     },
     legend: {
-      labelFontSize: theme.fontSizes.smPx,
+      labelFontSize: convertRemToPx(theme.fontSizes.sm),
       labelFontWeight: theme.fontWeights.normal,
       labelColor: getGray70(theme),
-      titleFontSize: theme.fontSizes.smPx,
+      titleFontSize: convertRemToPx(theme.fontSizes.sm),
       titleFontWeight: theme.fontWeights.normal,
       titleFontStyle: "normal",
       titleColor: getGray70(theme),
+      // TODO(lukasmasuch): Change padding here to use a spacing
+      // based on our available spacings (-> 4px = 0.25rem)
       titlePadding: 5,
-      labelPadding: theme.spacing.lgPx,
-      columnPadding: theme.spacing.smPx,
-      rowPadding: theme.spacing.twoXSPx,
+      labelPadding: convertRemToPx(theme.spacing.lg),
+      columnPadding: convertRemToPx(theme.spacing.sm),
+      rowPadding: convertRemToPx(theme.spacing.twoXS),
+      // TODO(lukasmasuch): Change padding here to use a spacing
+      // based on our available spacings (-> 8px = 0.5rem)
+      // eslint-disable-next-line streamlit-custom/no-hardcoded-theme-values
       padding: 7,
-      symbolStrokeWidth: 4,
+      symbolStrokeWidth: convertRemToPx(theme.spacing.twoXS),
     },
     range: {
       category: getCategoricalColorsArray(theme),
@@ -105,8 +111,8 @@ export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
       columns: 1,
       strokeWidth: 0,
       stroke: "transparent",
-      continuousHeight: 350,
-      continuousWidth: 400,
+      continuousHeight: convertRemToPx(theme.sizes.defaultChartHeight),
+      continuousWidth: convertRemToPx(theme.sizes.defaultChartWidth),
     },
     concat: {
       columns: 1,
@@ -115,13 +121,11 @@ export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
       columns: 1,
     },
     mark: {
-      tooltip: true,
-      ...(hasLightBackgroundColor(theme)
-        ? { color: "#0068C9" }
-        : { color: "#83C9FF" }),
+      tooltip: { content: "encoding" },
+      color: getBlue80(theme),
     },
     bar: {
-      binSpacing: theme.spacing.twoXSPx,
+      binSpacing: convertRemToPx(theme.spacing.twoXS),
       discreteBandSize: { band: 0.85 },
     },
     axisDiscrete: {
@@ -153,8 +157,8 @@ export function applyThemeDefaults(config: any, theme: EmotionTheme): any {
   const themeFonts = {
     labelFont: genericFonts.bodyFont,
     titleFont: genericFonts.bodyFont,
-    labelFontSize: fontSizes.twoSmPx,
-    titleFontSize: fontSizes.twoSmPx,
+    labelFontSize: convertRemToPx(fontSizes.twoSm),
+    titleFontSize: convertRemToPx(fontSizes.twoSm),
   }
   const themeDefaults = {
     background: colors.bgColor,
@@ -181,8 +185,8 @@ export function applyThemeDefaults(config: any, theme: EmotionTheme): any {
     },
     view: {
       stroke: getGray30(theme),
-      continuousHeight: 350,
-      continuousWidth: 400,
+      continuousHeight: convertRemToPx(theme.sizes.defaultChartHeight),
+      continuousWidth: convertRemToPx(theme.sizes.defaultChartWidth),
     },
     mark: {
       tooltip: true,

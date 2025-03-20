@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,21 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
 
 import { screen, within } from "@testing-library/react"
-import { render } from "@streamlit/lib/src/test_util"
-import { BlockNode } from "@streamlit/lib/src/AppNode"
-import { Block as BlockProto } from "@streamlit/lib/src/proto"
+
+import { Block as BlockProto } from "@streamlit/protobuf"
+
+import { render } from "~lib/test_util"
+import { BlockNode } from "~lib/AppNode"
 
 import Tabs, { TabProps } from "./Tabs"
 
+const FAKE_SCRIPT_HASH = "fake_script_hash"
+
 function makeTab(label: string, children: BlockNode[] = []): BlockNode {
   return new BlockNode(
+    FAKE_SCRIPT_HASH,
     children,
     new BlockProto({ allowEmpty: true, tab: { label } })
   )
@@ -33,6 +37,7 @@ function makeTab(label: string, children: BlockNode[] = []): BlockNode {
 
 function makeTabsNode(tabs: number): BlockNode {
   return new BlockNode(
+    FAKE_SCRIPT_HASH,
     Array.from({ length: tabs }, (_element, index) => makeTab(`Tab ${index}`)),
     new BlockProto({ allowEmpty: true })
   )
@@ -44,12 +49,16 @@ const getProps = (props?: Partial<TabProps>): TabProps =>
     node: makeTabsNode(5),
     isStale: false,
     ...props,
-    renderTabContent: jest.fn(),
+    renderTabContent: vi.fn(),
   })
 
 describe("st.tabs", () => {
   it("renders without crashing", () => {
     render(<Tabs {...getProps()} />)
+
+    const tabsElement = screen.getByTestId("stTabs")
+    expect(tabsElement).toBeInTheDocument()
+    expect(tabsElement).toHaveClass("stTabs")
 
     const tabsContainer = screen.getByRole("tablist")
     expect(tabsContainer).toBeInTheDocument()

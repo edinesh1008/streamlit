@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,19 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
-import { screen, fireEvent } from "@testing-library/react"
 
-import TimezoneMock from "timezone-mock"
+import { act, fireEvent, screen } from "@testing-library/react"
 
 import {
   LabelVisibilityMessage as LabelVisibilityMessageProto,
   Slider as SliderProto,
-} from "@streamlit/lib/src/proto"
-import { render } from "@streamlit/lib/src/test_util"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
-import { mockTheme } from "@streamlit/lib/src/mocks/mockTheme"
+} from "@streamlit/protobuf"
+
+import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
+import { render } from "~lib/test_util"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
+import { withTimezones } from "~lib/util/withTimezones"
+
 import Slider, { Props } from "./Slider"
 
 const getProps = (
@@ -47,10 +48,9 @@ const getProps = (
   width: 600,
   disabled: false,
   widgetMgr: new WidgetStateManager({
-    sendRerunBackMsg: jest.fn(),
-    formsDataChanged: jest.fn(),
+    sendRerunBackMsg: vi.fn(),
+    formsDataChanged: vi.fn(),
   }),
-  theme: mockTheme.emotion,
   ...props,
 })
 
@@ -59,16 +59,26 @@ const triggerChangeEvent = (
   key: "ArrowLeft" | "ArrowRight"
 ): void => {
   fireEvent.focus(element)
+  // TODO: Utilize user-event instead of fireEvent
+  // eslint-disable-next-line testing-library/prefer-user-event
   fireEvent.keyDown(element, { key })
+  // TODO: Utilize user-event instead of fireEvent
+  // eslint-disable-next-line testing-library/prefer-user-event
   fireEvent.keyUp(element, { key })
 }
 
 describe("Slider widget", () => {
-  jest.useFakeTimers()
+  vi.useFakeTimers()
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    jest.clearAllTimers()
+    vi.clearAllMocks()
+    vi.clearAllTimers()
+
+    vi.spyOn(UseResizeObserver, "useResizeObserver").mockReturnValue({
+      elementRef: { current: null },
+      forceRecalculate: vitest.fn(),
+      values: [250],
+    })
   })
 
   it("shows a label", () => {
@@ -103,12 +113,12 @@ describe("Slider widget", () => {
 
   it("sets widget value on mount", () => {
     const props = getProps()
-    jest.spyOn(props.widgetMgr, "setDoubleArrayValue")
+    vi.spyOn(props.widgetMgr, "setDoubleArrayValue")
 
     render(<Slider {...props} />)
 
     // We need to do this as we are using a debounce when the widget value is set
-    jest.runAllTimers()
+    vi.runAllTimers()
 
     expect(props.widgetMgr.setDoubleArrayValue).toHaveBeenCalledWith(
       props.element,
@@ -120,12 +130,12 @@ describe("Slider widget", () => {
 
   it("can pass fragmentId to setDoubleArrayValue", () => {
     const props = getProps(undefined, { fragmentId: "myFragmentId" })
-    jest.spyOn(props.widgetMgr, "setDoubleArrayValue")
+    vi.spyOn(props.widgetMgr, "setDoubleArrayValue")
 
     render(<Slider {...props} />)
 
     // We need to do this as we are using a debounce when the widget value is set
-    jest.runAllTimers()
+    vi.runAllTimers()
 
     expect(props.widgetMgr.setDoubleArrayValue).toHaveBeenCalledWith(
       props.element,
@@ -139,8 +149,8 @@ describe("Slider widget", () => {
     const props = getProps()
     render(<Slider {...props} />)
 
-    const min = screen.getByTestId("stTickBarMin")
-    const max = screen.getByTestId("stTickBarMax")
+    const min = screen.getByTestId("stSliderTickBarMin")
+    const max = screen.getByTestId("stSliderTickBarMax")
     expect(min).toHaveTextContent("0")
     expect(max).toHaveTextContent("10")
   })
@@ -150,15 +160,16 @@ describe("Slider widget", () => {
       const props = getProps()
       render(<Slider {...props} />)
 
-      const slider = screen.getByRole("slider")
+      const slider = screen.getByTestId("stSlider")
       expect(slider).toBeInTheDocument()
+      expect(slider).toHaveClass("stSlider")
     })
 
     it("displays a thumb value", () => {
       const props = getProps()
       render(<Slider {...props} />)
 
-      expect(screen.getAllByTestId("stThumbValue")).toHaveLength(1)
+      expect(screen.getAllByTestId("stSliderThumbValue")).toHaveLength(1)
     })
 
     it("has the correct value", () => {
@@ -174,16 +185,20 @@ describe("Slider widget", () => {
       expect(slider).toHaveAttribute("aria-valuemax", `${props.element.max}`)
     })
 
-    it("handles value changes", async () => {
+    it("handles value changes", () => {
       const props = getProps()
 
       render(<Slider {...props} />)
-      jest.spyOn(props.widgetMgr, "setDoubleArrayValue")
+      vi.spyOn(props.widgetMgr, "setDoubleArrayValue")
 
       const slider = screen.getByRole("slider")
-      triggerChangeEvent(slider, "ArrowRight")
-      // We need to do this as we are using a debounce when the widget value is set
-      jest.runAllTimers()
+
+      act(() => {
+        triggerChangeEvent(slider, "ArrowRight")
+
+        // We need to do this as we are using a debounce when the widget value is set
+        vi.runAllTimers()
+      })
 
       expect(props.widgetMgr.setDoubleArrayValue).toHaveBeenCalledWith(
         props.element,
@@ -195,19 +210,22 @@ describe("Slider widget", () => {
       expect(slider).toHaveAttribute("aria-valuenow", "6")
     })
 
-    it("resets its value when form is cleared", async () => {
+    it("resets its value when form is cleared", () => {
       // Create a widget in a clearOnSubmit form
       const props = getProps({ formId: "form" })
-      props.widgetMgr.setFormClearOnSubmit("form", true)
+      props.widgetMgr.setFormSubmitBehaviors("form", true)
 
       render(<Slider {...props} />)
 
-      jest.spyOn(props.widgetMgr, "setDoubleArrayValue")
+      vi.spyOn(props.widgetMgr, "setDoubleArrayValue")
 
       const slider = screen.getByRole("slider")
+
       triggerChangeEvent(slider, "ArrowRight")
 
-      jest.runAllTimers()
+      act(() => {
+        vi.runAllTimers()
+      })
 
       expect(props.widgetMgr.setDoubleArrayValue).toHaveBeenLastCalledWith(
         props.element,
@@ -218,8 +236,10 @@ describe("Slider widget", () => {
 
       expect(slider).toHaveAttribute("aria-valuenow", "6")
 
-      // "Submit" the form
-      props.widgetMgr.submitForm("form")
+      act(() => {
+        // "Submit" the form
+        props.widgetMgr.submitForm("form", undefined)
+      })
 
       // Our widget should be reset, and the widgetMgr should be updated
       expect(props.widgetMgr.setDoubleArrayValue).toHaveBeenLastCalledWith(
@@ -248,7 +268,7 @@ describe("Slider widget", () => {
       const props = getProps({ default: [1, 9] })
       render(<Slider {...props} />)
 
-      expect(screen.getAllByTestId("stThumbValue")).toHaveLength(2)
+      expect(screen.getAllByTestId("stSliderThumbValue")).toHaveLength(2)
     })
 
     it("has the correct value", () => {
@@ -340,17 +360,20 @@ describe("Slider widget", () => {
       })
     })
 
-    it("handles value changes", async () => {
+    it("handles value changes", () => {
       const props = getProps({ default: [1, 9] })
 
       render(<Slider {...props} />)
-      jest.spyOn(props.widgetMgr, "setDoubleArrayValue")
+      vi.spyOn(props.widgetMgr, "setDoubleArrayValue")
 
       const sliders = screen.getAllByRole("slider")
+
       triggerChangeEvent(sliders[1], "ArrowRight")
 
-      // We need to do this as we are using a debounce when the widget value is set
-      jest.runAllTimers()
+      act(() => {
+        // We need to do this as we are using a debounce when the widget value is set
+        vi.runAllTimers()
+      })
 
       expect(props.widgetMgr.setDoubleArrayValue).toHaveBeenCalledWith(
         props.element,
@@ -366,35 +389,29 @@ describe("Slider widget", () => {
   })
 
   describe("Datetime slider", () => {
-    TimezoneMock.register("UTC")
+    withTimezones(() => {
+      it("formats min and max as dates", () => {
+        const DAYS_IN_MICROS = 24 * 60 * 60 * 1000 * 1000
+        const WEEK_IN_MICROS = 7 * DAYS_IN_MICROS
 
-    it("should be in UTC", () => {
-      // We use a less idiomiatic Jest call, since getTimezoneOffset can return
-      // -0, and Object.is(-0, 0) is false: https://stackoverflow.com/a/59343755
-      expect(new Date().getTimezoneOffset() === 0).toBeTruthy()
-    })
+        const props = getProps({
+          // The default value should be divisible by step.
+          // Otherwise, we get a warning from `react-range`.
+          default: [0],
+          min: 0,
+          max: 4 * WEEK_IN_MICROS,
+          step: DAYS_IN_MICROS,
+          format: "YYYY-MM-DD",
+          dataType: SliderProto.DataType.DATETIME,
+        })
+        render(<Slider {...props} />)
 
-    it("formats min and max as dates", () => {
-      const DAYS_IN_MICROS = 24 * 60 * 60 * 1000 * 1000
-      const WEEK_IN_MICROS = 7 * DAYS_IN_MICROS
+        const min = screen.getByTestId("stSliderTickBarMin")
+        const max = screen.getByTestId("stSliderTickBarMax")
 
-      const props = getProps({
-        // The default value should be divisible by step.
-        // Otherwise, we get a warning from `react-range`.
-        default: [0],
-        min: 0,
-        max: 4 * WEEK_IN_MICROS,
-        step: DAYS_IN_MICROS,
-        format: "YYYY-MM-DD",
-        dataType: SliderProto.DataType.DATETIME,
+        expect(min).toHaveTextContent("1970-01-01")
+        expect(max).toHaveTextContent("1970-01-29")
       })
-      render(<Slider {...props} />)
-
-      const min = screen.getByTestId("stTickBarMin")
-      const max = screen.getByTestId("stTickBarMax")
-
-      expect(min).toHaveTextContent("1970-01-01")
-      expect(max).toHaveTextContent("1970-01-29")
     })
   })
 
@@ -462,6 +479,11 @@ describe("Slider widget", () => {
 
       const slider = screen.getByRole("slider")
       triggerChangeEvent(slider, "ArrowRight")
+
+      act(() => {
+        // We need to do this as we are using a debounce when the widget value is set
+        vi.runAllTimers()
+      })
 
       expect(slider).toHaveAttribute("aria-valuetext", "yellow")
     })

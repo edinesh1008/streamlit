@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-import { GridCell, TextCell, GridCellKind } from "@glideapps/glide-data-grid"
+import { GridCell, GridCellKind, TextCell } from "@glideapps/glide-data-grid"
 
-import {
-  notNullOrUndefined,
-  isNullOrUndefined,
-} from "@streamlit/lib/src/util/utils"
+import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
 
 import {
   BaseColumn,
   BaseColumnProps,
   getErrorCell,
-  toSafeString,
   removeLineBreaks,
+  toSafeString,
 } from "./utils"
 
 /**
@@ -40,8 +37,10 @@ function ObjectColumn(props: BaseColumnProps): BaseColumn {
     displayData: "",
     allowOverlay: true,
     contentAlignment: props.contentAlignment,
+    allowWrapping: props.isWrappingAllowed,
     readonly: true,
-    style: props.isIndex ? "faded" : "normal",
+    // The text in pinned columns should be faded.
+    style: props.isPinned ? "faded" : "normal",
   } as TextCell
   return {
     ...props,

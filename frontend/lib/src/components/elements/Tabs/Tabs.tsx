@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,23 @@
  */
 
 import React, {
+  memo,
   ReactElement,
   useContext,
   useEffect,
   useRef,
   useState,
 } from "react"
-import { useTheme } from "@emotion/react"
-import { Tabs as UITabs, Tab as UITab } from "baseui/tabs-motion"
 
-import { BlockNode, AppNode } from "@streamlit/lib/src/AppNode"
-import { BlockPropsWithoutWidth } from "@streamlit/lib/src/components/core/Block"
-import { isElementStale } from "@streamlit/lib/src/components/core/Block/utils"
-import { LibContext } from "@streamlit/lib/src/components/core/LibContext"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
+import { useTheme } from "@emotion/react"
+import { Tab as UITab, Tabs as UITabs } from "baseui/tabs-motion"
+
+import { AppNode, BlockNode } from "~lib/AppNode"
+import { BlockPropsWithoutWidth } from "~lib/components/core/Block"
+import { isElementStale } from "~lib/components/core/Block/utils"
+import { LibContext } from "~lib/components/core/LibContext"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
+import { STALE_STYLES } from "~lib/theme"
 
 import { StyledTabContainer } from "./styled-components"
 
@@ -39,7 +42,7 @@ export interface TabProps extends BlockPropsWithoutWidth {
   renderTabContent: (childProps: any) => ReactElement
 }
 
-function Tabs(props: TabProps): ReactElement {
+function Tabs(props: Readonly<TabProps>): ReactElement {
   const { widgetsDisabled, node, isStale, scriptRunState, scriptRunId } = props
   const { fragmentIdsThisRun } = useContext(LibContext)
 
@@ -62,6 +65,8 @@ function Tabs(props: TabProps): ReactElement {
       setActiveTabKey(0)
       setActiveTabName(allTabLabels[0])
     }
+    // TODO: Update to match React best practices
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allTabLabels])
 
@@ -81,17 +86,19 @@ function Tabs(props: TabProps): ReactElement {
       setActiveTabName(allTabLabels[0])
     }
 
+    // TODO: Update to match React best practices
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node.children.length])
 
-  const TAB_HEIGHT = "2.5rem"
+  const TAB_HEIGHT = theme.sizes.tabHeight
   const TAB_BORDER_HEIGHT = theme.spacing.threeXS
   return (
     <StyledTabContainer
-      isOverflowing={isOverflowing}
-      tabHeight={TAB_HEIGHT}
       className="stTabs"
       data-testid="stTabs"
+      isOverflowing={isOverflowing}
+      tabHeight={TAB_HEIGHT}
     >
       <UITabs
         activateOnFocus
@@ -116,7 +123,7 @@ function Tabs(props: TabProps): ReactElement {
           },
           TabBorder: {
             style: () => ({
-              backgroundColor: theme.colors.fadedText05,
+              backgroundColor: theme.colors.borderColorLight,
               height: TAB_BORDER_HEIGHT,
             }),
           },
@@ -127,12 +134,7 @@ function Tabs(props: TabProps): ReactElement {
               marginBottom: `-${TAB_BORDER_HEIGHT}`,
               paddingBottom: TAB_BORDER_HEIGHT,
               overflowY: "hidden",
-              ...(isStale
-                ? {
-                    opacity: 0.33,
-                    transition: "opacity 1s ease-in 0.5s",
-                  }
-                : {}),
+              ...(isStale && STALE_STYLES),
             }),
           },
           Root: {
@@ -145,7 +147,9 @@ function Tabs(props: TabProps): ReactElement {
       >
         {node.children.map((appNode: AppNode, index: number): ReactElement => {
           // Reset available tab labels when rerendering
-          if (index === 0) allTabLabels = []
+          if (index === 0) {
+            allTabLabels = []
+          }
 
           // If the tab is stale, disable it
           const isStaleTab = isElementStale(
@@ -173,6 +177,7 @@ function Tabs(props: TabProps): ReactElement {
 
           return (
             <UITab
+              data-testid="stTab"
               title={
                 <StreamlitMarkdown
                   source={nodeLabel}
@@ -180,6 +185,8 @@ function Tabs(props: TabProps): ReactElement {
                   isLabel
                 />
               }
+              // TODO: Update to match React best practices
+              // eslint-disable-next-line @eslint-react/no-array-index-key
               key={index}
               disabled={widgetsDisabled}
               overrides={{
@@ -224,20 +231,16 @@ function Tabs(props: TabProps): ReactElement {
                             : theme.colors.primary,
                         }
                       : {}),
+                    // Add minimal required padding to hide the overscroll gradient
+                    // This is calculated based on the width of the gradient (spacing.lg)
                     ...(isOverflowing && isLast
                       ? {
-                          // Add minimal required padding to hide the overscroll gradient
-                          paddingRight: "0.6rem",
+                          paddingRight: `calc(${theme.spacing.lg} * 0.6)`,
                         }
                       : {}),
-                    ...(!isStale && isStaleTab
-                      ? {
-                          // Apply stale effect if only this specific
-                          // tab is stale but not the entire tab container.
-                          opacity: 0.33,
-                          transition: "opacity 1s ease-in 0.5s",
-                        }
-                      : {}),
+                    // Apply stale effect if only this specific
+                    // tab is stale but not the entire tab container.
+                    ...(!isStale && isStaleTab && STALE_STYLES),
                   }),
                 },
               }}
@@ -251,4 +254,4 @@ function Tabs(props: TabProps): ReactElement {
   )
 }
 
-export default Tabs
+export default memo(Tabs)

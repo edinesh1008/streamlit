@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,14 +30,66 @@ class StHtmlAPITest(DeltaGeneratorTestCase):
 
     def test_st_html_with_file(self):
         """Test st.html with file."""
-        st.html("./tests/streamlit/elements/test_html.js")
+        st.html(str(pathlib.Path(__file__).parent / "test_html.js"))
 
         el = self.get_delta_from_queue().new_element
         self.assertEqual(el.html.body, "<button>Corgi</button>")
 
     def test_st_html_with_path(self):
         """Test st.html with path."""
-        st.html(pathlib.Path("./tests/streamlit/elements/test_html.js"))
+        st.html(pathlib.Path(__file__).parent / "test_html.js")
 
         el = self.get_delta_from_queue().new_element
         self.assertEqual(el.html.body, "<button>Corgi</button>")
+
+    def test_st_html_with_dunderstr(self):
+        """Test st.html with __str__."""
+
+        class MyClass:
+            def __str__(self):
+                return "mystr"
+
+        obj = MyClass()
+
+        st.html(obj)
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.html.body, "mystr")
+
+    def test_st_html_with_repr_html(self):
+        """Test st.html with _repr_html_."""
+
+        class MyClass:
+            def _repr_html_(self):
+                return "<div>html</div>"
+
+        obj = MyClass()
+
+        st.html(obj)
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.html.body, "<div>html</div>")
+
+    def test_st_html_with_repr_html_and_dunderstr(self):
+        """Test st.html with _repr_html_ and dunderstr: html should win."""
+
+        class MyClass:
+            def __str__(self):
+                return "mystr"
+
+            def _repr_html_(self):
+                return "<div>html</div>"
+
+        obj = MyClass()
+
+        st.html(obj)
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.html.body, "<div>html</div>")
+
+    def test_st_html_with_nonhtml_filelike_str(self):
+        """Test st.html with a string that's neither HTML-like nor a real file."""
+        st.html("foo/fake.html")
+
+        el = self.get_delta_from_queue().new_element
+        self.assertEqual(el.html.body, "foo/fake.html")

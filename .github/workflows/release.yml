@@ -6,27 +6,18 @@ on:
 
 jobs:
   run-python-tests:
-    uses: ./.github/workflows/python-versions.yml
+    uses: ./.github/workflows/python-tests.yml
     with:
       ref: ${{ github.ref_name }}
     secrets:
-      PARAMETER_PASSWORD: ${{ secrets.PARAMETER_PASSWORD }}
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
     permissions:
       # Permission needed to upload constraints file
       contents: write
 
   run-javascript-tests:
     uses: ./.github/workflows/js-tests.yml
-    with:
-      ref: ${{ github.ref_name }}
-
-  run-py-prod-deps-smoke-test:
-    uses: ./.github/workflows/py-prod-deps-smoke-test.yml
-    with:
-      ref: ${{ github.ref_name }}
-
-  run-cypress-tests:
-    uses: ./.github/workflows/cypress.yml
     with:
       ref: ${{ github.ref_name }}
 
@@ -41,17 +32,16 @@ jobs:
     needs:
       - run-python-tests
       - run-javascript-tests
-      - run-py-prod-deps-smoke-test
-      - run-cypress-tests
       - run-playwright-tests
 
     defaults:
       run:
-        shell: bash --login -eo pipefail {0}
+        shell: bash
 
     permissions:
       # Additional permission needed to generate release
       contents: write
+      id-token: write
 
     env:
       # Name of the tag
@@ -64,8 +54,8 @@ jobs:
       # The name of the tag that contains the constraints files
       # for the current release
       CONSTRAINTS_TAG: constraints/${{ github.ref_name }}
-      # We don't want to use constraints files because they might not exist yet.
-      USE_CONSTRAINTS_FILE: "false"
+
+    environment: release
 
     steps:
       - name: Checkout Streamlit code
@@ -112,16 +102,14 @@ jobs:
           sudo apt install rsync
           make package
       - name: Store Package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Release
           path: lib/dist
       - name: Upload to PyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.STREAMLIT_PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.STREAMLIT_PYPI_API_TOKEN }}
-        run: |
-          make distribute
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+        with:
+          packages-dir: lib/dist/
       - name: Create GitHub Release
         env:
           GIT_TAG: ${{ env.GIT_TAG }}
@@ -137,10 +125,11 @@ jobs:
           # later git commands can work.
           persist-credentials: true
           path: constraints
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: constraints
           path: constraints
+          pattern: constraints-*
+          merge-multiple: true
       - name: Commit and push constraint files as tag
         run: |
           cd constraints;

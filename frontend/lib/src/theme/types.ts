@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 import { lightThemePrimitives } from "baseui"
 
-import { CustomThemeConfig } from "@streamlit/lib/src/proto"
+import { CustomThemeConfig } from "@streamlit/protobuf"
 
-import emotionBaseTheme from "./emotionBaseTheme"
 import { baseuiLightTheme } from "./baseui"
+import emotionBaseTheme from "./emotionBaseTheme"
 
 export type EmotionTheme = typeof emotionBaseTheme
 
@@ -31,6 +31,7 @@ export type ThemeConfig = {
   // sidebar theming.
   basewebTheme: typeof baseuiLightTheme
   primitives: typeof lightThemePrimitives
+  themeInput?: Partial<CustomThemeConfig>
 }
 
 export type CachedTheme = {
@@ -40,9 +41,12 @@ export type CachedTheme = {
 }
 
 type IconSizes = typeof emotionBaseTheme.iconSizes
-type ThemeSpacings = typeof emotionBaseTheme.spacing
 type ThemeColors = typeof emotionBaseTheme.colors
+export type ThemeSizings = typeof emotionBaseTheme.sizes
+export type ThemeSpacings = typeof emotionBaseTheme.spacing
 
 export type IconSize = keyof IconSizes
 export type ThemeColor = Extract<keyof ThemeColors, string>
+export type ThemeSizing = keyof ThemeSizings
 export type ThemeSpacing = keyof ThemeSpacings
+export type PresetThemeName = "Light" | "Dark"

@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ np.random.seed(0)
 data = np.random.randn(200, 3)
 df = pd.DataFrame(data, columns=["a", "b", "c"])
 chart = alt.Chart(df).mark_circle().encode(x="a", y="b", size="c", color="c")
-st.altair_chart(chart, theme=None)
 
 st.write("Show default vega lite theme:")
 st.altair_chart(chart, theme=None)
@@ -69,7 +68,7 @@ if not (major == "4" and minor < "2"):
     )
 
     st.write("Pie Chart with more than 4 Legend items")
-    st.altair_chart(chart, theme="streamlit")
+    st.altair_chart(chart, theme="streamlit", use_container_width=False)
 
 # taken from vega_datasets barley example
 barley = alt.UrlData(
@@ -88,7 +87,9 @@ st.altair_chart(barley_chart, theme=None)
 st.write("Grouped Bar Chart with streamlit theme:")
 st.altair_chart(barley_chart, theme="streamlit")
 
-st.write("Chart with use_container_width used")
+st.write(
+    "Grouped Bar Chart with use_container_width=True (note that this doesn't work well)"
+)
 st.altair_chart(barley_chart, theme=None, use_container_width=True)
 
 st.write("Layered chart")
@@ -105,3 +106,15 @@ base = (
 
 new_base_chart = base.mark_line() + base.mark_point()
 st.altair_chart(new_base_chart)
+
+x = np.linspace(10, 100, 10)
+y1 = 5 * x
+y2 = 1 / x
+
+df1 = pd.DataFrame.from_dict({"x": x, "y1": y1, "y2": y2})
+
+c1 = alt.Chart(df1).mark_line().encode(alt.X("x"), alt.Y("y1"))
+
+c2 = alt.Chart(df1).mark_line().encode(alt.X("x"), alt.Y("y2"))
+
+st.altair_chart(c1 & c2, use_container_width=True)

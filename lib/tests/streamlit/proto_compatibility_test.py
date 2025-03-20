@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
 
 from google.protobuf.descriptor import FieldDescriptor
 from parameterized import parameterized
@@ -45,6 +46,9 @@ FD = FieldDescriptor
                 ("page_script_hash", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("page_name", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("icon", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("is_default", FD.LABEL_OPTIONAL, FD.TYPE_BOOL),
+                ("section_header", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("url_pathname", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
             },
         ),
         (
@@ -59,6 +63,7 @@ FD = FieldDescriptor
                 ("app_pages", FD.LABEL_REPEATED, FD.TYPE_MESSAGE),
                 ("page_script_hash", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("fragment_ids_this_run", FD.LABEL_REPEATED, FD.TYPE_STRING),
+                ("main_script_hash", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
             },
         ),
         (
@@ -96,11 +101,20 @@ FD = FieldDescriptor
                 ("widget_background_color", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("widget_border_color", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("radii", FD.LABEL_OPTIONAL, FD.TYPE_MESSAGE),
+                ("heading_font", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("body_font", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("code_font", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("font_faces", FD.LABEL_REPEATED, FD.TYPE_MESSAGE),
                 ("font_sizes", FD.LABEL_OPTIONAL, FD.TYPE_MESSAGE),
                 ("skeleton_background_color", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("base_radius", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("border_color", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("show_widget_border", FD.LABEL_OPTIONAL, FD.TYPE_BOOL),
+                ("link_color", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("base_font_size", FD.LABEL_OPTIONAL, FD.TYPE_INT32),
+                ("code_background_color", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("show_sidebar_border", FD.LABEL_OPTIONAL, FD.TYPE_BOOL),
+                ("sidebar", FD.LABEL_OPTIONAL, FD.TYPE_MESSAGE),
             },
         ),
         (

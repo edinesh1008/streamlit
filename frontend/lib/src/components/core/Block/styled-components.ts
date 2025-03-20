@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,13 @@
  */
 
 import React from "react"
+
 import styled from "@emotion/styled"
-import { EmotionTheme } from "@streamlit/lib/src/theme"
+
+import { Block as BlockProto } from "@streamlit/protobuf"
+
+import { StyledCheckbox } from "~lib/components/widgets/Checkbox/styled-components"
+import { EmotionTheme, STALE_STYLES } from "~lib/theme"
 
 function translateGapWidth(gap: string, theme: EmotionTheme): string {
   let gapWidth = theme.spacing.lg
@@ -50,7 +55,7 @@ export const StyledHorizontalBlock = styled.div<StyledHorizontalBlockProps>(
 
 export interface StyledElementContainerProps {
   isStale: boolean
-  width: number
+  width: React.CSSProperties["width"]
   elementType: string
 }
 
@@ -63,35 +68,27 @@ export const StyledElementContainer = styled.div<StyledElementContainerProps>(
     position: "relative",
 
     "@media print": {
-      "@-moz-document url-prefix()": {
-        display: "block",
-      },
       overflow: "visible",
     },
 
-    ":is(.empty-html)": {
+    ":is(.stHtml-empty)": {
       display: "none",
     },
 
-    ":has(> .cacheSpinner)": {
-      height: 0,
+    ":has(> .stCacheSpinner)": {
+      height: theme.spacing.none,
       overflow: "visible",
       visibility: "visible",
-      marginBottom: "-1rem",
-      zIndex: 1000,
+      marginBottom: `-${theme.spacing.lg}`,
+      zIndex: theme.zIndices.cacheSpinner,
     },
 
     ":has(> .stPageLink)": {
-      marginTop: "-0.375rem",
-      marginBottom: "-0.375rem",
+      marginTop: `-${theme.spacing.xs}`,
+      marginBottom: `-${theme.spacing.xs}`,
     },
 
-    ...(isStale && elementType !== "skeleton"
-      ? {
-          opacity: 0.33,
-          transition: "opacity 1s ease-in 0.5s",
-        }
-      : {}),
+    ...(isStale && elementType !== "skeleton" && STALE_STYLES),
     ...(elementType === "empty"
       ? {
           // Use display: none for empty elements to avoid the flexbox gap.
@@ -113,10 +110,13 @@ export const StyledElementContainer = styled.div<StyledElementContainerProps>(
 interface StyledColumnProps {
   weight: number
   gap: string
+  showBorder: boolean
+  verticalAlignment?: BlockProto.Column.VerticalAlignment
 }
 
 export const StyledColumn = styled.div<StyledColumnProps>(
-  ({ weight, gap, theme }) => {
+  ({ theme, weight, gap, showBorder, verticalAlignment }) => {
+    const { VerticalAlignment } = BlockProto.Column
     const percentage = weight * 100
     const gapWidth = translateGapWidth(gap, theme)
     const width = `calc(${percentage}% - ${gapWidth})`
@@ -130,18 +130,44 @@ export const StyledColumn = styled.div<StyledColumnProps>(
       [`@media (max-width: ${theme.breakpoints.columns})`]: {
         minWidth: `calc(100% - ${theme.spacing.twoXL})`,
       },
+      ...(verticalAlignment === VerticalAlignment.BOTTOM && {
+        marginTop: "auto",
+        // Add margin to the first checkbox/toggle within the column to align it
+        // better with other input widgets.
+        [`& ${StyledElementContainer}:last-of-type > ${StyledCheckbox}`]: {
+          marginBottom: theme.spacing.sm,
+        },
+      }),
+      ...(verticalAlignment === VerticalAlignment.TOP && {
+        // Add margin to the first checkbox/toggle within the column to align it
+        // better with other input widgets.
+        [`& ${StyledElementContainer}:first-of-type > ${StyledCheckbox}`]: {
+          marginTop: theme.spacing.sm,
+        },
+      }),
+      ...(verticalAlignment === VerticalAlignment.CENTER && {
+        marginTop: "auto",
+        marginBottom: "auto",
+      }),
+      ...(showBorder && {
+        border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+        borderRadius: theme.radii.default,
+        padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
+      }),
     }
   }
 )
 
 export interface StyledVerticalBlockProps {
   ref?: React.RefObject<any>
-  width?: number
+  width?: React.CSSProperties["width"]
+  maxWidth?: React.CSSProperties["maxWidth"]
 }
 
 export const StyledVerticalBlock = styled.div<StyledVerticalBlockProps>(
-  ({ width, theme }) => ({
+  ({ width, maxWidth, theme }) => ({
     width,
+    maxWidth,
     position: "relative", // Required for the automatic width computation.
     display: "flex",
     flex: 1,
@@ -167,9 +193,9 @@ export const StyledVerticalBlockBorderWrapper =
   styled.div<StyledVerticalBlockBorderWrapperProps>(
     ({ theme, border, height }) => ({
       ...(border && {
-        border: `1px solid ${theme.colors.fadedText10}`,
-        borderRadius: theme.radii.lg,
-        padding: "calc(1em - 1px)", // 1px to account for border.
+        border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+        borderRadius: theme.radii.default,
+        padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
       }),
       ...(height && {
         height: `${height}px`,

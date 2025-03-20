@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import styled from "@emotion/styled"
 import { transparentize } from "color2k"
 
-import { hasLightBackgroundColor } from "@streamlit/lib/src/theme"
+import { hasLightBackgroundColor } from "~lib/theme"
 
 export interface StyledChatMessageContainerProps {
   background: boolean
@@ -32,7 +32,7 @@ export const StyledChatMessageContainer =
       gap: theme.spacing.sm,
       padding: theme.spacing.lg,
       paddingRight: background ? theme.spacing.lg : 0,
-      borderRadius: theme.radii.lg,
+      borderRadius: theme.radii.default,
       ...(background
         ? {
             backgroundColor: lightTheme
@@ -61,18 +61,18 @@ export const StyledAvatarBackground = styled.div(({ theme }) => {
   const lightTheme = hasLightBackgroundColor(theme)
   return {
     display: "flex",
-    border: `1px solid ${
+    border: `${theme.sizes.borderWidth} solid ${
       lightTheme ? theme.colors.gray40 : theme.colors.gray85
     }`,
     backgroundColor: lightTheme ? theme.colors.white : theme.colors.gray100,
     color: lightTheme ? theme.colors.gray90 : theme.colors.white,
-    lineHeight: "1",
+    lineHeight: theme.lineHeights.none,
     fontSize: theme.fontSizes.md,
     // Ensure the avatar always respects the width/height
     flexShrink: 0,
-    width: "2rem",
-    height: "2rem",
-    borderRadius: theme.radii.lg,
+    width: theme.sizes.chatAvatarSize,
+    height: theme.sizes.chatAvatarSize,
+    borderRadius: theme.radii.default,
     alignItems: "center",
     justifyContent: "center",
   }
@@ -87,11 +87,11 @@ export const StyledAvatarIcon = styled.div<StyledAvatarIconProps>(
     const lightTheme = hasLightBackgroundColor(theme)
     return {
       display: "flex",
-      width: "2rem",
-      height: "2rem",
+      width: theme.sizes.chatAvatarSize,
+      height: theme.sizes.chatAvatarSize,
       // Ensure the avatar always respects the width/height
       flexShrink: 0,
-      borderRadius: theme.radii.lg,
+      borderRadius: theme.radii.default,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: background,
@@ -102,11 +102,11 @@ export const StyledAvatarIcon = styled.div<StyledAvatarIconProps>(
 
 export const StyledAvatarImage = styled.img(({ theme }) => {
   return {
-    width: "2rem",
-    height: "2rem",
+    width: theme.sizes.chatAvatarSize,
+    height: theme.sizes.chatAvatarSize,
     // Ensure the avatar always respects the width/height
     flexShrink: 0,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.default,
     objectFit: "cover",
     display: "flex",
   }

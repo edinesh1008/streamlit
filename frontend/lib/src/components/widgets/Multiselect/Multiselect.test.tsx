@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,20 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
 
-import { screen, fireEvent } from "@testing-library/react"
-import { render } from "@streamlit/lib/src/test_util"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
+import { act, fireEvent, screen } from "@testing-library/react"
+import { userEvent } from "@testing-library/user-event"
+
 import {
   LabelVisibilityMessage as LabelVisibilityMessageProto,
   MultiSelect as MultiSelectProto,
-} from "@streamlit/lib/src/proto"
-import { mockTheme } from "@streamlit/lib/src/mocks/mockTheme"
+} from "@streamlit/protobuf"
+
+import { render } from "~lib/test_util"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
+import * as Utils from "~lib/theme/utils"
+import { mockConvertRemToPx } from "~lib/mocks/mocks"
+
 import Multiselect, { Props } from "./Multiselect"
 
 const getProps = (
@@ -39,28 +43,34 @@ const getProps = (
     placeholder: "Please select",
     ...elementProps,
   }),
-  width: 0,
   disabled: false,
-  theme: mockTheme.emotion,
   widgetMgr: new WidgetStateManager({
-    sendRerunBackMsg: jest.fn(),
-    formsDataChanged: jest.fn(),
+    sendRerunBackMsg: vi.fn(),
+    formsDataChanged: vi.fn(),
   }),
   ...widgetProps,
 })
 
 describe("Multiselect widget", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  beforeEach(() => {
+    vi.spyOn(Utils, "convertRemToPx").mockImplementation(mockConvertRemToPx)
+  })
+
   it("renders without crashing", () => {
     const props = getProps()
     render(<Multiselect {...props} />)
 
-    const multiSelect = screen.getByRole("combobox")
+    const multiSelect = screen.getByTestId("stMultiSelect")
     expect(multiSelect).toBeInTheDocument()
   })
 
   it("sets widget value on mount", () => {
     const props = getProps()
-    jest.spyOn(props.widgetMgr, "setIntArrayValue")
+    vi.spyOn(props.widgetMgr, "setIntArrayValue")
 
     render(<Multiselect {...props} />)
     expect(props.widgetMgr.setIntArrayValue).toHaveBeenCalledWith(
@@ -75,7 +85,7 @@ describe("Multiselect widget", () => {
 
   it("can pass fragmentId to setIntArrayValue", () => {
     const props = getProps(undefined, { fragmentId: "myFragmentId" })
-    jest.spyOn(props.widgetMgr, "setIntArrayValue")
+    vi.spyOn(props.widgetMgr, "setIntArrayValue")
 
     render(<Multiselect {...props} />)
     expect(props.widgetMgr.setIntArrayValue).toHaveBeenCalledWith(
@@ -88,14 +98,12 @@ describe("Multiselect widget", () => {
     )
   })
 
-  it("has correct className and style", () => {
+  it("has correct className", () => {
     const props = getProps()
     render(<Multiselect {...props} />)
     const multiSelect = screen.getByTestId("stMultiSelect")
 
-    expect(multiSelect).toHaveClass("row-widget")
     expect(multiSelect).toHaveClass("stMultiSelect")
-    expect(multiSelect).toHaveStyle(`width: ${props.width}px`)
   })
 
   it("renders a label", () => {
@@ -146,12 +154,13 @@ describe("Multiselect widget", () => {
     })
   })
 
-  it("renders options", () => {
+  it("renders options", async () => {
+    const user = userEvent.setup()
     const props = getProps({ default: [] })
     render(<Multiselect {...props} />)
 
     const expandListButton = screen.getAllByTitle("open")[0]
-    fireEvent.click(expandListButton)
+    await user.click(expandListButton)
 
     const options = screen.getAllByRole("option")
     expect(options.length).toBe(props.element.options.length)
@@ -160,16 +169,18 @@ describe("Multiselect widget", () => {
     })
   })
 
-  it("filters based on label, not value", () => {
+  it("filters based on label, not value", async () => {
+    const user = userEvent.setup()
     const props = getProps({ default: [] })
     render(<Multiselect {...props} />)
 
     const multiSelect = screen.getByRole("combobox")
 
-    fireEvent.change(multiSelect, { target: { value: "1" } })
+    await user.type(multiSelect, "1")
     expect(screen.getByText("No results")).toBeInTheDocument()
 
-    fireEvent.change(multiSelect, { target: { value: "a" } })
+    await user.clear(multiSelect)
+    await user.type(multiSelect, "a")
     const match = screen.getByRole("option")
     expect(match).toHaveTextContent("a")
   })
@@ -181,31 +192,35 @@ describe("Multiselect widget", () => {
     expect(multiSelect).toBeDisabled()
   })
 
-  it("can select multiple options", () => {
+  it("can select multiple options", async () => {
+    const user = userEvent.setup()
     const props = getProps()
     render(<Multiselect {...props} />)
 
     const multiSelect = screen.getByRole("combobox")
+    // TODO: Utilize user-event instead of fireEvent
+    // eslint-disable-next-line testing-library/prefer-user-event
     fireEvent.change(multiSelect, { target: { value: "b" } })
     const match = screen.getByRole("option")
-    fireEvent.click(match)
+    await user.click(match)
 
     const selections = screen.getAllByRole("button")
     expect(selections[0]).toHaveTextContent("a")
     expect(selections[1]).toHaveTextContent("b")
   })
 
-  it("can remove options", () => {
+  it("can remove options", async () => {
+    const user = userEvent.setup()
     const props = getProps()
     render(<Multiselect {...props} />)
 
     // Clear current selection
     const deleteOptionButton = screen.getAllByTitle("Delete")[0]
-    fireEvent.click(deleteOptionButton)
+    await user.click(deleteOptionButton)
 
     // Should now see all options available again
     const expandListButton = screen.getAllByTitle("open")[0]
-    fireEvent.click(expandListButton)
+    await user.click(expandListButton)
 
     const options = screen.getAllByRole("option")
     expect(options.length).toBe(props.element.options.length)
@@ -214,17 +229,18 @@ describe("Multiselect widget", () => {
     })
   })
 
-  it("can clear all", () => {
+  it("can clear all", async () => {
+    const user = userEvent.setup()
     const props = getProps()
     render(<Multiselect {...props} />)
 
     // Clear all selections
     const clearAllButton = screen.getByRole("button", { name: "Clear all" })
-    fireEvent.click(clearAllButton)
+    await user.click(clearAllButton)
 
     // Should now see all options available again
     const expandListButton = screen.getAllByTitle("open")[0]
-    fireEvent.click(expandListButton)
+    await user.click(expandListButton)
 
     const options = screen.getAllByRole("option")
     expect(options.length).toBe(props.element.options.length)
@@ -233,21 +249,24 @@ describe("Multiselect widget", () => {
     })
   })
 
-  it("resets its value when form is cleared", () => {
+  it("resets its value when form is cleared", async () => {
     // Create a widget in a clearOnSubmit form
+    const user = userEvent.setup()
     const props = getProps({ formId: "form" })
-    props.widgetMgr.setFormClearOnSubmit("form", true)
+    props.widgetMgr.setFormSubmitBehaviors("form", true)
 
-    jest.spyOn(props.widgetMgr, "setIntArrayValue")
+    vi.spyOn(props.widgetMgr, "setIntArrayValue")
 
     render(<Multiselect {...props} />)
 
     // Change the widget value
     const multiSelect = screen.getByRole("combobox")
+    // TODO: Utilize user-event instead of fireEvent
+    // eslint-disable-next-line testing-library/prefer-user-event
     fireEvent.change(multiSelect, { target: { value: "b" } })
     const match = screen.getByRole("option")
     // Select b
-    fireEvent.click(match)
+    await user.click(match)
 
     // Options list should only have c available - a & b selected
     const remainingOptions = screen.getAllByRole("option")
@@ -263,12 +282,14 @@ describe("Multiselect widget", () => {
       undefined
     )
 
-    // "Submit" the form
-    props.widgetMgr.submitForm("form")
+    act(() => {
+      // "Submit" the form
+      props.widgetMgr.submitForm("form", undefined)
+    })
 
     // Our widget should be reset, and the widgetMgr should be updated
     const expandListButton = screen.getAllByTitle("open")[0]
-    fireEvent.click(expandListButton)
+    await user.click(expandListButton)
     // Options list should only have b & c available - default a selected
     const updatedOptions = screen.getAllByRole("option")
     expect(updatedOptions.length).toBe(2)
@@ -286,7 +307,8 @@ describe("Multiselect widget", () => {
   })
 
   describe("properly invalidates going over max selections", () => {
-    it("has correct noResultsMsg when maxSelections is not passed", () => {
+    it("has correct noResultsMsg when maxSelections is not passed", async () => {
+      const user = userEvent.setup()
       const props = getProps(
         MultiSelectProto.create({
           id: "1",
@@ -299,12 +321,13 @@ describe("Multiselect widget", () => {
 
       // Type something with no matches
       const multiSelect = screen.getByRole("combobox")
-      fireEvent.change(multiSelect, { target: { value: "z" } })
+      await user.type(multiSelect, "z")
 
       expect(screen.getByText("No results")).toBeInTheDocument()
     })
 
-    it("has correct noResultsMsg when no match and selections < maxSelections", () => {
+    it("has correct noResultsMsg when no match and selections < maxSelections", async () => {
+      const user = userEvent.setup()
       const props = getProps(
         MultiSelectProto.create({
           id: "1",
@@ -318,12 +341,13 @@ describe("Multiselect widget", () => {
 
       // Type something with no matches
       const multiSelect = screen.getByRole("combobox")
-      fireEvent.change(multiSelect, { target: { value: "z" } })
+      await user.type(multiSelect, "z")
 
       expect(screen.getByText("No results")).toBeInTheDocument()
     })
 
-    it("has correct noResultsMsg when maxSelections reached", () => {
+    it("has correct noResultsMsg when maxSelections reached", async () => {
+      const user = userEvent.setup()
       const props = getProps(
         MultiSelectProto.create({
           id: "1",
@@ -337,9 +361,11 @@ describe("Multiselect widget", () => {
 
       // Select another option, b
       const multiSelect = screen.getByRole("combobox")
+      // TODO: Utilize user-event instead of fireEvent
+      // eslint-disable-next-line testing-library/prefer-user-event
       fireEvent.change(multiSelect, { target: { value: "b" } })
       const match = screen.getByRole("option")
-      fireEvent.click(match)
+      await user.click(match)
 
       expect(
         screen.getByText(
@@ -348,7 +374,8 @@ describe("Multiselect widget", () => {
       ).toBeInTheDocument()
     })
 
-    it("does not allow for more selection when an option is picked & maxSelections === 1", () => {
+    it("does not allow for more selection when an option is picked & maxSelections === 1", async () => {
+      const user = userEvent.setup()
       const props = getProps(
         MultiSelectProto.create({
           id: "1",
@@ -361,7 +388,7 @@ describe("Multiselect widget", () => {
       render(<Multiselect {...props} />)
 
       const multiSelect = screen.getByRole("combobox")
-      fireEvent.click(multiSelect)
+      await user.click(multiSelect)
 
       expect(
         screen.getByText(
@@ -370,7 +397,8 @@ describe("Multiselect widget", () => {
       ).toBeInTheDocument()
     })
 
-    it("does allow an option to be removed when we are at max selections", () => {
+    it("does allow an option to be removed when we are at max selections", async () => {
+      const user = userEvent.setup()
       const props = getProps(
         MultiSelectProto.create({
           id: "1",
@@ -384,11 +412,11 @@ describe("Multiselect widget", () => {
 
       // Clear a selection
       const deleteOptionButton = screen.getAllByTitle("Delete")[0]
-      fireEvent.click(deleteOptionButton)
+      await user.click(deleteOptionButton)
 
       // Options list should only have a & c available - b selected
       const expandListButton = screen.getAllByTitle("open")[0]
-      fireEvent.click(expandListButton)
+      await user.click(expandListButton)
       const updatedOptions = screen.getAllByRole("option")
       expect(updatedOptions.length).toBe(2)
       expect(updatedOptions[0]).toHaveTextContent("a")

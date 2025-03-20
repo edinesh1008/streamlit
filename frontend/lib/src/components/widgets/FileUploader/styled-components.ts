@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 
 import styled, { CSSObject } from "@emotion/styled"
-import { EmotionTheme } from "@streamlit/lib/src/theme"
+
+import { convertRemToPx, EmotionTheme } from "~lib/theme"
 
 export interface StyledFileDropzone {
   isDisabled: boolean
@@ -27,7 +28,10 @@ export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
     alignItems: "center",
     padding: theme.spacing.lg,
     backgroundColor: theme.colors.secondaryBg,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.default,
+    border: theme.colors.widgetBorderColor
+      ? `${theme.sizes.borderWidth} solid ${theme.colors.widgetBorderColor}`
+      : undefined,
     ":focus": {
       outline: "none",
     },
@@ -38,11 +42,11 @@ export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
   })
 )
 
-export const StyledFileDropzoneInstructions = styled.div(() => ({
+export const StyledFileDropzoneInstructions = styled.div({
   marginRight: "auto",
   alignItems: "center",
   display: "flex",
-}))
+})
 
 export const StyledFileDropzoneInstructionsFileUploaderIcon = styled.span(
   ({ theme }) => ({
@@ -71,9 +75,10 @@ export const StyledUploadedFiles = styled.div(({ theme }) => ({
   paddingRight: theme.spacing.lg,
 }))
 
-export const StyledUploadedFilesList = styled.ul(() => ({
+export const StyledUploadedFilesList = styled.ul(({ theme }) => ({
   listStyleType: "none",
-  marginBottom: 0,
+  margin: theme.spacing.none,
+  padding: theme.spacing.none,
 }))
 
 export const StyledUploadedFilesListItem = styled.li(({ theme }) => ({
@@ -165,13 +170,13 @@ const compactFileUploader = (theme: EmotionTheme): CSSObject => ({
   },
 })
 
-export const StyledFileUploader = styled.div(({ theme }) => {
-  if (theme.inSidebar) {
-    return compactFileUploader(theme)
+interface StyledFileUploaderProps {
+  width: number
+}
+export const StyledFileUploader = styled.div<StyledFileUploaderProps>(
+  ({ theme, width }) => {
+    if (width < convertRemToPx("23rem")) {
+      return compactFileUploader(theme)
+    }
   }
-
-  return {
-    [`@media (max-width: ${theme.breakpoints.sm})`]:
-      compactFileUploader(theme),
-  }
-})
+)

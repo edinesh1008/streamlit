@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 import React from "react"
 
-import { fireEvent, screen } from "@testing-library/react"
-import "@testing-library/jest-dom"
+import { screen } from "@testing-library/react"
+import { userEvent } from "@testing-library/user-event"
 
-import { render } from "@streamlit/lib/src/test_util"
-import { Block as BlockProto } from "@streamlit/lib/src/proto"
+import { Block as BlockProto } from "@streamlit/protobuf"
+
+import { render } from "~lib/test_util"
 
 import Expander, { ExpanderProps } from "./Expander"
 
@@ -48,6 +49,7 @@ describe("Expander container", () => {
     )
     const expanderContainer = screen.getByTestId("stExpander")
     expect(expanderContainer).toBeInTheDocument()
+    expect(expanderContainer).toHaveClass("stExpander")
   })
 
   it("does not render a list", () => {
@@ -74,7 +76,9 @@ describe("Expander container", () => {
   it("does not render collapse/expand icon if empty", () => {
     const props = getProps({}, { empty: true })
     render(<Expander {...props}></Expander>)
-    expect(screen.getByTestId("stExpanderToggleIcon")).toBeInTheDocument()
+    expect(
+      screen.queryByTestId("stExpanderToggleIcon")
+    ).not.toBeInTheDocument()
   })
 
   it("renders expander with a spinner icon", () => {
@@ -88,7 +92,7 @@ describe("Expander container", () => {
   })
 
   it("renders expander with a check icon", () => {
-    const props = getProps({ icon: "check" })
+    const props = getProps({ icon: ":material/check:" })
     render(
       <Expander {...props}>
         <div>test</div>
@@ -98,13 +102,35 @@ describe("Expander container", () => {
   })
 
   it("renders expander with a error icon", () => {
-    const props = getProps({ icon: "error" })
+    const props = getProps({ icon: ":material/error:" })
     render(
       <Expander {...props}>
         <div>test</div>
       </Expander>
     )
     expect(screen.getByTestId("stExpanderIconError")).toBeInTheDocument()
+  })
+
+  it("renders expander with an emoji icon", () => {
+    const props = getProps({ icon: "🚀" })
+    render(
+      <Expander {...props}>
+        <div>test</div>
+      </Expander>
+    )
+    expect(screen.getByTestId("stExpanderIcon")).toBeInTheDocument()
+    expect(screen.getByText("🚀")).toBeInTheDocument()
+  })
+
+  it("renders expander with a material icon", () => {
+    const props = getProps({ icon: ":material/add_circle:" })
+    render(
+      <Expander {...props}>
+        <div>test</div>
+      </Expander>
+    )
+    expect(screen.getByTestId("stExpanderIcon")).toBeInTheDocument()
+    expect(screen.getByText("add_circle")).toBeInTheDocument()
   })
 
   it("should render a expanded component", () => {
@@ -127,7 +153,8 @@ describe("Expander container", () => {
     expect(screen.getByText("test")).not.toBeVisible()
   })
 
-  it("should render the text when expanded", () => {
+  it("should render the text when expanded", async () => {
+    const user = userEvent.setup()
     const props = getProps({ expanded: false })
     render(
       <Expander {...props}>
@@ -135,7 +162,7 @@ describe("Expander container", () => {
       </Expander>
     )
 
-    fireEvent.click(screen.getByText("hi"))
+    await user.click(screen.getByText("hi"))
     expect(screen.getByText("test")).toBeVisible()
   })
 })

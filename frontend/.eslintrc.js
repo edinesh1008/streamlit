@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+const path = require("path")
+const vitest = require("eslint-plugin-vitest")
+
 module.exports = {
   env: {
     // allow using browser-defined globals like `window` and `document`
@@ -21,6 +24,9 @@ module.exports = {
     es6: true,
   },
   extends: [
+    // Activate recommended eslint rules: https://eslint.org/docs/latest/rules
+    "eslint:recommended",
+    // Uses the recommended rules from airbnb-typescript/base
     "airbnb-typescript/base",
     // Uses the recommended rules from @eslint-plugin-react
     "plugin:react/recommended",
@@ -34,19 +40,21 @@ module.exports = {
     // This will display prettier errors as ESLint errors.
     // Make sure this is always the last configuration in the extends array.
     "plugin:prettier/recommended",
-    // Recommended Jest configuration to enforce good testing practices
-    "plugin:jest/recommended",
     // Uses the recommended rules from React Testing Library:
     "plugin:testing-library/react",
     // Uses the recommended rules from lodash
     "plugin:lodash/recommended",
+    // This uses the `-legacy` nomenclature since we're on an older version of
+    // eslint that doesn't support flat config
+    // @see https://eslint-react.xyz/docs/presets
+    "plugin:@eslint-react/recommended-type-checked-legacy",
   ],
   // Specifies the ESLint parser
   parser: "@typescript-eslint/parser",
   parserOptions: {
     // make the parser resolve the project configuration relative to .eslintrc.js
-    tsconfigRootDir: __dirname,
-    project: "./tsconfig.dev.json",
+    tsconfigRootDir: path.resolve("."),
+    project: "tsconfig.json",
     ecmaFeatures: {
       jsx: true, // Allows for the parsing of JSX
     },
@@ -62,21 +70,41 @@ module.exports = {
     "**/vendor/*",
     "**/node_modules/*",
   ],
-  plugins: ["no-relative-import-paths"],
+  plugins: [
+    "no-relative-import-paths",
+    "streamlit-custom",
+    "vitest",
+    "react-compiler",
+    "@eslint-react",
+  ],
   // Place to specify ESLint rules.
   // Can be used to overwrite rules specified from the extended configs
   rules: {
+    // Recommended vitest configuration to enforce good testing practices
+    ...vitest.configs.recommended.rules,
     // Use `const` or `let` instead of `var`
     "no-var": "error",
+    // Prevent unintentional use of `console.log`
+    "no-console": "error",
+    // Prevent unintentional use of `debugger`
+    "no-debugger": "error",
     // We don't use PropTypes
     "react/prop-types": "off",
     // We don't escape entities
     "react/no-unescaped-entities": "off",
+    // We do want to discourage the usage of flushSync
+    "@eslint-react/dom/no-flush-sync": "error",
+    // This was giving false positives
+    "@eslint-react/no-unused-class-component-members": "off",
+    // This was giving false positives
+    "@eslint-react/naming-convention/use-state": "off",
+    // Helps us catch functions written as if they are hooks, but are not.
+    "@eslint-react/hooks-extra/no-useless-custom-hooks": "error",
+    // Turning off for now until we have clearer guidance on how to fix existing
+    // usages
+    "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "off",
     // Some of these are being caught erroneously
     "@typescript-eslint/camelcase": "off",
-    // Console statements are currently allowed,
-    // but we may want to reconsider this!
-    "@typescript-eslint/no-console": "off",
     // Empty interfaces are ok
     "@typescript-eslint/no-empty-interface": "off",
     // Empty functions are ok
@@ -122,6 +150,21 @@ module.exports = {
       "ForInStatement",
       "LabeledStatement",
       "WithStatement",
+      {
+        selector: "CallExpression[callee.name='withTheme']",
+        message:
+          "The use of withTheme HOC is not allowed for functional components. " +
+          "Please use the useTheme hook instead.",
+      },
+    ],
+    "no-restricted-globals": [
+      "error",
+      {
+        name: "localStorage",
+        message:
+          "Please use window.localStorage instead since localStorage is not " +
+          "supported in some browsers (e.g. Android WebView).",
+      },
     ],
     // Allow foo.hasOwnProperty("bar")
     "no-prototype-builtins": "off",
@@ -165,7 +208,72 @@ module.exports = {
     "lodash/prefer-is-nil": "off",
     "lodash/prefer-matches": "off",
     "lodash/path-style": "off",
+    "sort-imports": [
+      "error",
+      {
+        ignoreCase: true,
+        ignoreDeclarationSort: true,
+      },
+    ],
+    "import/order": [
+      1,
+      {
+        pathGroups: [
+          {
+            pattern: "react",
+            group: "external",
+            position: "before",
+          },
+          {
+            pattern: "@streamlit/**",
+            group: "internal",
+            position: "before",
+          },
+        ],
+        pathGroupsExcludedImportTypes: ["react"],
+        groups: [
+          "external",
+          "builtin",
+          "internal",
+          "parent",
+          "sibling",
+          "index",
+        ],
+        "newlines-between": "always",
+      },
+    ],
+    "react-compiler/react-compiler": "error",
+    "streamlit-custom/no-hardcoded-theme-values": "error",
+    "streamlit-custom/use-strict-null-equality-checks": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        paths: [
+          {
+            name: "timezone-mock",
+            message: "Please use the withTimezones test harness instead",
+          },
+        ],
+      },
+    ],
   },
+  overrides: [
+    {
+      // allow hardcoded styles in our test files and in the theme definitions
+      files: ["**/*.test.ts", "**/*.test.tsx", "lib/src/theme/**/*"],
+      rules: {
+        "streamlit-custom/no-hardcoded-theme-values": ["off"],
+      },
+    },
+    {
+      // test-only rules
+      files: ["**/*.test.ts", "**/*.test.tsx"],
+      extends: ["plugin:testing-library/react"],
+      rules: {
+        "testing-library/prefer-user-event": "error",
+      },
+    },
+  ],
   settings: {
     react: {
       // Tells eslint-plugin-react to automatically detect
@@ -176,7 +284,7 @@ module.exports = {
     "import/resolver": {
       typescript: {
         // tell eslint to look at these tsconfigs for import statements
-        project: ["lib/tsconfig.json", "app/tsconfig.json"],
+        project: [path.resolve(".", "tsconfig.json")],
       },
     },
   },

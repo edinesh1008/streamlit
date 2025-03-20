@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,24 +18,26 @@ import asyncio
 import base64
 import binascii
 import json
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import starlette.websockets
 from starlette.endpoints import WebSocketEndpoint
-from starlette.websockets import WebSocket
 
 from streamlit import config
 from streamlit.logger import get_logger
 from streamlit.proto.BackMsg_pb2 import BackMsg
-from streamlit.proto.ForwardMsg_pb2 import ForwardMsg
-from streamlit.runtime import Runtime, SessionClient, SessionClientDisconnectedError
+from streamlit.runtime import SessionClient, SessionClientDisconnectedError
 from streamlit.runtime.runtime_util import serialize_forward_msg
-from streamlit.web.server.server_util import is_url_from_allowed_origins
+
+if TYPE_CHECKING:
+    from starlette.websockets import WebSocket
+
+    from streamlit.proto.ForwardMsg_pb2 import ForwardMsg
 
 _LOGGER: Final = get_logger(__name__)
 
 
-# TODO [kajarenc]: Move this class to a separate file
+# TODO: [kajarenc]: Move this class to a separate file
 class ASGISessionClient(SessionClient):
     """An ASGI session client that can send messages to the browser."""
 
@@ -46,12 +48,12 @@ class ASGISessionClient(SessionClient):
         """Send a ForwardMsg to the browser."""
         try:
             self._queue.put_nowait(msg)
-        except (RuntimeError,) as e:
+        except RuntimeError as e:
             raise SessionClientDisconnectedError from e
 
 
 class ASGIBrowserWebSocketHandler(WebSocketEndpoint):
-    """Handles a WebSocket connection from the browser"""
+    """Handles a WebSocket connection from the browser."""
 
     encoding = "bytes"
 
@@ -92,7 +94,7 @@ class ASGIBrowserWebSocketHandler(WebSocketEndpoint):
         except (KeyError, binascii.Error, json.decoder.JSONDecodeError):
             email = "test@example.com"
 
-        user_info: dict[str, str | None] = dict()
+        user_info: dict[str, str | None] = {}
 
         if is_public_cloud_app:
             user_info["email"] = None
@@ -162,7 +164,6 @@ class ASGIBrowserWebSocketHandler(WebSocketEndpoint):
     #     return None
 
     async def on_receive(self, websocket: WebSocket, data: bytes) -> None:
-
         if not websocket.state._session_id:
             return
         try:

@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ from streamlit.runtime.secrets import AttrDict
 from tests.testutil import create_mock_script_run_ctx
 
 
-@pytest.mark.require_snowflake
+@pytest.mark.require_integration
 class SnowparkConnectionTest(unittest.TestCase):
     def tearDown(self) -> None:
         st.cache_data.clear()
@@ -182,7 +182,7 @@ class SnowparkConnectionTest(unittest.TestCase):
         conn = SnowparkConnection("my_snowpark_connection")
         conn._instance.sql.return_value = mock_sql_return
 
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             conn.query("SELECT 1;")
 
         # conn._connect should have just been called once when first creating the

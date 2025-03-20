@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 
 import React from "react"
-import { LabelVisibilityOptions } from "@streamlit/lib/src/util/utils"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
+
+import { isNullOrUndefined, LabelVisibilityOptions } from "~lib/util/utils"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 
 import { StyledWidgetLabel } from "./styled-components"
 
@@ -44,7 +45,7 @@ export function WidgetLabel({
   labelVisibility,
   htmlFor,
 }: LabelProps): React.ReactElement {
-  if (label == null) {
+  if (isNullOrUndefined(label)) {
     return <></>
   }
 

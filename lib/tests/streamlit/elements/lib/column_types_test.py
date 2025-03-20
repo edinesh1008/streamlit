@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ from streamlit.elements.lib.column_types import (
     DateColumn,
     DatetimeColumn,
     ImageColumn,
+    JsonColumn,
     LineChartColumn,
     LinkColumn,
     ListColumn,
@@ -52,6 +53,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                 )
             ),
             {
@@ -60,6 +62,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
             },
             "Should have all the properties defined.",
         )
@@ -80,6 +83,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default=50,
                     min_value=0,
                     max_value=100,
@@ -93,6 +97,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": 50,
                 "type_config": {
                     "type": "number",
@@ -122,6 +127,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default="default",
                     max_chars=10,
                     validate="^[a-zA-Z]+$",
@@ -133,6 +139,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": "default",
                 "type_config": {
                     "type": "text",
@@ -160,6 +167,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default=True,
                 )
             ),
@@ -169,6 +177,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": True,
                 "type_config": {"type": "checkbox"},
             },
@@ -192,6 +201,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default="a",
                     options=["a", "b", "c"],
                 )
@@ -202,6 +212,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": "a",
                 "type_config": {"type": "selectbox", "options": ["a", "b", "c"]},
             },
@@ -225,6 +236,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default=datetime.datetime(2021, 1, 1),
                     min_value=datetime.datetime(2020, 1, 1),
                     max_value=datetime.datetime(2022, 1, 2),
@@ -238,6 +250,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": "2021-01-01T00:00:00",
                 "type_config": {
                     "type": "datetime",
@@ -267,6 +280,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default=datetime.time(12, 0),
                     min_value=datetime.time(0, 0),
                     max_value=datetime.time(23, 59),
@@ -280,6 +294,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": "12:00:00",
                 "type_config": {
                     "type": "time",
@@ -309,6 +324,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default=datetime.date(2021, 1, 1),
                     min_value=datetime.date(2020, 1, 1),
                     max_value=datetime.date(2022, 1, 2),
@@ -322,6 +338,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": "2021-01-01",
                 "type_config": {
                     "type": "date",
@@ -349,6 +366,7 @@ class ColumnTypesTest(unittest.TestCase):
                     "Col1",
                     width="small",
                     help="Help text",
+                    pinned=True,
                     min_value=0,
                     max_value=100,
                     format="%.1f%%",
@@ -358,6 +376,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "label": "Col1",
                 "width": "small",
                 "help": "Help text",
+                "pinned": True,
                 "type_config": {
                     "type": "progress",
                     "format": "%.1f%%",
@@ -383,6 +402,7 @@ class ColumnTypesTest(unittest.TestCase):
                     "Col1",
                     width="small",
                     help="Help text",
+                    pinned=True,
                     y_min=0,
                     y_max=100,
                 )
@@ -391,6 +411,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "label": "Col1",
                 "width": "small",
                 "help": "Help text",
+                "pinned": True,
                 "type_config": {"type": "line_chart", "y_min": 0, "y_max": 100},
             },
             "Should have all the properties defined.",
@@ -411,6 +432,7 @@ class ColumnTypesTest(unittest.TestCase):
                     "Col1",
                     width="small",
                     help="Help text",
+                    pinned=True,
                     y_min=0,
                     y_max=100,
                 )
@@ -419,6 +441,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "label": "Col1",
                 "width": "small",
                 "help": "Help text",
+                "pinned": True,
                 "type_config": {"type": "bar_chart", "y_min": 0, "y_max": 100},
             },
             "Should have all the properties defined.",
@@ -441,6 +464,7 @@ class ColumnTypesTest(unittest.TestCase):
                     help="Help text",
                     disabled=False,
                     required=True,
+                    pinned=True,
                     default="https://streamlit.io/",
                     max_chars=100,
                     validate="^[a-zA-Z]+$",
@@ -453,6 +477,7 @@ class ColumnTypesTest(unittest.TestCase):
                 "help": "Help text",
                 "disabled": False,
                 "required": True,
+                "pinned": True,
                 "default": "https://streamlit.io/",
                 "type_config": {
                     "type": "link",
@@ -479,12 +504,14 @@ class ColumnTypesTest(unittest.TestCase):
                     "Col1",
                     width="small",
                     help="Help text",
+                    pinned=True,
                 )
             ),
             {
                 "label": "Col1",
                 "width": "small",
                 "help": "Help text",
+                "pinned": True,
                 "type_config": {
                     "type": "list",
                 },
@@ -502,13 +529,41 @@ class ColumnTypesTest(unittest.TestCase):
         )
 
         self.assertEqual(
-            remove_none_values(ImageColumn("Col1", width="small", help="Help text")),
+            remove_none_values(
+                ImageColumn("Col1", width="small", help="Help text", pinned=True)
+            ),
             {
                 "label": "Col1",
                 "width": "small",
                 "help": "Help text",
+                "pinned": True,
                 "type_config": {
                     "type": "image",
+                },
+            },
+            "Should have all the properties defined.",
+        )
+
+    def test_json_column(self):
+        """Test JsonColumn creation."""
+
+        self.assertEqual(
+            remove_none_values(JsonColumn()),
+            {"type_config": {"type": "json"}},
+            "Should only have the type defined and nothing else.",
+        )
+
+        self.assertEqual(
+            remove_none_values(
+                JsonColumn("Col1", width="small", help="Help text", pinned=True)
+            ),
+            {
+                "label": "Col1",
+                "width": "small",
+                "help": "Help text",
+                "pinned": True,
+                "type_config": {
+                    "type": "json",
                 },
             },
             "Should have all the properties defined.",

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import React from "react"
 
-import { baseTheme, ThemeConfig } from "@streamlit/lib/src/theme"
+import { baseTheme, ThemeConfig } from "~lib/theme"
 
 /**
  * The lib config contains various configurations that the host platform can
@@ -34,6 +34,8 @@ export type LibConfig = {
    * Whether to disable the full screen mode all elements / widgets.
    */
   disableFullscreenMode?: boolean
+
+  enforceDownloadInNewTab?: boolean
 }
 
 export interface LibContextProps {
@@ -93,6 +95,12 @@ export interface LibContextProps {
    * current script run isn't due to a fragment, this field is falsy.
    */
   fragmentIdsThisRun: Array<string>
+
+  /**
+   * The current locale of the app. Defaults to the browser's locale.
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/language
+   */
+  locale: typeof window.navigator.language
 }
 
 export const LibContext = React.createContext<LibContextProps>({
@@ -108,4 +116,5 @@ export const LibContext = React.createContext<LibContextProps>({
   currentPageScriptHash: "",
   libConfig: {},
   fragmentIdsThisRun: [],
+  locale: window.navigator.language,
 })

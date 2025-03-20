@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,74 +15,61 @@
  */
 
 import React, { ReactElement, useEffect } from "react"
-import { Button as ButtonProto } from "@streamlit/lib/src/proto"
+
+import { Button as ButtonProto } from "@streamlit/protobuf"
+
+import { Box } from "~lib/components/shared/Base/styled-components"
 import BaseButton, {
-  BaseButtonTooltip,
   BaseButtonKind,
   BaseButtonSize,
-} from "@streamlit/lib/src/components/shared/BaseButton"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
+  BaseButtonTooltip,
+  DynamicButtonLabel,
+} from "~lib/components/shared/BaseButton"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
 
 export interface Props {
   disabled: boolean
   element: ButtonProto
   hasInProgressUpload: boolean
   widgetMgr: WidgetStateManager
-  width: number
   fragmentId?: string
 }
 
 export function FormSubmitButton(props: Props): ReactElement {
-  const {
-    disabled,
-    element,
-    widgetMgr,
-    hasInProgressUpload,
-    width,
-    fragmentId,
-  } = props
+  const { disabled, element, widgetMgr, hasInProgressUpload, fragmentId } =
+    props
   const { formId } = element
-  const style = { width }
-  const kind =
-    element.type === "primary"
-      ? BaseButtonKind.PRIMARY_FORM_SUBMIT
-      : BaseButtonKind.SECONDARY_FORM_SUBMIT
+
+  let kind = BaseButtonKind.SECONDARY_FORM_SUBMIT
+  if (element.type === "primary") {
+    kind = BaseButtonKind.PRIMARY_FORM_SUBMIT
+  } else if (element.type === "tertiary") {
+    kind = BaseButtonKind.TERTIARY_FORM_SUBMIT
+  }
 
   useEffect(() => {
     widgetMgr.addSubmitButton(formId, element)
     return () => widgetMgr.removeSubmitButton(formId, element)
   }, [widgetMgr, formId, element])
 
-  // When useContainerWidth true & has help tooltip,
-  // we need to pass the container width down to the button
-  const fluidWidth = element.help ? width : true
-
   return (
-    <div
-      className="row-widget stButton"
-      data-testid="stFormSubmitButton"
-      style={style}
-    >
-      <BaseButtonTooltip help={element.help}>
+    <Box className="stFormSubmitButton" data-testid="stFormSubmitButton">
+      <BaseButtonTooltip
+        help={element.help}
+        containerWidth={element.useContainerWidth}
+      >
         <BaseButton
           kind={kind}
           size={BaseButtonSize.SMALL}
-          fluidWidth={element.useContainerWidth ? fluidWidth : false}
+          containerWidth={element.useContainerWidth}
           disabled={disabled || hasInProgressUpload}
           onClick={() => {
-            widgetMgr.submitForm(element.formId, element, fragmentId)
+            widgetMgr.submitForm(element.formId, fragmentId, element)
           }}
         >
-          <StreamlitMarkdown
-            source={element.label}
-            allowHTML={false}
-            isLabel
-            largerLabel
-            disableLinks
-          />
+          <DynamicButtonLabel icon={element.icon} label={element.label} />
         </BaseButton>
       </BaseButtonTooltip>
-    </div>
+    </Box>
   )
 }

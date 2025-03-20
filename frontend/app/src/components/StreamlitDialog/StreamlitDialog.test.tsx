@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 
 import React, { Fragment } from "react"
-import { SessionInfo, mockSessionInfo, render } from "@streamlit/lib"
-import { StreamlitDialog, DialogType } from "./StreamlitDialog"
+
 import { screen } from "@testing-library/react"
-import "@testing-library/jest-dom"
+
+import { mockSessionInfo, render, SessionInfo } from "@streamlit/lib"
+import { DialogType } from "@streamlit/app/src/components/StreamlitDialog/constants"
+import { StreamlitDialog } from "@streamlit/app/src/components/StreamlitDialog"
 
 function flushPromises(): Promise<void> {
   return new Promise(process.nextTick)
@@ -59,7 +61,7 @@ describe("StreamlitDialog", () => {
     )
 
     const baseButtonSecondary = await screen.findByTestId(
-      "baseButton-secondary"
+      "stBaseButton-secondary"
     )
     expect(baseButtonSecondary).toBeDefined()
   })
@@ -76,10 +78,8 @@ describe("StreamlitDialog", () => {
       </Fragment>
     )
 
-    const baseButtonSecondary = await screen.findByTestId(
-      "baseButton-tertiary"
-    )
-    expect(baseButtonSecondary).toBeDefined()
+    const baseButtonGhost = await screen.findByTestId("stBaseButton-ghost")
+    expect(baseButtonGhost).toBeDefined()
   })
 })
 
@@ -95,7 +95,7 @@ describe("aboutDialog", () => {
       </Fragment>
     )
 
-    expect(screen.getByTestId("stModal")).toBeInTheDocument()
+    expect(screen.getByTestId("stDialog")).toBeInTheDocument()
     // need a regex because there is a line break
     const versionRegex = /Streamlit v\s*42\.42\.42/
     const versionText = screen.getByText(versionRegex)
@@ -116,7 +116,7 @@ describe("aboutDialog", () => {
       </Fragment>
     )
 
-    expect(screen.getByTestId("stModal")).toBeInTheDocument()
+    expect(screen.getByTestId("stDialog")).toBeInTheDocument()
     // regex that is anything after Streamlit v
     const versionRegex = /^Streamlit v.*/
     const nonExistentText = screen.queryByText(versionRegex)

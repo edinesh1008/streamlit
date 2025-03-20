@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  */
 
 import React, { ReactElement } from "react"
-import { StyledList, StyledEmptyState, OptionListProps } from "baseui/menu"
-import { FixedSizeList } from "react-window"
-import {
-  Placement,
-  OverflowTooltip,
-} from "@streamlit/lib/src/components/shared/Tooltip"
-import { ThemedStyledDropdownListItem } from "./styled-components"
 
-const LIST_ITEM_HEIGHT = 40
-const EMPTY_LIST_HEIGHT = 90
-const MAX_LIST_HEIGHT = 300
+import { OptionListProps, StyledEmptyState, StyledList } from "baseui/menu"
+import { FixedSizeList } from "react-window"
+import { useTheme } from "@emotion/react"
+
+import { OverflowTooltip, Placement } from "~lib/components/shared/Tooltip"
+import { convertRemToPx } from "~lib/theme/utils"
+
+import { ThemedStyledDropdownListItem } from "./styled-components"
 
 /*
  * A component that renders a large dropdown to render only a fixed amount of
@@ -56,28 +54,61 @@ function FixedSizeListItem(props: FixedSizeListItemProps): ReactElement {
 }
 
 const VirtualDropdown = React.forwardRef<any, any>((props, ref) => {
+  const theme = useTheme()
+  // TODO: Update to match React best practices
+  // eslint-disable-next-line @eslint-react/no-children-to-array
   const children = React.Children.toArray(props.children) as ReactElement[]
 
   if (!children[0] || !children[0].props.item) {
     const childrenProps = children[0] ? children[0].props : {}
     return (
       <StyledList
-        $style={{ height: `${EMPTY_LIST_HEIGHT}px` }}
+        $style={{
+          height: theme.sizes.emptyDropdownHeight,
+          paddingBottom: theme.spacing.none,
+          paddingTop: theme.spacing.none,
+          paddingLeft: theme.spacing.none,
+          paddingRight: theme.spacing.none,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          // Somehow this adds an additional shadow, even though we already have
+          // one on the popover, so we need to remove it here.
+          boxShadow: "none",
+        }}
         ref={ref}
-        data-testid="stVirtualDropdownEmpty"
+        data-testid="stSelectboxVirtualDropdownEmpty"
       >
-        <StyledEmptyState {...childrenProps} />
+        <StyledEmptyState
+          $style={{
+            paddingBottom: theme.spacing.none,
+            paddingTop: theme.spacing.none,
+            paddingLeft: theme.spacing.none,
+            paddingRight: theme.spacing.none,
+            color: theme.colors.fadedText60,
+          }}
+          {...childrenProps}
+        />
       </StyledList>
     )
   }
 
-  const height = Math.min(MAX_LIST_HEIGHT, children.length * LIST_ITEM_HEIGHT)
+  const height = Math.min(
+    convertRemToPx(theme.sizes.maxDropdownHeight),
+    children.length * convertRemToPx(theme.sizes.dropdownItemHeight)
+  )
 
   return (
     <StyledList
       ref={ref}
-      $style={{ paddingTop: 0, paddingBottom: 0 }}
-      data-testid="stVirtualDropdown"
+      $style={{
+        paddingTop: 0,
+        paddingBottom: 0,
+        // Somehow this adds an additional shadow, even though we already have
+        // one on the popover, so we need to remove it here.
+        boxShadow: "none",
+      }}
+      data-testid="stSelectboxVirtualDropdown"
     >
       <FixedSizeList
         width="100%"
@@ -87,7 +118,7 @@ const VirtualDropdown = React.forwardRef<any, any>((props, ref) => {
         itemKey={(index: number, data: { props: OptionListProps }[]) =>
           data[index].props.item.value
         }
-        itemSize={LIST_ITEM_HEIGHT}
+        itemSize={convertRemToPx(theme.sizes.dropdownItemHeight)}
       >
         {FixedSizeListItem}
       </FixedSizeList>

@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@ df = pd.DataFrame(
 )
 
 st.header("Disabled parameter:")
-st.data_editor(df, disabled=True)
-st.data_editor(df, disabled=["col_4", "col_1"])
+st.data_editor(df, disabled=True, use_container_width=False)
+st.data_editor(df, disabled=["col_4", "col_1"], use_container_width=False)
 
 st.header("Hide index parameter:")
-st.data_editor(df, hide_index=True)
-st.data_editor(df, hide_index=False)
+st.data_editor(df, hide_index=True, use_container_width=False)
+st.data_editor(df, hide_index=False, use_container_width=False)
 
 st.header("Column order parameter:")
-st.data_editor(df, column_order=["col_4", "col_3", "col_0"])
+st.data_editor(df, column_order=["col_4", "col_3", "col_0"], use_container_width=False)
 
 st.header("Set column labels:")
 st.data_editor(
@@ -50,10 +50,15 @@ st.data_editor(
         "col_0": "Column 0",
         "col_2": st.column_config.Column("Column 1"),
     },
+    use_container_width=False,
 )
 
 st.header("Hide columns:")
-st.data_editor(df, column_config={"col_1": None, "col_3": {"hidden": True}})
+st.data_editor(
+    df,
+    column_config={"col_1": None, "col_3": {"hidden": True}},
+    use_container_width=False,
+)
 
 st.header("Set column width:")
 st.data_editor(
@@ -63,6 +68,7 @@ st.data_editor(
         "col_1": st.column_config.Column(width="medium"),
         "col_4": {"width": "large"},
     },
+    use_container_width=False,
 )
 
 st.header("Set help tooltips:")
@@ -77,16 +83,18 @@ st.data_editor(
         "col_0": st.column_config.Column(help="This :red[is] a **tooltip** 🌟"),
         "_index": {"help": "Index tooltip!"},
     },
+    use_container_width=False,
 )
 
 st.header("Text column:")
 st.caption(
-    "Editing the first column should only allow 5 characters. The second column should only allow numerical characters."
+    "Editing the first column should only allow 5 characters. The second column should"
+    " only allow numerical characters."
 )
 st.data_editor(
     pd.DataFrame(
         {
-            "col_0": ["Hello World", "Lorem ipsum", "", None],
+            "col_0": ["Hello World", '{"foo": "bar", "baz": 123}', "", None],
             "col_1": ["1", "2", "3", None],
         }
     ),
@@ -104,11 +112,14 @@ st.data_editor(
             validate="^[0-9]+$",
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Number column:")
 st.caption(
-    "Editing the first column should only allow to submit numbers between 0 and 5. And only a maximum of 2 decimals."
+    "Editing the first column should only allow to submit numbers between 0 and 5. "
+    "And only a maximum of 2 decimals."
 )
 st.data_editor(
     pd.DataFrame(
@@ -133,6 +144,8 @@ st.data_editor(
             format="%.2f%%",
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Checkbox column:")
@@ -154,6 +167,8 @@ st.data_editor(
         ),
         "col_1": st.column_config.CheckboxColumn(),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Selectbox column:")
@@ -175,13 +190,16 @@ st.data_editor(
             default=True,
             options=[1, 2, 3, 4, 5],
         ),
-        "col_1": st.column_config.SelectboxColumn(),
+        "col_1": st.column_config.SelectboxColumn(options=["a", "b", "c", "d"]),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Link column:")
 st.caption(
-    "Editing the first column should only submitting values starting with http and a maximum of 50 characters."
+    "Editing the first column should only submitting values starting with http and a "
+    "maximum of 50 characters."
 )
 st.data_editor(
     pd.DataFrame(
@@ -210,20 +228,23 @@ st.data_editor(
             disabled=False,
             default="https://streamlit.io/",
             max_chars=50,
-            validate="^http.*$",
+            validate=r"^http.*$",
         ),
         "col_1": st.column_config.LinkColumn(),
         "col_2": st.column_config.LinkColumn(
             "Display text via Regex",
-            validate="^https://.*?\.streamlit\.app$",
-            display_text="https://(.*?)\.streamlit\.app",
+            validate=r"^https://.*?\.streamlit\.app$",
+            display_text=r"https://(.*?)\.streamlit\.app",
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Datetime column:")
 st.caption(
-    "Editing the first column should only allow datetime values between 2021-01-01 and 2022-01-01."
+    "Editing the first column should only allow datetime values between 2021-01-01 and "
+    "2022-01-01."
 )
 st.data_editor(
     pd.DataFrame(
@@ -250,11 +271,14 @@ st.data_editor(
             format="YYYY-MM-DD HH:mm:ss.SSS",
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Date column:")
 st.caption(
-    "Editing the first column should only allow picking every second day and between 2021-01-01 and 2022-01-01."
+    "Editing the first column should only allow picking every second day and between "
+    "2021-01-01 and 2022-01-01."
 )
 st.data_editor(
     pd.DataFrame(
@@ -280,11 +304,14 @@ st.data_editor(
             step=2,
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Time column:")
 st.caption(
-    "Editing the first column should only allow datetime values between 01:02 and 01:03."
+    "Editing the first column should only allow datetime values "
+    "between 01:02 and 01:03."
 )
 st.data_editor(
     pd.DataFrame(
@@ -310,6 +337,8 @@ st.data_editor(
             step=datetime.timedelta(milliseconds=1),
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Progress column:")
@@ -331,6 +360,8 @@ st.data_editor(
             format="$%f", min_value=0, max_value=1000
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("List column:")
@@ -350,6 +381,8 @@ st.data_editor(
         ),
         "col_1": st.column_config.ListColumn(),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Bar chart column:")
@@ -371,6 +404,8 @@ st.data_editor(
         ),
         "col_1": st.column_config.BarChartColumn(),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 
@@ -393,6 +428,8 @@ st.data_editor(
         ),
         "col_1": st.column_config.LineChartColumn(),
     },
+    use_container_width=False,
+    hide_index=True,
 )
 
 st.header("Image column:")
@@ -415,4 +452,6 @@ st.data_editor(
             help="This is a image column",
         ),
     },
+    use_container_width=False,
+    hide_index=True,
 )

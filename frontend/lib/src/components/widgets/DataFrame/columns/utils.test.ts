@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,35 @@
  * limitations under the License.
  */
 import { GridCell, GridCellKind } from "@glideapps/glide-data-grid"
-import moment, { Moment } from "moment"
-import timezoneMock from "timezone-mock"
+import { Field, Utf8 } from "apache-arrow"
+import moment, { Moment } from "moment-timezone"
+
+import { DataFrameCellType } from "~lib/dataframes/arrowTypeUtils"
+import { withTimezones } from "~lib/util/withTimezones"
 
 import {
-  getErrorCell,
-  isErrorCell,
-  getEmptyCell,
-  getTextCell,
-  toSafeArray,
-  toSafeString,
-  toSafeNumber,
-  formatNumber,
-  mergeColumnParameters,
-  isMissingValueCell,
   BaseColumnProps,
-  toSafeBoolean,
-  toGlideColumn,
-  toSafeDate,
   countDecimals,
-  truncateDecimals,
   formatMoment,
+  formatNumber,
+  getEmptyCell,
+  getErrorCell,
+  getLinkDisplayValueFromRegex,
+  getTextCell,
+  isErrorCell,
+  isMissingValueCell,
+  mergeColumnParameters,
   removeLineBreaks,
+  toGlideColumn,
+  toJsonString,
+  toSafeArray,
+  toSafeBoolean,
+  toSafeDate,
+  toSafeNumber,
+  toSafeString,
+  truncateDecimals,
 } from "./utils"
+
 import { TextColumn } from "./index"
 
 const MOCK_TEXT_COLUMN_PROPS = {
@@ -45,12 +51,20 @@ const MOCK_TEXT_COLUMN_PROPS = {
   title: "column_1",
   indexNumber: 0,
   arrowType: {
-    pandas_type: "unicode",
-    numpy_type: "object",
+    type: DataFrameCellType.DATA,
+    arrowField: new Field("test", new Utf8(), true),
+    pandasType: {
+      field_name: "test",
+      name: "test",
+      pandas_type: "unicode",
+      numpy_type: "object",
+      metadata: null,
+    },
   },
   isEditable: false,
   isHidden: false,
   isIndex: false,
+  isPinned: false,
   isStretched: false,
 } as BaseColumnProps
 
@@ -60,9 +74,11 @@ describe("getErrorCell", () => {
     expect(errorCell.kind).toEqual(GridCellKind.Text)
     expect(errorCell.readonly).toEqual(true)
     expect(errorCell.allowOverlay).toEqual(true)
-    expect(errorCell.displayData).toEqual("⚠️ Foo Error")
-    expect(errorCell.data).toEqual("⚠️ Foo Error\n\nLorem Ipsum Dolor\n")
+    expect(errorCell.displayData).toEqual("Foo Error")
+    expect(errorCell.data).toEqual("Foo Error")
+    expect(errorCell.errorDetails).toEqual("Lorem Ipsum Dolor")
     expect(errorCell.isError).toEqual(true)
+    expect(errorCell.style).toEqual("faded")
   })
 })
 
@@ -133,7 +149,7 @@ describe("toSafeArray", () => {
       [true, false],
       [true, false],
     ],
-  ])("converts %p to a valid array: %p", (input, expected) => {
+  ])("converts %s to a valid array: %s", (input, expected) => {
     expect(toSafeArray(input)).toEqual(expected)
   })
 })
@@ -159,7 +175,7 @@ describe("toSafeString", () => {
       },
       "[object Object]",
     ],
-  ])("converts %p to a valid string: %p", (input, expected) => {
+  ])("converts %s to a valid string: %s", (input, expected) => {
     expect(toSafeString(input)).toEqual(expected)
   })
 })
@@ -190,7 +206,7 @@ describe("toSafeBoolean", () => {
     [12345, undefined],
     [[1, 2], undefined],
     [0.1, undefined],
-  ])("converts %p to a boolean: %p", (input, expected) => {
+  ])("converts %s to a boolean: %s", (input, expected) => {
     expect(toSafeBoolean(input)).toEqual(expected)
   })
 })
@@ -226,7 +242,7 @@ describe("toSafeNumber", () => {
     [".1312314", 0.1312314],
     [true, 1],
     [false, 0],
-  ])("converts %p to a valid number: %p", (input, expected) => {
+  ])("converts %s to a valid number: %s", (input, expected) => {
     expect(toSafeNumber(input)).toEqual(expected)
   })
 })
@@ -239,8 +255,15 @@ describe("formatNumber", () => {
     [10.1234, "10.1234"],
     // Rounds to 4 decimals
     [10.12346, "10.1235"],
+    [0.00016, "0.0002"],
+    // If number is smaller than 0.0001, shows the next decimal number
+    // to avoid showing 0 for small numbers.
+    [0.000051, "0.00005"],
+    [0.00000123, "0.000001"],
+    [0.00000183, "0.000002"],
+    [0.0000000061, "0.000000006"],
   ])(
-    "formats %p to %p with default options (no trailing zeros)",
+    "formats %s to %s with default options (no trailing zeros)",
     (value, expected) => {
       expect(formatNumber(value)).toEqual(expected)
     }
@@ -258,18 +281,18 @@ describe("formatNumber", () => {
     [0.123, 0, "0"],
     [0.123, 1, "0.1"],
   ])(
-    "formats %p to %p with %p decimals (keeps trailing zeros)",
+    "formats %s to %s with %s decimals (keeps trailing zeros)",
     (value, decimals, expected) => {
       expect(formatNumber(value, undefined, decimals)).toEqual(expected)
     }
   )
 
   it.each([
-    [0.5, "percent", "50.00%"],
+    [0.5, "percent", "50%"],
     [0.51236, "percent", "51.24%"],
-    [1.1, "percent", "110.00%"],
-    [0, "percent", "0.00%"],
-    [0.00001, "percent", "0.00%"],
+    [-1.123456, "percent", "-112.35%"],
+    [0, "percent", "0%"],
+    [0.00001, "percent", "0%"],
     [1000, "compact", "1K"],
     [1100, "compact", "1.1K"],
     [10, "compact", "10"],
@@ -279,8 +302,29 @@ describe("formatNumber", () => {
     [123456789, "scientific", "1.235E8"],
     [1000, "engineering", "1E3"],
     [123456789, "engineering", "123.457E6"],
-    [10, "duration[ns]", "a few seconds"],
-    [1234567891234, "duration[ns]", "21 minutes"],
+    [1234.567, "engineering", "1.235E3"],
+    // plain
+    [10.1231234, "plain", "10.1231234"],
+    [-1234.456789, "plain", "-1234.456789"],
+    [0.00000001, "plain", "0.00000001"],
+    // dollar
+    [10.123, "dollar", "$10.12"],
+    [-1234.456789, "dollar", "-$1,234.46"],
+    [0.00000001, "dollar", "$0.00"],
+    // euro
+    [10.123, "euro", "€10.12"],
+    [-1234.456789, "euro", "-€1,234.46"],
+    [0.00000001, "euro", "€0.00"],
+    // localized
+    [10.123, "localized", "10.123"],
+    [-1234.456789, "localized", "-1,234.457"],
+    [0.001, "localized", "0.001"],
+    // accounting
+    [10.123, "accounting", "10.12"],
+    [-10.126, "accounting", "(10.13)"],
+    [-10.1, "accounting", "(10.10)"],
+    [1000000.123412, "accounting", "1,000,000.12"],
+    [-1000000.123412, "accounting", "(1,000,000.12)"],
     // sprintf format
     [10.123, "%d", "10"],
     [10.123, "%i", "10"],
@@ -322,7 +366,7 @@ describe("formatNumber", () => {
     // Test prefixing with plus sign:
     [42, "%+d", "+42"],
     [-42, "%+d", "-42"],
-  ])("formats %p with format %p to '%p'", (value, format, expected) => {
+  ])("formats %s with format %s to '%s'", (value, format, expected) => {
     expect(formatNumber(value, format)).toEqual(expected)
   })
 
@@ -339,7 +383,7 @@ describe("formatNumber", () => {
     [25000.25, "$%,.2f"],
     [9876543210, "%,.0f"],
   ])(
-    "cannot format %p using the invalid sprintf format %p",
+    "cannot format %s using the invalid sprintf format %s",
     (input: number, format: string) => {
       expect(() => {
         formatNumber(input, format)
@@ -385,6 +429,7 @@ describe("toGlideColumn", () => {
       id: MOCK_TEXT_COLUMN_PROPS.id,
       title: MOCK_TEXT_COLUMN_PROPS.title,
       hasMenu: false,
+      menuIcon: "dots",
       themeOverride: MOCK_TEXT_COLUMN_PROPS.themeOverride,
       grow: undefined,
       width: undefined,
@@ -397,16 +442,16 @@ describe("toGlideColumn", () => {
       isStretched: true,
     })
 
-    expect(toGlideColumn(textColumn).grow).toEqual(3)
+    expect(toGlideColumn(textColumn).grow).toEqual(1)
 
-    // Create index column:
+    // Pinned columns should not use grow:
     const indexColumn = TextColumn({
       ...MOCK_TEXT_COLUMN_PROPS,
       isStretched: true,
-      isIndex: true,
+      isPinned: true,
     })
 
-    expect(toGlideColumn(indexColumn).grow).toEqual(1)
+    expect(toGlideColumn(indexColumn).grow).toEqual(undefined)
   })
 })
 
@@ -470,7 +515,7 @@ describe("toSafeDate", () => {
     ["2023-04-25 10:30 AM", new Date("2023-04-25T10:30:00.000Z")],
     // valid Unix timestamp in seconds as a string
     ["1671951600", new Date("2022-12-25T07:00:00.000Z")],
-  ])("converts input %p to the correct date %p", (input, expectedOutput) => {
+  ])("converts input %s to the correct date %s", (input, expectedOutput) => {
     expect(toSafeDate(input)).toEqual(expectedOutput)
   })
 })
@@ -522,74 +567,201 @@ describe("truncateDecimals", () => {
   )
 })
 
-describe("formatMoment", () => {
-  beforeAll(() => {
-    jest.useFakeTimers("modern")
-    jest.setSystemTime(new Date("2022-04-28T00:00:00Z"))
-    timezoneMock.register("UTC")
-  })
+withTimezones(() => {
+  describe("formatMoment", () => {
+    beforeAll(() => {
+      const d = new Date("2022-04-28T00:00:00Z")
+      vi.useFakeTimers()
+      vi.setSystemTime(d)
+    })
 
-  afterAll(() => {
-    jest.useRealTimers()
-    timezoneMock.unregister()
-  })
+    afterAll(() => {
+      vi.useRealTimers()
+    })
 
-  it.each([
-    [
-      "YYYY-MM-DD HH:mm:ss z",
-      moment.utc("2023-04-27T10:20:30Z"),
-      "2023-04-27 10:20:30 UTC",
-    ],
-    [
-      "YYYY-MM-DD HH:mm:ss z",
-      moment.utc("2023-04-27T10:20:30Z").tz("America/Los_Angeles"),
-      "2023-04-27 03:20:30 PDT",
-    ],
-    [
-      "YYYY-MM-DD HH:mm:ss Z",
-      moment.utc("2023-04-27T10:20:30Z").tz("America/Los_Angeles"),
-      "2023-04-27 03:20:30 -07:00",
-    ],
-    [
-      "YYYY-MM-DD HH:mm:ss Z",
-      moment.utc("2023-04-27T10:20:30Z").utcOffset("+04:00"),
-      "2023-04-27 14:20:30 +04:00",
-    ],
-    ["YYYY-MM-DD", moment.utc("2023-04-27T10:20:30Z"), "2023-04-27"],
-    [
-      "MMM Do, YYYY [at] h:mm A",
-      moment.utc("2023-04-27T15:45:00Z"),
-      "Apr 27th, 2023 at 3:45 PM",
-    ],
-    [
-      "MMMM Do, YYYY Z",
-      moment.utc("2023-04-27T10:20:30Z").utcOffset("-02:30"),
-      "April 27th, 2023 -02:30",
-    ],
-    // Distance:
-    ["distance", moment.utc("2022-04-10T20:20:30Z"), "17 days ago"],
-    ["distance", moment.utc("2020-04-10T20:20:30Z"), "2 years ago"],
-    ["distance", moment.utc("2022-04-27T23:59:59Z"), "a few seconds ago"],
-    ["distance", moment.utc("2022-04-20T00:00:00Z"), "8 days ago"],
-    ["distance", moment.utc("2022-05-27T23:59:59Z"), "in a month"],
-    ["relative", moment.utc("2022-04-30T15:30:00Z"), "Saturday at 3:30 PM"],
-    // Relative:
-    [
-      "relative",
-      moment.utc("2022-04-24T12:20:30Z"),
-      "Last Sunday at 12:20 PM",
-    ],
-    ["relative", moment.utc("2022-04-28T12:00:00Z"), "Today at 12:00 PM"],
-    ["relative", moment.utc("2022-04-29T12:00:00Z"), "Tomorrow at 12:00 PM"],
-  ])(
-    "uses %s format to format %p to %p",
-    (format: string, momentDate: Moment, expected: string) => {
-      expect(formatMoment(momentDate, format)).toBe(expected)
-    }
-  )
+    it.each([
+      [
+        "YYYY-MM-DD HH:mm:ss z",
+        moment.utc("2023-04-27T10:20:30Z"),
+        "2023-04-27 10:20:30 UTC",
+      ],
+      [
+        "YYYY-MM-DD HH:mm:ss z",
+        moment.utc("2023-04-27T10:20:30Z").tz("America/Los_Angeles"),
+        "2023-04-27 03:20:30 PDT",
+      ],
+      [
+        "YYYY-MM-DD HH:mm:ss Z",
+        moment.utc("2023-04-27T10:20:30Z").tz("America/Los_Angeles"),
+        "2023-04-27 03:20:30 -07:00",
+      ],
+      [
+        "YYYY-MM-DD HH:mm:ss Z",
+        moment.utc("2023-04-27T10:20:30Z").utcOffset("+04:00"),
+        "2023-04-27 14:20:30 +04:00",
+      ],
+      ["YYYY-MM-DD", moment.utc("2023-04-27T10:20:30Z"), "2023-04-27"],
+      [
+        "MMM Do, YYYY [at] h:mm A",
+        moment.utc("2023-04-27T15:45:00Z"),
+        "Apr 27th, 2023 at 3:45 PM",
+      ],
+      [
+        "MMMM Do, YYYY Z",
+        moment.utc("2023-04-27T10:20:30Z").utcOffset("-02:30"),
+        "April 27th, 2023 -02:30",
+      ],
+      // Distance:
+      ["distance", moment.utc("2022-04-10T20:20:30Z"), "17 days ago"],
+      ["distance", moment.utc("2020-04-10T20:20:30Z"), "2 years ago"],
+      ["distance", moment.utc("2022-04-27T23:59:59Z"), "a few seconds ago"],
+      ["distance", moment.utc("2022-04-20T00:00:00Z"), "8 days ago"],
+      ["distance", moment.utc("2022-05-27T23:59:59Z"), "in a month"],
+      // Calendar:
+      ["calendar", moment.utc("2022-04-30T15:30:00Z"), "Saturday at 3:30 PM"],
+      [
+        "calendar",
+        moment.utc("2022-04-24T12:20:30Z"),
+        "Last Sunday at 12:20 PM",
+      ],
+      ["calendar", moment.utc("2022-04-28T12:00:00Z"), "Today at 12:00 PM"],
+      ["calendar", moment.utc("2022-04-29T12:00:00Z"), "Tomorrow at 12:00 PM"],
+      // ISO8601:
+      [
+        "iso8601",
+        moment.utc("2023-04-27T10:20:30.123Z"),
+        "2023-04-27T10:20:30.123Z",
+      ],
+    ])(
+      "uses %s format to format %s to %s",
+      (format: string, momentDate: Moment, expected: string) => {
+        expect(formatMoment(momentDate, format)).toBe(expected)
+      }
+    )
+  })
 })
 
 test("removeLineBreaks should remove line breaks", () => {
   expect(removeLineBreaks("\n")).toBe(" ")
   expect(removeLineBreaks("\nhello\n\nworld")).toBe(" hello  world")
+})
+
+describe("getLinkDisplayValueFromRegex", () => {
+  it.each([
+    [
+      new RegExp("https://(.*?).streamlit.app"),
+      "https://example.streamlit.app",
+      "example",
+    ],
+    [
+      new RegExp("https://(.*?).streamlit.app"),
+      "https://my-cool-app.streamlit.app",
+      "my-cool-app",
+    ],
+    [
+      new RegExp("https://(.*?).streamlit.app"),
+      "https://example.streamlit.app?param=value",
+      "example",
+    ],
+    [
+      new RegExp("https://(.*?).streamlit.app"),
+      "https://example.streamlit.app?param1=value1&param2=value2",
+      "example",
+    ],
+    [new RegExp("id=(.*?)&"), "https://example.com?id=123&type=user", "123"],
+    [
+      new RegExp("[?&]user=(.*?)(?:&|$)"),
+      "https://example.com?page=1&user=john_doe&sort=desc",
+      "john_doe",
+    ],
+    [
+      new RegExp("https://(.*?).streamlit.app"),
+      "https://my%20cool%20app.streamlit.app",
+      "my cool app",
+    ],
+    [
+      new RegExp("https://(.*?).streamlit.app"),
+      "https://special%21chars%40app.streamlit.app",
+      "special!chars@app",
+    ],
+    [
+      new RegExp("user=(.*?)(?:&|$)"),
+      "https://example.com?user=john%20doe%40email.com",
+      "john doe@email.com",
+    ],
+    [
+      new RegExp("name=(.*?)&"),
+      "https://example.com?name=%E2%9C%A8special%20user%E2%9C%A8&type=vip",
+      "✨special user✨",
+    ],
+    [
+      new RegExp("q=(.*?)&"),
+      "https://example.com?q=%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82&lang=ru",
+      "привет",
+    ],
+    [
+      new RegExp("path/(.*?)/"),
+      "https://example.com/path/user%20name%20%26%20company/settings",
+      "user name & company",
+    ],
+    [
+      new RegExp("search/(.*?)\\?"),
+      "https://example.com/search/space%20%26%20time?page=1",
+      "space & time",
+    ],
+    [
+      new RegExp("https://(.*?).other.app"),
+      "https://example.streamlit.app",
+      "https://example.streamlit.app",
+    ],
+    [new RegExp("https://(.*?).streamlit.app"), null, ""],
+    [new RegExp("https://(.*?).streamlit.app"), undefined, ""],
+    [
+      new RegExp(".*meal=(.*)"),
+      "https://example.com/feedme?meal=fish+%26+chips%3A+%C2%A39",
+      "fish & chips: £9",
+    ],
+  ])(
+    "extracts display value from %s with href %s to be %s",
+    (regex: RegExp, href: string | null | undefined, expected: string) => {
+      expect(getLinkDisplayValueFromRegex(regex, href)).toBe(expected)
+    }
+  )
+})
+
+describe("toJsonString", () => {
+  it.each([
+    // Simple values
+    ["hello", "hello"],
+    [123, "123"],
+    [true, "true"],
+    [false, "false"],
+    [null, ""],
+    [undefined, ""],
+    // Arrays
+    [[1, 2, 3], "[1,2,3]"],
+    [["a", "b", "c"], '["a","b","c"]'],
+    [[1, "a", true], '[1,"a",true]'],
+    // Objects
+    [{ a: 1, b: 2 }, '{"a":1,"b":2}'],
+    [{ name: "test", active: true }, '{"name":"test","active":true}'],
+    // Nested structures
+    [{ arr: [1, 2, { x: "y" }] }, '{"arr":[1,2,{"x":"y"}]}'],
+    // BigInt handling
+    [BigInt(123), "123"],
+    [{ big: BigInt(9007199254740991) }, '{"big":9007199254740991}'],
+    // Already stringified JSON
+    ['{"test":123}', '{"test":123}'],
+    // Circular reference (should use toSafeString fallback)
+    [
+      (() => {
+        const circular: any = { a: 1 }
+        circular.self = circular
+        return circular
+      })(),
+      "[object Object]",
+    ],
+  ])("converts %o to JSON string %s", (input: any, expected: string) => {
+    expect(toJsonString(input)).toBe(expected)
+  })
 })

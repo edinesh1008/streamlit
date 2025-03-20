@@ -1,7 +1,7 @@
 # This workflow automatically comments on issues labeled with 'type:enhancement' or 'type:bug'
 # and adds a thumbs-up reaction to the issue to encourage community voting.
 
-name: Community voting
+name: Community Voting
 on:
   issues:
     types:
@@ -24,10 +24,16 @@ jobs:
 
             ![Visits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fstreamlit%2Fstreamlit%2Fissues%2F${{ github.event.issue.number }}&title=visits&edge_flat=false)
       - name: Upvote issue
-        uses: aidan-mundy/react-to-issue@b2a9194cf1ea483d633bc2834ed6c4c41c2a45f0
+        uses: actions/github-script@v7
         with:
-          issue-number: ${{ github.event.issue.number }}
-          reactions: "+1"
+          script: |
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              content: '+1'
+            });
+            console.log(`Added +1 reaction to issue #${context.issue.number}`);
   add-bug-comment:
     if: github.event.label.name == 'type:bug'
     runs-on: ubuntu-latest
@@ -45,7 +51,13 @@ jobs:
 
             ![Visits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fstreamlit%2Fstreamlit%2Fissues%2F${{ github.event.issue.number }}&title=visits&edge_flat=false)
       - name: Upvote issue
-        uses: aidan-mundy/react-to-issue@b2a9194cf1ea483d633bc2834ed6c4c41c2a45f0
+        uses: actions/github-script@v7
         with:
-          issue-number: ${{ github.event.issue.number }}
-          reactions: "+1"
+          script: |
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              content: '+1'
+            });
+            console.log(`Added +1 reaction to issue #${context.issue.number}`);

@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
+
 import streamlit as st
 
 st.header("Main Page")
 st.slider("x")
 
+st.write("Query Params:", st.query_params)
+
 if st.button("`pages/02_page2.py`"):
     st.switch_page("pages/02_page2.py")
 
 if st.button("`pages/08_slow_page.py`"):
-    st.switch_page("pages/08_slow_page.py")
+    st.switch_page(Path("pages/08_slow_page.py"))

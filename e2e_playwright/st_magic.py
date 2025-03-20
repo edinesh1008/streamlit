@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ else:
     "ELSE"
 
 
-for ii in range(1):
+for _ in range(1):
     "FOR"
 
 while True:
@@ -123,10 +123,11 @@ def docstrings():
 
     def nested():
         """Multiline docstring.
-        Should not be printed."""
+        Should not be printed.
+        """
         pass
 
-    class Foo(object):
+    class Foo:
         """Class docstring. Should not be printed."""
 
         pass
@@ -149,7 +150,7 @@ class MyClass:
     """MyClass: this help block should be printed."""
 
     def __init__(self):
-        """This should not be printed."""
+        """Should not be printed."""
 
 
 MyClass

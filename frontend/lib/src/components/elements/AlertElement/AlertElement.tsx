@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,61 +14,51 @@
  * limitations under the License.
  */
 
-import React, { ReactElement } from "react"
+import React, { memo, ReactElement } from "react"
 
-import { Alert as AlertProto } from "@streamlit/lib/src/proto"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
-import { EmojiIcon } from "@streamlit/lib/src/components/shared/Icon"
-import AlertContainer, {
-  Kind,
-} from "@streamlit/lib/src/components/shared/AlertContainer"
+import { useTheme } from "@emotion/react"
+
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
+import { DynamicIcon } from "~lib/components/shared/Icon"
+import AlertContainer, { Kind } from "~lib/components/shared/AlertContainer"
+import { EmotionTheme } from "~lib/theme"
+
 import { StyledAlertContent } from "./styled-components"
-
-export function getAlertElementKind(format: AlertProto.Format): Kind {
-  switch (format) {
-    case AlertProto.Format.ERROR:
-      return Kind.ERROR
-    case AlertProto.Format.INFO:
-      return Kind.INFO
-    case AlertProto.Format.SUCCESS:
-      return Kind.SUCCESS
-    case AlertProto.Format.WARNING:
-      return Kind.WARNING
-    default:
-      throw new Error(`Unexpected alert type: ${format}`)
-  }
-}
 
 export interface AlertElementProps {
   body: string
   icon?: string
   kind: Kind
-  width: number
 }
 
 /**
  * Display an (error|warning|info|success) box with a Markdown-formatted body.
  */
-export default function AlertElement({
+function AlertElement({
   icon,
   body,
   kind,
-  width,
-}: AlertElementProps): ReactElement {
+}: Readonly<AlertElementProps>): ReactElement {
+  const theme: EmotionTheme = useTheme()
   const markdownWidth = {
-    // Fix issue #6394 - Need to account for 1.25rem padding + 0.5rem gap when icon present
-    width: icon ? `calc(100% - 1.75rem)` : "100%",
+    // Fix issue #6394 - Need to account for icon size (iconSizes.lg) + gap when icon present
+    width: icon
+      ? `calc(100% - (${theme.iconSizes.lg} + ${theme.spacing.sm}))`
+      : "100%",
   }
 
   return (
     <div className="stAlert" data-testid="stAlert">
-      <AlertContainer width={width} kind={kind}>
+      <AlertContainer kind={kind}>
         <StyledAlertContent>
           {icon && (
-            <EmojiIcon testid="stAlertEmojiIcon" size="lg">
-              {icon}
-            </EmojiIcon>
+            <DynamicIcon
+              iconValue={icon}
+              size="lg"
+              testid="stAlertDynamicIcon"
+            />
           )}
+
           <StreamlitMarkdown
             source={body}
             allowHTML={false}
@@ -79,3 +69,5 @@ export default function AlertElement({
     </div>
   )
 }
+
+export default memo(AlertElement)

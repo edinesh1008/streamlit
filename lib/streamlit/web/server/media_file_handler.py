@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,8 +44,9 @@ class MediaFileHandler(tornado.web.StaticFileHandler):
         cls._storage = storage
 
     def set_default_headers(self) -> None:
-        if allow_cross_origin_requests():
-            self.set_header("Access-Control-Allow-Origin", "*")
+        # if allow_cross_origin_requests():
+        #     self.set_header("Access-Control-Allow-Origin", "*")
+        pass
 
     def set_extra_headers(self, path: str) -> None:
         """Add Content-Disposition header for downloadable files.

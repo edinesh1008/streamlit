@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ import textwrap
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from matplotlib import pyplot
 
 import streamlit as st
 
@@ -44,9 +43,9 @@ st.pyplot(fig, use_container_width=False)
 st.write("Advanced Seaborn figure:")
 # Generate data
 data_points = 100
-xData: "np.typing.NDArray[np.float_]" = (np.random.randn(data_points, 1) * 30) + 30
-yData: "np.typing.NDArray[np.float_]" = np.random.randn(data_points, 1) * 30
-data: "np.typing.NDArray[np.float_]" = np.random.randn(data_points, 2)
+xData: "np.typing.NDArray[np.float64]" = (np.random.randn(data_points, 1) * 30) + 30
+yData: "np.typing.NDArray[np.float64]" = np.random.randn(data_points, 1) * 30
+data: "np.typing.NDArray[np.float64]" = np.random.randn(data_points, 2)
 
 # Generate plot
 fig, ax = plt.subplots(figsize=(4.5, 4.5))
@@ -84,6 +83,9 @@ kwargs = {
 st.pyplot(fig, clear_figure=True, **kwargs)
 
 st.write("Figure using deprecated global object:")
-plot = pyplot.plot(data)
+plot = plt.plot(data)
 st.pyplot()
-pyplot.clf()
+plt.clf()
+
+fig, ax = plt.subplots()
+st.pyplot(fig)

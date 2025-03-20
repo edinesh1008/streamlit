@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from __future__ import annotations
 
 from unittest.mock import ANY, MagicMock, patch
 
@@ -34,9 +36,12 @@ class BrowserWebSocketHandlerTest(ServerTestCase):
 
     @tornado.testing.gen_test
     async def test_connect_with_no_session_id(self):
-        with self._patch_app_session(), patch.object(
-            self.server._runtime, "connect_session"
-        ) as patched_connect_session:
+        with (
+            self._patch_app_session(),
+            patch.object(
+                self.server._runtime, "connect_session"
+            ) as patched_connect_session,
+        ):
             await self.server.start()
             await self.ws_connect()
 
@@ -48,9 +53,12 @@ class BrowserWebSocketHandlerTest(ServerTestCase):
 
     @tornado.testing.gen_test
     async def test_connect_with_session_id(self):
-        with self._patch_app_session(), patch.object(
-            self.server._runtime, "connect_session"
-        ) as patched_connect_session:
+        with (
+            self._patch_app_session(),
+            patch.object(
+                self.server._runtime, "connect_session"
+            ) as patched_connect_session,
+        ):
             await self.server.start()
             await self.ws_connect(existing_session_id="session_id")
 
@@ -62,7 +70,7 @@ class BrowserWebSocketHandlerTest(ServerTestCase):
 
     @tornado.testing.gen_test
     async def test_write_forward_msg_reraises_websocket_closed_error(self):
-        """`write_forward_msg` should re-raise WebSocketClosedError as
+        """`write_forward_msg` should re-raise WebSocketClosedError
         as SessionClientDisconnectedError.
         """
 

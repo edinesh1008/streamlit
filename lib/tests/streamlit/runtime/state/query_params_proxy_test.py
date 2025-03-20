@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import unittest
-from typing import Dict, List, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,7 +26,7 @@ from streamlit.runtime.state.session_state import SessionState
 
 
 def _create_mock_session_state(
-    initial_query_params_values: Dict[str, Union[List[str], str]]
+    initial_query_params_values: dict[str, list[str] | str],
 ) -> SafeSessionState:
     """Return a new SafeSessionState instance populated with the
     given query param values.
@@ -101,8 +102,35 @@ class TestQueryParamsProxy(unittest.TestCase):
 
     def test__getattr__raises_Attribute_exception(self):
         with pytest.raises(AttributeError):
-            self.query_params_proxy.nonexistent
+            self.query_params_proxy.nonexistent  # noqa: B018
 
     def test__delattr__raises_Attribute_exception(self):
         with pytest.raises(AttributeError):
             del self.query_params_proxy.nonexistent
+
+    def test_to_dict(self):
+        self.query_params_proxy["test_multi"] = ["value1", "value2"]
+        assert self.query_params_proxy.to_dict() == {
+            "test": "value",
+            "test_multi": "value2",
+        }
+
+    def test_from_dict(self):
+        new_dict = {"test_new": "value_new", "test_multi": ["value1", "value2"]}
+        self.query_params_proxy.from_dict(new_dict)
+        assert self.query_params_proxy.test_new == "value_new"
+        assert self.query_params_proxy["test_multi"] == "value2"
+        assert self.query_params_proxy.get_all("test_multi") == ["value1", "value2"]
+        assert len(self.query_params_proxy) == 2
+
+    def test_key_error_message(self):
+        with pytest.raises(KeyError) as e:
+            self.query_params_proxy["nonexistent"]
+
+        assert str(e.value) == """'st.query_params has no key "nonexistent".'"""
+
+    def test_attribute_error_message(self):
+        with pytest.raises(AttributeError) as e:
+            self.query_params_proxy.nonexistent  # noqa: B018
+
+        assert str(e.value) == 'st.query_params has no attribute "nonexistent".'

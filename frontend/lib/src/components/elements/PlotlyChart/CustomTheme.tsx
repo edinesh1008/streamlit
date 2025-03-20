@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,24 @@
  */
 
 import merge from "lodash/merge"
+import { getLogger } from "loglevel"
 
 import {
+  convertRemToPx,
+  EmotionTheme,
+  getBlue80,
+  getCategoricalColorsArray,
   getDecreasingRed,
+  getDivergingColorsArray,
   getGray30,
   getGray70,
   getGray90,
   getIncreasingGreen,
-  hasLightBackgroundColor,
-  EmotionTheme,
   getSequentialColorsArray,
-  getCategoricalColorsArray,
-  getDivergingColorsArray,
-} from "@streamlit/lib/src/theme"
-import { ensureError } from "@streamlit/lib/src/util/ErrorHandling"
-import { logError } from "@streamlit/lib/src/util/log"
+} from "~lib/theme"
+import { ensureError } from "~lib/util/ErrorHandling"
 
+const LOG = getLogger("PlotlyChart:CustomTheme")
 /**
  * This applies general layout changes to things such as x axis,
  * y axis, legends, titles, grid changes, background, etc.
@@ -47,18 +49,18 @@ export function applyStreamlitThemeTemplateLayout(
     font: {
       color: getGray70(theme),
       family: genericFonts.bodyFont,
-      size: fontSizes.twoSmPx,
+      size: convertRemToPx(fontSizes.twoSm),
     },
     title: {
       color: colors.headingColor,
       subtitleColor: colors.bodyText,
       font: {
         family: genericFonts.headingFont,
-        size: fontSizes.mdPx,
+        size: convertRemToPx(fontSizes.md),
         color: colors.headingColor,
       },
       pad: {
-        l: theme.spacing.twoXSPx,
+        l: convertRemToPx(theme.spacing.twoXS),
       },
       xanchor: "left",
       x: 0,
@@ -66,16 +68,16 @@ export function applyStreamlitThemeTemplateLayout(
     legend: {
       title: {
         font: {
-          size: fontSizes.twoSmPx,
+          size: convertRemToPx(fontSizes.twoSm),
           color: getGray70(theme),
         },
         side: "top",
       },
       valign: "top",
       bordercolor: colors.transparent,
-      borderwidth: theme.spacing.nonePx,
+      borderwidth: 0,
       font: {
-        size: fontSizes.twoSmPx,
+        size: convertRemToPx(fontSizes.twoSm),
         color: getGray90(theme),
       },
     },
@@ -87,14 +89,14 @@ export function applyStreamlitThemeTemplateLayout(
       title: {
         font: {
           color: getGray70(theme),
-          size: fontSizes.smPx,
+          size: convertRemToPx(fontSizes.sm),
         },
-        standoff: theme.spacing.twoXLPx,
+        standoff: convertRemToPx(theme.spacing.twoXL),
       },
       tickcolor: getGray30(theme),
       tickfont: {
         color: getGray70(theme),
-        size: fontSizes.twoSmPx,
+        size: convertRemToPx(fontSizes.twoSm),
       },
       gridcolor: getGray30(theme),
       minor: {
@@ -108,15 +110,15 @@ export function applyStreamlitThemeTemplateLayout(
       showgrid: false,
       tickfont: {
         color: getGray70(theme),
-        size: fontSizes.twoSmPx,
+        size: convertRemToPx(fontSizes.twoSm),
       },
       tickcolor: getGray30(theme),
       title: {
         font: {
           color: getGray70(theme),
-          size: fontSizes.smPx,
+          size: convertRemToPx(fontSizes.sm),
         },
-        standoff: theme.spacing.xlPx,
+        standoff: convertRemToPx(theme.spacing.xl),
       },
       minor: {
         gridcolor: getGray30(theme),
@@ -126,28 +128,29 @@ export function applyStreamlitThemeTemplateLayout(
       rangeselector: {
         bgcolor: colors.bgColor,
         bordercolor: getGray30(theme),
+        // eslint-disable-next-line streamlit-custom/no-hardcoded-theme-values
         borderwidth: 1,
         x: 0,
       },
     },
     margin: {
-      pad: theme.spacing.smPx,
-      r: theme.spacing.nonePx,
-      l: theme.spacing.nonePx,
+      pad: convertRemToPx(theme.spacing.sm),
+      r: 0,
+      l: 0,
     },
     hoverlabel: {
       bgcolor: colors.bgColor,
-      bordercolor: colors.fadedText10,
+      bordercolor: colors.borderColor,
       font: {
         color: getGray70(theme),
         family: genericFonts.bodyFont,
-        size: fontSizes.twoSmPx,
+        size: convertRemToPx(fontSizes.twoSm),
       },
     },
     coloraxis: {
       colorbar: {
         thickness: 16,
-        xpad: theme.spacing.twoXLPx,
+        xpad: convertRemToPx(theme.spacing.twoXL),
         ticklabelposition: "outside",
         outlinecolor: colors.transparent,
         outlinewidth: 8,
@@ -156,12 +159,12 @@ export function applyStreamlitThemeTemplateLayout(
         title: {
           font: {
             color: getGray70(theme),
-            size: fontSizes.smPx,
+            size: convertRemToPx(fontSizes.sm),
           },
         },
         tickfont: {
           color: getGray70(theme),
-          size: fontSizes.twoSmPx,
+          size: convertRemToPx(fontSizes.twoSm),
         },
       },
     },
@@ -172,7 +175,7 @@ export function applyStreamlitThemeTemplateLayout(
       title: {
         font: {
           family: genericFonts.bodyFont,
-          size: fontSizes.smPx,
+          size: convertRemToPx(fontSizes.sm),
         },
       },
       color: getGray70(theme),
@@ -181,7 +184,7 @@ export function applyStreamlitThemeTemplateLayout(
         linecolor: getGray70(theme),
         tickfont: {
           family: genericFonts.bodyFont,
-          size: fontSizes.twoSmPx,
+          size: convertRemToPx(fontSizes.twoSm),
         },
       },
       baxis: {
@@ -189,7 +192,7 @@ export function applyStreamlitThemeTemplateLayout(
         gridcolor: getGray70(theme),
         tickfont: {
           family: genericFonts.bodyFont,
-          size: fontSizes.twoSmPx,
+          size: convertRemToPx(fontSizes.twoSm),
         },
       },
       caxis: {
@@ -197,7 +200,7 @@ export function applyStreamlitThemeTemplateLayout(
         gridcolor: getGray70(theme),
         tickfont: {
           family: genericFonts.bodyFont,
-          size: fontSizes.twoSmPx,
+          size: convertRemToPx(fontSizes.twoSm),
         },
       },
     },
@@ -372,10 +375,7 @@ function replaceGOSpecificColors(spec: string, theme: EmotionTheme): string {
 
   spec = spec.replaceAll(INCREASING, getIncreasingGreen(theme))
   spec = spec.replaceAll(DECREASING, getDecreasingRed(theme))
-  spec = spec.replaceAll(
-    TOTAL,
-    hasLightBackgroundColor(theme) ? theme.colors.blue80 : theme.colors.blue40
-  )
+  spec = spec.replaceAll(TOTAL, getBlue80(theme))
 
   spec = spec.replaceAll(GRAY_30, getGray30(theme))
   spec = spec.replaceAll(GRAY_70, getGray70(theme))
@@ -409,7 +409,7 @@ export function applyStreamlitTheme(spec: any, theme: EmotionTheme): void {
     applyStreamlitThemeTemplateLayout(spec.layout.template.layout, theme)
   } catch (e) {
     const err = ensureError(e)
-    logError(err)
+    LOG.error(err)
   }
   if ("title" in spec.layout) {
     spec.layout.title = merge(spec.layout.title, {

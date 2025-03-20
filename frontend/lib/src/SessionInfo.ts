@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import {
   Initialize,
   NewSession,
   UserInfo,
-} from "./proto"
+} from "@streamlit/protobuf"
 
-import { hashString } from "./util/utils"
+import { hashString, notNullOrUndefined } from "./util/utils"
 
 /**
  * SessionInfo properties. These don't change during the lifetime of a session.
@@ -67,8 +67,10 @@ export class SessionInfo {
    * previous props to `SessionInfo.last`.
    */
   public setCurrent(props?: Props): void {
-    this._last = this._current != null ? { ...this._current } : undefined
-    this._current = props != null ? { ...props } : undefined
+    this._last = notNullOrUndefined(this._current)
+      ? { ...this._current }
+      : undefined
+    this._current = notNullOrUndefined(props) ? { ...props } : undefined
   }
 
   /** Clear `SessionInfo.current` and copy its previous props to `SessionInfo.last`. */
@@ -78,12 +80,12 @@ export class SessionInfo {
 
   /** True if `SessionInfo.current` exists. */
   public get isSet(): boolean {
-    return this._current != null
+    return notNullOrUndefined(this._current)
   }
 
   /** True if `SessionInfo.current` refers to a "streamlit hello" session. */
   public get isHello(): boolean {
-    return this._current != null && this._current.isHello
+    return notNullOrUndefined(this._current) && this._current.isHello
   }
 
   /** Create SessionInfo Props from the relevant bits of an initialize message. */

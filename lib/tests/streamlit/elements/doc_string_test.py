@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ class StHelpAPITest(DeltaGeneratorTestCase):
         self.assertTrue(
             el.doc_string.startswith("Change the current working directory")
         )
-        self.assertEqual(f"posix.chdir(path)", el.value)
+        self.assertIn(el.value, ["posix.chdir(path)", "nt.chdir(path)"])
 
     def test_st_help_with_available_conditional_members(self):
         """Test st.help with conditional members available"""

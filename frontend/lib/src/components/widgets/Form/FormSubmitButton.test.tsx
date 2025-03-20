@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 import React from "react"
-import "@testing-library/jest-dom"
-import { screen, fireEvent } from "@testing-library/react"
-import { render } from "@streamlit/lib/src/test_util"
 
+import { screen } from "@testing-library/react"
+import { userEvent } from "@testing-library/user-event"
 import { enableAllPlugins } from "immer"
 
-import { Button as ButtonProto } from "@streamlit/lib/src/proto"
+import { Button as ButtonProto } from "@streamlit/protobuf"
 
+import { render } from "~lib/test_util"
 import {
   createFormsData,
   FormsData,
   WidgetStateManager,
-} from "@streamlit/lib/src/WidgetStateManager"
+} from "~lib/WidgetStateManager"
+
 import { FormSubmitButton, Props } from "./FormSubmitButton"
 
 // Required by ImmerJS
@@ -39,8 +40,8 @@ describe("FormSubmitButton", () => {
   beforeEach(() => {
     formsData = createFormsData()
     widgetMgr = new WidgetStateManager({
-      sendRerunBackMsg: jest.fn(),
-      formsDataChanged: jest.fn(newData => {
+      sendRerunBackMsg: vi.fn(),
+      formsDataChanged: vi.fn(newData => {
         formsData = newData
       }),
     })
@@ -48,20 +49,19 @@ describe("FormSubmitButton", () => {
 
   function getProps(
     props: Partial<Props> = {},
-    useContainerWidth = false,
-    helpText = "mockHelpText"
+    elementProps: Partial<ButtonProto> = {}
   ): Props {
     return {
       element: ButtonProto.create({
         id: "1",
         label: "Submit",
         formId: "mockFormId",
-        help: helpText,
-        useContainerWidth,
+        help: "mockHelpText",
+        useContainerWidth: false,
+        ...elementProps,
       }),
       disabled: false,
       hasInProgressUpload: false,
-      width: 250,
       widgetMgr,
       ...props,
     }
@@ -72,18 +72,16 @@ describe("FormSubmitButton", () => {
     expect(screen.getByRole("button")).toBeInTheDocument()
   })
 
-  it("has correct className and style", () => {
+  it("has correct className", () => {
     const props = getProps()
     render(<FormSubmitButton {...props} />)
 
     const formSubmitButton = screen.getByTestId("stFormSubmitButton")
 
-    expect(formSubmitButton).toHaveClass("row-widget")
-    expect(formSubmitButton).toHaveClass("stButton")
-    expect(formSubmitButton).toHaveStyle(`width: ${props.width}px`)
+    expect(formSubmitButton).toHaveClass("stFormSubmitButton")
   })
 
-  it("renders a label", () => {
+  it("renders a label within the button", () => {
     const props = getProps()
     render(<FormSubmitButton {...props} />)
 
@@ -94,33 +92,50 @@ describe("FormSubmitButton", () => {
     expect(formSubmitButton).toBeInTheDocument()
   })
 
+  it("renders with help properly", async () => {
+    const user = userEvent.setup()
+    render(<FormSubmitButton {...getProps({}, { help: "mockHelpText" })} />)
+
+    const formSubmitButton = screen.getByRole("button")
+    expect(formSubmitButton).toHaveStyle("width: auto")
+    const tooltipTarget = screen.getByTestId("stTooltipHoverTarget")
+    expect(tooltipTarget).toHaveStyle("width: auto")
+
+    await user.hover(tooltipTarget)
+
+    const tooltipContent = await screen.findByTestId("stTooltipContent")
+    expect(tooltipContent).toHaveTextContent("mockHelpText")
+  })
+
   it("calls submitForm when clicked", async () => {
+    const user = userEvent.setup()
     const props = getProps()
-    jest.spyOn(props.widgetMgr, "submitForm")
+    vi.spyOn(props.widgetMgr, "submitForm")
     render(<FormSubmitButton {...props} />)
 
     const formSubmitButton = screen.getByRole("button")
 
-    fireEvent.click(formSubmitButton)
+    await user.click(formSubmitButton)
     expect(props.widgetMgr.submitForm).toHaveBeenCalledWith(
       props.element.formId,
-      props.element,
-      undefined
+      undefined,
+      props.element
     )
   })
 
   it("can pass fragmentId to submitForm", async () => {
+    const user = userEvent.setup()
     const props = getProps({ fragmentId: "myFragmentId" })
-    jest.spyOn(props.widgetMgr, "submitForm")
+    vi.spyOn(props.widgetMgr, "submitForm")
     render(<FormSubmitButton {...props} />)
 
     const formSubmitButton = screen.getByRole("button")
 
-    fireEvent.click(formSubmitButton)
+    await user.click(formSubmitButton)
     expect(props.widgetMgr.submitForm).toHaveBeenCalledWith(
       props.element.formId,
-      props.element,
-      "myFragmentId"
+      "myFragmentId",
+      props.element
     )
   })
 
@@ -170,26 +185,5 @@ describe("FormSubmitButton", () => {
     unmountView2()
 
     expect(formsData.submitButtons.get("mockFormId")?.length).toBe(0)
-  })
-
-  it("does not use container width by default", () => {
-    render(<FormSubmitButton {...getProps()} />)
-
-    const formSubmitButton = screen.getByRole("button")
-    expect(formSubmitButton).toHaveStyle("width: auto")
-  })
-
-  it("passes useContainerWidth property with help correctly", () => {
-    render(<FormSubmitButton {...getProps({}, true)} />)
-
-    const formSubmitButton = screen.getByRole("button")
-    expect(formSubmitButton).toHaveStyle(`width: ${250}px`)
-  })
-
-  it("passes useContainerWidth property without help correctly", () => {
-    render(<FormSubmitButton {...getProps({}, true, "")} />)
-
-    const formSubmitButton = screen.getByRole("button")
-    expect(formSubmitButton).toHaveStyle("width: 100%")
   })
 })

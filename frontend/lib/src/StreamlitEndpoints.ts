@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,52 @@
  */
 
 import { CancelToken } from "axios"
-import { IAppPage } from "./proto"
 
-export type JWTHeader = {
-  jwtHeaderName: string
-  jwtHeaderValue: string
+import { IAppPage } from "@streamlit/protobuf"
+
+export type FileUploadClientConfig = {
+  prefix: string
+  headers: Record<string, string>
 }
 
 /** Exposes non-websocket endpoints used by the frontend. */
 export interface StreamlitEndpoints {
+  /**
+   * Set the static config url for static connection media assets.
+   *
+   * @param url The URL to set.
+   */
+  setStaticConfigUrl(url: string): void
+
+  /**
+   * Send postMessage to host with client errors
+   * @param component component causing the error
+   * @param error error status code or message
+   * @param message additional error info
+   * @param source component src (url)
+   * @param customComponentName If custom component, the component's name causing the error.
+   */
+  sendClientErrorToHost(
+    component: string,
+    error: string | number,
+    message: string,
+    source: string,
+    customComponentName?: string
+  ): void
+
+  /**
+   * Checks if the component src has successful response.
+   * If not, sends CLIENT_ERROR message with error info.
+   * @param sourceUrl The source to check.
+   * @param componentName The component for which the source is being checked.
+   * @param customComponentName If custom component, the component's name for which the source is being checked.
+   */
+  checkSourceUrlResponse(
+    sourceUrl: string,
+    componentName: string,
+    customComponentName?: string
+  ): Promise<void>
+
   /**
    * Return a URL to fetch data for the given custom component.
    * @param componentName The registered name of the component.
@@ -53,11 +90,7 @@ export interface StreamlitEndpoints {
    * @param page the page's AppPage protobuf properties
    * @param pageIndex the page's zero-based index
    */
-  buildAppPageURL(
-    pageLinkBaseURL: string | undefined,
-    page: IAppPage,
-    pageIndex: number
-  ): string
+  buildAppPageURL(pageLinkBaseURL: string | undefined, page: IAppPage): string
 
   /**
    * Upload a file to the FileUploader endpoint.
@@ -101,8 +134,8 @@ export interface StreamlitEndpoints {
   fetchCachedForwardMsg(hash: string): Promise<Uint8Array>
 
   /**
-   * Set JWT Header.
-   * @param jwtHeader the object that contains jwtHeaderName and jwtHeaderValue
+   * setFileUploadClientConfig.
+   * @param config the object that contains prefix and headers object
    */
-  setJWTHeader?(jwtHeader: JWTHeader): void
+  setFileUploadClientConfig?(config: FileUploadClientConfig): void
 }

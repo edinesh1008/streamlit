@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 import React from "react"
 
-import { PageConfig, IGitInfo, AppConfig } from "@streamlit/lib"
+import { AppConfig } from "@streamlit/connection"
+import { IGitInfo, PageConfig } from "@streamlit/protobuf"
 
 export interface Props {
   /**
@@ -79,13 +80,6 @@ export interface Props {
   sidebarChevronDownshift: number
 
   /**
-   * Adjustment to positioning of the app's toasts
-   * based on information sent from the host.
-   * @see EventContainer
-   */
-  toastAdjustment: boolean
-
-  /**
    * The latest state of the git information related to the app.
    */
   gitInfo: IGitInfo | null
@@ -106,7 +100,6 @@ export const AppContext = React.createContext<Props>({
   showColoredLine: false,
   pageLinkBaseUrl: "",
   sidebarChevronDownshift: 0,
-  toastAdjustment: false,
   gitInfo: null,
   appConfig: {},
 })

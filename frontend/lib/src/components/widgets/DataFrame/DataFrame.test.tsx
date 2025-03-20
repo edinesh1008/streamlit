@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,25 @@
 
 import React from "react"
 
-import { TEN_BY_TEN } from "@streamlit/lib/src/mocks/arrow"
-import { render } from "@streamlit/lib/src/test_util"
-import { Quiver } from "@streamlit/lib/src/dataframes/Quiver"
-import { Arrow as ArrowProto } from "@streamlit/lib/src/proto"
 import { screen } from "@testing-library/react"
-import "@testing-library/jest-dom"
 import * as glideDataGridModule from "@glideapps/glide-data-grid"
 
-jest.mock("@glideapps/glide-data-grid", () => ({
-  ...jest.requireActual("@glideapps/glide-data-grid"),
-  DataEditor: jest.fn(props => <div {...props} />),
+import { Arrow as ArrowProto } from "@streamlit/protobuf"
+
+import { TEN_BY_TEN } from "~lib/mocks/arrow"
+import { render } from "~lib/test_util"
+import { Quiver } from "~lib/dataframes/Quiver"
+import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
+
+vi.mock("@glideapps/glide-data-grid", async () => ({
+  ...(await vi.importActual("@glideapps/glide-data-grid")),
+  DataEditor: vi.fn(props => <div {...props} />),
 }))
 
 // The native-file-system-adapter creates some issues in the test environment
 // so we mock it out. The errors might be related to the missing typescript
 // distribution. But the file picker most likely wouldn't work anyways in jest-dom.
-jest.mock("native-file-system-adapter", () => ({}))
+vi.mock("native-file-system-adapter", () => ({}))
 
 import DataFrame, { DataFrameProps } from "./DataFrame"
 
@@ -49,10 +51,9 @@ const getProps = (
     editingMode,
   }),
   data,
-  width: 700,
   disabled: false,
   widgetMgr: {
-    getStringValue: jest.fn(),
+    getStringValue: vi.fn(),
   } as any,
 })
 
@@ -62,20 +63,16 @@ describe("DataFrame widget", () => {
   const props = getProps(new Quiver({ data: TEN_BY_TEN }))
 
   beforeEach(() => {
-    // Mocking ResizeObserver to prevent:
-    // TypeError: window.ResizeObserver is not a constructor
-    // @ts-expect-error
-    delete window.ResizeObserver
-    window.ResizeObserver = jest.fn().mockImplementation(() => ({
-      observe: jest.fn(),
-      unobserve: jest.fn(),
-      disconnect: jest.fn(),
-    }))
+    vi.spyOn(UseResizeObserver, "useResizeObserver").mockReturnValue({
+      elementRef: { current: null },
+      forceRecalculate: vitest.fn(),
+      values: [250],
+    })
   })
 
   afterEach(() => {
     window.ResizeObserver = ResizeObserver
-    jest.restoreAllMocks()
+    vi.restoreAllMocks()
   })
 
   it("renders without crashing", () => {
@@ -91,24 +88,6 @@ describe("DataFrame widget", () => {
     expect(styledResizableContainer).toHaveClass("stDataFrame")
   })
 
-  it("grid container should use full width when useContainerWidth is used", () => {
-    render(<DataFrame {...getProps(new Quiver({ data: TEN_BY_TEN }), true)} />)
-    const dfStyle = getComputedStyle(
-      screen.getByTestId("stDataFrameResizable")
-    )
-    expect(dfStyle.width).toBe("700px")
-    expect(dfStyle.height).toBe("400px")
-  })
-
-  it("grid container should render with specific size", () => {
-    render(<DataFrame {...props} />)
-    const dfStyle = getComputedStyle(
-      screen.getByTestId("stDataFrameResizable")
-    )
-    expect(dfStyle.width).toBe("400px")
-    expect(dfStyle.height).toBe("400px")
-  })
-
   it("should have a toolbar", () => {
     render(<DataFrame {...props} />)
 
@@ -122,7 +101,7 @@ describe("DataFrame widget", () => {
 
   it("Touch detection correctly deactivates some features", () => {
     // Set window.matchMedia to simulate a touch device
-    window.matchMedia = jest.fn().mockImplementation(() => ({
+    window.matchMedia = vi.fn().mockImplementation(() => ({
       matches: true,
     }))
 

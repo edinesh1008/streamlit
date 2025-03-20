@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +14,55 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Create a tag for the PYPI nightly version
+"""Create a tag for the PYPI nightly version.
 
-Increment the version number, add a dev suffix and add todays date
+Increment the version number, add a dev suffix and add todays date.
 """
+
+from __future__ import annotations
+
 from datetime import datetime
 
 import packaging.version
 import pytz
+from packaging.version import Version
 
-import streamlit.version
+PYPI_STREAMLIT_URL = "https://pypi.org/pypi/streamlit/json"
+
+
+def get_latest_streamlit_version() -> Version:
+    """Request the latest streamlit version string from PyPI.
+
+    NB: this involves a network call, so it could raise an error
+    or take a long time.
+
+    Parameters
+    ----------
+    timeout : float or None
+        The request timeout.
+
+    Returns
+    -------
+    str
+        The version string for the latest version of streamlit
+        on PyPI.
+
+    """
+    import requests
+
+    rsp = requests.get(PYPI_STREAMLIT_URL)
+    try:
+        version_str = rsp.json()["info"]["version"]
+    except Exception as e:
+        raise RuntimeError("Got unexpected response from PyPI", e)
+    return Version(version_str)
 
 
 def create_tag():
     """Create tag with updated version, a suffix and date."""
 
     # Get latest version
-    current_version = streamlit.version._get_latest_streamlit_version()
+    current_version = get_latest_streamlit_version()
 
     # Update micro
     version_with_inc_micro = (

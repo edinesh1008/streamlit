@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """Unit tests for MemoryMediaFileStorage"""
+
+from __future__ import annotations
 
 import unittest
 from unittest import mock
@@ -166,14 +168,14 @@ class MemoryMediaFileStorageTest(unittest.TestCase):
 
         # delete file 1. It should not exist, but file2 should.
         self.storage.delete_file(file_id1)
-        with self.assertRaises(Exception):
+        with self.assertRaises(MediaFileStorageError):
             self.storage.get_file(file_id1)
 
         self.assertIsNotNone(self.storage.get_file(file_id2))
 
         # delete file 2
         self.storage.delete_file(file_id2)
-        with self.assertRaises(Exception):
+        with self.assertRaises(MediaFileStorageError):
             self.storage.get_file(file_id2)
 
     def test_delete_invalid_file_is_a_noop(self):

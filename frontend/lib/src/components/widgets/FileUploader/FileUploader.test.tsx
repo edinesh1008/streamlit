@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-import "@testing-library/jest-dom"
-import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import React from "react"
-import { render } from "@streamlit/lib/src/test_util"
-import userEvent from "@testing-library/user-event"
+
+import { fireEvent, screen, waitFor, within } from "@testing-library/react"
+import { userEvent } from "@testing-library/user-event"
 
 import {
   FileUploader as FileUploaderProto,
   FileUploaderState as FileUploaderStateProto,
   FileURLs as FileURLsProto,
+  IFileURLs,
   LabelVisibilityMessage as LabelVisibilityMessageProto,
   UploadedFileInfo as UploadedFileInfoProto,
-  IFileURLs,
-} from "@streamlit/lib/src/proto"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
+} from "@streamlit/protobuf"
+
+import { render } from "~lib/test_util"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
+import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
+
 import FileUploader, { Props } from "./FileUploader"
 
 const createFile = (filename = "filename.txt"): File => {
@@ -64,18 +67,18 @@ const getProps = (
       maxUploadSizeMb: 50,
       ...elementProps,
     }),
-    width: 0,
+    width: 250,
     disabled: false,
     widgetMgr: new WidgetStateManager({
-      sendRerunBackMsg: jest.fn(),
-      formsDataChanged: jest.fn(),
+      sendRerunBackMsg: vi.fn(),
+      formsDataChanged: vi.fn(),
     }),
     // @ts-expect-error
     uploadClient: {
-      uploadFile: jest.fn().mockImplementation(() => {
+      uploadFile: vi.fn().mockImplementation(() => {
         return Promise.resolve()
       }),
-      fetchFileURLs: jest.fn().mockImplementation((acceptedFiles: File[]) => {
+      fetchFileURLs: vi.fn().mockImplementation((acceptedFiles: File[]) => {
         return Promise.resolve(
           acceptedFiles.map(file => {
             return new FileURLsProto({
@@ -86,13 +89,21 @@ const getProps = (
           })
         )
       }),
-      deleteFile: jest.fn(),
+      deleteFile: vi.fn(),
     },
     ...widgetProps,
   }
 }
 
 describe("FileUploader widget tests", () => {
+  beforeEach(() => {
+    vi.spyOn(UseResizeObserver, "useResizeObserver").mockReturnValue({
+      elementRef: { current: null },
+      forceRecalculate: vitest.fn(),
+      values: [250],
+    })
+  })
+
   it("renders without crashing", () => {
     const props = getProps()
     render(<FileUploader {...props} />)
@@ -113,7 +124,8 @@ describe("FileUploader widget tests", () => {
           deleteUrl: "filename.txt",
         }),
       ]),
-      { fromUi: false }
+      { fromUi: false },
+      undefined
     )
 
     render(<FileUploader {...props} />)
@@ -160,7 +172,7 @@ describe("FileUploader widget tests", () => {
   it("uploads a single file upload", async () => {
     const user = userEvent.setup()
     const props = getProps()
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZoneInput = screen.getByTestId(
@@ -194,7 +206,7 @@ describe("FileUploader widget tests", () => {
   it("can pass fragmentId to setFileUploaderStateValue", async () => {
     const user = userEvent.setup()
     const props = getProps(undefined, { fragmentId: "myFragmentId" })
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZoneInput = screen.getByTestId(
@@ -222,7 +234,7 @@ describe("FileUploader widget tests", () => {
 
   it("uploads a single file even if too many files are selected", async () => {
     const props = getProps({ multipleFiles: false })
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZone = screen.getByTestId(
@@ -285,7 +297,7 @@ describe("FileUploader widget tests", () => {
   it("replaces file on single file uploader", async () => {
     const user = userEvent.setup()
     const props = getProps()
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZoneInput = screen.getByTestId(
@@ -301,6 +313,9 @@ describe("FileUploader widget tests", () => {
     expect(fileDropZoneInput.files?.[0]).toEqual(firstFile)
 
     expect(props.uploadClient.uploadFile).toHaveBeenCalledTimes(1)
+    // setFileUploaderStateValue should have been called once on init and once
+    // when the file was uploaded.
+    expect(props.widgetMgr.setFileUploaderStateValue).toHaveBeenCalledTimes(2)
 
     const secondFile = new File(["Another text in a file"], "filename2.txt", {
       type: "text/plain",
@@ -315,11 +330,14 @@ describe("FileUploader widget tests", () => {
     expect(currentFiles[0].textContent).toContain("filename2.txt")
     expect(fileDropZoneInput.files?.[0]).toEqual(secondFile)
     expect(props.uploadClient.uploadFile).toHaveBeenCalledTimes(2)
+    // setFileUploaderStateValue should have been called once on init and
+    // once each for the first and second file uploads.
+    expect(props.widgetMgr.setFileUploaderStateValue).toHaveBeenCalledTimes(3)
   })
 
   it("uploads multiple files, even if some have errors", async () => {
     const props = getProps({ multipleFiles: true, type: [".txt"] })
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZone = screen.getByTestId(
@@ -389,7 +407,7 @@ describe("FileUploader widget tests", () => {
   it("can delete completed upload", async () => {
     const user = userEvent.setup()
     const props = getProps({ multipleFiles: true })
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZoneInput = screen.getByTestId(
@@ -462,11 +480,11 @@ describe("FileUploader widget tests", () => {
     const props = getProps()
 
     // Mock the uploadFile method to return a promise that never resolves to test updating state
-    props.uploadClient.uploadFile = jest.fn().mockImplementation(() => {
+    props.uploadClient.uploadFile = vi.fn().mockImplementation(() => {
       return new Promise(() => {})
     })
 
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZoneInput = screen.getByTestId(
@@ -549,7 +567,7 @@ describe("FileUploader widget tests", () => {
   it("handles upload error", async () => {
     const user = userEvent.setup()
     const props = getProps()
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
     render(<FileUploader {...props} />)
 
     const fileDropZoneInput = screen.getByTestId(
@@ -557,7 +575,7 @@ describe("FileUploader widget tests", () => {
     ) as HTMLInputElement
 
     // Upload a file that will be rejected by the server
-    props.uploadClient.uploadFile = jest
+    props.uploadClient.uploadFile = vi
       .fn()
       .mockRejectedValue(new Error("random upload error!"))
 
@@ -628,10 +646,10 @@ describe("FileUploader widget tests", () => {
 
     // Create a widget in a clearOnSubmit form
     const props = getProps({ formId: "form" })
-    jest.spyOn(props.widgetMgr, "setFileUploaderStateValue")
-    props.widgetMgr.setFormClearOnSubmit("form", true)
+    vi.spyOn(props.widgetMgr, "setFileUploaderStateValue")
+    props.widgetMgr.setFormSubmitBehaviors("form", true)
 
-    jest.spyOn(props.widgetMgr, "setIntValue")
+    vi.spyOn(props.widgetMgr, "setIntValue")
 
     const { rerender } = render(<FileUploader {...props} />)
 
@@ -661,7 +679,7 @@ describe("FileUploader widget tests", () => {
     )
 
     // "Submit" the form
-    props.widgetMgr.submitForm("form")
+    props.widgetMgr.submitForm("form", undefined)
     rerender(<FileUploader {...props} />)
 
     // Our widget should be reset, and the widgetMgr should be updated

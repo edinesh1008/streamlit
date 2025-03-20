@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
+
 import { screen } from "@testing-library/react"
-import { render } from "@streamlit/lib/src/test_util"
 
 import {
-  Metric as MetricProto,
   LabelVisibilityMessage as LabelVisibilityMessageProto,
-} from "@streamlit/lib/src/proto"
+  Metric as MetricProto,
+} from "@streamlit/protobuf"
+
+import { render } from "~lib/test_util"
+import { mockTheme } from "~lib/mocks/mockTheme"
+
 import Metric, { MetricProps } from "./Metric"
 
 const getProps = (elementProps: Partial<MetricProto> = {}): MetricProps => ({
@@ -38,7 +41,9 @@ describe("Metric element", () => {
   it("renders metric as expected", () => {
     const props = getProps()
     render(<Metric {...props} />)
-    expect(screen.getByTestId("stMetric")).toBeInTheDocument()
+    const metricElement = screen.getByTestId("stMetric")
+    expect(metricElement).toBeInTheDocument()
+    expect(metricElement).toHaveClass("stMetric")
   })
 
   it("renders metric label as expected", () => {
@@ -137,5 +142,21 @@ describe("Metric element", () => {
     render(<Metric {...props} />)
     const tooltip = screen.getByTestId("stTooltipIcon")
     expect(tooltip).toBeInTheDocument()
+  })
+
+  it("renders without border by default", () => {
+    const props = getProps()
+    render(<Metric {...props} />)
+    expect(screen.getByTestId("stMetric")).toHaveStyle("border: none;")
+  })
+
+  it("renders with border if passed", () => {
+    const props = getProps({ showBorder: true })
+    render(<Metric {...props} />)
+
+    const expectedBorder = `${mockTheme.emotion.sizes.borderWidth} solid ${mockTheme.emotion.colors.borderColor}`
+    expect(screen.getByTestId("stMetric")).toHaveStyle(
+      `border: ${expectedBorder}`
+    )
   })
 })

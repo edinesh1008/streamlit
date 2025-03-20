@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,25 @@
  */
 
 import styled from "@emotion/styled"
-import { StyledEmojiIcon } from "@streamlit/lib/src/components/shared/Icon/styled-components"
+
+import {
+  StyledEmojiIcon,
+  StyledIcon,
+} from "~lib/components/shared/Icon/styled-components"
+import { StyledCodeBlock } from "~lib/components/elements/CodeBlock/styled-components"
+import { StyledMaterialIcon } from "~lib/components/shared/Icon/Material/styled-components"
 
 export const StyledAlertContent = styled.div(({ theme }) => ({
   display: "flex",
   gap: theme.spacing.sm,
   width: "100%",
 
-  [StyledEmojiIcon as any]: {
+  [`${StyledEmojiIcon}, ${StyledIcon}, ${StyledMaterialIcon}`]: {
     position: "relative",
     top: "2px",
   },
 
-  ".stCodeBlock code": {
-    paddingRight: "1rem",
+  [`${StyledCodeBlock} code`]: {
+    paddingRight: theme.spacing.lg,
   },
 }))

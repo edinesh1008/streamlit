@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -27,7 +29,6 @@ import streamlit.components.v1 as components
 from streamlit.connections import SnowparkConnection, SQLConnection
 from streamlit.runtime import metrics_util
 from streamlit.runtime.caching import cache_data_api, cache_resource_api
-from streamlit.runtime.legacy_caching import caching
 from streamlit.runtime.scriptrunner import get_script_run_ctx, magic_funcs
 from streamlit.web.server import websocket_headers
 from tests.delta_generator_test_case import DeltaGeneratorTestCase
@@ -50,15 +51,17 @@ class MetricsUtilTest(unittest.TestCase):
         """Test getting the machine id from /etc"""
         file_data = "etc"
 
-        with patch(
-            "streamlit.runtime.metrics_util.uuid.getnode", return_value=MAC
-        ), patch(
-            "streamlit.runtime.metrics_util.open",
-            mock_open(read_data=file_data),
-            create=True,
-        ), patch(
-            "streamlit.runtime.metrics_util.os.path.isfile",
-            side_effect=lambda path: path == "/etc/machine-id",
+        with (
+            patch("streamlit.runtime.metrics_util.uuid.getnode", return_value=MAC),
+            patch(
+                "streamlit.runtime.metrics_util.open",
+                mock_open(read_data=file_data),
+                create=True,
+            ),
+            patch(
+                "streamlit.runtime.metrics_util.os.path.isfile",
+                side_effect=lambda path: path == "/etc/machine-id",
+            ),
         ):
             machine_id = metrics_util._get_machine_id_v3()
         assert machine_id == file_data
@@ -67,15 +70,17 @@ class MetricsUtilTest(unittest.TestCase):
         """Test getting the machine id from /var/lib/dbus"""
         file_data = "dbus"
 
-        with patch(
-            "streamlit.runtime.metrics_util.uuid.getnode", return_value=MAC
-        ), patch(
-            "streamlit.runtime.metrics_util.open",
-            mock_open(read_data=file_data),
-            create=True,
-        ), patch(
-            "streamlit.runtime.metrics_util.os.path.isfile",
-            side_effect=lambda path: path == "/var/lib/dbus/machine-id",
+        with (
+            patch("streamlit.runtime.metrics_util.uuid.getnode", return_value=MAC),
+            patch(
+                "streamlit.runtime.metrics_util.open",
+                mock_open(read_data=file_data),
+                create=True,
+            ),
+            patch(
+                "streamlit.runtime.metrics_util.os.path.isfile",
+                side_effect=lambda path: path == "/var/lib/dbus/machine-id",
+            ),
         ):
             machine_id = metrics_util._get_machine_id_v3()
         assert machine_id == file_data
@@ -83,9 +88,10 @@ class MetricsUtilTest(unittest.TestCase):
     def test_machine_id_v3_from_node(self):
         """Test getting the machine id as the mac address"""
 
-        with patch(
-            "streamlit.runtime.metrics_util.uuid.getnode", return_value=MAC
-        ), patch("streamlit.runtime.metrics_util.os.path.isfile", return_value=False):
+        with (
+            patch("streamlit.runtime.metrics_util.uuid.getnode", return_value=MAC),
+            patch("streamlit.runtime.metrics_util.os.path.isfile", return_value=False),
+        ):
             machine_id = metrics_util._get_machine_id_v3()
         assert machine_id == MAC
 
@@ -111,7 +117,7 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
             (datetime.date.today(), "datetime.date"),
             (datetime.datetime.today().time(), "datetime.time"),
             (pd.DataFrame(), "DataFrame"),
-            (pd.Series(), "PandasSeries"),
+            (pd.Series(dtype="float64"), "PandasSeries"),
             # Also support classes as input
             (datetime.date, "datetime.date"),
             (pd.DataFrame, "DataFrame"),
@@ -176,7 +182,7 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
 
     def test_create_page_profile_message_is_fragment_run(self):
         ctx = get_script_run_ctx()
-        ctx.current_fragment_id = "some_fragment_id"
+        ctx.fragment_ids_this_run = ["some_fragment_id"]
 
         forward_msg = metrics_util.create_page_profile_message(
             commands=[
@@ -198,6 +204,8 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
         @metrics_util.gather_metrics("test_function")
         def test_function(param1: int, param2: str, param3: float = 0.1) -> str:
             st.markdown("This command should not be tracked")
+            st.text_input("This command should also not be tracked")
+            st.text("This command should also not be tracked")
             return "foo"
 
         test_function(param1=10, param2="foobar")
@@ -233,7 +241,6 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
                 cache_resource_api.ResourceCache.write_result,
                 "_cache_resource_object",
             ),
-            (caching._write_to_cache, "_cache_object"),
             (websocket_headers._get_websocket_headers, "_get_websocket_headers"),
             (components.html, "_html"),
             (components.iframe, "_iframe"),
@@ -274,9 +281,10 @@ class PageTelemetryTest(DeltaGeneratorTestCase):
             "connection",
             "experimental_connection",
             "spinner",
-            "empty",
             "progress",
-            "get_option",
+            "context",
+            "login",
+            "logout",
         }
 
         # Create a list of all public API names in the `st` module (minus

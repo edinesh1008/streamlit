@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,43 +14,40 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, useEffect, useRef, useState } from "react"
+import React, { memo, ReactElement, useEffect, useRef, useState } from "react"
+
+import { ExpandLess, ExpandMore } from "@emotion-icons/material-outlined"
+
+import { Block as BlockProto } from "@streamlit/protobuf"
+
 import {
-  ExpandMore,
-  ExpandLess,
-  Check,
-  ErrorOutline,
-} from "@emotion-icons/material-outlined"
-import { Block as BlockProto } from "@streamlit/lib/src/proto"
-import {
-  StyledSpinnerIcon,
+  DynamicIcon,
   StyledIcon,
-} from "@streamlit/lib/src/components/shared/Icon"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
-import { notNullOrUndefined } from "@streamlit/lib/src/util/utils"
-import { LibContext } from "@streamlit/lib/src/components/core/LibContext"
-import { IconSize, isPresetTheme } from "@streamlit/lib/src/theme"
+  StyledSpinnerIcon,
+} from "~lib/components/shared/Icon"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
+import { notNullOrUndefined } from "~lib/util/utils"
+import { LibContext } from "~lib/components/core/LibContext"
+import { IconSize, isPresetTheme } from "~lib/theme"
 
 import {
   BORDER_SIZE,
+  StyledDetails,
+  StyledDetailsPanel,
   StyledExpandableContainer,
   StyledSummary,
   StyledSummaryHeading,
-  StyledDetailsPanel,
-  StyledEmptyDetailsPanel,
-  StyledDetails,
 } from "./styled-components"
 
 export interface ExpanderIconProps {
-  icon: string
+  icon?: string
 }
 
 /**
- * Renders an icon for the expander.
+ * Renders an icon for the expander and optionally a user-defined icon.
  *
  * If the icon is "spinner", it will render a spinner icon.
- * If the icon is "check", it will render a check icon.
- * If the icon is "error", it will render an error icon.
+ * If the icon is a valid, user-defined icon, it will render the user-defined icon.
  * Otherwise, it will render nothing.
  *
  * @param {string} icon - The icon to render.
@@ -62,9 +59,15 @@ export const ExpanderIcon = (props: ExpanderIconProps): ReactElement => {
 
   const iconProps = {
     size: "lg" as IconSize,
-    margin: "",
-    padding: "",
+    margin: "0",
+    padding: "0",
   }
+
+  const statusIconTestIds: Record<string, string> = {
+    ":material/check:": "stExpanderIconCheck",
+    ":material/error:": "stExpanderIconError",
+  }
+
   if (icon === "spinner") {
     const usingCustomTheme = !isPresetTheme(activeTheme)
     return (
@@ -74,29 +77,18 @@ export const ExpanderIcon = (props: ExpanderIconProps): ReactElement => {
         {...iconProps}
       />
     )
-  } else if (icon === "check") {
-    return (
-      <StyledIcon
-        as={Check}
-        color={"inherit"}
-        aria-hidden="true"
-        data-testid="stExpanderIconCheck"
-        {...iconProps}
-      />
-    )
-  } else if (icon === "error") {
-    return (
-      <StyledIcon
-        as={ErrorOutline}
-        color={"inherit"}
-        aria-hidden="true"
-        data-testid="stExpanderIconError"
-        {...iconProps}
-      />
-    )
   }
 
-  return <></>
+  return icon ? (
+    <DynamicIcon
+      color="inherit"
+      iconValue={icon}
+      testid={statusIconTestIds[icon] || "stExpanderIcon"}
+      {...iconProps}
+    />
+  ) : (
+    <></>
+  )
 }
 
 export interface ExpanderProps {
@@ -177,12 +169,15 @@ const Expander: React.FC<React.PropsWithChildren<ExpanderProps>> = ({
       }
     )
 
-    animation.onfinish = () => onAnimationFinish(isOpen)
+    animation.addEventListener("finish", () => onAnimationFinish(isOpen))
     animationRef.current = animation
   }
 
   const toggle = (e: React.MouseEvent<HTMLDetailsElement>): void => {
     e.preventDefault()
+    if (empty) {
+      return
+    }
 
     setExpanded(!expanded)
     const detailsEl = detailsRef.current
@@ -236,38 +231,42 @@ const Expander: React.FC<React.PropsWithChildren<ExpanderProps>> = ({
   }
 
   return (
-    <StyledExpandableContainer data-testid="stExpander">
+    <StyledExpandableContainer className="stExpander" data-testid="stExpander">
       <StyledDetails isStale={isStale} ref={detailsRef}>
-        <StyledSummary onClick={toggle} ref={summaryRef}>
+        <StyledSummary
+          onClick={toggle}
+          empty={empty}
+          ref={summaryRef}
+          isStale={isStale}
+        >
           <StyledSummaryHeading>
             {element.icon && <ExpanderIcon icon={element.icon} />}
             <StreamlitMarkdown source={label} allowHTML={false} isLabel />
           </StyledSummaryHeading>
-          <StyledIcon
-            as={expanded ? ExpandLess : ExpandMore}
-            color={"inherit"}
-            aria-hidden="true"
-            data-testid="stExpanderToggleIcon"
-            size="lg"
-            margin=""
-            padding=""
-          />
+          {!empty ? (
+            <StyledIcon
+              as={expanded ? ExpandLess : ExpandMore}
+              color={"inherit"}
+              aria-hidden="true"
+              data-testid="stExpanderToggleIcon"
+              size="lg"
+              margin=""
+              padding=""
+            />
+          ) : (
+            <></>
+          )}
         </StyledSummary>
         {!empty ? (
           <StyledDetailsPanel data-testid="stExpanderDetails" ref={contentRef}>
             {children}
           </StyledDetailsPanel>
         ) : (
-          <StyledEmptyDetailsPanel
-            data-testid="stExpanderDetails"
-            ref={contentRef}
-          >
-            empty
-          </StyledEmptyDetailsPanel>
+          <></>
         )}
       </StyledDetails>
     </StyledExpandableContainer>
   )
 }
 
-export default Expander
+export default memo(Expander)

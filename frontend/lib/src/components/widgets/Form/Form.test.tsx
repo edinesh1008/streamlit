@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,26 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
+
 import { screen } from "@testing-library/react"
-import { ScriptRunState } from "@streamlit/lib/src/ScriptRunState"
-import { render } from "@streamlit/lib/src/test_util"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
-import { Form, Props } from "./Form"
+
+import { ScriptRunState } from "~lib/ScriptRunState"
+import { render } from "~lib/test_util"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
+
+import Form, { Props } from "./Form"
 
 describe("Form", () => {
   function getProps(props: Partial<Props> = {}): Props {
     return {
       formId: "mockFormId",
-      width: 100,
       hasSubmitButton: false,
       scriptRunState: ScriptRunState.RUNNING,
       clearOnSubmit: false,
+      enterToSubmit: true,
       widgetMgr: new WidgetStateManager({
-        sendRerunBackMsg: jest.fn(),
-        formsDataChanged: jest.fn(),
+        sendRerunBackMsg: vi.fn(),
+        formsDataChanged: vi.fn(),
       }),
       border: false,
       ...props,
@@ -40,7 +42,9 @@ describe("Form", () => {
   }
   it("renders without crashing", () => {
     render(<Form {...getProps()} />)
-    expect(screen.getByTestId("stForm")).toBeInTheDocument()
+    const formElement = screen.getByTestId("stForm")
+    expect(formElement).toBeInTheDocument()
+    expect(formElement).toHaveClass("stForm")
   })
 
   it("shows error if !hasSubmitButton && scriptRunState==NOT_RUNNING", () => {

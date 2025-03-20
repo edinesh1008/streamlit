@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,50 +14,49 @@
  * limitations under the License.
  */
 
+import isPropValid from "@emotion/is-prop-valid"
 import styled from "@emotion/styled"
 import { Spinner } from "baseui/spinner"
-import isPropValid from "@emotion/is-prop-valid"
-interface ThemedStyledSpinnerProps {
-  usingCustomTheme: boolean
-}
 
 export const ThemedStyledSpinner = styled(Spinner, {
   shouldForwardProp: isPropValid,
-})<ThemedStyledSpinnerProps>(({ theme, usingCustomTheme }) => {
+})(({ theme }) => {
   return {
     fontSize: theme.fontSizes.sm,
-    width: "1.375rem",
-    height: "1.375rem",
-    borderWidth: "3px",
-    radius: "4px",
+    width: theme.sizes.spinnerSize,
+    height: theme.sizes.spinnerSize,
+    borderWidth: theme.sizes.spinnerThickness,
     justifyContents: "center",
     padding: theme.spacing.none,
     margin: theme.spacing.none,
-    borderColor: theme.colors.fadedText10,
-    borderTopColor: usingCustomTheme
-      ? theme.colors.primary
-      : theme.colors.blue70,
+    borderColor: theme.colors.borderColor,
+    borderTopColor: theme.colors.secondary,
     flexGrow: 0,
     flexShrink: 0,
   }
 })
 
 interface StyledSpinnerProps {
-  width: number
   cache: boolean
 }
 
 export const StyledSpinner = styled.div<StyledSpinnerProps>(
-  ({ theme, width, cache }) => ({
-    width: width,
+  ({ theme, cache }) => ({
     ...(cache
       ? {
-          paddingBottom: "1rem",
+          paddingBottom: theme.spacing.lg,
           background: `linear-gradient(to bottom, ${theme.colors.bgColor} 0%, ${theme.colors.bgColor} 80%, transparent 100%)`,
         }
       : null),
   })
 )
+
+// TODO: Maybe move this to `theme/consts.ts`, see
+// https://github.com/streamlit/streamlit/pull/10085/files#diff-a5cce939bf6c73209a258132c71ccb368a3a1fd57b68b373d242736adb920093
+export const StyledSpinnerTimer = styled.div(({ theme }) => ({
+  opacity: 0.6,
+  fontSize: theme.fontSizes.sm,
+}))
 
 export const StyledSpinnerContainer = styled.div(({ theme }) => ({
   display: "flex",

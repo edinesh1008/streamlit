@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,22 @@ export const fonts: { [key: string]: string } = {
   sansSerif: '"Source Sans Pro", sans-serif',
   monospace: '"Source Code Pro", monospace',
   serif: '"Source Serif Pro", serif',
+  materialIcons: "Material Symbols Rounded",
 }
 
 export const genericFonts = {
   bodyFont: fonts.sansSerif,
   codeFont: fonts.monospace,
   headingFont: fonts.sansSerif,
+  iconFont: fonts.materialIcons,
 }
 
-// Same as in variables.scss
-const fontSizeTwoSmall = 12
-const fontSizeSmall = 14
-const fontSizeMedium = 16
-
 export const fontSizes = {
-  twoSm: `${fontSizeTwoSmall}px`, // Use px to force sm to be a round number.
-  sm: `${fontSizeSmall}px`, // Use px to force sm to be a round number.
+  // baseFontSize equals to md, but in pixels (this value can also be configured by the user)
+  // The baseFontSize should only be used in global styles.
+  baseFontSize: 16,
+  twoSm: "0.75rem",
+  sm: "0.875rem",
   md: "1rem",
   mdLg: "1.125rem",
   lg: "1.25rem",
@@ -41,10 +41,6 @@ export const fontSizes = {
   twoXL: "1.75rem",
   threeXL: "2.25rem",
   fourXL: "2.75rem",
-
-  twoSmPx: fontSizeTwoSmall, // twoSm but as a number, in pixels
-  smPx: fontSizeSmall, // sm but as a number, in pixels
-  mdPx: fontSizeMedium, // med but as a number, in pixels
 }
 
 export const fontWeights = {
@@ -54,19 +50,11 @@ export const fontWeights = {
 }
 
 export const lineHeights = {
-  normal: "normal",
   none: 1,
+  headings: 1.2,
   tight: 1.25,
-  table: 1.5,
+  inputWidget: 1.4,
+  small: 1.5,
   base: 1.6,
   menuItem: 2,
-}
-
-export const letterSpacings = {
-  tighter: "-0.05em",
-  tight: "-0.025em",
-  normal: "0",
-  wide: "0.025em",
-  wider: "0.05em",
-  widest: "0.1em",
 }

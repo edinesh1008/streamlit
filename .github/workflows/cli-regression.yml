@@ -13,12 +13,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  cli_test:
+  cli-regression:
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        shell: bash --login -eo pipefail {0}
+        shell: bash
 
     steps:
       - name: Checkout Streamlit code
@@ -39,7 +39,7 @@ jobs:
         timeout-minutes: 120
         run: |
           sudo apt install rsync
-          BUILD_AS_FAST_AS_POSSIBLE=1 make package
+          make package
       - name: Run CLI regression tests
         run: |
           export SKIP_VERSION_CHECK=true; make cli-regression-tests

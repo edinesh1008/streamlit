@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,18 +91,41 @@ else:
 if runtime.exists():
     st.write(repr(st.session_state.collapsed_label) == repr(collapsed_label))
 
-if runtime.exists():
-    if not st.session_state.get("counter"):
-        st.session_state["counter"] = 0
+if not st.session_state.get("counter"):
+    st.session_state["counter"] = 0
 
-    def file_uploader_on_change():
-        st.session_state.counter += 1
 
+def file_uploader_on_change():
+    st.session_state.counter += 1
+
+
+st.file_uploader(
+    "Drop a file:",
+    type=["txt"],
+    key="on_change_file_uploader_key",
+    on_change=file_uploader_on_change,
+)
+
+st.text(st.session_state.counter)
+
+
+@st.experimental_fragment()
+def test_file_fragment():
+    file_uploader_in_fragment = st.file_uploader(label="file uploader")
+    st.write("File uploader in Fragment:", bool(file_uploader_in_fragment))
+
+
+test_file_fragment()
+
+st.file_uploader(":material/check: :rainbow[Fancy] _**markdown** `label` _support_")
+
+col1, col2 = st.columns([0.35, 0.65])
+with col1:
     st.file_uploader(
-        "Drop a file:",
-        type=["txt"],
-        key="on_change_file_uploader_key",
-        on_change=file_uploader_on_change,
+        "Uses compact file uploader", type=["txt", "pdf"], accept_multiple_files=True
     )
 
-    st.text(st.session_state.counter)
+if "runs" not in st.session_state:
+    st.session_state.runs = 0
+st.session_state.runs += 1
+st.write("Runs:", st.session_state.runs)

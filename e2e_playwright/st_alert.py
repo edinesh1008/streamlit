@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -76,3 +76,26 @@ st.write("Hello world!")
 
 st.error(text, icon="🚨")
 st.success(text)
+
+st.error("This is an error with non emoji icon", icon=":material/running_with_errors:")
+
+st.warning("This is a warning with non emoji icon", icon=":material/warning:")
+st.info("This is an info message with non emoji icon", icon=":material/info:")
+st.success(
+    "This is a success message with non emoji icon",
+    icon=":material/celebration:",
+)
+
+st.error("""
+## Big error
+
+This is a big error message.
+
+""")
+
+### LATEST MATERIAL ICON TEST START ###
+st.success(
+    "Success message to test material icon from latest material symbols font",
+    icon=":material/earbud_right:",
+)
+### LATEST MATERIAL ICON TEST END ###

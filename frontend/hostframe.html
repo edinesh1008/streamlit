@@ -1,5 +1,5 @@
 <!--
- Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -41,6 +41,10 @@ Usage:
 <script>
   window.addEventListener("message", event => {
     console.log("Received message event:", event)
+
+    if (event.data.type === "REDIRECT_TO_URL") {
+      window.location.href = event.data.url
+    }
   })
 
   function sendMessage(data) {
@@ -106,14 +110,27 @@ Usage:
   }
 
   function setAuthToken() {
-    // We handle auth token and jwt header name/value in child iframe,
+    // We handle auth token in child iframe,
     // only when `useExternalAuthToken` is set to True in
     // "_stcore/host-config" endpoint. Otherwise, we ignore this message.
     sendMessage({
       type: "SET_AUTH_TOKEN",
       authToken: "AUTH_TOKEN",
-      jwtHeaderName: "X-JWT-HEADER-NAME",
-      jwtHeaderValue: "X-JWT-HEADER-VALUE",
+    })
+  }
+
+  function setFileUploadClientConfig() {
+    sendMessage({
+      type: "SET_FILE_UPLOAD_CLIENT_CONFIG",
+      prefix:
+        "https://some-prefix" +
+        Math.floor(Math.random() * 100).toString() +
+        ".com/somethingelse/",
+      headers: {
+        header1: "header1value",
+        header2: "header2value",
+        header3: "header3value",
+      },
     })
   }
 
@@ -149,13 +166,17 @@ Usage:
         backgroundColor: "#FFFFFF",
         secondaryBackgroundColor: "#F5F5F5",
         textColor: "#1A1D21",
+        // Option is deprecated, but we still test to ensure backwards compatibility:
         widgetBackgroundColor: "#FFFFFF",
+        // Option is deprecated, but we still test to ensure backwards compatibility:
         widgetBorderColor: "#D3DAE8",
+        // Option is deprecated, but we still test to ensure backwards compatibility:
         skeletonBackgroundColor: "#CCDDEE",
         font: 0,
         base: 0,
         bodyFont: '"Inter", "Source Sans Pro", sans-serif',
         codeFont: '"Apercu Mono", "Source Code Pro", monospace',
+        baseFontSize: 14,
         fontFaces: [
           {
             family: "Inter",
@@ -188,16 +209,24 @@ Usage:
             weight: 700,
           },
         ],
-        radii: {
-          checkboxRadius: 3,
-          baseWidgetRadius: 6,
-        },
         fontSizes: {
           tinyFontSize: 10,
           smallFontSize: 12,
           baseFontSize: 14,
         },
       },
+    })
+  }
+
+  function restartWebsocketConnection() {
+    sendMessage({
+      type: "RESTART_WEBSOCKET_CONNECTION",
+    })
+  }
+
+  function terminateWebsocketConnection() {
+    sendMessage({
+      type: "TERMINATE_WEBSOCKET_CONNECTION",
     })
   }
 </script>
@@ -253,6 +282,9 @@ Usage:
   <button onclick="setHideSidebarNav()">Hide Sidebar Nav</button>
   <button onclick="setSidebarDownshift()">Sidebar Chevron Downshift</button>
   <button onclick="setAuthToken()">Set Auth Token</button>
+  <button onclick="setFileUploadClientConfig()">Set file upload config</button>
+  <button onclick="restartWebsocketConnection()">Restart Websocket</button>
+  <button onclick="terminateWebsocketConnection()">Terminate Websocket</button>
 </div>
 
 <iframe id="guest" src="http://localhost:3000" />

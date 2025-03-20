@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,44 +15,45 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
+
 import {
-  screen,
   fireEvent,
-  within,
   RenderResult,
+  screen,
+  within,
 } from "@testing-library/react"
 
-import {
-  render,
-  mockEndpoints,
-  useIsOverflowing,
-  emotionLightTheme,
-  PageConfig,
-} from "@streamlit/lib"
+import { mockEndpoints, render } from "@streamlit/lib"
+import { Logo, PageConfig } from "@streamlit/protobuf"
+
 import Sidebar, { SidebarProps } from "./Sidebar"
 
-jest.mock("@streamlit/lib/src/util/Hooks", () => ({
+vi.mock("~lib/util/Hooks", async () => ({
   __esModule: true,
-  ...jest.requireActual("@streamlit/lib/src/util/Hooks"),
-  useIsOverflowing: jest.fn(),
+  ...(await vi.importActual("~lib/util/Hooks")),
+  useIsOverflowing: vi.fn(),
 }))
 
-const mockUseIsOverflowing = useIsOverflowing as jest.MockedFunction<
-  typeof useIsOverflowing
->
+const buildMediaURL = vi.fn((url: string) => url)
+const sendClientErrorToHost = vi.fn()
+const mockEndpointProp = mockEndpoints({
+  buildMediaURL,
+  sendClientErrorToHost,
+})
 
 function renderSidebar(props: Partial<SidebarProps> = {}): RenderResult {
   return render(
     <Sidebar
-      endpoints={mockEndpoints()}
+      endpoints={mockEndpointProp}
       chevronDownshift={0}
-      theme={emotionLightTheme}
+      appLogo={null}
       appPages={[]}
-      onPageChange={jest.fn()}
+      navSections={[]}
+      onPageChange={vi.fn()}
       currentPageScriptHash={""}
       hasElements
       hideSidebarNav={false}
+      expandSidebarNav={false}
       {...props}
     />
   )
@@ -97,8 +98,16 @@ describe("Sidebar Component", () => {
       "true"
     )
 
-    // Click the close sidebar X
-    fireEvent.click(screen.getByRole("button"))
+    // Click the close sidebar <
+    // TODO: Utilize user-event instead of fireEvent
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.mouseOver(screen.getByTestId("stSidebarHeader"))
+    const sidebarCollapseButton = within(
+      screen.getByTestId("stSidebarCollapseButton")
+    ).getByRole("button")
+    // TODO: Utilize user-event instead of fireEvent
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.click(sidebarCollapseButton)
 
     expect(screen.getByTestId("stSidebar")).toHaveAttribute(
       "aria-expanded",
@@ -118,8 +127,10 @@ describe("Sidebar Component", () => {
 
     // Click the expand sidebar > button
     const expandButton = within(
-      screen.getByTestId("collapsedControl")
+      screen.getByTestId("stSidebarCollapsedControl")
     ).getByRole("button")
+    // TODO: Utilize user-event instead of fireEvent
+    // eslint-disable-next-line testing-library/prefer-user-event
     fireEvent.click(expandButton)
 
     expect(screen.getByTestId("stSidebar")).toHaveAttribute(
@@ -128,45 +139,41 @@ describe("Sidebar Component", () => {
     )
   })
 
-  it("chevron does not render if sidebar expanded", () => {
-    renderSidebar({
-      initialSidebarState: PageConfig.SidebarState.EXPANDED,
-    })
-
-    expect(screen.queryByTestId("collapsedControl")).not.toBeInTheDocument()
-  })
-
-  it("hides scrollbar when hideScrollbar is called", () => {
+  it("shows/hides the collapse arrow when hovering over top of sidebar", () => {
     const appPages = [
       { pageName: "first_page", pageScriptHash: "page_hash" },
       { pageName: "second_page", pageScriptHash: "page_hash2" },
     ]
-    // Need isOverflowing in SidebarNav to be true to test scrollbar behavior
-    mockUseIsOverflowing.mockReturnValueOnce(true)
+
     renderSidebar({ appPages })
 
-    expect(screen.getByTestId("stSidebarContent")).toHaveStyle(
-      "overflow: overlay"
+    // Hidden when not hovering near the top of sidebar
+    expect(screen.getByTestId("stSidebarCollapseButton")).toHaveStyle(
+      "display: none"
     )
 
-    fireEvent.mouseOver(screen.getByTestId("stSidebarNavItems"))
+    // Hover over the sidebar header
+    // TODO: Utilize user-event instead of fireEvent
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.mouseOver(screen.getByTestId("stSidebarHeader"))
 
-    expect(screen.getByTestId("stSidebarContent")).toHaveStyle(
-      "overflow: hidden"
+    // Displays the collapse <
+    expect(screen.getByTestId("stSidebarCollapseButton")).toHaveStyle(
+      "display: inline"
     )
   })
 
-  it("has extra top padding if no SidebarNav is displayed", () => {
+  it("has no top padding if no SidebarNav is displayed", () => {
     renderSidebar({
       appPages: [{ pageName: "streamlit_app", pageScriptHash: "page_hash" }],
     })
 
     expect(screen.getByTestId("stSidebarUserContent")).toHaveStyle(
-      "padding-top: 6rem"
+      "padding-top: 0"
     )
   })
 
-  it("has less padding if the SidebarNav is displayed", () => {
+  it("has small padding if the SidebarNav is displayed", () => {
     renderSidebar({
       appPages: [
         { pageName: "streamlit_app", pageScriptHash: "page_hash" },
@@ -175,7 +182,7 @@ describe("Sidebar Component", () => {
     })
 
     expect(screen.getByTestId("stSidebarUserContent")).toHaveStyle(
-      "padding-top: 1rem"
+      "padding-top: 1.5rem"
     )
   })
 
@@ -185,7 +192,9 @@ describe("Sidebar Component", () => {
       initialSidebarState: PageConfig.SidebarState.COLLAPSED,
     })
 
-    expect(screen.getByTestId("collapsedControl")).toHaveStyle("top: 0.5rem")
+    expect(screen.getByTestId("stSidebarCollapsedControl")).toHaveStyle(
+      "top: 1.25rem"
+    )
   })
 
   it("uses the given chevron spacing if chevronDownshift is nonzero", () => {
@@ -194,13 +203,23 @@ describe("Sidebar Component", () => {
       initialSidebarState: PageConfig.SidebarState.COLLAPSED,
     })
 
-    expect(screen.getByTestId("collapsedControl")).toHaveStyle("top: 50px")
+    expect(screen.getByTestId("stSidebarCollapsedControl")).toHaveStyle(
+      "top: 50px"
+    )
   })
 
   it("renders SidebarNav component", () => {
     const appPages = [
-      { pageName: "first_page", pageScriptHash: "page_hash" },
-      { pageName: "second_page", pageScriptHash: "page_hash2" },
+      {
+        pageName: "first page",
+        pageScriptHash: "page_hash",
+        urlPathname: "first_page",
+      },
+      {
+        pageName: "second page",
+        pageScriptHash: "page_hash2",
+        urlPathname: "second_page",
+      },
     ]
     renderSidebar({ appPages })
 
@@ -220,8 +239,150 @@ describe("Sidebar Component", () => {
     renderSidebar({ appPages, hideSidebarNav: true })
 
     expect(screen.queryByTestId("stSidebarNav")).not.toBeInTheDocument()
-    expect(screen.getByTestId("stSidebarUserContent")).toHaveStyle(
-      "padding-top: 6rem"
-    )
+  })
+
+  describe("handles appLogo rendering", () => {
+    const imageOnly = Logo.create({
+      image:
+        "https://global.discourse-cdn.com/business7/uploads/streamlit/original/2X/8/8cb5b6c0e1fe4e4ebfd30b769204c0d30c332fec.png",
+    })
+
+    const imageWithLink = Logo.create({
+      image:
+        "https://global.discourse-cdn.com/business7/uploads/streamlit/original/2X/8/8cb5b6c0e1fe4e4ebfd30b769204c0d30c332fec.png",
+      link: "www.example.com",
+    })
+
+    const fullAppLogo = Logo.create({
+      image:
+        "https://global.discourse-cdn.com/business7/uploads/streamlit/original/2X/8/8cb5b6c0e1fe4e4ebfd30b769204c0d30c332fec.png",
+      link: "www.example.com",
+      iconImage: "https://docs.streamlit.io/logo.svg",
+    })
+
+    const logoWithSize = Logo.create({
+      image:
+        "https://global.discourse-cdn.com/business7/uploads/streamlit/original/2X/8/8cb5b6c0e1fe4e4ebfd30b769204c0d30c332fec.png",
+      link: "www.example.com",
+      iconImage: "https://docs.streamlit.io/logo.svg",
+      size: "small",
+    })
+
+    it("renders spacer if no logo provided", () => {
+      renderSidebar({ appLogo: null })
+      const sidebarLogoSpacer = within(
+        screen.getByTestId("stSidebar")
+      ).getByTestId("stLogoSpacer")
+      expect(sidebarLogoSpacer).toBeInTheDocument()
+    })
+
+    it("renders logo when sidebar collapsed - uses iconImage if provided", () => {
+      const sourceSpy = vi.spyOn(mockEndpointProp, "buildMediaURL")
+      renderSidebar({
+        initialSidebarState: PageConfig.SidebarState.COLLAPSED,
+        appLogo: fullAppLogo,
+      })
+      const openSidebarContainer = screen.getByTestId(
+        "stSidebarCollapsedControl"
+      )
+      expect(openSidebarContainer).toBeInTheDocument()
+      const collapsedLogo = within(openSidebarContainer).getByTestId("stLogo")
+      expect(collapsedLogo).toBeInTheDocument()
+      expect(sourceSpy).toHaveBeenCalledWith(
+        "https://docs.streamlit.io/logo.svg"
+      )
+    })
+
+    it("renders logo when sidebar collapsed - defaults to image if no iconImage", () => {
+      const sourceSpy = vi.spyOn(mockEndpointProp, "buildMediaURL")
+      renderSidebar({
+        initialSidebarState: PageConfig.SidebarState.COLLAPSED,
+        appLogo: imageOnly,
+      })
+      const openSidebarContainer = screen.getByTestId(
+        "stSidebarCollapsedControl"
+      )
+      expect(openSidebarContainer).toBeInTheDocument()
+      const collapsedLogo = within(openSidebarContainer).getByTestId("stLogo")
+      expect(collapsedLogo).toBeInTheDocument()
+      expect(sourceSpy).toHaveBeenCalledWith(
+        "https://global.discourse-cdn.com/business7/uploads/streamlit/original/2X/8/8cb5b6c0e1fe4e4ebfd30b769204c0d30c332fec.png"
+      )
+    })
+
+    it("renders logo's image param when sidebar expanded", () => {
+      const sourceSpy = vi.spyOn(mockEndpointProp, "buildMediaURL")
+      renderSidebar({ appLogo: fullAppLogo })
+      const sidebarLogoContainer = screen.getByTestId("stSidebarHeader")
+      expect(sidebarLogoContainer).toBeInTheDocument()
+      const sidebarLogo = within(sidebarLogoContainer).getByTestId("stLogo")
+      expect(sidebarLogo).toBeInTheDocument()
+      expect(sourceSpy).toHaveBeenCalledWith(
+        "https://global.discourse-cdn.com/business7/uploads/streamlit/original/2X/8/8cb5b6c0e1fe4e4ebfd30b769204c0d30c332fec.png"
+      )
+    })
+
+    it("renders logo - default image has no link & medium size", () => {
+      renderSidebar({ appLogo: imageOnly })
+      const sidebarLogoLink = within(
+        screen.getByTestId("stSidebar")
+      ).queryByTestId("stLogoLink")
+      expect(sidebarLogoLink).not.toBeInTheDocument()
+      const sidebarLogo = within(screen.getByTestId("stSidebar")).getByTestId(
+        "stLogo"
+      )
+      expect(sidebarLogo).toHaveStyle({ height: "1.5rem" })
+    })
+
+    it("renders logo - image has link if provided", () => {
+      renderSidebar({ appLogo: imageWithLink })
+      const sidebarLogoLink = within(
+        screen.getByTestId("stSidebar")
+      ).getByTestId("stLogoLink")
+      expect(sidebarLogoLink).toHaveAttribute("href", "www.example.com")
+      const sidebarLogo = within(screen.getByTestId("stSidebar")).getByTestId(
+        "stLogo"
+      )
+      expect(sidebarLogo).toHaveStyle({ height: "1.5rem" })
+    })
+
+    it("renders logo - small size when specified", () => {
+      renderSidebar({ appLogo: logoWithSize })
+      const sidebarLogo = within(screen.getByTestId("stSidebar")).getByTestId(
+        "stLogo"
+      )
+      expect(sidebarLogo).toHaveStyle({ height: "1.25rem" })
+    })
+
+    it("sets maxWidth of logo based on sidebar width", () => {
+      renderSidebar({ appLogo: imageWithLink })
+      const sidebarWidth = window.getComputedStyle(
+        screen.getByTestId("stSidebar")
+      ).width
+      const sidebarLogo = within(screen.getByTestId("stSidebar")).getByTestId(
+        "stLogo"
+      )
+      // L & R padding (twoXL) + R margin (sm) + collapse button (2.25rem)
+      expect(sidebarLogo).toHaveStyle(
+        `max-width: calc(${sidebarWidth} - 2 * 1.5rem - 0.5rem - 2.25rem)`
+      )
+    })
+
+    it("sends an CLIENT_ERROR message when the logo source fails to load", () => {
+      renderSidebar({ appLogo: fullAppLogo })
+      const sidebarLogo = within(
+        screen.getByTestId("stSidebarHeader")
+      ).getByTestId("stLogo")
+      expect(sidebarLogo).toBeInTheDocument()
+
+      fireEvent.error(sidebarLogo)
+
+      expect(sendClientErrorToHost).toHaveBeenCalledWith(
+        "Sidebar Logo",
+        "Logo source failed to load",
+        "onerror triggered",
+        "https://global.discourse-cdn.com/business7/uploads/streamlit/original/2X/8/8cb5b6c0e1fe4e4ebfd30b769204c0d30c332fec.png"
+      )
+    })
   })
 })

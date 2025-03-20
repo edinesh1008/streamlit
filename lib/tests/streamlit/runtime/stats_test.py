@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import unittest
-from typing import List
 
 from streamlit.runtime.stats import (
     CacheStat,
@@ -25,9 +26,9 @@ from streamlit.runtime.stats import (
 
 class MockStatsProvider(CacheStatsProvider):
     def __init__(self):
-        self.stats: List[CacheStat] = []
+        self.stats: list[CacheStat] = []
 
-    def get_stats(self) -> List[CacheStat]:
+    def get_stats(self) -> list[CacheStat]:
         return self.stats
 
 

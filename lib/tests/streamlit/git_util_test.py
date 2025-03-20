@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from __future__ import annotations
 
 import unittest
 from unittest.mock import patch
@@ -51,8 +53,9 @@ class GitUtilTest(unittest.TestCase):
         prompt the user for credentials. We don't want to do this, so
         repo.is_valid() returns False for old gits.
         """
-        with patch("git.repo.base.Repo.GitCommandWrapperType") as git_mock, patch(
-            "streamlit.git_util.os"
+        with (
+            patch("git.repo.base.Repo.GitCommandWrapperType") as git_mock,
+            patch("streamlit.git_util.os"),
         ):
             git_mock.return_value.version_info = (1, 6, 4)  # An old git version
             repo = GitRepo(".")
@@ -60,8 +63,9 @@ class GitUtilTest(unittest.TestCase):
             self.assertEqual((1, 6, 4), repo.git_version)
 
     def test_git_repo_valid(self):
-        with patch("git.repo.base.Repo.GitCommandWrapperType") as git_mock, patch(
-            "streamlit.git_util.os"
+        with (
+            patch("git.repo.base.Repo.GitCommandWrapperType") as git_mock,
+            patch("streamlit.git_util.os"),
         ):
             git_mock.return_value.version_info = (2, 20, 3)  # A recent git version
             repo = GitRepo(".")

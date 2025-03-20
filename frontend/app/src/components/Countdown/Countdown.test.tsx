@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 
 import React from "react"
-import { render } from "@streamlit/lib"
+
 import { screen } from "@testing-library/react"
-import "@testing-library/jest-dom"
+
+import { render } from "@streamlit/lib"
 
 import Countdown from "./Countdown"
 
 describe("Countdown Component", () => {
   it("should render without crashing", () => {
-    render(<Countdown countdown={10} />)
+    render(<Countdown countdown={10} endCallback={() => {}} />)
     const countdownElement = screen.getByText("10")
 
-    expect(countdownElement).toBeInTheDocument()
+    expect(countdownElement).toBeVisible()
   })
 })

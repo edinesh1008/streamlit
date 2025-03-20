@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,36 @@
 
 import styled from "@emotion/styled"
 
-export const StyledNavLinkContainer = styled.div(({}) => ({
-  display: "flex",
-  flexDirection: "column",
-}))
+export interface StyledNavLinkContainerProps {
+  // If true, the button should take up container's full width
+  containerWidth?: boolean
+}
+
+export const StyledNavLinkContainer = styled.div<StyledNavLinkContainerProps>(
+  ({ containerWidth }) => ({
+    display: "flex",
+    flexDirection: "column",
+    width: containerWidth ? "100%" : "fit-content",
+  })
+)
 
 export interface StyledNavLinkProps {
   disabled: boolean
   isCurrentPage: boolean
-  // If true or number, the button should take up container's full width
-  fluidWidth?: boolean | number
+  // If true, the button should take up container's full width
+  containerWidth?: boolean
 }
 
 export const StyledNavLink = styled.a<StyledNavLinkProps>(
-  ({ disabled, isCurrentPage, fluidWidth, theme }) => ({
+  ({ disabled, isCurrentPage, containerWidth, theme }) => ({
     textDecoration: "none",
-    width: typeof fluidWidth == "number" ? `${fluidWidth}px` : "fit-content",
+    width: containerWidth ? "100%" : "fit-content",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
     gap: theme.spacing.sm,
-    borderRadius: theme.spacing.twoXS,
+    borderRadius: theme.radii.default,
 
     paddingLeft: theme.spacing.sm,
     paddingRight: theme.spacing.sm,
@@ -73,7 +81,7 @@ export const StyledNavLink = styled.a<StyledNavLinkProps>(
 
     ...(disabled
       ? {
-          borderColor: theme.colors.fadedText10,
+          borderColor: theme.colors.borderColor,
           backgroundColor: theme.colors.transparent,
           color: theme.colors.fadedText40,
           cursor: "not-allowed",
@@ -100,7 +108,7 @@ export const StyledNavLinkText = styled.span<StyledNavLinkTextProps>(
 
     ...(disabled
       ? {
-          borderColor: theme.colors.fadedText10,
+          borderColor: theme.colors.borderColor,
           backgroundColor: theme.colors.transparent,
           color: theme.colors.fadedText40,
           cursor: "not-allowed",

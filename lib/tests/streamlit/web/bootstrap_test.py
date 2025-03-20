@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,69 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from __future__ import annotations
+
 import os.path
 import sys
-import unittest
 from io import StringIO
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock, patch
 
-import pytest
-
 from streamlit import config
+from streamlit.runtime.runtime import Runtime
 from streamlit.web import bootstrap
-from streamlit.web.bootstrap import _fix_pydantic_duplicate_validators_error
 from tests import testutil
-from tests.testutil import patch_config_options, should_skip_pydantic_tests
-
-
-class BootstrapPydanticFixTest(unittest.TestCase):
-    def pydantic_model_definition(self):
-        from pydantic import BaseModel, root_validator, validator
-
-        class UserModel(BaseModel):
-            name: str
-            username: str
-            password1: str
-            password2: str
-
-            @validator("name")
-            def name_must_contain_space(cls, v):
-                if " " not in v:
-                    raise ValueError("must contain a space")
-                return v.title()
-
-            @root_validator()
-            def passwords_should_match(cls, values):
-                if values["password1"] != values["password2"]:
-                    raise ValueError("passwords do not match")
-                return values
-
-        UserModel(
-            name="John Doe",
-            username="johndoe",
-            password1="abcd",
-            password2="abcd",
-        )
-
-    @pytest.mark.skipif(
-        should_skip_pydantic_tests(), reason="We test fix only for pydantic 1.*"
-    )
-    @patch("pydantic.class_validators.in_ipython", Mock(return_value=False))
-    def test_fix_pydantic_crash(self):
-        import pydantic
-
-        # Check that without fix it crashes when model with validator
-        # defined two times (we emulate Streamlit rerun).
-        with self.assertRaises(pydantic.errors.ConfigError):
-            self.pydantic_model_definition()
-            self.pydantic_model_definition()
-
-        _fix_pydantic_duplicate_validators_error()
-
-        # Check that after fix model could be redefined without exception.
-        self.pydantic_model_definition()
-        self.pydantic_model_definition()
+from tests.testutil import patch_config_options
 
 
 class BootstrapPrintTest(IsolatedAsyncioTestCase):
@@ -99,21 +50,15 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
             {"browser.serverAddress": "the-address"}
         )
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(True)
 
         out = sys.stdout.getvalue()
         self.assertIn("Welcome to Streamlit. Check out our demo in your browser.", out)
         self.assertIn("URL: http://the-address", out)
-
-    def test_print_new_version_message(self):
-        with patch(
-            "streamlit.version.should_show_new_version_notice", return_value=True
-        ), patch("click.secho") as mock_echo:
-            bootstrap._print_new_version_message()
-            mock_echo.assert_called_once()
 
     def test_print_urls_configured(self):
         mock_is_manually_set = testutil.build_mock_config_is_manually_set(
@@ -123,8 +68,9 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
             {"browser.serverAddress": "the-address"}
         )
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
@@ -145,12 +91,14 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
         mock_get_internal_ip.return_value = "internal-ip"
         mock_get_external_ip.return_value = "external-ip"
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
         out = sys.stdout.getvalue()
+        self.assertIn("Local URL: http://localhost", out)
         self.assertIn("Network URL: http://internal-ip", out)
         self.assertIn("External URL: http://external-ip", out)
 
@@ -169,12 +117,14 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
         mock_get_internal_ip.return_value = "internal-ip"
         mock_get_external_ip.return_value = None
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
         out = sys.stdout.getvalue()
+        self.assertIn("Local URL: http://localhost", out)
         self.assertIn("Network URL: http://internal-ip", out)
         self.assertNotIn("External URL: http://external-ip", out)
 
@@ -193,12 +143,14 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
         mock_get_internal_ip.return_value = None
         mock_get_external_ip.return_value = "external-ip"
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
         out = sys.stdout.getvalue()
+        self.assertIn("Local URL: http://localhost", out)
         self.assertNotIn("Network URL: http://internal-ip", out)
         self.assertIn("External URL: http://external-ip", out)
 
@@ -213,8 +165,9 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
 
         mock_get_internal_ip.return_value = "internal-ip"
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
@@ -237,8 +190,9 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
 
         mock_get_internal_ip.return_value = "internal-ip"
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
@@ -262,8 +216,9 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
 
         mock_get_internal_ip.return_value = "internal-ip"
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
@@ -287,8 +242,9 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
 
         mock_get_internal_ip.return_value = None
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
@@ -325,8 +281,9 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
             }
         )
 
-        with patch.object(config, "get_option", new=mock_get_option), patch.object(
-            config, "is_manually_set", new=mock_is_manually_set
+        with (
+            patch.object(config, "get_option", new=mock_get_option),
+            patch.object(config, "is_manually_set", new=mock_is_manually_set),
         ):
             bootstrap._print_url(False)
 
@@ -378,9 +335,10 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
         folder total size is too large.
         """
 
-        with testutil.patch_config_options(
-            {"server.enableStaticServing": True}
-        ), patch.object(config, "set_option") as mock_set_option:
+        with (
+            testutil.patch_config_options({"server.enableStaticServing": True}),
+            patch.object(config, "set_option") as mock_set_option,
+        ):
             bootstrap._maybe_print_static_folder_warning("app_root/main_script_path")
             mock_echo.assert_called_once_with(
                 "WARNING: Static folder size is larger than 1GB. "
@@ -461,22 +419,34 @@ class BootstrapPrintTest(IsolatedAsyncioTestCase):
             },
         )
 
-    @patch("streamlit.web.bootstrap.invalidate_pages_cache")
-    @patch("streamlit.web.bootstrap.watch_dir")
-    def test_install_pages_watcher(
-        self, patched_watch_dir, patched_invalidate_pages_cache
-    ):
-        bootstrap._install_pages_watcher("/foo/bar/streamlit_app.py")
 
-        args, _ = patched_watch_dir.call_args_list[0]
-        on_pages_changed = args[1]
+class BootstrapRunTest(IsolatedAsyncioTestCase):
+    def tearDown(self):
+        #  Reset the Runtime._instance for subsequent test runs. Otherwise we will get
+        # a "Runtime already exists" error.
+        Runtime._instance = None
 
-        patched_watch_dir.assert_called_once_with(
-            "/foo/bar/pages",
-            on_pages_changed,
-            glob_pattern="*.py",
-            allow_nonexistent=True,
-        )
+    def test_bootstrap_run(self):
+        with testutil.patch_config_options({"server.headless": True}):
+            bootstrap.run("", False, [], {}, stop_immediately_for_testing=True)
 
-        on_pages_changed("/foo/bar/pages")
-        patched_invalidate_pages_cache.assert_called_once()
+    def test_bootstrap_run_in_existing_event_loop(self):
+        import asyncio
+
+        event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(event_loop)
+        with testutil.patch_config_options({"server.headless": True}):
+
+            async def _run():
+                bootstrap.run("", False, [], {}, stop_immediately_for_testing=True)
+
+            event_loop.run_until_complete(_run())
+
+    def test_bootstrap_run_without_existing_event_loop(self):
+        import asyncio
+
+        # Remove the existing event loop
+        asyncio.set_event_loop(None)
+
+        with testutil.patch_config_options({"server.headless": True}):
+            bootstrap.run("", False, [], {}, stop_immediately_for_testing=True)

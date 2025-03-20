@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 
 package:
-  name: {{ package_data.get('name')|lower }}
+  name: streamlit
   version: {{ package_data.get('version') }}
 
 source:
@@ -25,7 +25,7 @@ source:
 build:
   number: {{ environ.get('CONDA_BUILD_NUMBER', 0)|int }}
   noarch: python
-  script: python -m pip install . -vv
+  script: {{ PYTHON }} -m pip install . -vv
   entry_points:
     {% for ep in package_data.get('entry_points').get('console_scripts') %}
       - {{ ep }}
@@ -40,19 +40,21 @@ requirements:
     - python {{ package_data.get('python_requires') }}
   run:
     {% for req in package_data.get('install_requires', []) %}
-      # 2022.07.01 - temporarily set protobuf's lower bound to 3.11 to work
-      # around a conda resolution issue
-      {% if 'protobuf' in req %}
-        - protobuf >=3.11, <4
       # Conda doesn't support the `platform_system` conditional that pip does.
       # We may need to figure out how to avoid installing watchdog on MacOS
       # by default in our conda distribution due to this.
-      {% elif 'watchdog' in req %}
+      {% if 'watchdog' in req %}
         - watchdog
       {% else %}
         - {{ req }}
       {% endif %}
     {% endfor %}
+        # We need to specify Python as a runtime requirement here, otherwise
+        # conda may try to use the system python installation rather than the
+        # python installation of the conda environment. The weird indentation
+        # is required to match the indentation of the requirements added via
+        # templating above.
+        - python {{ package_data.get('python_requires') }}
 
 test:
   imports:

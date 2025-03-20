@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,34 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, MouseEvent } from "react"
-import { LinkButton as LinkButtonProto } from "@streamlit/lib/src/proto"
+import React, { memo, MouseEvent, ReactElement } from "react"
+
+import { LinkButton as LinkButtonProto } from "@streamlit/protobuf"
+
 import {
-  BaseButtonTooltip,
   BaseButtonKind,
   BaseButtonSize,
-} from "@streamlit/lib/src/components/shared/BaseButton"
+  BaseButtonTooltip,
+  DynamicButtonLabel,
+} from "~lib/components/shared/BaseButton"
+import { Box } from "~lib/components/shared/Base/styled-components"
 
 import BaseLinkButton from "./BaseLinkButton"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
 
 export interface Props {
   disabled: boolean
   element: LinkButtonProto
-  width: number
 }
 
-function LinkButton(props: Props): ReactElement {
-  const { disabled, element, width } = props
-  const style = { width }
+function LinkButton(props: Readonly<Props>): ReactElement {
+  const { disabled, element } = props
 
-  const kind =
-    element.type === "primary"
-      ? BaseButtonKind.PRIMARY
-      : BaseButtonKind.SECONDARY
-
-  // When useContainerWidth true & has help tooltip,
-  // we need to pass the container width down to the button
-  const fluidWidth = element.help ? width : true
+  let kind = BaseButtonKind.SECONDARY
+  if (element.type === "primary") {
+    kind = BaseButtonKind.PRIMARY
+  } else if (element.type === "tertiary") {
+    kind = BaseButtonKind.TERTIARY
+  }
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>): void => {
     // Prevent the link from being followed if the button is disabled.
@@ -52,12 +51,11 @@ function LinkButton(props: Props): ReactElement {
   }
 
   return (
-    <div
-      className="row-widget stLinkButton"
-      data-testid="stLinkButton"
-      style={style}
-    >
-      <BaseButtonTooltip help={element.help}>
+    <Box className="stLinkButton" data-testid="stLinkButton">
+      <BaseButtonTooltip
+        help={element.help}
+        containerWidth={element.useContainerWidth}
+      >
         {/* We use separate BaseLinkButton instead of BaseButton here, because
         link behavior requires tag <a> instead of <button>.*/}
         <BaseLinkButton
@@ -65,23 +63,17 @@ function LinkButton(props: Props): ReactElement {
           size={BaseButtonSize.SMALL}
           disabled={disabled}
           onClick={handleClick}
-          fluidWidth={element.useContainerWidth ? fluidWidth : false}
+          containerWidth={element.useContainerWidth}
           href={element.url}
           target="_blank"
           rel="noreferrer"
           aria-disabled={disabled}
         >
-          <StreamlitMarkdown
-            source={element.label}
-            allowHTML={false}
-            isLabel
-            largerLabel
-            disableLinks
-          />
+          <DynamicButtonLabel icon={element.icon} label={element.label} />
         </BaseLinkButton>
       </BaseButtonTooltip>
-    </div>
+    </Box>
   )
 }
 
-export default LinkButton
+export default memo(LinkButton)

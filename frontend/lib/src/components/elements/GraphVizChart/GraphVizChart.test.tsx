@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,32 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
+
+import { Mock, MockInstance } from "vitest"
 import { screen } from "@testing-library/react"
 import { graphviz } from "d3-graphviz"
-import { logError } from "@streamlit/lib/src/util/log"
-import { render } from "@streamlit/lib/src/test_util"
-import { GraphVizChart as GraphVizChartProto } from "@streamlit/lib/src/proto"
-import { GraphVizChart, GraphVizChartProps } from "./GraphVizChart"
 
-jest.mock("d3-graphviz", () => ({
-  graphviz: jest.fn().mockReturnValue({
+import { GraphVizChart as GraphVizChartProto } from "@streamlit/protobuf"
+
+import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
+import { render } from "~lib/test_util"
+
+import GraphVizChart, { GraphVizChartProps, LOG } from "./GraphVizChart"
+
+vi.mock("d3-graphviz", () => ({
+  graphviz: vi.fn().mockReturnValue({
     zoom: () => ({
       fit: () => ({
         scale: () => ({
           engine: () => ({
             renderDot: () => ({
-              on: jest.fn(),
+              on: vi.fn(),
             }),
           }),
         }),
       }),
     }),
   }),
-}))
-jest.mock("@streamlit/lib/src/util/log", () => ({
-  logError: jest.fn(),
-  logMessage: jest.fn(),
 }))
 
 const getProps = (
@@ -51,13 +51,19 @@ const getProps = (
     elementId: "1",
     ...elementProps,
   }),
-  isFullScreen: false,
 })
 
 describe("GraphVizChart Element", () => {
+  let logErrorSpy: MockInstance
+
   beforeEach(() => {
-    // @ts-expect-error
-    logError.mockClear()
+    logErrorSpy = vi.spyOn(LOG, "error").mockImplementation(() => {})
+
+    vi.spyOn(UseResizeObserver, "useResizeObserver").mockReturnValue({
+      elementRef: { current: null },
+      forceRecalculate: vitest.fn(),
+      values: [250],
+    })
   })
 
   afterEach(() => {
@@ -69,24 +75,27 @@ describe("GraphVizChart Element", () => {
     const props = getProps()
     render(<GraphVizChart {...props} />)
 
-    expect(screen.getByTestId("stGraphVizChart")).toBeInTheDocument()
-    expect(logError).not.toHaveBeenCalled()
+    const graphvizElement = screen.getByTestId("stGraphVizChart")
+    expect(graphvizElement).toBeInTheDocument()
+    expect(graphvizElement).toHaveClass("stGraphVizChart")
+
+    expect(logErrorSpy).not.toHaveBeenCalled()
     expect(graphviz).toHaveBeenCalled()
   })
 
   it("should update chart and log error when crashes", () => {
     // Mock graphviz().renderDot() to throw an error for the "crash" spec
-    const mockRenderDot = jest.fn().mockImplementation(spec => {
+    const mockRenderDot = vi.fn().mockImplementation(spec => {
       if (spec === "crash") {
         throw new Error("Simulated GraphViz crash")
       }
       return {
-        on: jest.fn(),
+        on: vi.fn(),
       }
     })
 
     // Modify the graphviz mock to use the mockRenderDot
-    ;(graphviz as jest.Mock).mockReturnValue({
+    ;(graphviz as Mock).mockReturnValue({
       zoom: () => ({
         fit: () => ({
           scale: () => ({
@@ -104,7 +113,7 @@ describe("GraphVizChart Element", () => {
 
     render(<GraphVizChart {...props} />)
 
-    expect(logError).toHaveBeenCalledTimes(1)
+    expect(logErrorSpy).toHaveBeenCalledTimes(1)
     expect(mockRenderDot).toHaveBeenCalledWith("crash")
     expect(graphviz).toHaveBeenCalledTimes(1)
   })
@@ -117,18 +126,6 @@ describe("GraphVizChart Element", () => {
 
     expect(screen.getByTestId("stGraphVizChart")).toHaveStyle(
       "height: auto; width: auto"
-    )
-  })
-
-  it("shoud render with height and width set to 100%", () => {
-    const props = {
-      ...getProps(),
-      isFullScreen: true,
-    }
-    render(<GraphVizChart {...props} />)
-
-    expect(screen.getByTestId("stGraphVizChart")).toHaveStyle(
-      "height: 100%; width: 100%"
     )
   })
 })

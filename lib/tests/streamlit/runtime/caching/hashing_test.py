@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
 # limitations under the License.
 
 """st.memo/singleton hashing tests."""
+
+from __future__ import annotations
+
 import datetime
 import functools
 import hashlib
@@ -28,12 +31,9 @@ from enum import Enum, auto
 from io import BytesIO, StringIO
 from unittest.mock import MagicMock, Mock
 
-import cffi
-import dateutil.tz
 import numpy as np
-import pandas
 import pandas as pd
-import tzlocal
+import pytest
 from parameterized import parameterized
 from PIL import Image
 
@@ -49,17 +49,89 @@ from streamlit.runtime.caching.hashing import (
 )
 from streamlit.runtime.uploaded_file_manager import UploadedFile, UploadedFileRec
 from streamlit.type_util import is_type
-from streamlit.util import HASHLIB_KWARGS
 
 get_main_script_director = MagicMock(return_value=os.getcwd())
 
 
 def get_hash(value, hash_funcs=None, cache_type=None):
-    hasher = hashlib.new("md5", **HASHLIB_KWARGS)
+    hasher = hashlib.new("md5", usedforsecurity=False)
     update_hash(
         value, hasher, cache_type=cache_type or MagicMock(), hash_funcs=hash_funcs
     )
     return hasher.digest()
+
+
+def prepare_polars_data():
+    try:
+        import polars as pl
+
+        return [
+            (pl.DataFrame({"foo": [12]}), pl.DataFrame({"foo": [12]}), True),
+            (pl.DataFrame({"foo": [12]}), pl.DataFrame({"foo": [42]}), False),
+            (
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}),
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}),
+                True,
+            ),
+            # Extra column
+            (
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}),
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4], "C": [1, 2, 3]}),
+                False,
+            ),
+            # Different values
+            (
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}),
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 5]}),
+                False,
+            ),
+            # Different order
+            (
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}),
+                pl.DataFrame(data={"B": [1, 2, 3], "A": [2, 3, 4]}),
+                False,
+            ),
+            # Missing column
+            (
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}),
+                pl.DataFrame(data={"A": [1, 2, 3]}),
+                False,
+            ),
+            # Different sort
+            (
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}).sort(
+                    by=["A"], descending=False
+                ),
+                pl.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}).sort(
+                    by=["B"], descending=True
+                ),
+                False,
+            ),
+            # Different headers
+            (
+                pd.DataFrame(data={"A": [1, 2, 3], "C": [2, 3, 4]}),
+                pd.DataFrame(data={"A": [1, 2, 3], "B": [2, 3, 4]}),
+                False,
+            ),
+            # Reordered columns
+            (
+                pd.DataFrame(data={"A": [1, 2, 3], "C": [2, 3, 4]}),
+                pd.DataFrame(data={"C": [2, 3, 4], "A": [1, 2, 3]}),
+                False,
+            ),
+            # Slightly different dtypes
+            (
+                pd.DataFrame(
+                    data={"A": [1, 2, 3], "C": pd.array([1, 2, 3], dtype="UInt64")}
+                ),
+                pd.DataFrame(
+                    data={"A": [1, 2, 3], "C": pd.array([1, 2, 3], dtype="Int64")}
+                ),
+                False,
+            ),
+        ]
+    except ImportError:
+        return []
 
 
 class HashTest(unittest.TestCase):
@@ -103,16 +175,8 @@ class HashTest(unittest.TestCase):
         self.assertNotEqual(id(naive_datetime1), id(naive_datetime1_copy))
         self.assertNotEqual(get_hash(naive_datetime1), get_hash(naive_datetime3))
 
-    @parameterized.expand(
-        [
-            datetime.timezone.utc,
-            tzlocal.get_localzone(),
-            dateutil.tz.gettz("America/Los_Angeles"),
-            dateutil.tz.gettz("Europe/Berlin"),
-            dateutil.tz.UTC,
-        ]
-    )
-    def test_datetime_aware(self, tz_info):
+    def test_datetime_aware(self):
+        tz_info = datetime.timezone.utc
         aware_datetime1 = datetime.datetime(2007, 12, 23, 15, 45, 55, tzinfo=tz_info)
         aware_datetime1_copy = datetime.datetime(
             2007, 12, 23, 15, 45, 55, tzinfo=tz_info
@@ -138,9 +202,9 @@ class HashTest(unittest.TestCase):
         ]
     )
     def test_pandas_timestamp(self, tz_info):
-        timestamp1 = pandas.Timestamp("2017-01-01T12", tz=tz_info)
-        timestamp1_copy = pandas.Timestamp("2017-01-01T12", tz=tz_info)
-        timestamp2 = pandas.Timestamp("2019-01-01T12", tz=tz_info)
+        timestamp1 = pd.Timestamp("2017-01-01T12", tz=tz_info)
+        timestamp1_copy = pd.Timestamp("2017-01-01T12", tz=tz_info)
+        timestamp2 = pd.Timestamp("2019-01-01T12", tz=tz_info)
 
         self.assertEqual(get_hash(timestamp1), get_hash(timestamp1_copy))
         self.assertNotEqual(id(timestamp1), id(timestamp1_copy))
@@ -262,7 +326,7 @@ class HashTest(unittest.TestCase):
     def test_regex(self):
         p2 = re.compile(".*")
         p1 = re.compile(".*")
-        p3 = re.compile(".*", re.I)
+        p3 = re.compile(".*", re.IGNORECASE)
         self.assertEqual(get_hash(p1), get_hash(p2))
         self.assertNotEqual(get_hash(p1), get_hash(p3))
 
@@ -273,6 +337,11 @@ class HashTest(unittest.TestCase):
 
         self.assertEqual(get_hash(df1), get_hash(df3))
         self.assertNotEqual(get_hash(df1), get_hash(df2))
+
+    @pytest.mark.usefixtures("benchmark")
+    def test_pandas_large_dataframe_performance(self):
+        df1 = pd.DataFrame(np.zeros((_PANDAS_ROWS_LARGE, 4)), columns=list("ABCD"))
+        self.benchmark(lambda: get_hash(df1))
 
     @parameterized.expand(
         [
@@ -363,6 +432,53 @@ class HashTest(unittest.TestCase):
         series5 = pd.Series(range(_PANDAS_ROWS_LARGE))
 
         self.assertEqual(get_hash(series4), get_hash(series5))
+
+    @pytest.mark.require_integration
+    def test_polars_series(self):
+        import polars as pl  # type: ignore[import-not-found]
+
+        series1 = pl.Series([1, 2])
+        series2 = pl.Series([1, 3])
+        series3 = pl.Series([1, 2])
+
+        self.assertEqual(get_hash(series1), get_hash(series3))
+        self.assertNotEqual(get_hash(series1), get_hash(series2))
+
+        series4 = pl.Series(range(_PANDAS_ROWS_LARGE))
+        series5 = pl.Series(range(_PANDAS_ROWS_LARGE))
+
+        self.assertEqual(get_hash(series4), get_hash(series5))
+
+    @pytest.mark.require_integration
+    @parameterized.expand(prepare_polars_data(), skip_on_empty=True)
+    def test_polars_dataframe(self, df1, df2, expected):
+        result = get_hash(df1) == get_hash(df2)
+        self.assertEqual(result, expected)
+
+    @pytest.mark.require_integration
+    def test_polars_large_dataframe(self):
+        import polars as pl
+
+        df1 = pl.DataFrame(np.zeros((_PANDAS_ROWS_LARGE, 4)), schema=list("abcd"))
+        df2 = pl.DataFrame(np.ones((_PANDAS_ROWS_LARGE, 4)), schema=list("abcd"))
+        df3 = pl.DataFrame(np.zeros((_PANDAS_ROWS_LARGE, 4)), schema=list("abcd"))
+
+        self.assertEqual(get_hash(df1), get_hash(df3))
+        self.assertNotEqual(get_hash(df1), get_hash(df2))
+
+    @pytest.mark.usefixtures("benchmark")
+    def test_polars_large_dataframe_performance(self):
+        # We put the try/except here to avoid the test failing if polars is not
+        # installed rather than marking it as `require_integration`,
+        # because it should participate in the benchmarking.
+        try:
+            import polars as pl
+
+            df1 = pl.DataFrame(np.zeros((_PANDAS_ROWS_LARGE, 4)), schema=list("abcd"))
+            self.benchmark(lambda: get_hash(df1))
+        except ImportError:
+            # Skip if polars is not installed.
+            pass
 
     def test_pandas_series_similar_dtypes(self):
         series1 = pd.Series([1, 2], dtype="UInt64")
@@ -467,8 +583,8 @@ class HashTest(unittest.TestCase):
         temp1 = tempfile.NamedTemporaryFile()
         temp2 = tempfile.NamedTemporaryFile()
 
-        with open(__file__, "r") as f:
-            with open(__file__, "r") as g:
+        with open(__file__) as f:
+            with open(__file__) as g:
                 self.assertEqual(get_hash(f), get_hash(g))
 
             self.assertNotEqual(get_hash(f), get_hash(temp1))
@@ -477,7 +593,7 @@ class HashTest(unittest.TestCase):
         self.assertNotEqual(get_hash(temp1), get_hash(temp2))
 
     def test_file_position(self):
-        with open(__file__, "r") as f:
+        with open(__file__) as f:
             h1 = get_hash(f)
             self.assertEqual(h1, get_hash(f))
             f.readline()
@@ -531,33 +647,7 @@ class HashTest(unittest.TestCase):
 
 
 class NotHashableTest(unittest.TestCase):
-    """Tests for various unhashable types. Many of these types *are*
-    hashable by @st.cache's hasher, and we're explicitly removing support for
-    them.
-    """
-
-    def _build_cffi(self, name):
-        ffibuilder = cffi.FFI()
-        ffibuilder.set_source(
-            "cffi_bin._%s" % name,
-            r"""
-                static int %s(int x)
-                {
-                    return x + "A";
-                }
-            """
-            % name,
-        )
-
-        ffibuilder.cdef("int %s(int);" % name)
-        ffibuilder.compile(verbose=True)
-
-    def test_compiled_ffi_not_hashable(self):
-        self._build_cffi("foo")
-        from cffi_bin._foo import ffi as foo
-
-        with self.assertRaises(UnhashableTypeError):
-            get_hash(foo)
+    """Tests for various unhashable types."""
 
     def test_lambdas_not_hashable(self):
         with self.assertRaises(UnhashableTypeError):
@@ -565,7 +655,7 @@ class NotHashableTest(unittest.TestCase):
 
     def test_generator_not_hashable(self):
         with self.assertRaises(UnhashableTypeError):
-            get_hash((x for x in range(1)))
+            get_hash(x for x in range(1))
 
     def test_hash_funcs_acceptable_keys(self):
         """Test that hashes are equivalent when hash_func key is supplied both as a

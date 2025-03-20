@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 import re
 import subprocess
@@ -35,10 +36,8 @@ IGNORE_PATTERN = re.compile(
     r"^\.(github)/"
     # Exclude images.
     r"|\.(?:png|jpg|jpeg|gif|ttf|woff|otf|eot|woff2|ico|svg)$"
-    # Exclude videos we use for testing st.video.
-    r"|e2e_playwright/test_assets/.*\.(mp4|webm)$"
-    # Exclude subtitle files we use for testing st.video.
-    r"|e2e_playwright/test_assets/.*\.(vtt|srt)$"
+    # Exclude playwright test assets folder.
+    r"|e2e_playwright/test_assets/.*$"
     # Exclude js file we use for testing st.html.
     r"|^lib/tests/streamlit/elements/test_html\.js"
     # Exclude files, because they make it obvious which product they relate to.
@@ -49,23 +48,29 @@ IGNORE_PATTERN = re.compile(
     r"|yarn\.lock$"
     # Exclude pytest config files, because they don't have any degree of creativity.
     r"|pytest\.ini$"
+    r"|\.coveragerc$"
     # Exclude empty files, because they don't have any degree of creativity.
     r"|py\.typed$"
     # Exclude dev-tools configuration files, because they don't have any
     # degree of creativity.
     r"|^(\.dockerignore|\.editorconfig|\.gitignore|\.gitmodules)$"
     r"|^frontend/(\.dockerignore|\.eslintrc.js|\.prettierignore)$"
-    r"|^lib/(\.coveragerc|\.dockerignore|MANIFEST\.in|mypy\.ini)$"
-    r"|^lib/(test|dev)-requirements\.txt$"
+    r"|^frontend/\.yarn"  # Exclude everything in the .yarn folder
+    r"|^component-lib/\.yarn"
+    r"|^lib/(\.dockerignore|MANIFEST\.in|mypy\.ini)$"
+    r"|^.*-requirements\.txt$"
     r"|^lib/min-constraints-gen\.txt"
     r"|\.isort\.cfg$"
     r"|\.credentials/\.gitignore$"
+    r"|^frontend/app/performance/lighthouse/\.gitignore$"
+    r"|^e2e_playwright/\.gitignore$"
     # Excluding test files, because adding headers may cause tests to fail.
-    r"|/(fixtures|__snapshots__|test_data|data)/"
+    r"|/(fixtures|__snapshots__|test_data|data|test)/"
     # Exclude vendored files.
     r"|/vendor/|^vendor/|^component-lib/declarations/apache-arrow"
     r"|proto/streamlit/proto/openmetrics_data_model\.proto"
-    r"|^e2e_flaky/scripts/.*\.py",
+    # Exclude patch files.
+    r"|\.patch$",
     re.IGNORECASE,
 )
 
@@ -92,7 +97,7 @@ def main():
             if LICENSE_TEXT not in file_content:
                 print("Found file without license header", fileloc)
                 invalid_files_count += 1
-        except:
+        except Exception:
             print(
                 f"Failed to open the file: {fileloc}. Is it binary file?",
             )

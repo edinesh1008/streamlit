@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,12 @@ import pytest
 from parameterized import parameterized
 
 import streamlit as st
-from streamlit.errors import StreamlitAPIException
-from streamlit.js_number import JSNumber
+from streamlit.elements.lib.js_number import JSNumber
+from streamlit.errors import (
+    StreamlitAPIException,
+    StreamlitValueAboveMaxError,
+    StreamlitValueBelowMinError,
+)
 from streamlit.proto.Alert_pb2 import Alert as AlertProto
 from streamlit.proto.LabelVisibilityMessage_pb2 import LabelVisibilityMessage
 from streamlit.proto.NumberInput_pb2 import NumberInput
@@ -38,10 +42,18 @@ class NumberInputTest(DeltaGeneratorTestCase):
         st.number_input("Label", value=0)
         c = self.get_delta_from_queue().new_element.number_input
         self.assertEqual(NumberInput.INT, c.data_type)
+        self.assertEqual(c.has_min, True)
+        self.assertEqual(c.min, JSNumber.MIN_SAFE_INTEGER)
+        self.assertEqual(c.has_max, True)
+        self.assertEqual(c.max, JSNumber.MAX_SAFE_INTEGER)
 
         st.number_input("Label", value=0.5)
         c = self.get_delta_from_queue().new_element.number_input
         self.assertEqual(NumberInput.FLOAT, c.data_type)
+        self.assertEqual(c.has_min, True)
+        self.assertEqual(c.min, JSNumber.MIN_NEGATIVE_VALUE)
+        self.assertEqual(c.has_max, True)
+        self.assertEqual(c.max, JSNumber.MAX_VALUE)
 
     def test_min_value_zero_sets_default_value(self):
         st.number_input("Label", 0, 10)
@@ -60,8 +72,6 @@ class NumberInputTest(DeltaGeneratorTestCase):
         )
         self.assertEqual(c.default, 0.0)
         self.assertEqual(c.HasField("default"), True)
-        self.assertEqual(c.has_min, False)
-        self.assertEqual(c.has_max, False)
         self.assertEqual(c.disabled, False)
         self.assertEqual(c.placeholder, "")
 
@@ -193,7 +203,7 @@ class NumberInputTest(DeltaGeneratorTestCase):
     def test_error_on_unsupported_formatters(self):
         UNSUPPORTED = "pAn"
         for char in UNSUPPORTED:
-            with pytest.raises(StreamlitAPIException) as exc_message:
+            with pytest.raises(StreamlitAPIException):
                 st.number_input("any label", value=3.14, format="%" + char)
 
     def test_error_on_invalid_formats(self):
@@ -204,7 +214,7 @@ class NumberInputTest(DeltaGeneratorTestCase):
             "%d%d",
         ]
         for fmt in BAD_FORMATS:
-            with pytest.raises(StreamlitAPIException) as exc_message:
+            with pytest.raises(StreamlitAPIException):
                 st.number_input("any label", value=3.14, format=fmt)
 
     def test_value_out_of_bounds(self):
@@ -239,6 +249,28 @@ class NumberInputTest(DeltaGeneratorTestCase):
         self.assertEqual(
             "`value` (%s) must be >= -1.797e+308" % str(value), str(exc.value)
         )
+
+    def test_min_and_max_setting_for_integer_inputs(self):
+        """Test min & max set by user respected, otherwise use defaults."""
+        st.number_input("Label", value=2, step=1, min_value=0, max_value=10)
+        c = self.get_delta_from_queue().new_element.number_input
+        self.assertEqual(c.min, 0)
+        self.assertEqual(c.max, 10)
+
+        st.number_input("Label", value=2, step=1, min_value=0)
+        c = self.get_delta_from_queue().new_element.number_input
+        self.assertEqual(c.min, 0)
+        self.assertEqual(c.max, JSNumber.MAX_SAFE_INTEGER)
+
+        st.number_input("Label", value=2, step=1, max_value=10)
+        c = self.get_delta_from_queue().new_element.number_input
+        self.assertEqual(c.min, JSNumber.MIN_SAFE_INTEGER)
+        self.assertEqual(c.max, 10)
+
+        st.number_input("Label", value=2, step=1)
+        c = self.get_delta_from_queue().new_element.number_input
+        self.assertEqual(c.min, JSNumber.MIN_SAFE_INTEGER)
+        self.assertEqual(c.max, JSNumber.MAX_SAFE_INTEGER)
 
     def test_outside_form(self):
         """Test that form id is marshalled correctly outside of a form."""
@@ -280,7 +312,7 @@ class NumberInputTest(DeltaGeneratorTestCase):
         self.assertEqual(number_input_proto.default, 0)
 
     @patch("streamlit.runtime.Runtime.exists", MagicMock(return_value=True))
-    @patch("streamlit.elements.utils.get_session_state")
+    @patch("streamlit.elements.lib.policies.get_session_state")
     def test_no_warning_with_value_set_in_state(self, patched_get_session_state):
         mock_session_state = MagicMock()
         mock_session_state.is_new_state_value.return_value = True
@@ -320,10 +352,12 @@ class NumberInputTest(DeltaGeneratorTestCase):
         )
 
     def test_should_keep_type_of_return_value_after_rerun(self):
+        # set the initial page script hash
+        self.script_run_ctx.reset(page_script_hash=self.script_run_ctx.page_script_hash)
         # Generate widget id and reset context
         st.number_input("a number", min_value=1, max_value=100, key="number")
         widget_id = self.script_run_ctx.session_state.get_widget_states()[0].id
-        self.script_run_ctx.reset()
+        self.script_run_ctx.reset(page_script_hash=self.script_run_ctx.page_script_hash)
 
         # Set the state of the widgets to the test state
         widget_state = WidgetState()
@@ -367,8 +401,31 @@ class NumberInputTest(DeltaGeneratorTestCase):
     def test_should_raise_exception_when_default_gt_max_and_min_is_none(self):
         value = 11
         max_value = 10
-        with pytest.raises(StreamlitAPIException):
+        with self.assertRaises(StreamlitValueAboveMaxError):
             st.number_input("My Label", value=value, max_value=max_value)
+
+    def test_should_raise_exception_when_session_state_value_out_of_range(self):
+        """Test out of range interactions by using st.session_state to set number input widget values beyond min/max."""
+        with pytest.raises(StreamlitValueAboveMaxError):
+            st.session_state.number_input = 10
+            st.number_input(
+                "number_input", min_value=1, max_value=5, key="number_input"
+            )
+
+        with pytest.raises(StreamlitValueBelowMinError):
+            st.session_state.number_input_1 = 10
+            st.number_input(
+                "number_input_1", min_value=15, max_value=20, key="number_input_1"
+            )
+
+    def test_shows_cached_widget_replay_warning(self):
+        """Test that a warning is shown when this widget is used inside a cached function."""
+        st.cache_data(lambda: st.number_input("the label"))()
+
+        # The widget itself is still created, so we need to go back one element more:
+        el = self.get_delta_from_queue(-2).new_element.exception
+        self.assertEqual(el.type, "CachedWidgetWarning")
+        self.assertTrue(el.is_warning)
 
 
 def test_number_input_interaction():
@@ -397,3 +454,18 @@ def test_number_input_interaction():
     at = number_input.set_value(None).run()
     number_input = at.number_input[0]
     assert number_input.value is None
+
+
+def test_None_session_state_value_retained():
+    def script():
+        import streamlit as st
+
+        if "number_input" not in st.session_state:
+            st.session_state["number_input"] = None
+
+        st.number_input("number_input", key="number_input")
+        st.button("button")
+
+    at = AppTest.from_function(script).run()
+    at = at.button[0].click().run()
+    assert at.number_input[0].value is None

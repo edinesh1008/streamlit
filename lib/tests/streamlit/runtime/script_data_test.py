@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
+import os.path
 import unittest
 from dataclasses import FrozenInstanceError
 
@@ -27,9 +30,13 @@ class ScriptDataTest(unittest.TestCase):
             False,
         )
 
-        assert script_data.main_script_path == "/path/to/some/script.py"
-        assert script_data.is_hello == False
-        assert script_data.script_folder == "/path/to/some"
+        assert os.path.realpath(script_data.main_script_path) == os.path.realpath(
+            "/path/to/some/script.py"
+        )
+        assert script_data.is_hello is False
+        assert os.path.realpath(script_data.script_folder) == os.path.realpath(
+            "/path/to/some"
+        )
         assert script_data.name == "script"
 
     def test_is_frozen(self):

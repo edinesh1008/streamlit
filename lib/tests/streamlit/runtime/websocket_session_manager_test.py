@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from __future__ import annotations
 
 import unittest
 from unittest.mock import MagicMock, patch
@@ -78,7 +80,7 @@ class WebsocketSessionManagerTests(unittest.TestCase):
 
     def test_connect_session_assert(self):
         with pytest.raises(AssertionError):
-            session_id = self.connect_session(
+            self.connect_session(
                 existing_session_id="existing_session_id",
                 session_id_override="session_id_override",
             )

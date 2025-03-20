@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,29 @@
  * limitations under the License.
  */
 
-import React, { ReactElement } from "react"
-import { EmojiIcon } from "@streamlit/lib/src/components/shared/Icon"
-import { Placement } from "@streamlit/lib/src/components/shared/Tooltip"
-import { PageLink as PageLinkProto } from "@streamlit/lib/src/proto"
-import { BaseButtonTooltip } from "@streamlit/lib/src/components/shared/BaseButton"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
+import React, { memo, ReactElement } from "react"
 
-import { LibContext } from "@streamlit/lib/src/components/core/LibContext"
-import IsSidebarContext from "@streamlit/lib/src/components/core/IsSidebarContext"
+import { useTheme } from "@emotion/react"
+
+import { PageLink as PageLinkProto } from "@streamlit/protobuf"
+
+import { DynamicIcon } from "~lib/components/shared/Icon"
+import { Placement } from "~lib/components/shared/Tooltip"
+import { BaseButtonTooltip } from "~lib/components/shared/BaseButton"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
+import { EmotionTheme } from "~lib/theme"
+import { LibContext } from "~lib/components/core/LibContext"
+import IsSidebarContext from "~lib/components/core/IsSidebarContext"
 
 import {
   StyledNavLink,
-  StyledNavLinkText,
   StyledNavLinkContainer,
+  StyledNavLinkText,
 } from "./styled-components"
 
 export interface Props {
   disabled: boolean
   element: PageLinkProto
-  width: number
 }
 
 function shouldUseContainerWidth(
@@ -48,12 +51,13 @@ function shouldUseContainerWidth(
   return useContainerWidth === true ? true : false
 }
 
-function PageLink(props: Props): ReactElement {
+function PageLink(props: Readonly<Props>): ReactElement {
   const { onPageChange, currentPageScriptHash } = React.useContext(LibContext)
   const isInSidebar = React.useContext(IsSidebarContext)
 
-  const { disabled, element, width } = props
-  const style = { width }
+  const { colors }: EmotionTheme = useTheme()
+
+  const { disabled, element } = props
 
   const useContainerWidth = shouldUseContainerWidth(
     element.useContainerWidth,
@@ -72,30 +76,36 @@ function PageLink(props: Props): ReactElement {
       // MPA Page Link
       e.preventDefault()
       if (!disabled) {
-        onPageChange(element.pageScriptHash as string)
+        onPageChange(element.pageScriptHash)
       }
     }
   }
 
   return (
-    <div
-      className="row-widget stPageLink"
-      data-testid="stPageLink"
-      style={style}
-    >
-      <BaseButtonTooltip help={element.help} placement={Placement.TOP_RIGHT}>
-        <StyledNavLinkContainer>
+    <div className="stPageLink" data-testid="stPageLink">
+      <BaseButtonTooltip
+        help={element.help}
+        placement={Placement.TOP_RIGHT}
+        containerWidth={useContainerWidth}
+      >
+        <StyledNavLinkContainer containerWidth={useContainerWidth}>
           <StyledNavLink
             data-testid="stPageLink-NavLink"
             disabled={disabled}
             isCurrentPage={isCurrentPage}
-            fluidWidth={useContainerWidth ? width : false}
+            containerWidth={useContainerWidth}
             href={element.page}
             target={element.external ? "_blank" : ""}
             rel="noreferrer"
             onClick={handleClick}
           >
-            {element.icon && <EmojiIcon size="lg">{element.icon}</EmojiIcon>}
+            {element.icon && (
+              <DynamicIcon
+                size="lg"
+                color={disabled ? colors.fadedText40 : colors.bodyText}
+                iconValue={element.icon}
+              />
+            )}
             <StyledNavLinkText disabled={disabled}>
               <StreamlitMarkdown
                 source={element.label}
@@ -113,4 +123,4 @@ function PageLink(props: Props): ReactElement {
   )
 }
 
-export default PageLink
+export default memo(PageLink)

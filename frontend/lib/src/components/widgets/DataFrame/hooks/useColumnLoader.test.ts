@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,33 @@
  * limitations under the License.
  */
 
-import { renderHook } from "@testing-library/react-hooks"
+import { renderHook } from "@testing-library/react"
+import { Field, Int64, Utf8 } from "apache-arrow"
 
-import { Quiver } from "@streamlit/lib/src/dataframes/Quiver"
-import { Arrow as ArrowProto } from "@streamlit/lib/src/proto"
-import { UNICODE } from "@streamlit/lib/src/mocks/arrow"
+import { Arrow as ArrowProto } from "@streamlit/protobuf"
+
 import {
   BaseColumn,
-  ObjectColumn,
-  TextColumn,
   CheckboxColumn,
-  SelectboxColumn,
+  ColumnCreator,
   ListColumn,
   NumberColumn,
-  ColumnCreator,
-} from "@streamlit/lib/src/components/widgets/DataFrame/columns"
+  ObjectColumn,
+  SelectboxColumn,
+  TextColumn,
+} from "~lib/components/widgets/DataFrame/columns"
+import { DataFrameCellType } from "~lib/dataframes/arrowTypeUtils"
+import { Quiver } from "~lib/dataframes/Quiver"
+import { UNICODE } from "~lib/mocks/arrow"
 
 import useColumnLoader, {
-  ColumnConfigProps,
   applyColumnConfig,
+  COLUMN_POSITION_PREFIX,
+  COLUMN_WIDTH_MAPPING,
+  ColumnConfigProps,
   getColumnConfig,
   getColumnType,
   INDEX_IDENTIFIER,
-  COLUMN_POSITION_PREFIX,
-  COLUMN_WIDTH_MAPPING,
 } from "./useColumnLoader"
 
 const MOCK_COLUMNS: BaseColumn[] = [
@@ -47,12 +50,20 @@ const MOCK_COLUMNS: BaseColumn[] = [
     title: "",
     indexNumber: 0,
     arrowType: {
-      pandas_type: "int64",
-      numpy_type: "int64",
+      type: DataFrameCellType.INDEX,
+      arrowField: new Field("index_col", new Int64(), true),
+      pandasType: {
+        field_name: "index_col",
+        name: "index_col",
+        pandas_type: "int64",
+        numpy_type: "int64",
+        metadata: null,
+      },
     },
     isEditable: false,
     isHidden: false,
     isIndex: true,
+    isPinned: true,
     isStretched: false,
   }),
   NumberColumn({
@@ -61,12 +72,20 @@ const MOCK_COLUMNS: BaseColumn[] = [
     title: "column_1",
     indexNumber: 1,
     arrowType: {
-      pandas_type: "int64",
-      numpy_type: "int64",
+      type: DataFrameCellType.DATA,
+      arrowField: new Field("column_1", new Int64(), true),
+      pandasType: {
+        field_name: "column_1",
+        name: "column_1",
+        pandas_type: "int64",
+        numpy_type: "int64",
+        metadata: null,
+      },
     },
     isEditable: false,
     isHidden: false,
     isIndex: false,
+    isPinned: false,
     isStretched: false,
   }),
   TextColumn({
@@ -75,12 +94,20 @@ const MOCK_COLUMNS: BaseColumn[] = [
     title: "column_2",
     indexNumber: 2,
     arrowType: {
-      pandas_type: "unicode",
-      numpy_type: "object",
+      type: DataFrameCellType.DATA,
+      arrowField: new Field("column_2", new Utf8(), true),
+      pandasType: {
+        field_name: "column_2",
+        name: "column_2",
+        pandas_type: "unicode",
+        numpy_type: "object",
+        metadata: null,
+      },
     },
     isEditable: false,
     isHidden: false,
     isIndex: false,
+    isPinned: false,
     isStretched: false,
   }),
 ]
@@ -180,6 +207,148 @@ describe("applyColumnConfig", () => {
     const column1 = applyColumnConfig(MOCK_COLUMNS[0], emptyColumnConfig)
     expect(column1).toBe(MOCK_COLUMNS[0])
   })
+
+  it("applies column config in the correct priority order", () => {
+    const columnConfig: Map<string | number, ColumnConfigProps> = new Map([
+      // All these column keys refer to the same column. They are just different
+      // ways of specifying the same column (index, position, name, ID).
+      // 1. Index config
+      [
+        INDEX_IDENTIFIER,
+        {
+          width: "small",
+          label: "Index Label",
+          alignment: "left",
+        },
+      ],
+      // 2. Position-based config
+      [
+        `${COLUMN_POSITION_PREFIX}0`,
+        {
+          width: "medium",
+          label: "Position Label",
+          alignment: "center",
+        },
+      ],
+      // 3. Name-based config
+      [
+        "",
+        {
+          width: "large",
+          label: "Name Label",
+          alignment: "right",
+        },
+      ],
+      // 4. ID-based config
+      [
+        "index_col",
+        {
+          width: 100,
+          label: "ID Label",
+          alignment: "left",
+        },
+      ],
+    ])
+
+    // Test with the index column from MOCK_COLUMNS
+    const result = applyColumnConfig(MOCK_COLUMNS[0], columnConfig)
+
+    // Config should be merged in order, with later configs overwriting earlier ones
+    expect(result).toEqual({
+      ...MOCK_COLUMNS[0],
+      // Should have the width from ID config (last)
+      width: 100,
+      // Should have the label from ID config (last)
+      title: "ID Label",
+      // Should have the alignment from ID config (last)
+      contentAlignment: "left",
+    })
+  })
+
+  it("allows partial config overrides in priority order", () => {
+    const columnConfig: Map<string | number, ColumnConfigProps> = new Map([
+      // All these column keys refer to the same column. They are just different
+      // ways of specifying the same column (_index, position, ID).
+      [
+        INDEX_IDENTIFIER,
+        {
+          width: "small",
+          label: "Index Label",
+        },
+      ],
+      [
+        `${COLUMN_POSITION_PREFIX}0`,
+        {
+          // Only override the label
+          label: "Position Label",
+        },
+      ],
+      [
+        "index_col",
+        {
+          // Only override the width
+          width: 100,
+        },
+      ],
+    ])
+
+    const result = applyColumnConfig(MOCK_COLUMNS[0], columnConfig)
+
+    expect(result).toEqual({
+      ...MOCK_COLUMNS[0],
+      // Width should come from ID config
+      width: 100,
+      // Label should come from position config
+      title: "Position Label",
+    })
+  })
+
+  it("correctly merges nested type_config options", () => {
+    const columnConfig: Map<string | number, ColumnConfigProps> = new Map([
+      // All these column keys refer to the same column. They are just different
+      // ways of specifying the same column (_index, position, ID).
+      // 1. Index config
+      [
+        INDEX_IDENTIFIER,
+        {
+          type_config: {
+            options: ["a", "b"],
+            min_value: 0,
+          },
+        },
+      ],
+      // 2. Position-based config
+      [
+        `${COLUMN_POSITION_PREFIX}0`,
+        {
+          type_config: {
+            options: ["c", "d", "x"],
+            max_value: 100,
+          },
+        },
+      ],
+      // 3. ID-based config
+      [
+        "index_col",
+        {
+          type_config: {
+            options: ["e", "f"],
+            step: 1,
+          },
+        },
+      ],
+    ])
+
+    const result = applyColumnConfig(MOCK_COLUMNS[0], columnConfig)
+
+    // Should merge all type_config options from different config sources
+    expect(result.columnTypeOptions).toEqual({
+      options: ["e", "f"], // From ID config (last)
+      min_value: 0, // From index config (first)
+      max_value: 100, // From position config
+      step: 1, // From ID config (last)
+    })
+  })
 })
 
 describe("getColumnConfig", () => {
@@ -236,12 +405,20 @@ describe("getColumnType", () => {
         title: "column_1",
         indexNumber: 1,
         arrowType: {
-          pandas_type: "int64",
-          numpy_type: "int64",
+          type: DataFrameCellType.DATA,
+          arrowField: new Field("column_1", new Int64(), true),
+          pandasType: {
+            field_name: "column_1",
+            name: "column_1",
+            pandas_type: "int64",
+            numpy_type: "int64",
+            metadata: null,
+          },
         },
         isEditable: false,
         isHidden: false,
         isIndex: false,
+        isPinned: false,
         isStretched: false,
         columnTypeOptions: {
           type: typeName,
@@ -260,7 +437,7 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     const { columns } = result.current
@@ -285,7 +462,7 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     const { columns } = result.current
@@ -310,7 +487,7 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     const { columns } = result.current
@@ -333,7 +510,7 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     for (const column of result.current.columns) {
@@ -351,7 +528,7 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     for (const column of result.current.columns) {
@@ -374,7 +551,7 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     expect(result.current.columns[1].isRequired).toBe(true)
@@ -396,7 +573,7 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     // Test that the column is hidden (not part of columns).
@@ -414,11 +591,42 @@ describe("useColumnLoader hook", () => {
     const data = new Quiver(element)
 
     const { result } = renderHook(() => {
-      return useColumnLoader(element, data, false)
+      return useColumnLoader(element, data, false, element.columnOrder)
     })
 
     for (const column of result.current.columns) {
       expect(column.icon).toBe(undefined)
     }
+  })
+
+  it("uses column order to order pinned columns", () => {
+    const element = ArrowProto.create({
+      data: UNICODE,
+      columnOrder: ["c2", "c1"],
+      columns: JSON.stringify({
+        c1: {
+          pinned: true,
+        },
+        c2: {
+          pinned: true,
+        },
+      }),
+    })
+
+    const data = new Quiver(element)
+
+    const { result } = renderHook(() => {
+      return useColumnLoader(element, data, false, element.columnOrder)
+    })
+
+    // Range index:
+    expect(result.current.columns[0].name).toBe("")
+    expect(result.current.columns[0].isIndex).toBe(true)
+
+    // Pinned columns:
+    expect(result.current.columns[1].name).toBe("c2")
+    expect(result.current.columns[1].isPinned).toBe(true)
+    expect(result.current.columns[2].name).toBe("c1")
+    expect(result.current.columns[2].isPinned).toBe(true)
   })
 })

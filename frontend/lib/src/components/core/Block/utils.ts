@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-import { ScriptRunState } from "@streamlit/lib/src/ScriptRunState"
-import { BlockNode, AppNode } from "@streamlit/lib/src/AppNode"
-import {
-  FormsData,
-  WidgetStateManager,
-} from "@streamlit/lib/src/WidgetStateManager"
-import { FileUploadClient } from "@streamlit/lib/src/FileUploadClient"
-import { ComponentRegistry } from "@streamlit/lib/src/components/widgets/CustomComponent"
-import { SessionInfo } from "@streamlit/lib/src/SessionInfo"
-import { StreamlitEndpoints } from "@streamlit/lib/src/StreamlitEndpoints"
-import { EmotionTheme, getDividerColors } from "@streamlit/lib/src/theme"
+import { AppNode, BlockNode } from "~lib/AppNode"
+import { ComponentRegistry } from "~lib/components/widgets/CustomComponent"
+import { FileUploadClient } from "~lib/FileUploadClient"
+import { ScriptRunState } from "~lib/ScriptRunState"
+import { StreamlitEndpoints } from "~lib/StreamlitEndpoints"
+import { EmotionTheme, getDividerColors } from "~lib/theme"
+import { isValidElementId } from "~lib/util/utils"
+import { FormsData, WidgetStateManager } from "~lib/WidgetStateManager"
 
 export function shouldComponentBeEnabled(
   elementType: string,
@@ -47,8 +44,13 @@ export function isElementStale(
 
   if (scriptRunState === ScriptRunState.RUNNING) {
     if (fragmentIdsThisRun && fragmentIdsThisRun.length) {
+      // if the fragmentId is set, we only want to mark elements as stale
+      // that belong to the same fragmentId and have a different scriptRunId.
+      // If they have the same scriptRunId, they were just updated.
       return Boolean(
-        node.fragmentId && fragmentIdsThisRun.includes(node.fragmentId)
+        node.fragmentId &&
+          fragmentIdsThisRun.includes(node.fragmentId) &&
+          node.scriptRunId !== scriptRunId
       )
     }
     return node.scriptRunId !== scriptRunId
@@ -108,11 +110,6 @@ export interface BaseBlockProps {
   endpoints: StreamlitEndpoints
 
   /**
-   * The app's SessionInfo instance. Exposes session-specific properties.
-   */
-  sessionInfo: SessionInfo
-
-  /**
    * The app's WidgetStateManager instance. Used by all widget elements to
    * store and retrieve widget state. When the user interacts with a widget,
    * the WidgetStateManager initiates the "rerun BackMsg" data flow to kick
@@ -167,4 +164,36 @@ export interface BaseBlockProps {
    * to use it, for example, in Dialogs to prevent fullscreen issues.
    */
   disableFullscreenMode?: boolean
+}
+
+/**
+ * Converts a user-specified key to a valid CSS class name.
+ *
+ * @param key - The key to convert.
+ * @returns A valid CSS class name.
+ */
+export function convertKeyToClassName(key: string | undefined | null): string {
+  if (!key) {
+    return ""
+  }
+  const className = key.trim().replace(/[^a-zA-Z0-9_-]/g, "-")
+  return "st-key-" + className
+}
+
+/**
+ * Returns the user-specified key extracted from the element id, or undefined if the id does
+ * not have a user-specified key.
+ */
+export function getKeyFromId(
+  elementId: string | undefined | null
+): string | undefined {
+  if (!elementId || !isValidElementId(elementId)) {
+    return undefined
+  }
+
+  // Split the elementId by hyphens
+  const parts = elementId.split("-")
+  // Extract all parts after the second hyphen
+  const userKey = parts.slice(2).join("-")
+  return userKey === "None" ? undefined : userKey
 }

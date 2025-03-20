@@ -1,5 +1,5 @@
 /**!
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,9 @@ message NewSession {
   // The fragment IDs being run in this session if it corresponds to a fragment
   // script run.
   repeated string fragment_ids_this_run = 10;
+
+  // Hash of the main script running (ie streamlit run main_script.py)
+  string main_script_hash = 11;
 }
 
 // Contains the session status that existed at the time the user connected.
@@ -110,7 +113,7 @@ message Config {
   // See config option "ui.hideTopBar".
   bool hide_top_bar = 6;
 
-  // See config option "ui.hideSidebarNav".
+  // See config option "client.showSidebarNavigation".
   bool hide_sidebar_nav = 7;
 
   // See config option "client.toolbarMode".
@@ -128,7 +131,7 @@ message Config {
 // Custom theme configuration options. Like other config options, these are set
 // in .streamlit/config.toml.
 //
-// IMPORTANT: This message is passed in JSON format in a host-to-guest postMessage. So DOT NOT
+// IMPORTANT: This message is passed in JSON format in a host-to-guest postMessage. So DO NOT
 // rename its proto fields!
 message CustomThemeConfig {
   enum BaseTheme {
@@ -136,6 +139,7 @@ message CustomThemeConfig {
     DARK = 1;
   }
 
+  // DEPRECATED: Use body_font instead:
   enum FontFamily {
     SANS_SERIF = 0;
     SERIF = 1;
@@ -146,16 +150,31 @@ message CustomThemeConfig {
   string secondary_background_color = 2;
   string background_color = 3;
   string text_color = 4;
+  // DEPRECATED: Use body_font instead:
   FontFamily font = 5;
   BaseTheme base = 6;
+  // DEPRECATED: This color is not applied anymore:
   string widget_background_color = 7;
+  // DEPRECATED: Use the border_color and show_widget_border instead:
   string widget_border_color = 8;
+  // DEPRECATED: Please use the base_radius theme config instead:
   Radii radii = 9;
+  string heading_font = 12;
   string body_font = 13;
   string code_font = 14;
   repeated FontFace font_faces = 15;
+  // DEPRECATED: Please use the base_font_size theme config instead:
   FontSizes font_sizes = 16;
+  // DEPRECATED: This color is not applied anymore:
   string skeleton_background_color = 17;
+  optional string base_radius = 18;
+  optional string border_color = 19;
+  optional bool show_widget_border = 20;
+  optional string link_color = 21;
+  optional int32 base_font_size = 22;
+  optional bool show_sidebar_border = 23;
+  optional CustomThemeConfig sidebar = 24;
+  optional string code_background_color = 25;
 }
 
 message FontFace {
@@ -165,12 +184,14 @@ message FontFace {
   string style = 4;
 }
 
+// DEPRECATED: Please use the base_radius theme config instead.
 message Radii {
   // In pixels.
   int32 base_widget_radius = 1;
   int32 checkbox_radius = 2;
 }
 
+// DEPRECATED: Please use the base_font_size theme config instead:
 message FontSizes {
   // In pixels.
   int32 tiny_font_size = 1;

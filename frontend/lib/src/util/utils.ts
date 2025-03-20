@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-import {
-  Alert as AlertProto,
-  LabelVisibilityMessage as LabelVisibilityMessageProto,
-  Element,
-} from "@streamlit/lib/src/proto"
+import decamelize from "decamelize"
 import get from "lodash/get"
 import xxhash from "xxhashjs"
+
+import {
+  Alert as AlertProto,
+  ChatInput as ChatInputProto,
+  Element,
+  LabelVisibilityMessage as LabelVisibilityMessageProto,
+  Skeleton as SkeletonProto,
+} from "@streamlit/protobuf"
+import { isNullOrUndefined, notNullOrUndefined } from "@streamlit/utils"
+
+import { assertNever } from "./assertNever"
+
+// This prefix should be in sync with the value on the python side:
+const GENERATED_ELEMENT_ID_PREFIX = "$$ID"
 
 /**
  * Wraps a function to allow it to be called, at most, once per interval
@@ -177,7 +187,7 @@ export function isPaddingDisplayed(): boolean {
 /**
  * Returns true if the URL parameters contain ?embed_options=light_theme (case insensitive).
  */
-export function isLightTheme(): boolean {
+export function isLightThemeInQueryParams(): boolean {
   // NOTE: We don't check for ?embed=true here, because we want to allow display without any
   // other embed options (for example in our e2e tests).
   return getEmbedUrlParams(EMBED_OPTIONS_QUERY_PARAM_KEY).has(
@@ -188,7 +198,7 @@ export function isLightTheme(): boolean {
 /**
  * Returns true if the URL parameters contain ?embed_options=dark_theme (case insensitive).
  */
-export function isDarkTheme(): boolean {
+export function isDarkThemeInQueryParams(): boolean {
   // NOTE: We don't check for ?embed=true here, because we want to allow display without any
   // other embed options (for example in our e2e tests).
   return getEmbedUrlParams(EMBED_OPTIONS_QUERY_PARAM_KEY).has(EMBED_DARK_THEME)
@@ -236,9 +246,9 @@ export function makeElementWithErrorText(text: string): Element {
 }
 
 /** Return a special internal-only Element showing an app "skeleton". */
-export function makeSkeletonElement(): Element {
+export function makeAppSkeletonElement(): Element {
   return new Element({
-    skeleton: {},
+    skeleton: { style: SkeletonProto.SkeletonStyle.APP },
   })
 }
 
@@ -255,7 +265,7 @@ export function hashString(s: string): string {
  * if the value is null or undefined.
  */
 export function requireNonNull<T>(obj: T | null | undefined): T {
-  if (obj == null) {
+  if (isNullOrUndefined(obj)) {
     throw new Error("value is null")
   }
   return obj
@@ -266,33 +276,6 @@ export function requireNonNull<T>(obj: T | null | undefined): T {
  */
 export function notUndefined<T>(value: T | undefined): value is T {
   return value !== undefined
-}
-
-/**
- * A type predicate that is true if the given value is not null.
- */
-export function notNull<T>(value: T | null): value is T {
-  return value != null
-}
-
-/**
- * A type predicate that is true if the given value is neither undefined
- * nor null.
- */
-export function notNullOrUndefined<T>(
-  value: T | null | undefined
-): value is T {
-  return <T>value !== null && <T>value !== undefined
-}
-
-/**
- * A type predicate that is true if the given value is either undefined
- * or null.
- */
-export function isNullOrUndefined<T>(
-  value: T | null | undefined
-): value is null | undefined {
-  return <T>value === null || <T>value === undefined
 }
 
 /**
@@ -318,14 +301,6 @@ export function isFromWindows(): boolean {
 }
 
 /**
- * Returns cookie value
- */
-export function getCookie(name: string): string | undefined {
-  const r = document.cookie.match(`\\b${name}=([^;]*)\\b`)
-  return r ? r[1] : undefined
-}
-
-/**
  * Sets cookie value
  */
 export function setCookie(
@@ -340,14 +315,34 @@ export function setCookie(
   document.cookie = `${name}=${value};${expirationStr}path=/`
 }
 
-/** Return an Element's widget ID if it's a widget, and undefined otherwise. */
-export function getElementWidgetID(element: Element): string | undefined {
-  return get(element as any, [requireNonNull(element.type), "id"])
+export function isValidElementId(
+  elementId: string | undefined | null
+): boolean {
+  if (!elementId) {
+    return false
+  }
+  return (
+    elementId.startsWith(GENERATED_ELEMENT_ID_PREFIX) &&
+    // There must be at least 3 parts: $$ID-<hash>-<userKey>
+    elementId.split("-").length >= 3
+  )
+}
+
+/**
+ * If the element has a valid ID, returns it. Otherwise, returns undefined.
+ */
+export function getElementId(element: Element): string | undefined {
+  const elementId = get(element as any, [requireNonNull(element.type), "id"])
+  if (elementId && isValidElementId(elementId)) {
+    // We only care about valid element IDs (with the correct prefix)
+    return elementId
+  }
+  return undefined
 }
 
 /** True if the given form ID is non-null and non-empty. */
 export function isValidFormId(formId?: string): formId is string {
-  return formId != null && formId.length > 0
+  return notNullOrUndefined(formId) && formId.length > 0
 }
 
 /** True if the given widget element is part of a form. */
@@ -373,6 +368,28 @@ export function labelVisibilityProtoValueToEnum(
       return LabelVisibilityOptions.Collapsed
     default:
       return LabelVisibilityOptions.Visible
+  }
+}
+
+export enum AcceptFileValue {
+  None,
+  Single,
+  Multiple,
+}
+
+export function chatInputAcceptFileProtoValueToEnum(
+  value: ChatInputProto.AcceptFile
+): AcceptFileValue {
+  switch (value) {
+    case ChatInputProto.AcceptFile.NONE:
+      return AcceptFileValue.None
+    case ChatInputProto.AcceptFile.SINGLE:
+      return AcceptFileValue.Single
+    case ChatInputProto.AcceptFile.MULTIPLE:
+      return AcceptFileValue.Multiple
+    default:
+      assertNever(value)
+      return AcceptFileValue.None
   }
 }
 
@@ -495,8 +512,55 @@ export function extractPageNameFromPathName(
   // weird-looking triple `replace()`.
   return decodeURIComponent(
     document.location.pathname
-      .replace(`/${basePath}`, "")
+      .replace(basePath, "")
       .replace(new RegExp("^/?"), "")
       .replace(new RegExp("/$"), "")
   )
 }
+
+/**
+ * Converts object keys from camelCase to snake_case, applied recursively to nested objects and arrays.
+ * Keys containing dots are replaced with underscores. The conversion preserves consecutive uppercase letters.
+ *
+ * @param obj - The input object with keys to be converted. Can include nested objects and arrays.
+ * @returns A new object with all keys in snake_case, maintaining the original structure and values.
+ *
+ * @example
+ * keysToSnakeCase({
+ *   userId: 1,
+ *   user.Info: { firstName: "John", lastName: "Doe" },
+ *   userActivities: [{ loginTime: "10AM", logoutTime: "5PM" }]
+ * });
+ * // Returns:
+ * // {
+ * //   user_id: 1,
+ * //   user_info: { first_name: "John", last_name: "Doe" },
+ * //   user_activities: [{ login_time: "10AM", logout_time: "5PM" }]
+ * // }
+ */
+export function keysToSnakeCase(
+  obj: Record<string, any>
+): Record<string, any> {
+  return Object.keys(obj).reduce((acc, key) => {
+    const newKey = decamelize(key, {
+      preserveConsecutiveUppercase: true,
+    }).replace(".", "_")
+    let value = obj[key]
+
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      value = keysToSnakeCase(value)
+    }
+
+    if (Array.isArray(value)) {
+      value = value.map(item =>
+        typeof item === "object" ? keysToSnakeCase(item) : item
+      )
+    }
+
+    acc[newKey] = value
+    return acc
+  }, {} as Record<string, any>)
+}
+
+// TODO: Update all imports to use @streamlit/utils and remove this line.
+export { isNullOrUndefined, notNullOrUndefined } from "@streamlit/utils"

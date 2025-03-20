@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-import { ensureError } from "@streamlit/lib/src/util/ErrorHandling"
-import hoistNonReactStatics from "hoist-non-react-statics"
 import React, { ComponentType, PureComponent, ReactNode } from "react"
-import MapboxTokenError from "./MapboxTokenError"
+
+import hoistNonReactStatics from "hoist-non-react-statics"
 import axios from "axios"
-import { DeckGlJsonChart } from "@streamlit/lib/src/proto"
-import { Skeleton } from "@streamlit/lib/src/components/elements/Skeleton"
-import { LibContext } from "@streamlit/lib/src/components/core/LibContext"
+
+import {
+  DeckGlJsonChart,
+  Skeleton as SkeletonProto,
+} from "@streamlit/protobuf"
+
+import { ensureError } from "~lib/util/ErrorHandling"
+import { Skeleton } from "~lib/components/elements/Skeleton"
+import { LibContext } from "~lib/components/core/LibContext"
+
+import MapboxTokenError from "./MapboxTokenError"
 
 interface InjectedProps {
   mapboxToken: string
 }
 
-interface State {
+export interface State {
   mapboxToken?: string
   mapboxTokenError?: Error
   isFetching: boolean
@@ -41,7 +48,6 @@ export type WrappedMapboxProps<P extends InjectedProps> = Omit<
   "mapboxToken"
 > & {
   element: DeckGlJsonChart
-  width: number
 }
 
 export class MapboxTokenNotProvidedError extends Error {}
@@ -137,23 +143,24 @@ const withMapboxToken =
 
       public render = (): ReactNode => {
         const { mapboxToken, mapboxTokenError, isFetching } = this.state
-        const { width } = this.props
 
         // We got an error when fetching our mapbox token: show the error.
         if (mapboxTokenError) {
           return (
-            <MapboxTokenError
-              width={width}
-              error={mapboxTokenError}
-              deltaType={deltaType}
-            />
+            <MapboxTokenError error={mapboxTokenError} deltaType={deltaType} />
           )
         }
 
         // If our mapboxToken hasn't been retrieved yet, show a loading
         // skeleton.
         if (isFetching) {
-          return <Skeleton />
+          return (
+            <Skeleton
+              element={SkeletonProto.create({
+                style: SkeletonProto.SkeletonStyle.ELEMENT,
+              })}
+            />
+          )
         }
 
         // We have the mapbox token. Pass it through to our component.
@@ -163,7 +170,6 @@ const withMapboxToken =
           <WrappedComponent
             {...(this.props as unknown as P)}
             mapboxToken={mapboxToken}
-            width={width}
           />
         )
       }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,25 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, ReactNode, useEffect, useState } from "react"
-import AlertElement from "@streamlit/lib/src/components/elements/AlertElement"
-import { Kind } from "@streamlit/lib/src/components/shared/AlertContainer"
-import { ScriptRunState } from "@streamlit/lib/src/ScriptRunState"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
+import React, {
+  memo,
+  ReactElement,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react"
+
+import AlertElement from "~lib/components/elements/AlertElement"
+import { Kind } from "~lib/components/shared/AlertContainer"
+import { ScriptRunState } from "~lib/ScriptRunState"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
+
 import { StyledErrorContainer, StyledForm } from "./styled-components"
 
 export interface Props {
   formId: string
   clearOnSubmit: boolean
-  width: number
+  enterToSubmit: boolean
   hasSubmitButton: boolean
   scriptRunState: ScriptRunState
   children?: ReactNode
@@ -38,25 +46,24 @@ export const MISSING_SUBMIT_BUTTON_WARNING =
   "never be sent to your Streamlit app." +
   "\n\nTo create a submit button, use the `st.form_submit_button()` function." +
   "\n\nFor more information, refer to the " +
-  "[documentation for forms](https://docs.streamlit.io/library/api-reference/control-flow/st.form)."
+  "[documentation for forms](https://docs.streamlit.io/develop/api-reference/execution-flow/st.form)."
 
-export function Form(props: Props): ReactElement {
+function Form(props: Props): ReactElement {
   const {
     formId,
     widgetMgr,
     hasSubmitButton,
     children,
-    width,
     scriptRunState,
     clearOnSubmit,
+    enterToSubmit,
     border,
   } = props
 
-  // Tell WidgetStateManager if this form is `clearOnSubmit` so that it can
-  // do the right thing when the form is submitted.
+  // Tell WidgetStateManager if this form is `clearOnSubmit` and `enterToSubmit`
   useEffect(() => {
-    widgetMgr.setFormClearOnSubmit(formId, clearOnSubmit)
-  }, [widgetMgr, formId, clearOnSubmit])
+    widgetMgr.setFormSubmitBehaviors(formId, clearOnSubmit, enterToSubmit)
+  }, [widgetMgr, formId, clearOnSubmit, enterToSubmit])
 
   // Determine if we need to show the "missing submit button" warning.
   // If we have a submit button, we don't show the warning, of course.
@@ -80,19 +87,17 @@ export function Form(props: Props): ReactElement {
   if (showWarning) {
     submitWarning = (
       <StyledErrorContainer>
-        <AlertElement
-          body={MISSING_SUBMIT_BUTTON_WARNING}
-          kind={Kind.ERROR}
-          width={width}
-        />
+        <AlertElement body={MISSING_SUBMIT_BUTTON_WARNING} kind={Kind.ERROR} />
       </StyledErrorContainer>
     )
   }
 
   return (
-    <StyledForm border={border} data-testid="stForm">
+    <StyledForm className="stForm" data-testid="stForm" border={border}>
       {children}
       {submitWarning}
     </StyledForm>
   )
 }
+
+export default memo(Form)

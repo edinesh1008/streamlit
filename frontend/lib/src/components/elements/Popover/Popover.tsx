@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +14,36 @@
  * limitations under the License.
  */
 
-import React, { ReactElement } from "react"
+import React, { memo, ReactElement } from "react"
 
 import { useTheme } from "@emotion/react"
-import { ExpandMore, ExpandLess } from "@emotion-icons/material-outlined"
+import { ExpandLess, ExpandMore } from "@emotion-icons/material-outlined"
+import { PLACEMENT, TRIGGER_TYPE, Popover as UIPopover } from "baseui/popover"
 
-import { hasLightBackgroundColor } from "@streamlit/lib/src/theme"
-import { StyledIcon } from "@streamlit/lib/src/components/shared/Icon"
-import { Block as BlockProto } from "@streamlit/lib/src/proto"
+import { Block as BlockProto } from "@streamlit/protobuf"
+
+import { hasLightBackgroundColor } from "~lib/theme"
+import { StyledIcon } from "~lib/components/shared/Icon"
 import BaseButton, {
-  BaseButtonTooltip,
   BaseButtonKind,
   BaseButtonSize,
-} from "@streamlit/lib/src/components/shared/BaseButton"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
-import IsSidebarContext from "@streamlit/lib/src/components/core/IsSidebarContext"
-
-import { Popover as UIPopover, TRIGGER_TYPE, PLACEMENT } from "baseui/popover"
+  BaseButtonTooltip,
+  DynamicButtonLabel,
+} from "~lib/components/shared/BaseButton"
+import IsSidebarContext from "~lib/components/core/IsSidebarContext"
+import { Box } from "~lib/components/shared/Base/styled-components"
+import { useCalculatedWidth } from "~lib/hooks/useCalculatedWidth"
 
 import { StyledPopoverButtonIcon } from "./styled-components"
 
 export interface PopoverProps {
   element: BlockProto.Popover
   empty: boolean
-  width: number
 }
 
 const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
   element,
   empty,
-  width,
   children,
 }): ReactElement => {
   const [open, setOpen] = React.useState(false)
@@ -52,12 +52,10 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
   const theme = useTheme()
   const lightBackground = hasLightBackgroundColor(theme)
 
-  // When useContainerWidth true & has help tooltip,
-  // we need to pass the container width down to the button
-  const fluidButtonWidth = element.help ? width : true
+  const [width, elementRef] = useCalculatedWidth()
 
   return (
-    <div data-testid="stPopover">
+    <Box data-testid="stPopover" className="stPopover" ref={elementRef}>
       <UIPopover
         triggerType={TRIGGER_TYPE.click}
         placement={PLACEMENT.bottomLeft}
@@ -86,38 +84,38 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
 
               maxHeight: "70vh",
               overflow: "auto",
-              maxWidth: `calc(${theme.sizes.contentMaxWidth} - 2rem)`,
+              maxWidth: `calc(${theme.sizes.contentMaxWidth} - 2*${theme.spacing.lg})`,
               minWidth: element.useContainerWidth
                 ? // If use_container_width==True, we use the container width as minimum:
                   `${Math.max(width, 160)}px` // 10rem ~= 160px
-                : "20rem",
+                : theme.sizes.minPopupWidth,
               [`@media (max-width: ${theme.breakpoints.sm})`]: {
-                maxWidth: `calc(100% - 2rem)`,
+                maxWidth: `calc(100% - ${theme.spacing.threeXL})`,
               },
               borderTopLeftRadius: theme.radii.xl,
               borderTopRightRadius: theme.radii.xl,
               borderBottomRightRadius: theme.radii.xl,
               borderBottomLeftRadius: theme.radii.xl,
 
-              borderLeftWidth: "1px",
-              borderRightWidth: "1px",
-              borderTopWidth: "1px",
-              borderBottomWidth: "1px",
+              borderLeftWidth: theme.sizes.borderWidth,
+              borderRightWidth: theme.sizes.borderWidth,
+              borderTopWidth: theme.sizes.borderWidth,
+              borderBottomWidth: theme.sizes.borderWidth,
 
-              paddingRight: "calc(1.5em - 1px)", // 1px to account for border.
-              paddingLeft: "calc(1.5em - 1px)",
-              paddingBottom: "calc(1.5em - 1px)",
-              paddingTop: "calc(1.5em - 1px)",
+              paddingRight: `calc(${theme.spacing.twoXL} - ${theme.sizes.borderWidth})`, // 1px to account for border.
+              paddingLeft: `calc(${theme.spacing.twoXL} - ${theme.sizes.borderWidth})`,
+              paddingBottom: `calc(${theme.spacing.twoXL} - ${theme.sizes.borderWidth})`,
+              paddingTop: `calc(${theme.spacing.twoXL} - ${theme.sizes.borderWidth})`,
 
               borderLeftStyle: "solid",
               borderRightStyle: "solid",
               borderTopStyle: "solid",
               borderBottomStyle: "solid",
 
-              borderLeftColor: theme.colors.fadedText10,
-              borderRightColor: theme.colors.fadedText10,
-              borderTopColor: theme.colors.fadedText10,
-              borderBottomColor: theme.colors.fadedText10,
+              borderLeftColor: theme.colors.borderColor,
+              borderRightColor: theme.colors.borderColor,
+              borderTopColor: theme.colors.borderColor,
+              borderBottomColor: theme.colors.borderColor,
 
               boxShadow: lightBackground
                 ? "0px 4px 16px rgba(0, 0, 0, 0.16)"
@@ -129,38 +127,35 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
         {/* This needs to be wrapped into a div, otherwise
         the BaseWeb popover implementation will not work correctly. */}
         <div>
-          <BaseButtonTooltip help={element.help}>
+          <BaseButtonTooltip
+            help={element.help}
+            containerWidth={element.useContainerWidth}
+          >
             <BaseButton
+              data-testid="stPopoverButton"
               kind={BaseButtonKind.SECONDARY}
               size={BaseButtonSize.SMALL}
               disabled={empty || element.disabled}
-              fluidWidth={element.useContainerWidth ? fluidButtonWidth : false}
-              data-testid="stPopoverButton"
+              containerWidth={element.useContainerWidth}
               onClick={() => setOpen(!open)}
             >
-              <StreamlitMarkdown
-                source={element.label}
-                allowHTML={false}
-                isLabel
-                largerLabel
-                disableLinks
-              />
+              <DynamicButtonLabel icon={element.icon} label={element.label} />
               <StyledPopoverButtonIcon>
                 <StyledIcon
                   as={open ? ExpandLess : ExpandMore}
                   color="inherit"
                   aria-hidden="true"
                   size="lg"
-                  margin=""
-                  padding=""
+                  margin={theme.spacing.none}
+                  padding={theme.spacing.none}
                 />
               </StyledPopoverButtonIcon>
             </BaseButton>
           </BaseButtonTooltip>
         </div>
       </UIPopover>
-    </div>
+    </Box>
   )
 }
 
-export default Popover
+export default memo(Popover)

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,21 @@
  * limitations under the License.
  */
 
-import nodeEmoji from "node-emoji"
-import { grabTheRightIcon } from "@streamlit/lib/src/vendor/twemoji"
-import { IGuestToHostMessage } from "@streamlit/lib/src/hostComm/types"
-import { StreamlitEndpoints } from "@streamlit/lib/src/StreamlitEndpoints"
+import * as nodeEmoji from "node-emoji"
+
+import { IGuestToHostMessage } from "~lib/hostComm/types"
+import { StreamlitEndpoints } from "~lib/StreamlitEndpoints"
+
+function iconToUrl(icon: string): string {
+  const iconRegexp = /^:(.+)\/(.+):$/
+  const matchResult = icon.match(iconRegexp)
+  if (matchResult === null) {
+    // If the icon is invalid, return just an empty string
+    return ""
+  }
+
+  return `https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/${matchResult[2]}/default/24px.svg`
+}
 
 /**
  * Set the provided url/emoji as the page favicon.
@@ -34,12 +45,11 @@ export function handleFavicon(
   const emoji = extractEmoji(favicon)
   let imageUrl
 
-  if (emoji) {
-    // Find the corresponding Twitter emoji on the CDN.
-    const codepoint = grabTheRightIcon(emoji)
-    const emojiUrl = `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/${codepoint}.png`
-
-    imageUrl = emojiUrl
+  if (emoji && !favicon.startsWith(":material")) {
+    // Create a favicon data URL as SVG with the emoji embedded.
+    imageUrl = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${emoji}</text></svg>`
+  } else if (favicon.startsWith(":material")) {
+    imageUrl = iconToUrl(favicon)
   } else {
     imageUrl = endpoints.buildMediaURL(favicon)
   }
@@ -66,12 +76,13 @@ function overwriteFavicon(imageUrl: string): void {
 // Return the emoji if it exists, or empty string otherwise
 function extractEmoji(maybeEmoji: string): string {
   const shortcode = maybeEmoji.replace("-", "_")
-  if (nodeEmoji.hasEmoji(nodeEmoji.get(shortcode))) {
+  const emoji = nodeEmoji.get(shortcode)
+  if (emoji !== undefined && nodeEmoji.has(emoji)) {
     // Format: pizza or :pizza:
-    // Since hasEmoji(':pizza:') == true, we must do this check first
-    return nodeEmoji.get(shortcode)
+    // Since has(':pizza:') == true, we must do this check first
+    return emoji
   }
-  if (nodeEmoji.hasEmoji(maybeEmoji)) {
+  if (nodeEmoji.has(maybeEmoji)) {
     // Format: 🍕
     return maybeEmoji
   }

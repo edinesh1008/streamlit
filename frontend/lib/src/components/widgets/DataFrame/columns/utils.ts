@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,25 @@
  */
 
 import {
-  GridCell,
-  Theme as GlideTheme,
-  TextCell,
-  GridCellKind,
-  LoadingCell,
-  GridColumn,
   BaseGridCell,
+  Theme as GlideTheme,
+  GridCell,
+  GridCellKind,
+  GridColumn,
+  LoadingCell,
+  TextCell,
 } from "@glideapps/glide-data-grid"
-import toString from "lodash/toString"
 import merge from "lodash/merge"
-import numbro from "numbro"
-import { sprintf } from "sprintf-js"
+import toString from "lodash/toString"
 import moment, { Moment } from "moment"
 import "moment-duration-format"
 import "moment-timezone"
+import numbro from "numbro"
+import { sprintf } from "sprintf-js"
 
-import { EmotionTheme } from "@streamlit/lib/src/theme"
-import { Type as ArrowType } from "@streamlit/lib/src/dataframes/Quiver"
-import {
-  notNullOrUndefined,
-  isNullOrUndefined,
-} from "@streamlit/lib/src/util/utils"
+import { ArrowType } from "~lib/dataframes/arrowTypeUtils"
+import { EmotionTheme } from "~lib/theme"
+import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
 
 /**
  * Interface used for defining the properties (configuration options) of a column.
@@ -59,10 +56,15 @@ export interface BaseColumnProps {
   readonly isHidden: boolean
   // If `True`, the column is a table index:
   readonly isIndex: boolean
+  // If `True`, the column is pinned/frozen:
+  readonly isPinned: boolean
   // If `True`, the column is a stretched:
   readonly isStretched: boolean
   // If `True`, a value is required before the cell or row can be submitted:
   readonly isRequired?: boolean
+  // If `True`, the content of the cell is allowed to be wrapped
+  // to fill the available height of the cell.
+  readonly isWrappingAllowed?: boolean
   // The initial width of the column:
   readonly width?: number
   // A help text that is displayed on hovering the column header.
@@ -77,6 +79,8 @@ export interface BaseColumnProps {
   readonly themeOverride?: Partial<GlideTheme>
   // A custom icon to be displayed in the column header:
   readonly icon?: string
+  // The group that this column belongs to.
+  readonly group?: string
 }
 
 /**
@@ -115,29 +119,31 @@ const BOOLEAN_FALSE_VALUES = ["false", "f", "no", "n", "off", "0"]
 /**
  * Interface used for indicating if a cell contains an error.
  */
-interface ErrorCell extends TextCell {
+export interface ErrorCell extends TextCell {
   readonly isError: true
+  readonly errorDetails: string
 }
 
 /**
  * Returns a cell with an error message.
  *
- * @param errorMsg: A short error message to use as display value.
+ * @param errorMsg: A short error message or the wrong value to use as display value.
  * @param errorDetails: The full error message to show when the user
- *                     clicks on a cell.
+ *                     hovers on a cell.
  *
  * @return a read-only GridCell object that can be used by glide-data-grid.
  */
 export function getErrorCell(errorMsg: string, errorDetails = ""): ErrorCell {
-  errorMsg = `⚠️ ${errorMsg}`
   return {
     kind: GridCellKind.Text,
     readonly: true,
     allowOverlay: true,
-    data: errorMsg + (errorDetails ? `\n\n${errorDetails}\n` : ""),
+    data: errorMsg,
     displayData: errorMsg,
+    errorDetails: errorDetails,
     isError: true,
-  } as ErrorCell
+    style: "faded",
+  }
 }
 
 /**
@@ -227,11 +233,15 @@ export function toGlideColumn(column: BaseColumn): GridColumn {
     id: column.id,
     title: column.title,
     hasMenu: false,
+    menuIcon: "dots",
     themeOverride: column.themeOverride,
     icon: column.icon,
-    ...(column.isStretched && {
-      grow: column.isIndex ? 1 : 3,
-    }),
+    group: column.group,
+    // Only grow non pinned columns, it looks a bit broken otherwise:
+    ...(column.isStretched &&
+      !column.isPinned && {
+        grow: 1,
+      }),
     ...(column.width && {
       width: column.width,
     }),
@@ -317,6 +327,20 @@ export function toSafeArray(data: any): any[] {
   } catch (error) {
     return [toSafeString(data)]
   }
+}
+
+/**
+ * Efficient check to determine if a string is looks like a JSON string.
+ *
+ * This is only a heuristic check and does not guarantee that the string is a
+ * valid JSON string.
+ *
+ * @param data - The data to check.
+ *
+ * @returns `true` if the data might be a JSON string.
+ */
+export function isMaybeJson(data: any): boolean {
+  return data && data.startsWith("{") && data.endsWith("}")
 }
 
 /**
@@ -419,6 +443,54 @@ export function toSafeNumber(value: any): number | null {
 }
 
 /**
+ * Tries to convert a given value of unknown type to a JSON string without
+ * the risks of any exceptions.
+ *
+ * @param value - The value to convert to a JSON string.
+ *
+ * @returns The converted JSON string or a string showing the type of the object as fallback.
+ */
+export function toJsonString(value: any): string {
+  if (isNullOrUndefined(value)) {
+    return ""
+  }
+
+  if (typeof value === "string") {
+    // If the value is already a string, return it as-is
+    return value
+  }
+
+  try {
+    // Try to convert the value to a JSON string
+    return JSON.stringify(value, (_key, val) =>
+      // BigInt are not supported by JSON.stringify
+      // so we convert them to a number as fallback
+      typeof val === "bigint" ? Number(val) : val
+    )
+  } catch (error) {
+    // If the value cannot be converted to a JSON string, return the stringified value
+    return toSafeString(value)
+  }
+}
+
+/**
+ * Determines the default mantissa to use for the given number.
+ *
+ * @param value - The number to determine the mantissa for.
+ *
+ * @returns The mantissa to use.
+ */
+function determineDefaultMantissa(value: number): number {
+  if (value === 0 || Math.abs(value) >= 0.0001) {
+    return 4
+  }
+
+  const expStr = value.toExponential()
+  const parts = expStr.split("e")
+  return Math.abs(parseInt(parts[1], 10))
+}
+
+/**
  * Formats the given number to a string based on a provided format or the default format.
  *
  * @param value - The number to format.
@@ -438,30 +510,70 @@ export function formatNumber(
   }
 
   if (isNullOrUndefined(format) || format === "") {
-    if (maxPrecision === 0) {
-      // Numbro is unable to format the number with 0 decimals.
-      value = Math.round(value)
+    // If no format is provided, use the default format
+    if (notNullOrUndefined(maxPrecision)) {
+      // Use the configured precision to influence how the number is formatted
+      if (maxPrecision === 0) {
+        // Numbro is unable to format the number with 0 decimals.
+        value = Math.round(value)
+      }
+
+      return numbro(value).format({
+        thousandSeparated: false,
+        mantissa: maxPrecision,
+        trimMantissa: false,
+      })
     }
-    return numbro(value).format(
-      notNullOrUndefined(maxPrecision)
-        ? `0,0.${"0".repeat(maxPrecision)}`
-        : `0,0.[0000]` // If no precision is given, use 4 decimals and hide trailing zeros
-    )
+
+    // Use a default format if no precision is given
+    return numbro(value).format({
+      thousandSeparated: false,
+      mantissa: determineDefaultMantissa(value),
+      trimMantissa: true,
+    })
   }
 
-  if (format === "percent") {
+  if (format === "plain") {
+    return numbro(value).format({
+      thousandSeparated: false,
+      // Use a large mantissa to avoid cutting off decimals
+      mantissa: 20,
+      trimMantissa: true,
+    })
+  } else if (format === "localized") {
+    return new Intl.NumberFormat().format(value)
+  } else if (format === "percent") {
     return new Intl.NumberFormat(undefined, {
       style: "percent",
-      minimumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(value)
+  } else if (format === "dollar") {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD",
+      currencyDisplay: "narrowSymbol",
+      maximumFractionDigits: 2,
+    }).format(value)
+  } else if (format === "euro") {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "EUR",
       maximumFractionDigits: 2,
     }).format(value)
   } else if (["compact", "scientific", "engineering"].includes(format)) {
     return new Intl.NumberFormat(undefined, {
       notation: format as any,
     }).format(value)
-  } else if (format === "duration[ns]") {
-    return moment.duration(value / (1000 * 1000), "milliseconds").humanize()
+  } else if (format === "accounting") {
+    return numbro(value).format({
+      thousandSeparated: true,
+      negative: "parenthesis",
+      mantissa: 2,
+      trimMantissa: false,
+    })
   }
+
   return sprintf(format, value)
 }
 
@@ -470,21 +582,37 @@ export function formatNumber(
  *
  * @param momentDate The moment date to format.
  * @param format The format to use.
- *   If the format is `locale` the date will be formatted according to the user's locale.
- *   If the format is `relative` the date will be formatted as a relative time (e.g. "2 hours ago").
+ *   If the format is `localized` the date will be formatted according to the user's locale.
+ *   If the format is `distance` the date will be formatted as a relative time distance (e.g. "2 hours ago").
+ *   If the format is `calendar` the date will be formatted as a calendar date (e.g. "Tomorrow 12:00").
+ *   If the format is `iso8601` the date will be formatted according to ISO 8601 standard:
+ *     - For date: YYYY-MM-DD
+ *     - For time: HH:mm:ss.sssZ
+ *     - For datetime: YYYY-MM-DDTHH:mm:ss.sssZ
  *   Otherwise, it is interpreted as momentJS format string: https://momentjs.com/docs/#/displaying/format/
  * @returns The formatted date as a string.
  */
-export function formatMoment(momentDate: Moment, format: string): string {
-  if (format === "locale") {
+export function formatMoment(
+  momentDate: Moment,
+  format: string,
+  momentKind: "date" | "time" | "datetime" = "datetime"
+): string {
+  if (format === "localized") {
     return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "medium",
+      dateStyle: momentKind === "time" ? undefined : "medium",
+      timeStyle: momentKind === "date" ? undefined : "medium",
     }).format(momentDate.toDate())
   } else if (format === "distance") {
     return momentDate.fromNow()
-  } else if (format === "relative") {
+  } else if (format === "calendar") {
     return momentDate.calendar()
+  } else if (format === "iso8601") {
+    if (momentKind === "date") {
+      return momentDate.format("YYYY-MM-DD")
+    } else if (momentKind === "time") {
+      return momentDate.format("HH:mm:ss.SSS[Z]")
+    }
+    return momentDate.toISOString()
   }
   return momentDate.format(format)
 }
@@ -663,7 +791,8 @@ export function getLinkDisplayValueFromRegex(
     if (patternMatch && patternMatch[1] !== undefined) {
       // return the first matching group
       // Since this might be a URI encoded value, we decode it.
-      return decodeURI(patternMatch[1])
+      // Note: we replace + with %20 to correctly convert + to whitespaces.
+      return decodeURIComponent(patternMatch[1].replace(/\+/g, "%20"))
     }
 
     // if the regex doesn't find a match with the url, just use the url as display value

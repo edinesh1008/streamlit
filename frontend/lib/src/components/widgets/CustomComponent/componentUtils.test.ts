@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,54 +15,57 @@
  */
 
 import { RefObject } from "react"
-import "@testing-library/jest-dom"
 
-import { mockTheme } from "@streamlit/lib/src/mocks/mockTheme"
+import { Mock } from "vitest"
 
 import {
+  ArrowDataframe,
+  ComponentInstance as ComponentInstanceProto,
+} from "@streamlit/protobuf"
+
+import { mockTheme } from "~lib/mocks/mockTheme"
+import { toExportedTheme } from "~lib/theme"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
+
+import {
+  createIframeMessageHandler,
   CUSTOM_COMPONENT_API_VERSION,
   IframeMessage,
   IframeMessageHandlerProps,
-  createIframeMessageHandler,
   parseArgs,
   sendRenderMessage,
 } from "./componentUtils"
 import { ComponentMessageType, StreamlitMessageType } from "./enums"
-import {
-  ArrowDataframe,
-  ComponentInstance as ComponentInstanceProto,
-} from "@streamlit/lib/src/proto"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
 
 // Mock our WidgetStateManager
-jest.mock("@streamlit/lib/src/WidgetStateManager")
+vi.mock("~lib/WidgetStateManager")
 
 describe("test componentUtils", () => {
   describe("createIframeMsgHandler", () => {
     const element = ComponentInstanceProto.create({})
     let widgetMgr: WidgetStateManager
-    let setComponentError: jest.Mock
-    let componentReadyCallback: jest.Mock
-    let frameHeightCallback: jest.Mock
+    let setComponentError: Mock
+    let componentReadyCallback: Mock
+    let frameHeightCallback: Mock
 
     let ref: RefObject<IframeMessageHandlerProps>
     let iframeMessageHandler: (type: string, data: IframeMessage) => void
 
     beforeEach(() => {
       // Clear our class mocks
-      const mockWidgetStateManager = WidgetStateManager as unknown as jest.Mock
+      const mockWidgetStateManager = WidgetStateManager as unknown as Mock
       mockWidgetStateManager.mockClear()
 
-      componentReadyCallback = jest.fn()
-      frameHeightCallback = jest.fn()
-      setComponentError = jest.fn()
+      componentReadyCallback = vi.fn()
+      frameHeightCallback = vi.fn()
+      setComponentError = vi.fn()
       widgetMgr = new WidgetStateManager({
-        sendRerunBackMsg: jest.fn(),
-        formsDataChanged: jest.fn(),
+        sendRerunBackMsg: vi.fn(),
+        formsDataChanged: vi.fn(),
       })
       ref = {
         current: {
-          isReady: true,
+          isReady: () => true,
           element,
           widgetMgr,
           setComponentError,
@@ -95,7 +98,7 @@ describe("test componentUtils", () => {
       })
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      ref.current!.isReady = false
+      ref.current!.isReady = () => false
       // when isReady = false, the callback should not be called
       iframeMessageHandler(ComponentMessageType.SET_FRAME_HEIGHT, {
         height: height,
@@ -113,7 +116,7 @@ describe("test componentUtils", () => {
       })
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      ref.current!.isReady = false
+      ref.current!.isReady = () => false
       // when isReady = false, the callback should not be called
       iframeMessageHandler(ComponentMessageType.SET_COMPONENT_VALUE, {
         value: jsonValue,
@@ -134,7 +137,7 @@ describe("test componentUtils", () => {
 
   describe("sendRenderMessage", () => {
     it("should send message to iframe", () => {
-      const handleAction = jest.fn()
+      const handleAction = vi.fn()
 
       const mockIframe: any = {
         contentWindow: {
@@ -160,14 +163,18 @@ describe("test componentUtils", () => {
           args,
           dfs: dataframeArgs,
           disabled,
-          theme: expect.any(Object),
+          theme: {
+            ...toExportedTheme(mockTheme.emotion),
+            // Should fill in the deprecated font property for backwards compatibility
+            font: mockTheme.emotion.genericFonts.bodyFont,
+          },
         },
         "*"
       )
     })
 
     it("should not send message when iframe is undefined", () => {
-      const handleAction = jest.fn()
+      const handleAction = vi.fn()
 
       const mockIframe: any = undefined
       sendRenderMessage({}, [], false, mockTheme.emotion, mockIframe)
@@ -175,7 +182,7 @@ describe("test componentUtils", () => {
     })
 
     it("should not send message when iframe's content window is undefined", () => {
-      const handleAction = jest.fn()
+      const handleAction = vi.fn()
 
       const mockIframe: any = {
         contentWindow: undefined,

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
+
 import { screen } from "@testing-library/react"
 
-import { mockEndpoints } from "@streamlit/lib/src/mocks/mocks"
-import { render } from "@streamlit/lib/src/test_util"
-import { Block as BlockProto } from "@streamlit/lib/src/proto"
+import { Block as BlockProto } from "@streamlit/protobuf"
+
+import { mockEndpoints } from "~lib/mocks/mocks"
+import { render } from "~lib/test_util"
 
 import ChatMessage, { ChatMessageProps } from "./ChatMessage"
 
@@ -34,7 +35,7 @@ const getProps = (
     ...elementProps,
   }),
   endpoints: mockEndpoints({
-    buildMediaURL: jest.fn().mockImplementation(url => url),
+    buildMediaURL: vi.fn().mockImplementation(url => url),
   }),
 })
 
@@ -43,8 +44,9 @@ describe("ChatMessage", () => {
     const props = getProps()
     render(<ChatMessage {...props} />)
 
-    const chatContent = screen.getByTestId("stChatMessageContent")
-    expect(chatContent).toBeInTheDocument()
+    const chatMessage = screen.getByTestId("stChatMessage")
+    expect(chatMessage).toBeInTheDocument()
+    expect(chatMessage).toHaveClass("stChatMessage")
   })
 
   it("renders message children content", () => {
@@ -92,7 +94,7 @@ describe("ChatMessage", () => {
     })
     render(<ChatMessage {...props} />)
 
-    const userAvatarIcon = screen.getByTestId("chatAvatarIcon-user")
+    const userAvatarIcon = screen.getByTestId("stChatMessageAvatarUser")
     expect(userAvatarIcon).toBeInTheDocument()
   })
 
@@ -104,7 +106,9 @@ describe("ChatMessage", () => {
     })
     render(<ChatMessage {...props} />)
 
-    const assistantAvatarIcon = screen.getByTestId("chatAvatarIcon-assistant")
+    const assistantAvatarIcon = screen.getByTestId(
+      "stChatMessageAvatarAssistant"
+    )
     expect(assistantAvatarIcon).toBeInTheDocument()
   })
 

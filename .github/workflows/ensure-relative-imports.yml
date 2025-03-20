@@ -1,4 +1,4 @@
-name: Ensure Relative Imports Exist in Prod @streamlit/lib
+name: Ensure Relative Imports in Frontend
 
 on:
   push:
@@ -19,12 +19,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  ensure-relative-imports:
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        shell: bash --login -eo pipefail {0}
+        shell: bash
 
     steps:
       - name: Checkout Streamlit code
@@ -43,10 +43,13 @@ jobs:
       - name: Setup virtual env
         uses: ./.github/actions/make_init
       - name: Run make develop
-        run: make develop
+        run: |
+          source venv/bin/activate
+          make develop
+
       - name: Run make protobuf
         run: make protobuf
       - name: Run make frontend-lib-prod
         run: make frontend-lib-prod
-      - name: Ensure ensure relative imports exist in the @streamlit/lib/dist folder
+      - name: Ensure relative imports exist in the @streamlit/lib/dist folder
         run: make ensure-relative-imports

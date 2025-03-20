@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,13 @@ with st.popover("popover 2 (use_container_width)", use_container_width=True):
     st.markdown("Hello")
 
 with st.popover(
+    "popover 9 (use_container_width) with help",
+    use_container_width=True,
+    help="help text",
+):
+    st.markdown("Hello")
+
+with st.popover(
     "popover 3 (with widgets)",
 ):
     st.markdown("Hello World 👋")
@@ -38,10 +45,9 @@ with st.popover(
     col3.text_input("Column 3")
     st.selectbox("Selectbox", ["a", "b", "c"])
 
-
 with st.popover("popover 4 (with dataframe)", help="help text"):
     st.markdown("Popover with dataframe")
-    st.dataframe(df, use_container_width=False)
+    st.dataframe(df, use_container_width=True)
     st.image(np.repeat(0, 100).reshape(10, 10))
 
 with st.sidebar.popover("popover 5 (in sidebar)"):
@@ -50,6 +56,12 @@ with st.sidebar.popover("popover 5 (in sidebar)"):
 
 with st.popover("popover 6 (disabled)", disabled=True):
     st.markdown("Hello World 👋")
+
+with st.popover("popover 7 (emoji)", icon="🦄"):
+    st.markdown("Hello unicorn")
+
+with st.popover("popover 8 (material icon)", icon=":material/thumb_up:"):
+    st.markdown("Hello thumb up")
 
 with st.expander("Output"):
     st.markdown(text)

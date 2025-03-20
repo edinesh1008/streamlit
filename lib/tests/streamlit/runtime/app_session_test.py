@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import annotations
+
 import asyncio
 import gc
 import threading
 import unittest
 from asyncio import AbstractEventLoop
-from typing import Any, Callable, List, Optional, cast
+from typing import Any, Callable, cast
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock, patch
 
@@ -30,6 +32,7 @@ from streamlit.proto.BackMsg_pb2 import BackMsg
 from streamlit.proto.ClientState_pb2 import ClientState
 from streamlit.proto.Common_pb2 import FileURLs, FileURLsRequest, FileURLsResponse
 from streamlit.proto.ForwardMsg_pb2 import ForwardMsg
+from streamlit.proto.NewSession_pb2 import FontFace
 from streamlit.runtime import Runtime
 from streamlit.runtime.app_session import AppSession, AppSessionState
 from streamlit.runtime.caching.storage.dummy_cache_storage import (
@@ -39,6 +42,7 @@ from streamlit.runtime.forward_msg_queue import ForwardMsgQueue
 from streamlit.runtime.fragment import MemoryFragmentStorage
 from streamlit.runtime.media_file_manager import MediaFileManager
 from streamlit.runtime.memory_media_file_storage import MemoryMediaFileStorage
+from streamlit.runtime.pages_manager import PagesManager
 from streamlit.runtime.script_data import ScriptData
 from streamlit.runtime.scriptrunner import (
     RerunData,
@@ -63,32 +67,33 @@ def del_path(monkeypatch):
 
 
 def _create_test_session(
-    event_loop: Optional[AbstractEventLoop] = None,
-    session_id_override: Optional[str] = None,
+    event_loop: AbstractEventLoop | None = None,
+    session_id_override: str | None = None,
 ) -> AppSession:
     """Create an AppSession instance with some default mocked data."""
     if event_loop is None:
         event_loop = MagicMock()
 
-    with patch(
-        "streamlit.runtime.app_session.asyncio.get_running_loop",
-        return_value=event_loop,
+    with (
+        patch(
+            "streamlit.runtime.app_session.asyncio.get_running_loop",
+            return_value=event_loop,
+        ),
+        patch(
+            "streamlit.runtime.app_session.LocalSourcesWatcher",
+            MagicMock(spec=LocalSourcesWatcher),
+        ),
     ):
         return AppSession(
             script_data=ScriptData("/fake/script_path.py", is_hello=False),
-            uploaded_file_manager=MagicMock(),
+            uploaded_file_manager=MagicMock(spec=UploadedFileManager),
             script_cache=MagicMock(),
             message_enqueued_callback=None,
-            local_sources_watcher=MagicMock(),
-            user_info={"email": "test@test.com"},
+            user_info={"email": "test@example.com"},
             session_id_override=session_id_override,
         )
 
 
-@patch(
-    "streamlit.runtime.app_session.LocalSourcesWatcher",
-    MagicMock(spec=LocalSourcesWatcher),
-)
 class AppSessionTest(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -127,13 +132,13 @@ class AppSessionTest(unittest.TestCase):
         session._uploaded_file_mgr = mock_file_mgr
 
         session.shutdown()
-        self.assertEqual(AppSessionState.SHUTDOWN_REQUESTED, session._state)
+        assert AppSessionState.SHUTDOWN_REQUESTED == session._state
         mock_file_mgr.remove_session_files.assert_called_once_with(session.id)
         patched_disconnect.assert_called_once_with(session._on_secrets_file_changed)
 
         # A 2nd shutdown call should have no effect.
         session.shutdown()
-        self.assertEqual(AppSessionState.SHUTDOWN_REQUESTED, session._state)
+        assert AppSessionState.SHUTDOWN_REQUESTED == session._state
 
         mock_file_mgr.remove_session_files.assert_called_once_with(session.id)
 
@@ -175,11 +180,11 @@ class AppSessionTest(unittest.TestCase):
         """Each AppSession should have a unique ID"""
         session1 = _create_test_session()
         session2 = _create_test_session()
-        self.assertNotEqual(session1.id, session2.id)
+        assert session1.id != session2.id
 
     def test_creates_session_state_on_init(self):
         session = _create_test_session()
-        self.assertIsInstance(session.session_state, SessionState)
+        assert isinstance(session.session_state, SessionState)
 
     def test_creates_fragment_storage_on_init(self):
         session = _create_test_session()
@@ -187,25 +192,21 @@ class AppSessionTest(unittest.TestCase):
         # isinstance (there's no need to as the static type checker already ensures
         # the field has the correct type), and we don't want to mark
         # MemoryFragmentStorage as @runtime_checkable.
-        self.assertIsNotNone(session._fragment_storage)
+        assert session._fragment_storage is not None
 
     def test_clear_cache_resets_session_state(self):
         session = _create_test_session()
         session._session_state["foo"] = "bar"
         session._handle_clear_cache_request()
-        self.assertTrue("foo" not in session._session_state)
+        assert "foo" not in session._session_state
 
-    @patch("streamlit.runtime.legacy_caching.clear_cache")
     @patch("streamlit.runtime.caching.cache_data.clear")
     @patch("streamlit.runtime.caching.cache_resource.clear")
-    def test_clear_cache_all_caches(
-        self, clear_resource_caches, clear_data_caches, clear_legacy_cache
-    ):
+    def test_clear_cache_all_caches(self, clear_resource_caches, clear_data_caches):
         session = _create_test_session()
         session._handle_clear_cache_request()
         clear_resource_caches.assert_called_once()
         clear_data_caches.assert_called_once()
-        clear_legacy_cache.assert_called_once()
 
     @patch(
         "streamlit.runtime.app_session.secrets_singleton.file_change_listener.connect"
@@ -287,14 +288,43 @@ class AppSessionTest(unittest.TestCase):
         self, mock_create_scriptrunner: MagicMock
     ):
         session = _create_test_session()
+        fragment_id = "my_fragment_id"
+        session._fragment_storage.set(fragment_id, lambda: None)
 
         mock_active_scriptrunner = MagicMock(spec=ScriptRunner)
         session._scriptrunner = mock_active_scriptrunner
 
-        session.request_rerun(ClientState(fragment_id="my_fragment_id"))
+        session.request_rerun(ClientState(fragment_id=fragment_id))
 
         # The active ScriptRunner should *not* be shut down or stopped.
         mock_active_scriptrunner.request_rerun.assert_called_once()
+        mock_active_scriptrunner.request_stop.assert_not_called()
+
+        # And a new ScriptRunner should *not* be created.
+        mock_create_scriptrunner.assert_not_called()
+
+    @patch_config_options({"runner.fastReruns": True})
+    @patch("streamlit.runtime.app_session.AppSession._create_scriptrunner")
+    def test_rerun_fragment_does_not_request_existing_scriptrunner_when_not_existing(
+        self, mock_create_scriptrunner: MagicMock
+    ):
+        """In case the fragment was removed by a preceding full app run, we want to exit
+        early and not request a rerun on the existing ScriptRunner.
+        """
+        session = _create_test_session()
+        fragment_id = "my_fragment_id"
+
+        # leaving the following code line in to show that the fragment id
+        # is not set in the fragment storage!
+        # session._fragment_storage.set(fragment_id, lambda: None)
+
+        mock_active_scriptrunner = MagicMock(spec=ScriptRunner)
+        session._scriptrunner = mock_active_scriptrunner
+
+        session.request_rerun(ClientState(fragment_id=fragment_id))
+
+        # The active ScriptRunner should *not* be requested at all.
+        mock_active_scriptrunner.request_rerun.assert_not_called()
         mock_active_scriptrunner.request_stop.assert_not_called()
 
         # And a new ScriptRunner should *not* be created.
@@ -304,7 +334,7 @@ class AppSessionTest(unittest.TestCase):
     def test_create_scriptrunner(self, mock_scriptrunner: MagicMock):
         """Test that _create_scriptrunner does what it should."""
         session = _create_test_session()
-        self.assertIsNone(session._scriptrunner)
+        assert session._scriptrunner is None
 
         session._create_scriptrunner(initial_rerun_data=RerunData())
 
@@ -316,14 +346,15 @@ class AppSessionTest(unittest.TestCase):
             uploaded_file_mgr=session._uploaded_file_mgr,
             script_cache=session._script_cache,
             initial_rerun_data=RerunData(),
-            user_info={"email": "test@test.com"},
+            user_info={"email": "test@example.com"},
             fragment_storage=session._fragment_storage,
+            pages_manager=session._pages_manager,
         )
 
-        self.assertIsNotNone(session._scriptrunner)
+        assert session._scriptrunner is not None
 
         # And that the ScriptRunner was initialized and started.
-        scriptrunner: MagicMock = cast(MagicMock, session._scriptrunner)
+        scriptrunner: MagicMock = cast("MagicMock", session._scriptrunner)
         scriptrunner.on_event.connect.assert_called_once_with(
             session._on_scriptrunner_event
         )
@@ -378,7 +409,7 @@ class AppSessionTest(unittest.TestCase):
                 forward_msg=ForwardMsg(),
             )
 
-            self.assertIsNone(session._debug_last_backmsg_id)
+            assert session._debug_last_backmsg_id is None
 
     @patch("streamlit.runtime.app_session.ScriptRunner", MagicMock(spec=ScriptRunner))
     @patch("streamlit.runtime.app_session.AppSession._enqueue_forward_msg", MagicMock())
@@ -397,7 +428,7 @@ class AppSessionTest(unittest.TestCase):
                 forward_msg=ForwardMsg(),
             )
 
-            self.assertEqual(session._state, AppSessionState.APP_NOT_RUNNING)
+            assert session._state == AppSessionState.APP_NOT_RUNNING
 
     def test_passes_client_state_on_run_on_save(self):
         session = _create_test_session()
@@ -421,48 +452,22 @@ class AppSessionTest(unittest.TestCase):
         # Clearing the cache should still have been called
         session._script_cache.clear.assert_called_once()
 
-        self.assertEqual(session.request_rerun.called, False)
+        assert not session.request_rerun.called
 
-    @patch(
-        "streamlit.runtime.app_session.source_util.get_pages",
+    @patch.object(
+        PagesManager,
+        "get_pages",
         MagicMock(
             return_value={
-                "hash1": {"page_name": "page1", "icon": "", "script_path": "script1"},
-                "hash2": {"page_name": "page2", "icon": "🎉", "script_path": "script2"},
+                "hash1": {"page_name": "page_1", "icon": "", "script_path": "script1"},
+                "hash2": {
+                    "page_name": "page_2",
+                    "icon": "🎉",
+                    "script_path": "script2",
+                },
             }
         ),
     )
-    @patch("streamlit.runtime.app_session.AppSession._enqueue_forward_msg")
-    def test_on_pages_changed(self, mock_enqueue: MagicMock):
-        session = _create_test_session()
-        session._on_pages_changed("/foo/pages")
-
-        expected_msg = ForwardMsg()
-        expected_msg.pages_changed.app_pages.extend(
-            [
-                AppPage(page_script_hash="hash1", page_name="page1", icon=""),
-                AppPage(page_script_hash="hash2", page_name="page2", icon="🎉"),
-            ]
-        )
-
-        mock_enqueue.assert_called_once_with(expected_msg)
-
-    @patch(
-        "streamlit.runtime.app_session.source_util.register_pages_changed_callback",
-    )
-    def test_installs_pages_watcher_on_init(self, patched_register_callback):
-        session = _create_test_session()
-        patched_register_callback.assert_called_once_with(session._on_pages_changed)
-
-    @patch("streamlit.runtime.app_session.source_util._on_pages_changed")
-    def test_deregisters_pages_watcher_on_shutdown(self, patched_on_pages_changed):
-        session = _create_test_session()
-        session.shutdown()
-
-        patched_on_pages_changed.disconnect.assert_called_once_with(
-            session._on_pages_changed
-        )
-
     def test_tags_fwd_msgs_with_last_backmsg_id_if_set(self):
         session = _create_test_session()
         session._debug_last_backmsg_id = "some backmsg id"
@@ -470,17 +475,20 @@ class AppSessionTest(unittest.TestCase):
         msg = ForwardMsg()
         session._enqueue_forward_msg(msg)
 
-        self.assertEqual(msg.debug_last_backmsg_id, "some backmsg id")
+        assert msg.debug_last_backmsg_id == "some backmsg id"
 
     @patch("streamlit.runtime.app_session.config.on_config_parsed")
-    @patch("streamlit.runtime.app_session.source_util.register_pages_changed_callback")
     @patch(
         "streamlit.runtime.app_session.secrets_singleton.file_change_listener.connect"
+    )
+    @patch.object(
+        PagesManager,
+        "get_pages",
+        MagicMock(return_value={}),
     )
     def test_registers_file_watchers(
         self,
         patched_secrets_connect,
-        patched_register_pages_changed_callback,
         patched_on_config_parsed,
     ):
         session = _create_test_session()
@@ -491,19 +499,26 @@ class AppSessionTest(unittest.TestCase):
         patched_on_config_parsed.assert_called_once_with(
             session._on_source_file_changed, force_connect=True
         )
-        patched_register_pages_changed_callback.assert_called_once_with(
-            session._on_pages_changed
-        )
         patched_secrets_connect.assert_called_once_with(
             session._on_secrets_file_changed
         )
 
+    @patch.object(
+        PagesManager,
+        "get_pages",
+        MagicMock(return_value={}),
+    )
     def test_recreates_local_sources_watcher_if_none(self):
         session = _create_test_session()
         session._local_sources_watcher = None
 
         session.register_file_watchers()
-        self.assertIsNotNone(session._local_sources_watcher)
+        assert session._local_sources_watcher
+
+    @patch_config_options({"server.fileWatcherType": "none"})
+    def test_no_local_sources_watcher_if_file_watching_disabled(self):
+        session = _create_test_session()
+        assert not session._local_sources_watcher
 
     @patch(
         "streamlit.runtime.app_session.secrets_singleton.file_change_listener.disconnect"
@@ -511,13 +526,17 @@ class AppSessionTest(unittest.TestCase):
     def test_disconnect_file_watchers(self, patched_secrets_disconnect):
         session = _create_test_session()
 
-        with patch.object(
-            session._local_sources_watcher, "close"
-        ) as patched_close_local_sources_watcher, patch.object(
-            session, "_stop_config_listener"
-        ) as patched_stop_config_listener, patch.object(
-            session, "_stop_pages_listener"
-        ) as patched_stop_pages_listener:
+        with (
+            patch.object(
+                session._local_sources_watcher, "close"
+            ) as patched_close_local_sources_watcher,
+            patch.object(
+                session, "_stop_config_listener"
+            ) as patched_stop_config_listener,
+            patch.object(
+                session, "_stop_pages_listener"
+            ) as patched_stop_pages_listener,
+        ):
             session.disconnect_file_watchers()
 
             patched_close_local_sources_watcher.assert_called_once()
@@ -527,9 +546,9 @@ class AppSessionTest(unittest.TestCase):
                 session._on_secrets_file_changed
             )
 
-            self.assertIsNone(session._local_sources_watcher)
-            self.assertIsNone(session._stop_config_listener)
-            self.assertIsNone(session._stop_pages_listener)
+            assert session._local_sources_watcher is None
+            assert session._stop_config_listener is None
+            assert session._stop_pages_listener is None
 
     def test_disconnect_file_watchers_removes_refs(self):
         """Test that calling disconnect_file_watchers on the AppSession
@@ -540,14 +559,21 @@ class AppSessionTest(unittest.TestCase):
 
         # Various listeners should have references to session file/pages/secrets changed
         # handlers.
-        self.assertGreater(len(gc.get_referrers(session)), 0)
+        assert len(gc.get_referrers(session)) > 0
 
         session.disconnect_file_watchers()
-        # Ensure that we don't count refs to session from an object that would have been
-        # garbage collected along with it.
+
+        # Run the gc to ensure that we don't count refs to session from an object that
+        # would have been garbage collected along with the session. We run the gc a few
+        # times for good measure as otherwise we've previously seen weirdness in CI
+        # where this test would fail for certain Python versions (exact reasons
+        # unknown), so it seems like the first gc sweep may not always pick up the
+        # session.
+        gc.collect(2)
+        gc.collect(2)
         gc.collect(2)
 
-        self.assertEqual(len(gc.get_referrers(session)), 0)
+        assert len(gc.get_referrers(session)) == 0
 
     @patch("streamlit.runtime.app_session.AppSession._enqueue_forward_msg")
     def test_handle_file_urls_request(self, mock_enqueue):
@@ -605,21 +631,68 @@ def _mock_get_options_for_section(overrides=None) -> Callable[..., Any]:
     if not overrides:
         overrides = {}
 
-    theme_opts = {
-        "base": "dark",
-        "primaryColor": "coral",
+    sidebar_theme_opts = {
         "backgroundColor": "white",
+        "baseRadius": "1.2rem",
+        "borderColor": "#ff0000",
+        "codeFont": "Monaspace Argon",
+        "font": "Inter",
+        "headingFont": "Inter Bold",
+        "linkColor": "#2EC163",
+        "primaryColor": "red",
         "secondaryBackgroundColor": "blue",
+        "showWidgetBorder": True,
         "textColor": "black",
-        "font": "serif",
+        "codeBackgroundColor": "blue",
+    }
+
+    if overrides.get("sidebar") is not None:
+        for k, v in overrides.get("sidebar").items():
+            sidebar_theme_opts[k] = v
+
+    theme_opts = {
+        "backgroundColor": "white",
+        "base": "dark",
+        "baseFontSize": 14,
+        "baseRadius": "1.2rem",
+        "borderColor": "#ff0000",
+        "codeFont": "Monaspace Argon",
+        "font": "Inter",
+        "fontFaces": [
+            {
+                "family": "Inter Bold",
+                "url": "https://raw.githubusercontent.com/rsms/inter/refs/heads/master/docs/font-files/Inter-Bold.woff2",
+            },
+            {
+                "family": "Inter",
+                "url": "https://raw.githubusercontent.com/rsms/inter/refs/heads/master/docs/font-files/Inter-Regular.woff2",
+                "weight": 400,
+            },
+            {
+                "family": "Monaspace Argon",
+                "url": "https://raw.githubusercontent.com/githubnext/monaspace/refs/heads/main/fonts/webfonts/MonaspaceArgon-Regular.woff2",
+                "weight": 400,
+            },
+        ],
+        "headingFont": "Inter Bold",
+        "linkColor": "#2EC163",
+        "primaryColor": "coral",
+        "secondaryBackgroundColor": "blue",
+        "showWidgetBorder": True,
+        "showSidebarBorder": True,
+        "textColor": "black",
+        "codeBackgroundColor": "blue",
     }
 
     for k, v in overrides.items():
-        theme_opts[k] = v
+        if k != "sidebar":
+            theme_opts[k] = v
 
     def get_options_for_section(section):
         if section == "theme":
             return theme_opts
+        elif section == "theme.sidebar":
+            return sidebar_theme_opts
         return config.get_options_for_section(section)
 
     return get_options_for_section
@@ -632,12 +705,17 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
         "streamlit.runtime.app_session.config.get_options_for_section",
         MagicMock(side_effect=_mock_get_options_for_section()),
     )
-    @patch(
-        "streamlit.runtime.app_session.source_util.get_pages",
+    @patch.object(
+        PagesManager,
+        "get_pages",
         MagicMock(
             return_value={
-                "hash1": {"page_name": "page1", "icon": "", "script_path": "script1"},
-                "hash2": {"page_name": "page2", "icon": "🎉", "script_path": "script2"},
+                "hash1": {"page_name": "page_1", "icon": "", "script_path": "script1"},
+                "hash2": {
+                    "page_name": "page_2",
+                    "icon": "🎉",
+                    "script_path": "script2",
+                },
             }
         ),
     )
@@ -657,9 +735,9 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
             session_state=MagicMock(),
             uploaded_file_mgr=MagicMock(),
             main_script_path="",
-            page_script_hash="",
-            user_info={"email": "test@test.com"},
+            user_info={"email": "test@example.com"},
             fragment_storage=MemoryFragmentStorage(),
+            pages_manager=PagesManager(""),
         )
         add_script_run_ctx(ctx=ctx)
 
@@ -678,34 +756,41 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
         await asyncio.sleep(0)
 
         sent_messages = session._browser_queue._queue
-        self.assertEqual(2, len(sent_messages))  # NewApp and SessionState messages
+        assert len(sent_messages) == 2  # NewApp and SessionState messages
         session._clear_queue.assert_called_once()
 
         # Note that we're purposefully not very thoroughly testing new_session
         # fields below to avoid getting to the point where we're just
         # duplicating code in tests.
         new_session_msg = sent_messages[0].new_session
-        self.assertEqual("mock_scriptrun_id", new_session_msg.script_run_id)
+        assert new_session_msg.script_run_id == "mock_scriptrun_id"
 
-        self.assertTrue(new_session_msg.HasField("config"))
-        self.assertEqual(
-            config.get_option("server.allowRunOnSave"),
-            new_session_msg.config.allow_run_on_save,
+        assert new_session_msg.HasField("config")
+        assert (
+            config.get_option("server.allowRunOnSave")
+            == new_session_msg.config.allow_run_on_save
         )
 
-        self.assertTrue(new_session_msg.HasField("custom_theme"))
-        self.assertEqual("black", new_session_msg.custom_theme.text_color)
+        assert new_session_msg.HasField("custom_theme")
+        assert new_session_msg.custom_theme.text_color == "black"
 
         init_msg = new_session_msg.initialize
-        self.assertTrue(init_msg.HasField("user_info"))
+        assert init_msg.HasField("user_info")
 
-        self.assertEqual(
-            list(new_session_msg.app_pages),
-            [
-                AppPage(page_script_hash="hash1", page_name="page1", icon=""),
-                AppPage(page_script_hash="hash2", page_name="page2", icon="🎉"),
-            ],
-        )
+        assert list(new_session_msg.app_pages) == [
+            AppPage(
+                page_script_hash="hash1",
+                page_name="page 1",
+                icon="",
+                url_pathname="page_1",
+            ),
+            AppPage(
+                page_script_hash="hash2",
+                page_name="page 2",
+                icon="🎉",
+                url_pathname="page_2",
+            ),
+        ]
 
         add_script_run_ctx(ctx=orig_ctx)
 
@@ -724,9 +809,9 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
             session_state=MagicMock(),
             uploaded_file_mgr=MagicMock(),
             main_script_path="",
-            page_script_hash="",
-            user_info={"email": "test@test.com"},
+            user_info={"email": "test@example.com"},
             fragment_storage=MemoryFragmentStorage(),
+            pages_manager=PagesManager(""),
         )
         add_script_run_ctx(ctx=ctx)
 
@@ -739,20 +824,41 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
             sender=mock_scriptrunner,
             event=ScriptRunnerEvent.SCRIPT_STARTED,
             page_script_hash="",
-            fragment_ids_this_run={"my_fragment_id"},
+            fragment_ids_this_run=["my_fragment_id"],
         )
 
         # Yield to let the AppSession's callbacks run.
         await asyncio.sleep(0)
 
         sent_messages = session._browser_queue._queue
-        self.assertEqual(2, len(sent_messages))  # NewApp and SessionState messages
-        session._clear_queue.assert_not_called()
+        assert len(sent_messages) == 2  # NewApp and SessionState messages
+        session._clear_queue.assert_called_once()
 
         new_session_msg = sent_messages[0].new_session
-        self.assertEqual(new_session_msg.fragment_ids_this_run, ["my_fragment_id"])
+        assert new_session_msg.fragment_ids_this_run == ["my_fragment_id"]
 
         add_script_run_ctx(ctx=orig_ctx)
+
+    async def test_updates_page_script_hash_in_client_state_on_script_start(self):
+        session = _create_test_session(asyncio.get_running_loop())
+        session._client_state.page_script_hash = "some_page_script_hash"
+
+        mock_scriptrunner = MagicMock(spec=ScriptRunner)
+        session._scriptrunner = mock_scriptrunner
+        session._clear_queue = MagicMock()
+
+        # Send a mock SCRIPT_STARTED event.
+        session._on_scriptrunner_event(
+            sender=mock_scriptrunner,
+            event=ScriptRunnerEvent.SCRIPT_STARTED,
+            page_script_hash="some_other_page_script_hash",
+            fragment_ids_this_run=None,
+        )
+
+        # Yield to let the AppSession's callbacks run.
+        await asyncio.sleep(0)
+
+        assert session._client_state.page_script_hash == "some_other_page_script_hash"
 
     async def test_events_handled_on_event_loop(self):
         """ScriptRunner events should be handled on the main thread only."""
@@ -794,7 +900,7 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
             "streamlit.runtime.app_session.asyncio.get_running_loop",
             return_value=MagicMock(),
         ):
-            with self.assertRaises(AssertionError):
+            with pytest.raises(AssertionError):
                 session._handle_scriptrunner_event_on_event_loop(
                     sender=MagicMock(), event=ScriptRunnerEvent.SCRIPT_STARTED
                 )
@@ -816,7 +922,7 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
         # Create a mocked ForwardMsgQueue that tracks "enqueue" and "clear"
         # function calls together in a list. We'll assert the content
         # and order of these calls.
-        forward_msg_queue_events: List[Any] = []
+        forward_msg_queue_events: list[Any] = []
         CLEAR_QUEUE = object()
 
         mock_queue = MagicMock(spec=ForwardMsgQueue)
@@ -824,7 +930,8 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
             side_effect=lambda msg: forward_msg_queue_events.append(msg)
         )
         mock_queue.clear = MagicMock(
-            side_effect=lambda: forward_msg_queue_events.append(CLEAR_QUEUE)
+            side_effect=lambda retain_lifecycle_msgs,
+            fragment_ids_this_run: forward_msg_queue_events.append(CLEAR_QUEUE)
         )
 
         session._browser_queue = mock_queue
@@ -835,7 +942,7 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
 
         # Messages get sent in an eventloop callback, which hasn't had a chance
         # to run yet. Our message queue should be empty.
-        self.assertEqual([], forward_msg_queue_events)
+        assert forward_msg_queue_events == []
 
         # Run callbacks
         await asyncio.sleep(0)
@@ -867,19 +974,21 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
                 ]
             )
 
-        # Assert the results!
-        self.assertEqual(expected_events, forward_msg_queue_events)
+        assert expected_events == forward_msg_queue_events
 
     async def test_handle_backmsg_handles_exceptions(self):
         """Exceptions raised in handle_backmsg should be sent to
         handle_backmsg_exception.
         """
         session = _create_test_session(asyncio.get_running_loop())
-        with patch.object(
-            session, "handle_backmsg_exception"
-        ) as handle_backmsg_exception, patch.object(
-            session, "_handle_clear_cache_request"
-        ) as handle_clear_cache_request:
+        with (
+            patch.object(
+                session, "handle_backmsg_exception"
+            ) as handle_backmsg_exception,
+            patch.object(
+                session, "_handle_clear_cache_request"
+            ) as handle_clear_cache_request,
+        ):
             error = Exception("explode!")
             handle_clear_cache_request.side_effect = error
 
@@ -897,16 +1006,19 @@ class AppSessionScriptEventTest(IsolatedAsyncioTestCase):
             rerun_script=session._client_state, debug_last_backmsg_id="some backmsg"
         )
         session.handle_backmsg(msg)
-        self.assertEqual(session._debug_last_backmsg_id, "some backmsg")
+        assert session._debug_last_backmsg_id == "some backmsg"
 
     @patch("streamlit.runtime.app_session._LOGGER")
     async def test_handles_app_heartbeat_backmsg(self, patched_logger):
         session = _create_test_session(asyncio.get_running_loop())
-        with patch.object(
-            session, "handle_backmsg_exception"
-        ) as handle_backmsg_exception, patch.object(
-            session, "_handle_app_heartbeat_request"
-        ) as handle_app_heartbeat_request:
+        with (
+            patch.object(
+                session, "handle_backmsg_exception"
+            ) as handle_backmsg_exception,
+            patch.object(
+                session, "_handle_app_heartbeat_request"
+            ) as handle_app_heartbeat_request,
+        ):
             msg = BackMsg()
             msg.app_heartbeat = True
             session.handle_backmsg(msg)
@@ -922,12 +1034,23 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         patched_config.get_options_for_section.side_effect = (
             _mock_get_options_for_section(
                 {
-                    "base": None,
-                    "primaryColor": None,
                     "backgroundColor": None,
-                    "secondaryBackgroundColor": None,
-                    "textColor": None,
+                    "base": None,
+                    "baseFontSize": None,
+                    "baseRadius": None,
+                    "borderColor": None,
+                    "codeFont": None,
                     "font": None,
+                    "fontFaces": None,
+                    "headingFont": None,
+                    "linkColor": None,
+                    "primaryColor": None,
+                    "secondaryBackgroundColor": None,
+                    "showWidgetBorder": None,
+                    "showSidebarBorder": None,
+                    "textColor": None,
+                    "sidebar": None,
+                    "codeBackgroundColor": None,
                 }
             )
         )
@@ -936,28 +1059,125 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         new_session_msg = msg.new_session
         app_session._populate_theme_msg(new_session_msg.custom_theme)
 
-        self.assertEqual(new_session_msg.HasField("custom_theme"), False)
+        assert not new_session_msg.HasField("custom_theme")
 
     @patch("streamlit.runtime.app_session.config")
-    def test_can_specify_some_options(self, patched_config):
-        patched_config.get_options_for_section.side_effect = _mock_get_options_for_section(
-            {
-                # Leave base, primaryColor, and font defined.
-                "backgroundColor": None,
-                "secondaryBackgroundColor": None,
-                "textColor": None,
-            }
+    def test_can_specify_false_options(self, patched_config):
+        patched_config.get_options_for_section.side_effect = (
+            _mock_get_options_for_section(
+                {
+                    "backgroundColor": None,
+                    "base": None,
+                    "baseFontSize": None,
+                    "baseRadius": None,
+                    "borderColor": None,
+                    "codeFont": None,
+                    "font": None,
+                    "fontFaces": None,
+                    "headingFont": None,
+                    "linkColor": None,
+                    "primaryColor": None,
+                    "secondaryBackgroundColor": None,
+                    "showWidgetBorder": False,
+                    "showSidebarBorder": None,
+                    "textColor": None,
+                    "sidebar": None,
+                    "codeBackgroundColor": None,
+                }
+            )
         )
 
         msg = ForwardMsg()
         new_session_msg = msg.new_session
         app_session._populate_theme_msg(new_session_msg.custom_theme)
 
-        self.assertEqual(new_session_msg.HasField("custom_theme"), True)
-        self.assertEqual(new_session_msg.custom_theme.primary_color, "coral")
+        assert new_session_msg.HasField("custom_theme")
+        assert new_session_msg.custom_theme.show_widget_border is False
+
+    @patch("streamlit.runtime.app_session.config")
+    def test_can_specify_some_options(self, patched_config):
+        patched_config.get_options_for_section.side_effect = (
+            _mock_get_options_for_section(
+                {
+                    # base and primaryColor are not set to None, since we want to
+                    # test here if we can set only a few selected options.
+                    "backgroundColor": None,
+                    "baseRadius": None,
+                    "baseFontSize": None,
+                    "borderColor": None,
+                    "codeFont": None,
+                    "font": None,
+                    "fontFaces": None,
+                    "headingFont": None,
+                    "linkColor": None,
+                    "secondaryBackgroundColor": None,
+                    "showWidgetBorder": None,
+                    "showSidebarBorder": None,
+                    "textColor": None,
+                    "codeBackgroundColor": None,
+                    "sidebar": {
+                        # primaryColor not set to None
+                        "backgroundColor": None,
+                        "baseRadius": None,
+                        "borderColor": None,
+                        "codeFont": None,
+                        "font": None,
+                        "headingFont": None,
+                        "linkColor": None,
+                        "secondaryBackgroundColor": None,
+                        "showWidgetBorder": None,
+                        "textColor": None,
+                        "codeBackgroundColor": None,
+                    },
+                }
+            )
+        )
+
+        msg = ForwardMsg()
+        new_session_msg = msg.new_session
+        app_session._populate_theme_msg(new_session_msg.custom_theme)
+
+        assert new_session_msg.HasField("custom_theme")
+        assert new_session_msg.custom_theme.primary_color == "coral"
         # In proto3, primitive fields are technically always required and are
         # set to the type's zero value when undefined.
-        self.assertEqual(new_session_msg.custom_theme.background_color, "")
+        assert new_session_msg.custom_theme.background_color == ""
+        assert new_session_msg.custom_theme.heading_font == ""
+        assert new_session_msg.custom_theme.code_font == ""
+        # The value from `theme.font` will be placed in body_font since
+        # font field uses a deprecated enum:
+        assert new_session_msg.custom_theme.body_font == ""
+        assert not new_session_msg.custom_theme.font_faces
+
+        # Fields that are marked as optional in proto:
+        assert not new_session_msg.custom_theme.HasField("base_radius")
+        assert not new_session_msg.custom_theme.HasField("border_color")
+        assert not new_session_msg.custom_theme.HasField("show_widget_border")
+        assert not new_session_msg.custom_theme.HasField("link_color")
+        assert not new_session_msg.custom_theme.HasField("base_font_size")
+        assert not new_session_msg.custom_theme.HasField("code_background_color")
+        assert not new_session_msg.custom_theme.HasField("show_sidebar_border")
+
+        app_session._populate_theme_msg(
+            new_session_msg.custom_theme.sidebar,
+            "theme.sidebar",
+        )
+
+        assert new_session_msg.custom_theme.HasField("sidebar")
+        assert new_session_msg.custom_theme.sidebar.primary_color == "red"
+        assert new_session_msg.custom_theme.sidebar.background_color == ""
+        assert new_session_msg.custom_theme.sidebar.heading_font == ""
+        assert new_session_msg.custom_theme.sidebar.code_font == ""
+        assert new_session_msg.custom_theme.sidebar.body_font == ""
+
+        # Fields that are marked as optional in proto:
+        assert not new_session_msg.custom_theme.sidebar.HasField("base_radius")
+        assert not new_session_msg.custom_theme.sidebar.HasField("border_color")
+        assert not new_session_msg.custom_theme.sidebar.HasField("show_widget_border")
+        assert not new_session_msg.custom_theme.sidebar.HasField("link_color")
+        assert not new_session_msg.custom_theme.sidebar.HasField(
+            "code_background_color"
+        )
 
     @patch("streamlit.runtime.app_session.config")
     def test_can_specify_all_options(self, patched_config):
@@ -970,9 +1190,63 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         new_session_msg = msg.new_session
         app_session._populate_theme_msg(new_session_msg.custom_theme)
 
-        self.assertEqual(new_session_msg.HasField("custom_theme"), True)
-        self.assertEqual(new_session_msg.custom_theme.primary_color, "coral")
-        self.assertEqual(new_session_msg.custom_theme.background_color, "white")
+        assert new_session_msg.HasField("custom_theme")
+        assert new_session_msg.custom_theme.primary_color == "coral"
+        assert new_session_msg.custom_theme.background_color == "white"
+        assert new_session_msg.custom_theme.text_color == "black"
+        assert new_session_msg.custom_theme.secondary_background_color == "blue"
+        assert new_session_msg.custom_theme.base_radius == "1.2rem"
+        assert new_session_msg.custom_theme.border_color == "#ff0000"
+        assert new_session_msg.custom_theme.show_widget_border is True
+        assert new_session_msg.custom_theme.link_color == "#2EC163"
+        assert new_session_msg.custom_theme.base_font_size == 14
+        assert new_session_msg.custom_theme.code_background_color == "blue"
+        assert new_session_msg.custom_theme.show_sidebar_border is True
+        # The value from `theme.font` will be placed in body_font since
+        # font uses a deprecated enum:
+        assert new_session_msg.custom_theme.heading_font == "Inter Bold"
+        assert new_session_msg.custom_theme.body_font == "Inter"
+        assert new_session_msg.custom_theme.code_font == "Monaspace Argon"
+        assert list(new_session_msg.custom_theme.font_faces) == [
+            FontFace(
+                family="Inter Bold",
+                url="https://raw.githubusercontent.com/rsms/inter/refs/heads/master/docs/font-files/Inter-Bold.woff2",
+            ),
+            FontFace(
+                family="Inter",
+                url="https://raw.githubusercontent.com/rsms/inter/refs/heads/master/docs/font-files/Inter-Regular.woff2",
+                weight=400,
+            ),
+            FontFace(
+                family="Monaspace Argon",
+                url="https://raw.githubusercontent.com/githubnext/monaspace/refs/heads/main/fonts/webfonts/MonaspaceArgon-Regular.woff2",
+                weight=400,
+            ),
+        ]
+
+        app_session._populate_theme_msg(
+            new_session_msg.custom_theme.sidebar,
+            "theme.sidebar",
+        )
+        assert new_session_msg.custom_theme.HasField("sidebar")
+        assert new_session_msg.custom_theme.sidebar.primary_color == "red"
+        assert new_session_msg.custom_theme.sidebar.background_color == "white"
+        assert new_session_msg.custom_theme.sidebar.text_color == "black"
+        assert new_session_msg.custom_theme.sidebar.secondary_background_color == "blue"
+        assert new_session_msg.custom_theme.sidebar.base_radius == "1.2rem"
+        assert new_session_msg.custom_theme.sidebar.border_color == "#ff0000"
+        assert new_session_msg.custom_theme.sidebar.show_widget_border is True
+        assert new_session_msg.custom_theme.sidebar.link_color == "#2EC163"
+        assert new_session_msg.custom_theme.sidebar.heading_font == "Inter Bold"
+        assert new_session_msg.custom_theme.sidebar.body_font == "Inter"
+        assert new_session_msg.custom_theme.sidebar.code_font == "Monaspace Argon"
+        assert new_session_msg.custom_theme.sidebar.code_background_color == "blue"
+
+        # Default values for unsupported fields in sidebar
+        assert new_session_msg.custom_theme.sidebar.base == 0
+        assert not new_session_msg.custom_theme.sidebar.font_faces
+        assert not new_session_msg.custom_theme.sidebar.HasField("base_font_size")
+        assert not new_session_msg.custom_theme.sidebar.HasField("show_sidebar_border")
 
     @patch("streamlit.runtime.app_session._LOGGER")
     @patch("streamlit.runtime.app_session.config")
@@ -990,25 +1264,10 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
             " Allowed values include ['light', 'dark']. Setting theme.base to \"light\"."
         )
 
-    @patch("streamlit.runtime.app_session._LOGGER")
-    @patch("streamlit.runtime.app_session.config")
-    def test_logs_warning_if_font_invalid(self, patched_config, patched_logger):
-        patched_config.get_options_for_section.side_effect = (
-            _mock_get_options_for_section({"font": "comic sans"})
-        )
 
-        msg = ForwardMsg()
-        new_session_msg = msg.new_session
-        app_session._populate_theme_msg(new_session_msg.custom_theme)
-
-        patched_logger.warning.assert_called_once_with(
-            '"comic sans" is an invalid value for theme.font.'
-            " Allowed values include ['sans serif', 'serif', 'monospace']. Setting theme.font to \"sans serif\"."
-        )
-
-
-@patch(
-    "streamlit.runtime.app_session.source_util.get_pages",
+@patch.object(
+    PagesManager,
+    "get_pages",
     MagicMock(
         return_value={
             "hash1": {"page_name": "page1", "script_path": "page1.py"},
@@ -1021,18 +1280,16 @@ class ShouldRerunOnFileChangeTest(unittest.TestCase):
         session = _create_test_session()
         session._client_state.page_script_hash = "hash2"
 
-        self.assertEqual(session._should_rerun_on_file_change("page2.py"), True)
+        assert session._should_rerun_on_file_change("page2.py")
 
     def test_returns_true_if_changed_file_is_not_page(self):
         session = _create_test_session()
         session._client_state.page_script_hash = "hash1"
 
-        self.assertEqual(
-            session._should_rerun_on_file_change("some_other_file.py"), True
-        )
+        assert session._should_rerun_on_file_change("some_other_file.py")
 
     def test_returns_false_if_different_page_changed(self):
         session = _create_test_session()
         session._client_state.page_script_hash = "hash2"
 
-        self.assertEqual(session._should_rerun_on_file_change("page1.py"), False)
+        assert not session._should_rerun_on_file_change("page1.py")

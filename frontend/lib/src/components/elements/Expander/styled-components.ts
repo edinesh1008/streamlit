@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 import styled from "@emotion/styled"
+
+import { STALE_STYLES, STALE_TRANSITION_PARAMS } from "~lib/theme"
 
 export interface StyledExpandableContainerProps {
   empty: boolean
@@ -33,13 +35,13 @@ export const StyledDetails = styled.details<StyledDetailsProps>(
     marginTop: 0,
     width: "100%",
     borderStyle: "solid",
-    borderWidth: `${BORDER_SIZE}px`,
-    borderColor: theme.colors.fadedText10,
-    borderRadius: theme.radii.lg,
+    borderWidth: theme.sizes.borderWidth,
+    borderColor: theme.colors.borderColor,
+    borderRadius: theme.radii.default,
     ...(isStale
       ? {
-          borderColor: theme.colors.fadedText05,
-          transition: "border 1s ease-in 0.5s",
+          borderColor: theme.colors.borderColorLight,
+          transition: `border ${STALE_TRANSITION_PARAMS}`,
         }
       : {}),
   })
@@ -52,43 +54,45 @@ export const StyledSummaryHeading = styled.span(({ theme }) => ({
   flexGrow: 1,
 }))
 
-export const StyledSummary = styled.summary(({ theme }) => ({
-  position: "relative",
-  display: "flex",
-  width: "100%",
-  "&:focus-visible": {
-    outline: `${BORDER_SIZE}px solid ${theme.colors.primary}`,
-    outlineOffset: `-${BORDER_SIZE}px`,
-    borderRadius: theme.radii.lg,
-  },
-  fontSize: theme.fontSizes.sm,
-  paddingLeft: theme.spacing.lg,
-  paddingRight: theme.spacing.lg,
-  paddingTop: theme.spacing.md,
-  paddingBottom: theme.spacing.md,
-  listStyleType: "none",
-  "&::-webkit-details-marker": {
-    display: "none",
-  },
-  "&:hover": {
-    color: theme.colors.primary,
-  },
-  "&:hover svg": {
-    fill: theme.colors.primary,
-  },
-}))
+interface StyledSummaryProps {
+  empty: boolean
+  isStale: boolean
+}
+
+export const StyledSummary = styled.summary<StyledSummaryProps>(
+  ({ theme, empty, isStale }) => ({
+    position: "relative",
+    display: "flex",
+    width: "100%",
+    "&:focus-visible": {
+      outline: `${theme.sizes.borderWidth} solid ${theme.colors.primary}`,
+      outlineOffset: `-${theme.sizes.borderWidth}`,
+      borderRadius: theme.radii.default,
+    },
+    fontSize: theme.fontSizes.sm,
+    paddingLeft: theme.spacing.lg,
+    paddingRight: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    paddingBottom: theme.spacing.md,
+    cursor: "pointer",
+    listStyleType: "none",
+    "&::-webkit-details-marker": {
+      display: "none",
+    },
+    "&:hover": {
+      color: empty ? undefined : theme.colors.primary,
+    },
+    "&:hover svg": {
+      fill: empty ? undefined : theme.colors.primary,
+    },
+    ...(empty && {
+      cursor: "default",
+    }),
+    ...(isStale && STALE_STYLES),
+  })
+)
 
 export const StyledDetailsPanel = styled.div(({ theme }) => ({
-  paddingBottom: theme.spacing.lg,
-  paddingLeft: theme.spacing.lg,
-  paddingRight: theme.spacing.lg,
-}))
-
-export const StyledEmptyDetailsPanel = styled.div(({ theme }) => ({
-  color: theme.colors.darkGray,
-  fontStyle: "italic",
-  fontSize: theme.fontSizes.sm,
-  textAlign: "center",
   paddingBottom: theme.spacing.lg,
   paddingLeft: theme.spacing.lg,
   paddingRight: theme.spacing.lg,

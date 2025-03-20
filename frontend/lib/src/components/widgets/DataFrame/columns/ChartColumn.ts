@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,18 @@ import {
 } from "@glideapps/glide-data-grid"
 import { SparklineCellType } from "@glideapps/glide-data-grid-cells"
 
-import { isNullOrUndefined } from "@streamlit/lib/src/util/utils"
+import { isNullOrUndefined } from "~lib/util/utils"
 
 import {
   BaseColumn,
   BaseColumnProps,
-  getErrorCell,
-  getEmptyCell,
-  toSafeString,
-  toSafeArray,
-  mergeColumnParameters,
-  toSafeNumber,
   formatNumber,
+  getEmptyCell,
+  getErrorCell,
+  mergeColumnParameters,
+  toSafeArray,
+  toSafeNumber,
+  toSafeString,
 } from "./utils"
 
 export const LINE_CHART_TYPE = "line_chart"

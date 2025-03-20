@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 import { GridCell, GridCellKind, UriCell } from "@glideapps/glide-data-grid"
 
-import { isNullOrUndefined } from "@streamlit/lib/src/util/utils"
+import { isNullOrUndefined } from "~lib/util/utils"
 
 import {
   BaseColumn,
   BaseColumnProps,
-  toSafeString,
   getErrorCell,
   getLinkDisplayValueFromRegex,
+  toSafeString,
 } from "./utils"
 
 export interface LinkColumnParams {
@@ -76,7 +76,7 @@ function LinkColumn(props: BaseColumnProps): BaseColumn {
     readonly: !props.isEditable,
     allowOverlay: true,
     contentAlign: props.contentAlignment,
-    style: props.isIndex ? "faded" : "normal",
+    style: "normal",
     hoverEffect: true,
     data: "",
     displayData: "",

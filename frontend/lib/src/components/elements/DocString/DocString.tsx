@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import React, { ReactElement } from "react"
-import { DocString as DocStringProto, IMember } from "@streamlit/lib/src/proto"
+import React, { memo, ReactElement } from "react"
+
+import { DocString as DocStringProto, IMember } from "@streamlit/protobuf"
+
 import {
   StyledDocContainer,
   StyledDocHeader,
@@ -24,49 +26,43 @@ import {
   StyledDocSummary,
   StyledDocType,
   StyledDocValue,
-  StyledMembersSummaryCell,
   StyledMembersDetailsCell,
   StyledMembersRow,
+  StyledMembersSummaryCell,
   StyledMembersTable,
 } from "./styled-components"
 
 export interface DocStringProps {
-  width: number
   element: DocStringProto
 }
 
 /**
  * Functional element representing formatted text.
  */
-export default function DocString({
-  width,
-  element,
-}: DocStringProps): ReactElement {
+function DocString({ element }: DocStringProps): ReactElement {
   const { name, type, value, docString, members } = element
 
   // Put it all together into a nice little html view.
   return (
-    <StyledDocContainer width={width} data-testid="stDocstring">
+    <StyledDocContainer className="stHelp" data-testid="stHelp">
       <StyledDocHeader>
         <StyledDocSummary>
           {name ? (
-            <StyledDocName data-testid="stDocstringName">{name}</StyledDocName>
+            <StyledDocName data-testid="stHelpName">{name}</StyledDocName>
           ) : null}
           {type ? (
-            <StyledDocType data-testid="stDocstringType">{type}</StyledDocType>
+            <StyledDocType data-testid="stHelpType">{type}</StyledDocType>
           ) : null}
           {value ? (
-            <StyledDocValue data-testid="stDocstringValue">
-              {value}
-            </StyledDocValue>
+            <StyledDocValue data-testid="stHelpValue">{value}</StyledDocValue>
           ) : null}
         </StyledDocSummary>
       </StyledDocHeader>
-      <StyledDocString data-testid="stDocstring-Doc">
+      <StyledDocString data-testid="stHelpDoc">
         {docString || "No docs available"}
       </StyledDocString>
       {members.length > 0 ? (
-        <StyledMembersTable data-testid="stDocstringMembersTable">
+        <StyledMembersTable data-testid="stHelpMembersTable">
           {members.map(member => (
             <Member member={member} key={member.name} />
           ))}
@@ -85,23 +81,27 @@ export function Member({ member }: MemberProps): ReactElement {
   const { name, type, value, docString } = member
 
   return (
-    <StyledMembersRow data-testid="stMember">
+    <StyledMembersRow data-testid="stHelpMember">
       <StyledMembersSummaryCell>
         {name ? (
-          <StyledDocName data-testid="stMemberDocName">{name}</StyledDocName>
+          <StyledDocName data-testid="stHelpMemberDocName">
+            {name}
+          </StyledDocName>
         ) : null}
         {type ? (
-          <StyledDocType data-testid="stMemberDocType">{type}</StyledDocType>
+          <StyledDocType data-testid="stHelpMemberDocType">
+            {type}
+          </StyledDocType>
         ) : null}
       </StyledMembersSummaryCell>
 
       <StyledMembersDetailsCell>
         {value ? (
-          <StyledDocValue data-testid="stMemberDocValue">
+          <StyledDocValue data-testid="stHelpMemberDocValue">
             {value}
           </StyledDocValue>
         ) : (
-          <StyledDocValue data-testid="stMemberDocString">
+          <StyledDocValue data-testid="stHelpMemberDocString">
             {docString || "No docs available"}
           </StyledDocValue>
         )}
@@ -109,3 +109,5 @@ export function Member({ member }: MemberProps): ReactElement {
     </StyledMembersRow>
   )
 }
+
+export default memo(DocString)

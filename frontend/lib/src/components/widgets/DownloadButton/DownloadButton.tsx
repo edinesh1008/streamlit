@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,76 +14,93 @@
  * limitations under the License.
  */
 
-import React, { ReactElement } from "react"
-import { DownloadButton as DownloadButtonProto } from "@streamlit/lib/src/proto"
+import React, { memo, ReactElement, useEffect } from "react"
+
+import { DownloadButton as DownloadButtonProto } from "@streamlit/protobuf"
+
+import createDownloadLinkElement from "~lib/util/createDownloadLinkElement"
 import BaseButton, {
-  BaseButtonTooltip,
   BaseButtonKind,
   BaseButtonSize,
-} from "@streamlit/lib/src/components/shared/BaseButton"
-import { WidgetStateManager } from "@streamlit/lib/src/WidgetStateManager"
-import StreamlitMarkdown from "@streamlit/lib/src/components/shared/StreamlitMarkdown"
-import { StreamlitEndpoints } from "@streamlit/lib/src/StreamlitEndpoints"
+  BaseButtonTooltip,
+  DynamicButtonLabel,
+} from "~lib/components/shared/BaseButton"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
+import { StreamlitEndpoints } from "~lib/StreamlitEndpoints"
+import { LibContext } from "~lib/components/core/LibContext"
 
 export interface Props {
   endpoints: StreamlitEndpoints
   disabled: boolean
   element: DownloadButtonProto
   widgetMgr: WidgetStateManager
-  width: number
   fragmentId?: string
 }
 
-function DownloadButton(props: Props): ReactElement {
-  const { disabled, element, widgetMgr, width, endpoints, fragmentId } = props
-  const style = { width }
+export function createDownloadLink(
+  endpoints: StreamlitEndpoints,
+  url: string,
+  enforceDownloadInNewTab: boolean
+): HTMLAnchorElement {
+  return createDownloadLinkElement({
+    enforceDownloadInNewTab,
+    url: endpoints.buildMediaURL(url),
+    filename: "",
+  })
+}
 
-  const kind =
-    element.type === "primary"
-      ? BaseButtonKind.PRIMARY
-      : BaseButtonKind.SECONDARY
+function DownloadButton(props: Props): ReactElement {
+  const { disabled, element, widgetMgr, endpoints, fragmentId } = props
+
+  const {
+    libConfig: { enforceDownloadInNewTab = false }, // Default to false, if no libConfig, e.g. for tests
+  } = React.useContext(LibContext)
+
+  let kind = BaseButtonKind.SECONDARY
+  if (element.type === "primary") {
+    kind = BaseButtonKind.PRIMARY
+  } else if (element.type === "tertiary") {
+    kind = BaseButtonKind.TERTIARY
+  }
+
+  useEffect(() => {
+    // Since we use a hidden link to download, we can't use the onerror event
+    // to catch src url load errors. Catch with direct check instead.
+    endpoints.checkSourceUrlResponse(element.url, "Download Button")
+  }, [element.url, endpoints])
 
   const handleDownloadClick: () => void = () => {
+    if (!element.ignoreRerun) {
+      widgetMgr.setTriggerValue(element, { fromUi: true }, fragmentId)
+    }
     // Downloads are only done on links, so create a hidden one and click it
     // for the user.
-    widgetMgr.setTriggerValue(element, { fromUi: true }, fragmentId)
-    const link = document.createElement("a")
-    const uri = endpoints.buildMediaURL(element.url)
-    link.setAttribute("href", uri)
-    link.setAttribute("target", "_self")
-    link.setAttribute("download", "")
+    const link = createDownloadLink(
+      endpoints,
+      element.url,
+      enforceDownloadInNewTab
+    )
     link.click()
   }
 
-  // When useContainerWidth true & has help tooltip,
-  // we need to pass the container width down to the button
-  const fluidWidth = element.help ? width : true
-
   return (
-    <div
-      className="row-widget stDownloadButton"
-      data-testid="stDownloadButton"
-      style={style}
-    >
-      <BaseButtonTooltip help={element.help}>
+    <div className="stDownloadButton" data-testid="stDownloadButton">
+      <BaseButtonTooltip
+        help={element.help}
+        containerWidth={element.useContainerWidth}
+      >
         <BaseButton
           kind={kind}
           size={BaseButtonSize.SMALL}
           disabled={disabled}
           onClick={handleDownloadClick}
-          fluidWidth={element.useContainerWidth ? fluidWidth : false}
+          containerWidth={element.useContainerWidth}
         >
-          <StreamlitMarkdown
-            source={element.label}
-            allowHTML={false}
-            isLabel
-            largerLabel
-            disableLinks
-          />
+          <DynamicButtonLabel icon={element.icon} label={element.label} />
         </BaseButton>
       </BaseButtonTooltip>
     </div>
   )
 }
 
-export default DownloadButton
+export default memo(DownloadButton)

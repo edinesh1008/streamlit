@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
-import { screen } from "@testing-library/react"
-import { render } from "@streamlit/lib/src/test_util"
-import { LabelVisibilityOptions } from "@streamlit/lib/src/util/utils"
 
-import { WidgetLabel, LabelProps } from "./WidgetLabel"
+import { screen } from "@testing-library/react"
+
+import { render } from "~lib/test_util"
+import { LabelVisibilityOptions } from "~lib/util/utils"
+
+import { LabelProps, WidgetLabel } from "./WidgetLabel"
 
 const getProps = (props?: Partial<LabelProps>): LabelProps => ({
   label: "Label",
@@ -40,8 +41,10 @@ describe("Widget Label", () => {
     render(<WidgetLabel {...props} />)
 
     expect(screen.getByTestId("stWidgetLabel")).toBeInTheDocument()
-    // Test that isLabel prop is true, which makes font size smaller
-    expect(screen.getByText(`${props.label}`)).toHaveStyle(`font-size: 14px`)
+
+    // Use the smaller font size for the markdown container
+    const markdownContainer = screen.getByTestId("stMarkdownContainer")
+    expect(markdownContainer).toHaveStyle("font-size: 0.875rem")
   })
 
   it("can be disabled", () => {

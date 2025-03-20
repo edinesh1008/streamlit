@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,18 @@
 
 from playwright.sync_api import Page, expect
 
-from e2e_playwright.conftest import ImageCompareFunction
+from e2e_playwright.conftest import ImageCompareFunction, wait_for_app_run
+from e2e_playwright.shared.app_utils import (
+    check_top_level_class,
+    expect_help_tooltip,
+    get_element_by_key,
+)
 
 
 def test_date_input_rendering(themed_app: Page, assert_snapshot: ImageCompareFunction):
     """Test that st.date_input renders correctly via screenshots matching."""
     date_widgets = themed_app.get_by_test_id("stDateInput")
-    expect(date_widgets).to_have_count(14)
+    expect(date_widgets).to_have_count(15)
 
     assert_snapshot(date_widgets.nth(0), name="st_date_input-single_date")
     assert_snapshot(date_widgets.nth(1), name="st_date_input-single_datetime")
@@ -36,6 +41,18 @@ def test_date_input_rendering(themed_app: Page, assert_snapshot: ImageCompareFun
     assert_snapshot(date_widgets.nth(11), name="st_date_input-single_date_callback")
     assert_snapshot(date_widgets.nth(12), name="st_date_input-empty_value")
     assert_snapshot(date_widgets.nth(13), name="st_date_input-value_from_state")
+    assert_snapshot(date_widgets.nth(14), name="st_date_input-markdown_label")
+
+
+def test_help_tooltip_works(app: Page):
+    leading_indent_regular_text_tooltip = """
+    This is a regular text block!
+    Test1
+    Test2
+
+    """
+    element_with_help = app.get_by_test_id("stDateInput").nth(0)
+    expect_help_tooltip(app, element_with_help, leading_indent_regular_text_tooltip)
 
 
 def test_date_input_has_correct_initial_values(app: Page):
@@ -83,7 +100,7 @@ def test_handle_value_changes(app: Page):
     """Test that st.date_input has the correct value after typing in a date."""
 
     first_date_input_field = app.get_by_test_id("stDateInput").first.locator("input")
-    first_date_input_field.type("1970/01/02")
+    first_date_input_field.fill("1970/01/02")
     first_date_input_field.blur()
 
     expect(app.get_by_test_id("stMarkdown").first).to_have_text(
@@ -97,9 +114,9 @@ def test_empty_date_input_behaves_correctly(
     """Test that st.date_input behaves correctly when empty."""
     # Enter 10 in the first empty input:
     empty_number_input = app.get_by_test_id("stDateInput").nth(12).locator("input")
-    empty_number_input.type("1970/01/02")
+    empty_number_input.type("1970/01/02", delay=50)
     empty_number_input.press("Enter")
-
+    wait_for_app_run(app)
     expect(app.get_by_test_id("stMarkdown").nth(13)).to_have_text(
         "Value 13: 1970-01-02", use_inner_text=True
     )
@@ -109,7 +126,9 @@ def test_empty_date_input_behaves_correctly(
 
     # Screenshot match clearable input:
     assert_snapshot(
-        app.get_by_test_id("stDateInput").nth(12), name="st_date_input-clearable_input"
+        app.get_by_test_id("stDateInput").nth(12),
+        name="st_date_input-clearable_input",
+        image_threshold=0.035,
     )
 
     # Press escape to clear value:
@@ -170,11 +189,15 @@ def test_calls_callback_on_change(app: Page):
     app.get_by_test_id("stDateInput").nth(11).click()
 
     # Select '1970/01/02'
-    app.locator(
+    calendar = app.locator(
         '[data-baseweb="calendar"] [aria-label^="Choose Friday, January 2nd 1970."]'
-    ).first.click()
+    ).first
+    expect(calendar).to_be_visible()
+    calendar.click()
+    wait_for_app_run(app)
 
-    expect(app.get_by_test_id("stMarkdown").nth(11)).to_have_text(
+    value_12_element = app.get_by_test_id("stMarkdown").nth(11)
+    expect(value_12_element).to_have_text(
         "Value 12: 1970-01-02",
         use_inner_text=True,
     )
@@ -185,15 +208,15 @@ def test_calls_callback_on_change(app: Page):
 
     # Change different date input to trigger delta path change
     first_date_input_field = app.get_by_test_id("stDateInput").first.locator("input")
-    first_date_input_field.type("1971/01/03")
-    first_date_input_field.press("Enter")
+    first_date_input_field.fill("1971/01/03")
+    wait_for_app_run(app)
 
     expect(app.get_by_test_id("stMarkdown").first).to_have_text(
         "Value 1: 1971-01-03", use_inner_text=True
     )
 
     # Test if value is still correct after delta path change
-    expect(app.get_by_test_id("stMarkdown").nth(11)).to_have_text(
+    expect(value_12_element).to_have_text(
         "Value 12: 1970-01-02",
         use_inner_text=True,
     )
@@ -289,3 +312,13 @@ def test_range_is_empty_if_calendar_closed_empty(app: Page):
         "Value 5: ()",
         use_inner_text=True,
     )
+
+
+def test_check_top_level_class(app: Page):
+    """Check that the top level class is correctly set."""
+    check_top_level_class(app, "stDateInput")
+
+
+def test_custom_css_class_via_key(app: Page):
+    """Test that the element can have a custom css class via the key argument."""
+    expect(get_element_by_key(app, "date_input_12")).to_be_visible()

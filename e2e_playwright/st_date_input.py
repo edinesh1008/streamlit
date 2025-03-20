@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,19 @@ from datetime import date, datetime
 import streamlit as st
 from streamlit import runtime
 
-v1 = st.date_input("Single date", date(1970, 1, 1), min_value=date(1970, 1, 1))
+leading_indent_regular_text_tooltip = """
+This is a regular text block!
+Test1
+Test2
+
+"""
+
+v1 = st.date_input(
+    "Single date",
+    date(1970, 1, 1),
+    min_value=date(1970, 1, 1),
+    help=leading_indent_regular_text_tooltip,
+)
 st.write("Value 1:", v1)
 
 v2 = st.date_input("Single datetime", datetime(2019, 7, 6, 21, 15), help="Help text")
@@ -89,3 +101,8 @@ v14 = st.date_input(
     key="date_input_14",
 )
 st.write("Value 14:", v14)
+
+st.date_input(
+    "date input 15 -> :material/check: :rainbow[Fancy] _**markdown** `label` _support_",
+    date(1970, 1, 1),
+)

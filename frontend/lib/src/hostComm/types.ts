@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,48 @@
  * limitations under the License.
  */
 
-import { ICustomThemeConfig, IAppPage } from "@streamlit/lib/src/proto"
-import { ExportedTheme } from "@streamlit/lib/src/theme"
-import { ScriptRunState } from "@streamlit/lib/src/ScriptRunState"
-import { LibConfig } from "@streamlit/lib/src/components/core/LibContext"
+import {
+  IAppPage,
+  ICustomThemeConfig,
+  MetricsEvent,
+} from "@streamlit/protobuf"
+
+import { ExportedTheme } from "~lib/theme"
+import { ScriptRunState } from "~lib/ScriptRunState"
+import { PresetThemeName } from "~lib/theme/types"
+
+/**
+ * The app config contains various configurations that the host platform can
+ * use to configure streamlit-app frontend behavior. This should to be treated as part of the public
+ * API, and changes need to be backwards-compatible meaning that an old host configuration
+ * should still work with a new frontend versions.
+ *
+ * TODO(lukasmasuch): Potentially refactor HostCommunicationManager and move this type
+ * to AppContext.tsx.
+ */
+export type AppConfig = {
+  /**
+   * A list of origins that we're allowed to receive cross-iframe messages
+   * from via the browser's window.postMessage API.
+   */
+  allowedOrigins?: string[]
+  /**
+   * Whether to wait until we've received a SET_AUTH_TOKEN message before
+   * resolving deferredAuthToken.promise. The WebsocketConnection class waits
+   * for this promise to resolve before attempting to establish a connection
+   * with the Streamlit server.
+   */
+  useExternalAuthToken?: boolean
+  /**
+   * Enables custom string messages to be sent to the host
+   */
+  enableCustomParentMessages?: boolean
+  /**
+   * Whether host wants to block error dialogs. If true, blocks error dialogs
+   * from being shown to the user, sends error info to host via postMessage
+   */
+  blockErrorDialogs?: boolean
+}
 
 export type DeployedAppMetadata = {
   hostedAt?: string
@@ -63,8 +101,6 @@ export type IHostToGuestMessage = {
   | {
       type: "SET_AUTH_TOKEN"
       authToken: string
-      jwtHeaderName?: string
-      jwtHeaderValue?: string
     }
   | {
       type: "SET_IS_OWNER"
@@ -113,13 +149,26 @@ export type IHostToGuestMessage = {
     }
   | {
       type: "SET_CUSTOM_THEME_CONFIG"
-      themeInfo: ICustomThemeConfig
+      themeName?: PresetThemeName
+      // TODO: Consider removing themeInfo once stakeholders no longer use it
+      themeInfo?: ICustomThemeConfig
+    }
+  | {
+      type: "SEND_APP_HEARTBEAT"
+    }
+  | {
+      type: "RESTART_WEBSOCKET_CONNECTION"
+    }
+  | {
+      type: "TERMINATE_WEBSOCKET_CONNECTION"
     }
 )
 
 export type IGuestToHostMessage =
   | {
       type: "GUEST_READY"
+      streamlitExecutionStartedAt: number
+      guestReadyAt: number
     }
   | {
       type: "MENU_ITEM_CALLBACK"
@@ -163,45 +212,42 @@ export type IGuestToHostMessage =
       scriptRunState: ScriptRunState
     }
   | {
+      type: "REDIRECT_TO_URL"
+      url: string
+    }
+  | {
       type: "CUSTOM_PARENT_MESSAGE"
       message: string
+    }
+  | {
+      type: "WEBSOCKET_DISCONNECTED"
+      attemptingToReconnect: boolean
+      // TODO(vdonato): Maybe provide a reason the disconnect happened. This
+      // could either be a WS disconnect code or a flag signifying the host
+      // requested this websocket disconnect.
+    }
+  | {
+      type: "WEBSOCKET_CONNECTED"
+    }
+  | {
+      type: "METRICS_EVENT"
+      eventName: string
+      data: MetricsEvent
+    }
+  | {
+      type: "CLIENT_ERROR_DIALOG"
+      error: string
+      message?: string
+    }
+  | {
+      type: "CLIENT_ERROR"
+      component: string
+      error: string | number
+      message: string
+      source: string
+      customComponentName?: string
     }
 
 export type VersionedMessage<Message> = {
   stCommVersion: number
 } & Message
-
-/**
- * The app config contains various configurations that the host platform can
- * use to configure streamlit-app frontend behavior. This should to be treated as part of the public
- * API, and changes need to be backwards-compatible meaning that an old host configuration
- * should still work with a new frontend versions.
- *
- * TODO(lukasmasuch): Potentially refactor HostCommunicationManager and move this type
- * to AppContext.tsx.
- */
-export type AppConfig = {
-  /**
-   * A list of origins that we're allowed to receive cross-iframe messages
-   * from via the browser's window.postMessage API.
-   */
-  allowedOrigins?: string[]
-  /**
-   * Whether to wait until we've received a SET_AUTH_TOKEN message before
-   * resolving deferredAuthToken.promise. The WebsocketConnection class waits
-   * for this promise to resolve before attempting to establish a connection
-   * with the Streamlit server.
-   */
-  useExternalAuthToken?: boolean
-  /**
-   * Enables custom string messages to be sent to the host
-   */
-  enableCustomParentMessages?: boolean
-}
-
-/**
- * The response structure of the `_stcore/host-config` endpoint.
- * This combines streamlit-lib specific configuration options with
- * streamlit-app specific options (e.g. allowed message origins).
- */
-export type IHostConfigResponse = LibConfig & AppConfig

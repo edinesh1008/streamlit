@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,14 @@
 
 """Server.py unit tests"""
 
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import errno
 import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -56,11 +59,6 @@ def _create_script_finished_msg(status) -> ForwardMsg:
     return msg
 
 
-def _patch_local_sources_watcher():
-    """Return a mock.patch for LocalSourcesWatcher"""
-    return patch("streamlit.runtime.runtime.LocalSourcesWatcher")
-
-
 class ServerTest(ServerTestCase):
     def setUp(self) -> None:
         self.original_ws_compression = config.get_option(
@@ -77,7 +75,7 @@ class ServerTest(ServerTestCase):
     @tornado.testing.gen_test
     async def test_start_stop(self):
         """Test that we can start and stop the server."""
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             await self.server.start()
             self.assertEqual(
                 RuntimeState.NO_SESSIONS_CONNECTED, self.server._runtime._state
@@ -98,7 +96,7 @@ class ServerTest(ServerTestCase):
     @tornado.testing.gen_test
     async def test_websocket_connect(self):
         """Test that we can connect to the server via websocket."""
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             await self.server.start()
 
             self.assertFalse(self.server.browser_is_connected)
@@ -124,7 +122,7 @@ class ServerTest(ServerTestCase):
 
     @tornado.testing.gen_test
     async def test_websocket_connect_to_nonexistent_session(self):
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             await self.server.start()
 
             ws_client = await self.ws_connect(existing_session_id="nonexistent_session")
@@ -138,7 +136,7 @@ class ServerTest(ServerTestCase):
 
     @tornado.testing.gen_test
     async def test_websocket_disconnect_and_reconnect(self):
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             await self.server.start()
 
             ws_client = await self.ws_connect()
@@ -167,7 +165,7 @@ class ServerTest(ServerTestCase):
     @tornado.testing.gen_test
     async def test_multiple_connections(self):
         """Test multiple websockets can connect simultaneously."""
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             await self.server.start()
 
             self.assertFalse(self.server.browser_is_connected)
@@ -200,7 +198,7 @@ class ServerTest(ServerTestCase):
 
     @tornado.testing.gen_test
     async def test_websocket_compression(self):
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             config._set_option("server.enableWebsocketCompression", True, "test")
             await self.server.start()
 
@@ -216,7 +214,7 @@ class ServerTest(ServerTestCase):
 
     @tornado.testing.gen_test
     async def test_websocket_compression_disabled(self):
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             config._set_option("server.enableWebsocketCompression", False, "test")
             await self.server.start()
 
@@ -234,18 +232,19 @@ class ServerTest(ServerTestCase):
         """Sending a message to a disconnected SessionClient raises an error.
         We should gracefully handle the error by cleaning up the session.
         """
-        with _patch_local_sources_watcher(), self._patch_app_session():
+        with self._patch_app_session():
             await self.server.start()
             await self.ws_connect()
 
             # Get the server's socket and session for this client
             session_info = self.server._runtime._session_mgr.list_active_sessions()[0]
 
-            with patch.object(
-                session_info.session, "flush_browser_queue"
-            ) as flush_browser_queue, patch.object(
-                session_info.client, "write_message"
-            ) as ws_write_message:
+            with (
+                patch.object(
+                    session_info.session, "flush_browser_queue"
+                ) as flush_browser_queue,
+                patch.object(session_info.client, "write_message") as ws_write_message,
+            ):
                 # Patch flush_browser_queue to simulate a pending message.
                 flush_browser_queue.return_value = [create_dataframe_msg([1, 2, 3])]
 
@@ -352,9 +351,11 @@ class SslServerTest(unittest.TestCase):
         The test checks the behavior whenever one of the two required configuration
         option is set.
         """
-        with patch_config_options({option_name: "/tmp/file"}), pytest.raises(
-            SystemExit
-        ), self.assertLogs("streamlit.web.server.server") as logs:
+        with (
+            patch_config_options({option_name: "/tmp/file"}),
+            pytest.raises(SystemExit),
+            self.assertLogs("streamlit.web.server.server") as logs,
+        ):
             start_listening(mock.MagicMock())
         self.assertEqual(
             logs.output,
@@ -399,6 +400,7 @@ class SslServerTest(unittest.TestCase):
         )
 
     @parameterized.expand(["server.sslCertFile", "server.sslKeyFile"])
+    @unittest.skipIf("win32" in sys.platform, "Windows does not natively have openssl")
     def test_invalid_file_content(self, option_name):
         """
         The test checks the behavior whenever one of the two requires file is corrupted.
@@ -473,6 +475,7 @@ class UnixSocketTest(unittest.TestCase):
 
         return httpserver
 
+    @unittest.skipIf("win32" in sys.platform, "Windows does not have unit sockets")
     def test_unix_socket(self):
         app = mock.MagicMock()
 
@@ -480,12 +483,12 @@ class UnixSocketTest(unittest.TestCase):
         some_socket = object()
 
         mock_server = self.get_httpserver()
-        with patch(
-            "streamlit.web.server.server.HTTPServer", return_value=mock_server
-        ), patch.object(
-            tornado.netutil, "bind_unix_socket", return_value=some_socket
-        ) as bind_unix_socket, patch.dict(
-            os.environ, {"HOME": "/home/superfakehomedir"}
+        with (
+            patch("streamlit.web.server.server.HTTPServer", return_value=mock_server),
+            patch.object(
+                tornado.netutil, "bind_unix_socket", return_value=some_socket
+            ) as bind_unix_socket,
+            patch.dict(os.environ, {"HOME": "/home/superfakehomedir"}),
         ):
             start_listening(app)
 

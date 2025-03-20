@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,17 @@
 import { GridCell, GridCellKind } from "@glideapps/glide-data-grid"
 import { DropdownCellType } from "@glideapps/glide-data-grid-cells"
 
-import { Quiver } from "@streamlit/lib/src/dataframes/Quiver"
-import {
-  isNullOrUndefined,
-  notNullOrUndefined,
-} from "@streamlit/lib/src/util/utils"
+import { isBooleanType } from "~lib/dataframes/arrowTypeUtils"
+import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
 
 import {
   BaseColumn,
   BaseColumnProps,
   getErrorCell,
-  toSafeString,
   mergeColumnParameters,
-  toSafeNumber,
   toSafeBoolean,
+  toSafeNumber,
+  toSafeString,
 } from "./utils"
 
 export interface SelectboxColumnParams {
@@ -53,8 +50,9 @@ function SelectboxColumn(props: BaseColumnProps): BaseColumn {
   const parameters = mergeColumnParameters(
     // Default parameters:
     {
-      options:
-        Quiver.getTypeName(props.arrowType) === "bool" ? [true, false] : [],
+      options: isBooleanType(props.arrowType)
+        ? [true, false]
+        : props.arrowType.categoricalOptions ?? [],
     },
     // User parameters:
     props.columnTypeOptions
@@ -75,6 +73,8 @@ function SelectboxColumn(props: BaseColumnProps): BaseColumn {
     copyData: "",
     contentAlign: props.contentAlignment,
     readonly: !props.isEditable,
+    // The text in pinned columns should be faded.
+    style: props.isPinned ? "faded" : "normal",
     data: {
       kind: "dropdown-cell",
       allowedValues: [
@@ -85,7 +85,6 @@ function SelectboxColumn(props: BaseColumnProps): BaseColumn {
           .map(opt => toSafeString(opt)), // convert everything to string
       ],
       value: "",
-      readonly: !props.isEditable,
     },
   } as DropdownCellType
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,25 @@
  */
 
 import React from "react"
-import "@testing-library/jest-dom"
-import { screen, fireEvent } from "@testing-library/react"
-import { render } from "@streamlit/lib/src/test_util"
 
-import { LabelVisibilityOptions } from "@streamlit/lib/src/util/utils"
-import { Selectbox, Props, fuzzyFilterSelectOptions } from "./Selectbox"
-import { mockTheme } from "@streamlit/lib/src/mocks/mockTheme"
+import { fireEvent, screen } from "@testing-library/react"
+import { userEvent } from "@testing-library/user-event"
 
-jest.mock("@streamlit/lib/src/WidgetStateManager")
+import { render } from "~lib/test_util"
+import { LabelVisibilityOptions } from "~lib/util/utils"
+import * as Utils from "~lib/theme/utils"
+import { mockConvertRemToPx } from "~lib/mocks/mocks"
+
+import Selectbox, { fuzzyFilterSelectOptions, Props } from "./Selectbox"
+
+vi.mock("~lib/WidgetStateManager")
 
 const getProps = (props: Partial<Props> = {}): Props => ({
   value: 0,
   label: "Label",
   options: ["a", "b", "c"],
-  width: 0,
   disabled: false,
-  onChange: jest.fn(),
-  theme: mockTheme.emotion,
+  onChange: vi.fn(),
   placeholder: "Select...",
   ...props,
 })
@@ -40,7 +41,12 @@ const getProps = (props: Partial<Props> = {}): Props => ({
 describe("Selectbox widget", () => {
   let props: Props
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   beforeEach(() => {
+    vi.spyOn(Utils, "convertRemToPx").mockImplementation(mockConvertRemToPx)
     props = getProps()
   })
 
@@ -49,12 +55,10 @@ describe("Selectbox widget", () => {
     expect(screen.getByRole("combobox")).toBeInTheDocument()
   })
 
-  it("has correct className and style", () => {
+  it("has correct className", () => {
     render(<Selectbox {...props} />)
     const selectbox = screen.getByTestId("stSelectbox")
     expect(selectbox).toHaveClass("stSelectbox")
-    expect(selectbox).toHaveClass("row-widget")
-    expect(selectbox).toHaveStyle(`width: ${props.width}px`)
   })
 
   it("renders a label", () => {
@@ -101,10 +105,11 @@ describe("Selectbox widget", () => {
     expect(screen.getByRole("combobox")).toBeDisabled()
   })
 
-  it("renders options", () => {
+  it("renders options", async () => {
+    const user = userEvent.setup()
     render(<Selectbox {...props} />)
     const selectbox = screen.getByRole("combobox")
-    fireEvent.click(selectbox)
+    await user.click(selectbox)
     const options = screen.getAllByRole("option")
 
     expect(options).toHaveLength(props.options.length)
@@ -121,35 +126,41 @@ describe("Selectbox widget", () => {
     expect(screen.getByRole("combobox")).toBeDisabled()
   })
 
-  it("is able to select an option", () => {
+  it("is able to select an option", async () => {
+    const user = userEvent.setup()
     render(<Selectbox {...props} />)
     const selectbox = screen.getByRole("combobox")
     // Open the dropdown
-    fireEvent.click(selectbox)
+    await user.click(selectbox)
     const options = screen.getAllByRole("option")
-    fireEvent.click(options[1])
+    // TODO: Utilize user-event instead of fireEvent
+    // eslint-disable-next-line testing-library/prefer-user-event
+    fireEvent.click(options[2])
 
-    expect(props.onChange).toHaveBeenCalledWith(1)
-    expect(screen.getByText(props.options[1])).toBeInTheDocument()
+    expect(props.onChange).toHaveBeenCalledWith(2)
+    expect(screen.getByText(props.options[2])).toBeInTheDocument()
   })
 
-  it("doesn't filter options based on index", () => {
+  it("doesn't filter options based on index", async () => {
+    const user = userEvent.setup()
     render(<Selectbox {...props} />)
 
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "1" } })
+    await user.type(screen.getByRole("combobox"), "1")
     expect(screen.getByText("No results")).toBeInTheDocument()
   })
 
-  it("filters options based on label with case insensitive", () => {
+  it("filters options based on label with case insensitive", async () => {
+    const user = userEvent.setup()
     render(<Selectbox {...props} />)
     const selectbox = screen.getByRole("combobox")
 
-    fireEvent.change(selectbox, { target: { value: "b" } })
+    await user.type(selectbox, "b")
     let options = screen.getAllByRole("option")
     expect(options).toHaveLength(1)
     expect(options[0]).toHaveTextContent("b")
 
-    fireEvent.change(selectbox, { target: { value: "B" } })
+    await user.clear(selectbox)
+    await user.type(selectbox, "B")
     options = screen.getAllByRole("option")
     expect(options).toHaveLength(1)
     expect(options[0]).toHaveTextContent("b")

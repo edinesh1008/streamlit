@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 """radio unit tests."""
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -27,6 +28,10 @@ from streamlit.proto.LabelVisibilityMessage_pb2 import LabelVisibilityMessage
 from streamlit.testing.v1.app_test import AppTest
 from streamlit.testing.v1.util import patch_config_options
 from tests.delta_generator_test_case import DeltaGeneratorTestCase
+from tests.streamlit.data_test_cases import (
+    SHARED_TEST_CASES,
+    CaseMetadata,
+)
 
 
 class RadioTest(DeltaGeneratorTestCase):
@@ -94,28 +99,18 @@ class RadioTest(DeltaGeneratorTestCase):
         self.assertEqual(current_value, None)
 
     @parameterized.expand(
-        [
-            (("m", "f"), ["m", "f"]),
-            (["male", "female"], ["male", "female"]),
-            (np.array(["m", "f"]), ["m", "f"]),
-            (pd.Series(np.array(["male", "female"])), ["male", "female"]),
-            (pd.DataFrame({"options": ["male", "female"]}), ["male", "female"]),
-            (
-                pd.DataFrame(
-                    data=[[1, 4, 7], [2, 5, 8], [3, 6, 9]], columns=["a", "b", "c"]
-                ).columns,
-                ["a", "b", "c"],
-            ),
-        ]
+        SHARED_TEST_CASES,
     )
-    def test_option_types(self, options, proto_options):
+    def test_option_types(self, name: str, input_data: Any, metadata: CaseMetadata):
         """Test that it supports different types of options."""
-        st.radio("the label", options)
+        st.radio("the label", input_data)
 
         c = self.get_delta_from_queue().new_element.radio
-        self.assertEqual(c.label, "the label")
-        self.assertEqual(c.default, 0)
-        self.assertEqual(c.options, proto_options)
+        assert c.label == "the label"
+        assert c.default == 0
+        assert {str(item) for item in c.options} == {
+            str(item) for item in metadata.expected_sequence
+        }
 
     def test_cast_options_to_string(self):
         """Test that it casts options to string."""
@@ -251,6 +246,15 @@ class RadioTest(DeltaGeneratorTestCase):
         self.assertEqual(c.default, 0)
         self.assertEqual(c.captions, ["first caption", "", "", "last caption"])
 
+    def test_shows_cached_widget_replay_warning(self):
+        """Test that a warning is shown when this widget is used inside a cached function."""
+        st.cache_data(lambda: st.radio("the label", ["option 1", "option 2"]))()
+
+        # The widget itself is still created, so we need to go back one element more:
+        el = self.get_delta_from_queue(-2).new_element.exception
+        self.assertEqual(el.type, "CachedWidgetWarning")
+        self.assertTrue(el.is_warning)
+
 
 def test_radio_interaction():
     """Test interactions with an empty radio widget."""
@@ -307,3 +311,18 @@ def test_radio_enum_coercion():
     with patch_config_options({"runner.enumCoercion": "off"}):
         with pytest.raises(AssertionError):
             test_enum()  # expect a failure with the config value off.
+
+
+def test_None_session_state_value_retained():
+    def script():
+        import streamlit as st
+
+        if "radio" not in st.session_state:
+            st.session_state["radio"] = None
+
+        st.radio("radio", ["a", "b", "c"], key="radio")
+        st.button("button")
+
+    at = AppTest.from_function(script).run()
+    at = at.button[0].click().run()
+    assert at.radio[0].value is None

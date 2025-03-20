@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,62 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import React, { PureComponent, ReactElement } from "react"
-import "@testing-library/jest-dom"
+
 import { screen, waitFor } from "@testing-library/react"
+
+import {
+  AppConfig as ConnectionAppConfig,
+  LibConfig as ConnectionLibConfig,
+  StreamlitEndpoints,
+} from "@streamlit/connection"
 import {
   AppRoot,
-  VerticalBlock,
   ComponentRegistry,
+  createFormsData,
   FileUploadClient,
+  FormsData,
+  AppConfig as LibAppConfig,
+  LibConfig as LibLibConfig,
+  render,
   ScriptRunState,
   SessionInfo,
-  StreamlitEndpoints,
-  createFormsData,
-  FormsData,
+  VerticalBlock,
   WidgetStateManager,
+} from "@streamlit/lib"
+import {
   Delta as DeltaProto,
   Element as ElementProto,
   ForwardMsgMetadata as ForwardMsgMetadataProto,
   Text as TextProto,
-  render,
-} from "@streamlit/lib"
+} from "@streamlit/protobuf"
 
 /**
  * Example StreamlitEndpoints implementation.
  */
 class Endpoints implements StreamlitEndpoints {
-  public buildComponentURL(): string {
+  public setStaticConfigUrl(url: string | null): void {
     throw new Error("Unimplemented")
+  }
+
+  public sendClientErrorToHost(
+    component: string,
+    error: string | number,
+    message: string,
+    source: string,
+    customComponentName?: string
+  ): void {
+    throw new Error("Unimplemented")
+  }
+
+  public checkSourceUrlResponse(
+    sourceUrl: string,
+    componentName?: string
+  ): Promise<void> {
+    return Promise.reject(new Error("Unimplemented"))
+  }
+
+  public buildComponentURL(componentName: string, path: string): string {
+    return path
   }
 
   public buildMediaURL(url: string): string {
@@ -118,8 +148,8 @@ class StreamlitLibExample extends PureComponent<Props, State> {
       // to a FileUploadClient callback. The FormSubmitButton element
       // reads the state.
       formsWithPendingRequestsChanged: formIds =>
-        this.widgetMgr.setFormsWithUploads(formIds),
-      requestFileURLs: jest.fn(),
+        this.widgetMgr.setFormsWithUploadsInProgress(formIds),
+      requestFileURLs: vi.fn(),
     })
 
     this.sessionInfo.setCurrent({
@@ -142,7 +172,7 @@ class StreamlitLibExample extends PureComponent<Props, State> {
 
     // Initialize React state
     this.state = {
-      elements: AppRoot.empty(),
+      elements: AppRoot.empty(""),
       formsData: createFormsData(),
       scriptRunState: ScriptRunState.NOT_RUNNING,
       // ScriptRunID should get a new unique ID every time the
@@ -199,7 +229,6 @@ class StreamlitLibExample extends PureComponent<Props, State> {
       <VerticalBlock
         node={blockNode}
         endpoints={this.endpoints}
-        sessionInfo={this.sessionInfo}
         scriptRunId={this.state.scriptRunId}
         scriptRunState={this.state.scriptRunState}
         widgetMgr={this.widgetMgr}
@@ -225,7 +254,7 @@ describe("StreamlitLibExample", () => {
     )
   })
 
-  it("handles Delta messages", () => {
+  it("handles Delta messages", async () => {
     // there's nothing within the app ui to cycle through script run messages so we need a reference
     let streamlitLibInstance: any
     render(
@@ -258,6 +287,15 @@ describe("StreamlitLibExample", () => {
     expect(screen.queryByText("Please wait...")).not.toBeInTheDocument()
 
     // And we should have the single Text element we created
-    expect(screen.getByText("Hello, world!")).toBeInTheDocument()
+    expect(await screen.findByText("Hello, world!")).toBeInTheDocument()
+  })
+
+  it("sees app config as the same structure", () => {
+    const appConfig: ConnectionAppConfig = {} as LibAppConfig
+    const libConfig: ConnectionLibConfig = {} as LibLibConfig
+
+    // Creating a test to ensure this just passes. The above will break
+    // the typechecker if the structures are not the same.
+    expect(true).toBe(true)
   })
 })

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,14 @@
  */
 
 import styled from "@emotion/styled"
-import { ChevronLeft } from "react-feather"
 import { darken } from "color2k"
-import { Small } from "@streamlit/lib"
+import { ChevronLeft } from "react-feather"
 
-export const StyledRerunHeader = styled.div(({ theme }) => ({
-  marginBottom: theme.spacing.sm,
-}))
-
-export const StyledCommandLine = styled.textarea(({ theme }) => ({
-  width: theme.sizes.full,
-  fontFamily: theme.genericFonts.codeFont,
-  fontSize: theme.fontSizes.sm,
-  height: "6rem",
-}))
-
-export const StyledShortcutLabel = styled.span(() => ({
+export const StyledShortcutLabel = styled.span({
   "&::first-letter": {
     textDecoration: "underline",
   },
-}))
+})
 
 export const StyledBackButton = styled(ChevronLeft)(({ theme }) => ({
   cursor: "pointer",
@@ -80,17 +68,8 @@ export const StyledLabel = styled.label(({ theme }) => ({
   paddingTop: 0,
   marginBottom: 0,
   marginTop: 0,
-  lineHeight: 1.25,
+  lineHeight: theme.lineHeights.tight,
   fontSize: theme.fontSizes.sm,
-}))
-
-export const StyledSmall = styled(Small)(() => ({
-  display: "block",
-  paddingBottom: 0,
-  paddingTop: 0,
-  marginBottom: 0,
-  marginTop: 0,
-  lineHeight: 1.5,
 }))
 
 export const StyledHr = styled.hr(({ theme }) => ({
@@ -108,10 +87,10 @@ export const StyledButtonContainer = styled.div(({ theme }) => ({
 export const StyledCheckbox = styled.input(({ theme }) => ({
   marginRight: theme.spacing.xs,
   appearance: "none",
-  border: `1px solid ${theme.colors.fadedText10}`,
+  border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
   width: theme.fontSizes.md,
   height: theme.fontSizes.md,
-  borderRadius: theme.radii.sm,
+  borderRadius: `min(${theme.radii.md}, ${theme.radii.maxCheckbox})`,
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -131,7 +110,7 @@ export const StyledCheckbox = styled.input(({ theme }) => ({
       fontFamily: theme.fonts.monospace,
       fontSize: theme.fontSizes.md,
       color: theme.colors.white,
-      lineHeight: 1,
+      lineHeight: theme.lineHeights.none,
     },
   },
 
@@ -140,21 +119,21 @@ export const StyledCheckbox = styled.input(({ theme }) => ({
   },
 }))
 
-export const StyledDeployErrorContent = styled.div(() => ({
+export const StyledDeployErrorContent = styled.div(({ theme }) => ({
   "& > ul": {
-    paddingLeft: "1.4rem",
+    paddingLeft: theme.spacing.twoXL,
   },
 }))
 
-export const StyledAboutInfo = styled.div(() => ({
-  padding: "0 0 1rem 0",
+export const StyledAboutInfo = styled.div(({ theme }) => ({
+  padding: `0 0 ${theme.spacing.lg} 0`,
   overflowY: "scroll",
 }))
 
 export const StyledAboutLink = styled.a(({ theme }) => ({
-  color: `${theme.colors.linkText} !important`,
+  color: `${theme.colors.link} !important`,
 
   "&:hover": {
-    color: `${darken(theme.colors.linkText, 0.15)} !important`,
+    color: `${darken(theme.colors.link, 0.15)} !important`,
   },
 }))

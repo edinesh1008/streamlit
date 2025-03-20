@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
 # limitations under the License.
 
 """Config Util Unittest."""
+
+from __future__ import annotations
+
 import copy
 import re
 import textwrap
@@ -207,15 +210,15 @@ class ConfigUtilTest(unittest.TestCase):
             "# This option's description starts from third line."
         )
 
-        assert (
-            description_index > 1
-        ), "Description should not be at the start of the output"
-        assert (
-            lines[description_index - 1].strip() == ""
-        ), "Preceding line should be empty (this line separates config options)"
-        assert (
-            lines[description_index - 2].strip() != ""
-        ), "The line before the preceding line should not be empty (this is the section header)"
+        assert description_index > 1, (
+            "Description should not be at the start of the output"
+        )
+        assert lines[description_index - 1].strip() == "", (
+            "Preceding line should be empty (this line separates config options)"
+        )
+        assert lines[description_index - 2].strip() != "", (
+            "The line before the preceding line should not be empty (this is the section header)"
+        )
 
     @patch("click.secho")
     def test_description_appears_before_option(self, patched_echo):
@@ -246,7 +249,9 @@ class ConfigUtilTest(unittest.TestCase):
 
     @patch("click.secho")
     def test_show_config_section_formatting(self, patched_echo):
-        config_options = create_config_options({"server.address": "localhost"})
+        config_options = create_config_options(
+            {"server.address": "localhost", "theme.sidebar.primaryColor": "red"}
+        )
         config_util.show_config(CONFIG_SECTION_DESCRIPTIONS, config_options)
 
         [(args, _)] = patched_echo.call_args_list
@@ -254,6 +259,9 @@ class ConfigUtilTest(unittest.TestCase):
         lines = output.split("\n")
 
         self.assertIn("[server]", lines)
+        self.assertIn('address = "localhost"', lines)
+        self.assertIn("[theme.sidebar]", lines)
+        self.assertIn('primaryColor = "red"', lines)
 
     @patch("click.secho")
     def test_show_config_hidden_option(self, patched_echo):

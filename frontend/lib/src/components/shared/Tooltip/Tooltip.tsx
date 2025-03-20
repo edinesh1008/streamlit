@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,26 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, ReactNode } from "react"
+import React, {
+  memo,
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useState,
+} from "react"
+
 import { useTheme } from "@emotion/react"
 import {
-  EmotionTheme,
-  hasLightBackgroundColor,
-} from "@streamlit/lib/src/theme"
-import { StatefulTooltip, ACCESSIBILITY_TYPE, PLACEMENT } from "baseui/tooltip"
+  ACCESSIBILITY_TYPE,
+  PLACEMENT,
+  PopoverOverrides,
+  StatefulTooltip,
+} from "baseui/tooltip"
+
+import { EmotionTheme, hasLightBackgroundColor } from "~lib/theme"
+
 import { StyledTooltipContentWrapper } from "./styled-components"
+import { useTooltipMeasurementSideEffect } from "./useTooltipMeasurementSideEffect"
 
 export enum Placement {
   AUTO = "auto",
@@ -46,6 +58,8 @@ export interface TooltipProps {
   inline?: boolean
   style?: React.CSSProperties
   onMouseEnterDelay?: number
+  overrides?: PopoverOverrides
+  containerWidth?: boolean
 }
 
 function Tooltip({
@@ -55,17 +69,37 @@ function Tooltip({
   inline,
   style,
   onMouseEnterDelay,
+  overrides,
+  containerWidth,
 }: TooltipProps): ReactElement {
   const theme: EmotionTheme = useTheme()
-  const { colors, fontSizes, radii } = theme
+  const { colors, fontSizes, radii, fontWeights } = theme
+
+  // This section of code is to work around a timing issue with BaseWeb's Tooltip component
+  const [tooltipElement, setTooltipElement] = useState<HTMLDivElement | null>(
+    null
+  )
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleOpen = useCallback(() => {
+    setIsOpen(true)
+  }, [])
+  const handleClose = useCallback(() => {
+    setIsOpen(false)
+  }, [])
+
+  useTooltipMeasurementSideEffect(tooltipElement, isOpen)
 
   return (
     <StatefulTooltip
+      onOpen={handleOpen}
+      onClose={handleClose}
       content={
         content ? (
           <StyledTooltipContentWrapper
             className="stTooltipContent"
             data-testid="stTooltipContent"
+            ref={setTooltipElement}
           >
             {content}
           </StyledTooltipContentWrapper>
@@ -77,42 +111,45 @@ function Tooltip({
       popoverMargin={10}
       onMouseEnterDelay={onMouseEnterDelay}
       overrides={{
-        Body: {
-          style: {
-            // This is annoying, but a bunch of warnings get logged when the
-            // shorthand version `borderRadius` is used here since the long
-            // names are used by BaseWeb and mixing the two is apparently
-            // bad :(
-            borderTopLeftRadius: radii.md,
-            borderTopRightRadius: radii.md,
-            borderBottomLeftRadius: radii.md,
-            borderBottomRightRadius: radii.md,
+        ...{
+          Body: {
+            style: {
+              // This is annoying, but a bunch of warnings get logged when the
+              // shorthand version `borderRadius` is used here since the long
+              // names are used by BaseWeb and mixing the two is apparently
+              // bad :(
+              borderTopLeftRadius: radii.default,
+              borderTopRightRadius: radii.default,
+              borderBottomLeftRadius: radii.default,
+              borderBottomRightRadius: radii.default,
 
-            paddingTop: "0 !important",
-            paddingBottom: "0 !important",
-            paddingLeft: "0 !important",
-            paddingRight: "0 !important",
+              paddingTop: "0 !important",
+              paddingBottom: "0 !important",
+              paddingLeft: "0 !important",
+              paddingRight: "0 !important",
 
-            backgroundColor: "transparent",
+              backgroundColor: "transparent",
+            },
+          },
+          Inner: {
+            style: {
+              backgroundColor: hasLightBackgroundColor(theme)
+                ? colors.bgColor
+                : colors.secondaryBg,
+              color: colors.bodyText,
+              fontSize: fontSizes.sm,
+              fontWeight: fontWeights.normal,
+
+              // See the long comment about `borderRadius`. The same applies here
+              // to `padding`.
+              paddingTop: "0 !important",
+              paddingBottom: "0 !important",
+              paddingLeft: "0 !important",
+              paddingRight: "0 !important",
+            },
           },
         },
-        Inner: {
-          style: {
-            backgroundColor: hasLightBackgroundColor(theme)
-              ? colors.bgColor
-              : colors.secondaryBg,
-            color: colors.bodyText,
-            fontSize: fontSizes.sm,
-            fontWeight: "normal",
-
-            // See the long comment about `borderRadius`. The same applies here
-            // to `padding`.
-            paddingTop: "0 !important",
-            paddingBottom: "0 !important",
-            paddingLeft: "0 !important",
-            paddingRight: "0 !important",
-          },
-        },
+        ...overrides,
       }}
     >
       {/* BaseWeb manipulates its child, so we create a wrapper div for protection */}
@@ -121,6 +158,7 @@ function Tooltip({
           display: "flex",
           flexDirection: "row",
           justifyContent: inline ? "flex-end" : "",
+          width: containerWidth ? "100%" : "auto",
           ...style,
         }}
         data-testid="stTooltipHoverTarget"
@@ -132,4 +170,4 @@ function Tooltip({
   )
 }
 
-export default Tooltip
+export default memo(Tooltip)

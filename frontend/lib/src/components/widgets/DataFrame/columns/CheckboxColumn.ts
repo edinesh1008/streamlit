@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 
 import {
-  GridCell,
   BooleanCell,
+  GridCell,
   GridCellKind,
 } from "@glideapps/glide-data-grid"
 
-import { isNullOrUndefined } from "@streamlit/lib/src/util/utils"
+import { isNullOrUndefined } from "~lib/util/utils"
 
 import {
   BaseColumn,
   BaseColumnProps,
   getErrorCell,
-  toSafeString,
   toSafeBoolean,
+  toSafeString,
 } from "./utils"
 
 /**
@@ -41,7 +41,7 @@ function CheckboxColumn(props: BaseColumnProps): BaseColumn {
     allowOverlay: false, // no overlay possible
     contentAlign: props.contentAlignment,
     readonly: !props.isEditable,
-    style: props.isIndex ? "faded" : "normal",
+    style: "normal",
   } as BooleanCell
 
   return {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+ * Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
  */
 
 import styled from "@emotion/styled"
-import { hasLightBackgroundColor } from "@streamlit/lib/src/theme"
+
+import { hasLightBackgroundColor } from "~lib/theme"
 
 export interface StyledDeckGlChartProps {
-  width: number
-  height: number
+  height: number | string
 }
 
 export const StyledDeckGlChart = styled.div<StyledDeckGlChartProps>(
-  ({ width, height, theme }) => ({
-    marginTop: theme.spacing.sm,
+  ({ height }) => ({
     position: "relative",
     height,
-    width,
+    width: "100%",
   })
 )
 
@@ -35,15 +34,30 @@ export const StyledNavigationControlContainer = styled.div(({ theme }) => ({
   position: "absolute",
   right: "2.625rem",
   top: theme.spacing.md,
-  zIndex: 1,
+  zIndex: theme.zIndices.priority,
+
+  ".mapboxgl-ctrl.mapboxgl-ctrl-group": {
+    // Ensures that the border-radius of the zoom buttons is visible
+    overflow: "hidden",
+    background: theme.colors.bgColor,
+  },
 
   // Update zoom buttons based on the active theme
   "button:not(:disabled)": {
     background: theme.colors.bgColor,
+    width: theme.iconSizes.twoXL,
+    height: theme.iconSizes.twoXL,
 
     // Add a separator between buttons
     "& + button": {
-      borderTopColor: theme.colors.secondaryBg,
+      borderTopColor: theme.colors.borderColor,
+    },
+
+    ".mapboxgl-ctrl-icon": {
+      backgroundSize: theme.iconSizes.twoXL,
+      "&:hover": {
+        backgroundColor: theme.colors.darkenedBgMix25,
+      },
     },
 
     // On dark backgrounds, invert the color for the + and - symbols
