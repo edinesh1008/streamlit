@@ -188,7 +188,6 @@ export const useLayoutStyles = <T>({
 
   // Note: Consider rounding the width to the nearest pixel so we don't have
   // subpixel widths, which leads to blurriness on screen
-
   const layoutStyles = useMemo((): UseLayoutStylesShape => {
     // If we don't have an element, we are rendering a root-level node, likely a
     // `StyledAppViewBlockContainer`
@@ -250,8 +249,16 @@ export const useLayoutStyles = <T>({
        * @see WidthBehavior on the Backend
        * @see the Image.proto file
        */
+      let flex
+      if (!Number.isNaN(Number(containerWidth))) {
+        flex = `${element.scale ?? 1} 1 ${validateWidth(containerWidth)}px`
+      } else {
+        flex = `${element.scale ?? 1} 1 0%`
+      }
+
       return {
         width: containerWidth,
+        flex: flex,
       }
     }
 
