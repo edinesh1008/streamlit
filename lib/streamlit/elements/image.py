@@ -159,17 +159,15 @@ class ImageMixin:
                 "`use_container_width` and `use_column_width` cannot be set at the same time.",
                 "Please utilize `use_container_width` since `use_column_width` is deprecated.",
             )
-
-        image_width: int = (
-            WidthBehavior.ORIGINAL
-            if (width is None or (isinstance(width, int) and width <= 0))
-            else width
-        )
-
-        if width == "stretch":
+        image_width: int
+        if width is None or (isinstance(width, int) and width <= 0):
+            image_width = WidthBehavior.ORIGINAL
+        elif width == "stretch":
             image_width = WidthBehavior.STRETCH
         elif width == "content":
             image_width = WidthBehavior.CONTENT
+        else:
+            image_width = width
 
         if use_column_width is not None:
             show_deprecation_warning(
