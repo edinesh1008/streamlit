@@ -39,15 +39,15 @@ const Dialog: React.FC<React.PropsWithChildren<Props>> = ({
   )
 
   useExecuteWhenChanged(
-    // when the deltaMsgReceivedAt changes, we might want to open the dialog again.
-    // since dismissing is a UI-only action, the initialIsOpen prop might not have
-    // changed which would lead to the dialog not opening again.
     () => {
       // Only apply the open state if it was actually set in the proto.
       if (notNullOrUndefined(initialIsOpen)) {
         setIsOpen(initialIsOpen)
       }
     },
+    // when the deltaMsgReceivedAt changes, we might want to open the dialog again.
+    // since dismissing is a UI-only action, the initialIsOpen prop might not have
+    // changed which would lead to the dialog not opening again.
     [initialIsOpen, deltaMsgReceivedAt]
   )
 
