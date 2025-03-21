@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, cast
 
 from streamlit.proto.Empty_pb2 import Empty as EmptyProto
 from streamlit.proto.Skeleton_pb2 import Skeleton as SkeletonProto
@@ -26,12 +26,7 @@ if TYPE_CHECKING:
 
 class EmptyMixin:
     @gather_metrics("empty")
-    def empty(
-        self,
-        *,  # keyword-only arguments
-        width: Literal["stretch", "content"] | int = "content",
-        scale: int = 1,
-    ) -> DeltaGenerator:
+    def empty(self) -> DeltaGenerator:
         """Insert a single-element container.
 
         Inserts a container into your app that can be used to hold a single element.
@@ -99,21 +94,8 @@ class EmptyMixin:
         .. output::
            https://doc-empty-placeholder.streamlit.app/
            height: 600px
-
-        Parameters
-        ----------
-        width : "stretch", "content", or int
-            The width of the empty container. If "stretch", the element will expand to fill its parent container.
-            If "content", the element will be sized to fit its contents. If an integer, the element will have
-            that specific width in pixels. Defaults to "content".
-
-        scale : int or None
-            An optional integer scale factor to apply to the element.
         """
         empty_proto = EmptyProto()
-        empty_proto.width = str(width)
-        if scale is not None:
-            empty_proto.scale = scale
         return self.dg._enqueue("empty", empty_proto)
 
     @gather_metrics("_skeleton")
