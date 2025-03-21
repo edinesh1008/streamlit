@@ -92,7 +92,6 @@ class ButtonMixin:
         key: Key | None = None,
         help: str | None = None,
         on_click: WidgetCallback | None = None,
-        justify_right: bool = False,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
@@ -251,7 +250,6 @@ class ButtonMixin:
             on_click=on_click,
             width=width,
             scale=scale,
-            justify_right=justify_right,
             args=args,
             kwargs=kwargs,
             disabled=disabled,
@@ -1040,7 +1038,6 @@ class ButtonMixin:
         help: str | None,
         is_form_submitter: bool,
         on_click: WidgetCallback | None = None,
-        justify_right: bool = False,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
         *,  # keyword-only arguments:
@@ -1102,7 +1099,6 @@ class ButtonMixin:
         button_proto.type = type
         button_proto.use_container_width = use_container_width
         button_proto.disabled = disabled
-        button_proto.justify_right = justify_right
         button_proto.width = str(width)
 
         if scale is not None:
