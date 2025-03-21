@@ -42,6 +42,7 @@ from streamlit.web.server.asgi_browser_websocket_handler import (
 from streamlit.web.server.asgi_routes import (
     ASGIHealthHandler,
     ASGIHostConfigHandler,
+    MediaFileHandler,
 )
 from streamlit.web.server.server_util import DEVELOPMENT_PORT
 
@@ -171,6 +172,8 @@ class Server:
 
         # Initialize MediaFileStorage and its associated endpoint
         media_file_storage = MemoryMediaFileStorage(MEDIA_ENDPOINT)
+
+        self._media_file_storage = media_file_storage
         # MediaFileHandler.initialize_storage(media_file_storage)
 
         uploaded_file_mgr = MemoryUploadedFileManager(UPLOAD_FILE_ENDPOINT)
@@ -230,6 +233,7 @@ class Server:
         await self._runtime._async_objs.started
         yield {
             "runtime": self._runtime,
+            "media_file_storage": self._media_file_storage,
         }
 
     def _create_app(self) -> Starlette:
@@ -241,6 +245,8 @@ class Server:
             Route("/healthz", ASGIHealthHandler),
             Route("/_stcore/health", ASGIHealthHandler),
             Route("/_stcore/host-config", ASGIHostConfigHandler),
+            # Add the media file route with a path parameter
+            Route(MEDIA_ENDPOINT + "/{path:path}", endpoint=MediaFileHandler),
         ]
 
         if config.get_option("global.developmentMode"):

@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Callable
+from urllib.parse import quote
 
 from starlette.endpoints import HTTPEndpoint
 from starlette.requests import Request
-from starlette.responses import JSONResponse, PlainTextResponse
+from starlette.responses import JSONResponse, PlainTextResponse, Response
 from starlette.staticfiles import StaticFiles
 from starlette.types import Scope
 
 from streamlit import config
+from streamlit.logger import get_logger
+from streamlit.runtime.media_file_storage import MediaFileKind, MediaFileStorageError
+from streamlit.runtime.memory_media_file_storage import get_extension_for_mimetype
+
+_LOGGER = get_logger(__name__)
 
 
 class ASGIHealthHandler(HTTPEndpoint):
@@ -129,3 +135,38 @@ class ASGIStaticFiles(StaticFiles):
             else:
                 scope["path"] = "/" + "/".join(url_parts[1:])
         return super().get_path(scope)
+
+
+class MediaFileHandler(HTTPEndpoint):
+    async def get(self, request: Request) -> Response:
+        """Handle GET requests for media files."""
+        path = request.path_params.get("path", "")
+        _LOGGER.debug("MediaFileHandler: GET %s", path)
+
+        storage = request.state.media_file_storage
+
+        try:
+            media_file = storage.get_file(path)
+        except MediaFileStorageError:
+            _LOGGER.error("MediaFileHandler: Missing file %s", path)
+            return PlainTextResponse("File not found", status_code=404)
+
+        _LOGGER.debug("MediaFileHandler: Sending %s file %s", media_file.mimetype, path)
+
+        headers = {}
+        if media_file.kind == MediaFileKind.DOWNLOADABLE:
+            filename = (
+                media_file.filename
+                or f"streamlit_download{get_extension_for_mimetype(media_file.mimetype)}"
+            )
+            try:
+                filename.encode("latin1")
+                file_expr = f'filename="{filename}"'
+            except UnicodeEncodeError:
+                # RFC5987 syntax for unicode filenames
+                file_expr = f"filename*=utf-8''{quote(filename)}"
+            headers["Content-Disposition"] = f"attachment; {file_expr}"
+
+        return Response(
+            content=media_file.content, media_type=media_file.mimetype, headers=headers
+        )
