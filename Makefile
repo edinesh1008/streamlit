@@ -392,8 +392,6 @@ notices:
 	./scripts/append_license.sh frontend/app/src/assets/fonts/Source_Serif_Pro/Source-Serif-Pro.LICENSE
 	./scripts/append_license.sh frontend/app/src/assets/img/Material-Icons.LICENSE
 	./scripts/append_license.sh frontend/app/src/assets/img/Open-Iconic.LICENSE
-	./scripts/append_license.sh frontend/lib/src/vendor/bokeh/bokeh-LICENSE.txt
-	./scripts/append_license.sh frontend/lib/src/vendor/react-bootstrap-LICENSE.txt
 
 .PHONY: headers
 # Update the license header on all source files.

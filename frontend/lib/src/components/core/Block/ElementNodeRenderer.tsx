@@ -16,7 +16,6 @@
 
 import React, { ReactElement, Suspense } from "react"
 
-import debounceRender from "react-debounce-render"
 import classNames from "classnames"
 
 import {
@@ -24,7 +23,6 @@ import {
   Arrow as ArrowProto,
   AudioInput as AudioInputProto,
   Audio as AudioProto,
-  BokehChart as BokehChartProto,
   ButtonGroup as ButtonGroupProto,
   Button as ButtonProto,
   CameraInput as CameraInputProto,
@@ -88,7 +86,6 @@ import { FormSubmitContent } from "~lib/components/widgets/Form"
 import Heading from "~lib/components/shared/StreamlitMarkdown/Heading"
 import { LibContext } from "~lib/components/core/LibContext"
 import { getElementId } from "~lib/util/utils"
-import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
 
 import {
   BaseBlockProps,
@@ -110,19 +107,6 @@ const ArrowVegaLiteChart = React.lazy(
   () => import("~lib/components/elements/ArrowVegaLiteChart")
 )
 const Toast = React.lazy(() => import("~lib/components/elements/Toast"))
-
-// BokehChart render function is sluggish. If the component is not debounced,
-// AutoSizer causes it to rerender multiple times for different widths
-// when the sidebar is toggled, which significantly slows down the app.
-const BokehChart = React.lazy(
-  () => import("~lib/components/elements/BokehChart")
-)
-
-// RTL ESLint triggers a false positive on this render function
-// eslint-disable-next-line testing-library/render-result-naming-convention
-const DebouncedBokehChart = withCalculatedWidth(
-  debounceRender(BokehChart, 100)
-)
 
 const DeckGlJsonChart = React.lazy(
   () => import("~lib/components/elements/DeckGlJsonChart")
@@ -255,14 +239,6 @@ const RawElementNodeRenderer = (
       return hideIfStale(
         props.isStale,
         <Balloons scriptRunId={props.scriptRunId} />
-      )
-
-    case "bokehChart":
-      return (
-        <DebouncedBokehChart
-          element={node.element.bokehChart as BokehChartProto}
-          {...elementProps}
-        />
       )
 
     case "code": {

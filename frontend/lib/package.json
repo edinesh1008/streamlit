@@ -15,9 +15,6 @@
       "default": "./dist/streamlit-lib.umd.js"
     }
   },
-  "sideEffects": [
-    "**/vendor/bokeh/**"
-  ],
   "files": [
     "dist"
   ],
