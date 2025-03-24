@@ -78,6 +78,13 @@ def test_pydeck_chart_has_consistent_visuals(
         pixel_threshold=1.0,
     )
 
+    # The pydeck tests are a lot flakier than need be so increase the pixel threshold
+    assert_snapshot(
+        pydeck_charts.nth(6).locator("canvas").nth(1),
+        name="st_pydeck_chart-globe_view",
+        pixel_threshold=1.0,
+    )
+
 
 def test_check_top_level_class(app: Page):
     """Check that the top level class is correctly set."""

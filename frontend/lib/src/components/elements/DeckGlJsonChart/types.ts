@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { DeckProps } from "@deck.gl/core"
+import type { DeckProps, View } from "@deck.gl/core"
 
 import type { DeckGlJsonChart as DeckGlJsonChartProto } from "@streamlit/protobuf"
 
@@ -32,11 +32,23 @@ type SerializedLayer = {
   updateTriggers?: Record<string, unknown[]>
 } & Record<string, unknown>
 
+type SerializedView = {
+  /** @see https://deck.gl/docs/developer-guide/views */
+  "@@type":
+    | "View"
+    | "MapView"
+    | "_GlobeView"
+    | "FirstPersonView"
+    | "OrthographicView"
+    | "OrbitView"
+  id?: string
+} & Record<string, unknown>
+
 export type ParsedDeckGlConfig = {
   layers: SerializedLayer[]
   mapStyle?: string
   initialViewState: DeckProps["initialViewState"]
-  views: DeckProps["views"]
+  views?: SerializedView[]
 }
 
 export interface DeckGLProps {
@@ -55,6 +67,7 @@ export interface DeckObject {
   }
   layers: DeckProps["layers"]
   mapStyle?: string | Array<string>
+  views?: DeckProps<View[]>["views"]
 }
 
 /**

@@ -17,12 +17,22 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import JSON5 from "json5"
-import { PickingInfo, ViewStateChangeParameters } from "@deck.gl/core"
+import {
+  FirstPersonView,
+  _GlobeView as GlobeView,
+  OrbitView,
+  OrthographicView,
+  PickingInfo,
+  View,
+  ViewStateChangeParameters,
+  ViewStateMap,
+} from "@deck.gl/core"
 import { TooltipContent } from "@deck.gl/core/dist/lib/tooltip"
 import isEqual from "lodash/isEqual"
 import { parseToRgba } from "color2k"
 
 import { DeckGlJsonChart as DeckGlJsonChartProto } from "@streamlit/protobuf"
+import { isNullOrUndefined } from "@streamlit/utils"
 
 import { useStWidthHeight } from "~lib/hooks/useStWidthHeight"
 import { EmotionTheme } from "~lib/theme"
@@ -33,6 +43,7 @@ import {
 import { WidgetStateManager } from "~lib/WidgetStateManager"
 import { useRequiredContext } from "~lib/hooks/useRequiredContext"
 import { ElementFullscreenContext } from "~lib/components/shared/ElementFullscreen/ElementFullscreenContext"
+import { assertNever } from "~lib/util/assertNever"
 
 import type {
   DeckGlElementState,
@@ -59,7 +70,7 @@ type UseDeckGlShape = {
   setSelection: React.Dispatch<
     React.SetStateAction<ValueWithSource<DeckGlElementState> | null>
   >
-  viewState: Record<string, unknown> | null
+  viewState: ViewStateMap<View[]> | null
   width: number | string
 }
 
@@ -180,9 +191,7 @@ export const useDeckGl = (props: UseDeckGlProps): UseDeckGlShape => {
     fragmentId,
   })
 
-  const [viewState, setViewState] = useState<Record<string, unknown> | null>(
-    null
-  )
+  const [viewState, setViewState] = useState<ViewStateMap<View[]> | null>(null)
 
   const { height, width } = useStWidthHeight({
     element,
@@ -330,9 +339,52 @@ export const useDeckGl = (props: UseDeckGlProps): UseDeckGlShape => {
       })
     }
 
-    delete copy?.views // We are not using views. This avoids a console warning.
+    // Clone the views array so we can delete the views property below
+    // since jsonConverted throws an error if the views property exists.
+    const clonedViews = [...(copy.views || [])]
+    delete copy.views
 
-    return jsonConverter.convert(copy)
+    const converted = jsonConverter.convert(copy)
+
+    // Now, we can safely add the views back to the converted object
+    // by instantiating the view objects and adding them to the converted object.
+    if (clonedViews?.length) {
+      converted.views = clonedViews
+        .map(view => {
+          const { "@@type": type } = view
+
+          switch (type) {
+            case "_GlobeView":
+              return new GlobeView()
+            case "MapView":
+              // This is the default view, so we don't need to instantiate it
+              // Nulls will be filtered out below
+              return null
+            case "FirstPersonView":
+              return new FirstPersonView()
+            case "OrthographicView":
+              return new OrthographicView()
+            case "OrbitView":
+              return new OrbitView()
+            case "View":
+              // View is an abstract class and cannot be instantiated directly
+              return null
+            default:
+              assertNever(type)
+              // Nulls will be filtered out below
+              return null
+          }
+        })
+        .filter(v => !isNullOrUndefined(v))
+
+      if (converted.views.length === 0) {
+        // If there are no views, delete the views property, and fallback to the
+        // default behavior of deck.gl
+        delete converted.views
+      }
+    }
+
+    return converted
   }, [
     data.selection.indices,
     isLightTheme,

@@ -161,3 +161,91 @@ st.pydeck_chart(
     height=250,
     use_container_width=False,
 )
+
+
+# Simple GlobeView with static data
+# @see https://github.com/streamlit/streamlit/issues/9933
+
+
+def get_cities_data():
+    return pd.DataFrame(
+        {
+            "name": ["New York", "London", "Tokyo"],
+            "latitude": [40.7128, 51.5074, 35.6762],
+            "longitude": [-74.0060, -0.1278, 139.6503],
+            "population": [8.4, 8.9, 13.9],
+        }
+    )
+
+
+def get_continents_geojson():
+    # A very basic continental outline without relying on external requests for
+    # speed and determinism.
+    CONTINENTS = [
+        {
+            "coordinates": [[-130, 30], [-60, 30], [-60, 70], [-130, 70], [-130, 30]],
+        },
+        {
+            "coordinates": [[-80, -60], [-30, -60], [-30, 10], [-80, 10], [-80, -60]],
+        },
+        {
+            "coordinates": [[-10, 35], [40, 35], [40, 70], [-10, 70], [-10, 35]],
+        },
+        {
+            "coordinates": [[-20, -40], [50, -40], [50, 35], [-20, 35], [-20, -40]],
+        },
+        {
+            "coordinates": [[40, 0], [145, 0], [145, 70], [40, 70], [40, 0]],
+        },
+        {
+            "coordinates": [[110, -45], [155, -45], [155, -10], [110, -10], [110, -45]],
+        },
+    ]
+
+    # Convert to GeoJSON format
+    continent_features = []
+    for continent in CONTINENTS:
+        feature = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[lon, lat] for lon, lat in continent["coordinates"]]],
+            },
+        }
+        continent_features.append(feature)
+
+    return {"type": "FeatureCollection", "features": continent_features}
+
+
+st.pydeck_chart(
+    pdk.Deck(
+        views=[pdk.View(type="_GlobeView")],
+        initial_view_state=pdk.ViewState(latitude=20, longitude=0, zoom=1, min_zoom=1),
+        layers=[
+            pdk.Layer(
+                "GeoJsonLayer",
+                data=get_continents_geojson(),
+                stroked=True,
+                filled=True,
+                extruded=False,
+                get_fill_color=[200, 200, 200, 200],  # Light gray with transparency
+                get_line_color=[100, 100, 100],
+                get_line_width=2,
+                pickable=True,
+            ),
+            pdk.Layer(
+                "ColumnLayer",
+                data=get_cities_data(),
+                get_position=["longitude", "latitude"],
+                get_elevation="population",  # Height based on population
+                elevation_scale=100000,
+                radius=100000,  # Larger radius to be visible on globe
+                get_fill_color=[255, 140, 0],  # Orange color for visibility
+                pickable=True,
+                auto_highlight=True,
+            ),
+        ],
+        map_provider=None,  # type: ignore
+        parameters={"cull": True},  # Required for opaque globe
+    )
+)

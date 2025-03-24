@@ -235,6 +235,7 @@ export const DeckGlJsonChart: FC<DeckGLProps> = props => {
           height={height}
           width={width}
           layers={isInitialized ? deck.layers : EMPTY_LAYERS}
+          views={deck.views}
           getTooltip={createTooltip}
           // @ts-expect-error There is a type mismatch due to our versions of the libraries
           ContextProvider={MapContext.Provider}
