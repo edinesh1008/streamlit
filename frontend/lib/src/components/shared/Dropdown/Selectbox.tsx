@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { memo, useCallback, useEffect, useState } from "react"
+import React, { memo, useCallback, useEffect, useRef, useState } from "react"
 
 import { isMobile } from "react-device-detect"
 import { ChevronDown } from "baseui/icon"
@@ -23,24 +23,20 @@ import { useTheme } from "@emotion/react"
 import { hasMatch, score } from "fzy.js"
 import sortBy from "lodash/sortBy"
 
-import VirtualDropdown from "@streamlit/lib/src/components/shared/Dropdown/VirtualDropdown"
-import {
-  isNullOrUndefined,
-  LabelVisibilityOptions,
-} from "@streamlit/lib/src/util/utils"
-import { Placement } from "@streamlit/lib/src/components/shared/Tooltip"
-import TooltipIcon from "@streamlit/lib/src/components/shared/TooltipIcon"
+import VirtualDropdown from "~lib/components/shared/Dropdown/VirtualDropdown"
+import { isNullOrUndefined, LabelVisibilityOptions } from "~lib/util/utils"
+import { Placement } from "~lib/components/shared/Tooltip"
+import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import {
   StyledWidgetLabelHelp,
   WidgetLabel,
-} from "@streamlit/lib/src/components/widgets/BaseWidget"
-import { EmotionTheme } from "@streamlit/lib/src/theme"
+} from "~lib/components/widgets/BaseWidget"
+import { EmotionTheme } from "~lib/theme"
 
 const NO_OPTIONS_MSG = "No options to select."
 
 export interface Props {
   disabled: boolean
-  width?: number
   value: number | null
   onChange: (value: number | null) => void
   options: any[]
@@ -79,7 +75,6 @@ export function fuzzyFilterSelectOptions(
 
 const Selectbox: React.FC<Props> = ({
   disabled,
-  width,
   value: propValue,
   onChange,
   options: propOptions,
@@ -91,6 +86,9 @@ const Selectbox: React.FC<Props> = ({
 }) => {
   const theme: EmotionTheme = useTheme()
   const [value, setValue] = useState<number | null>(propValue)
+  // This ref is used to store the value before the user starts removing characters so that we can restore
+  // the value in case the user dismisses the changes by clicking away.
+  const valueBeforeRemoval = useRef<number | null>(value)
 
   // Update the value whenever the value provided by the props changes
   // TODO: Find a better way to handle this to prevent unneeded re-renders
@@ -100,12 +98,20 @@ const Selectbox: React.FC<Props> = ({
 
   const handleChange = useCallback(
     (params: OnChangeParams): void => {
-      if (params.value.length === 0) {
+      if (params.type === "remove") {
+        valueBeforeRemoval.current = params.option?.value
+        // We set the value so that BaseWeb updates the element's value while typing.
+        // We don't want to commit the change yet, so we don't call onChange.
+        setValue(null)
+        return
+      }
+
+      valueBeforeRemoval.current = null
+      if (params.type === "clear") {
         setValue(null)
         onChange(null)
         return
       }
-
       const [selected] = params.value
       const newValue = parseInt(selected.value, 10)
       setValue(newValue)
@@ -113,6 +119,12 @@ const Selectbox: React.FC<Props> = ({
     },
     [onChange]
   )
+
+  const handleBlur = useCallback(() => {
+    if (valueBeforeRemoval.current !== null) {
+      setValue(valueBeforeRemoval.current)
+    }
+  }, [])
 
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] =>
@@ -151,7 +163,7 @@ const Selectbox: React.FC<Props> = ({
   const showKeyboardOnMobile = options.length > 10
 
   return (
-    <div className="stSelectbox" data-testid="stSelectbox" style={{ width }}>
+    <div className="stSelectbox" data-testid="stSelectbox">
       <WidgetLabel
         label={label}
         labelVisibility={labelVisibility}
@@ -168,6 +180,7 @@ const Selectbox: React.FC<Props> = ({
         labelKey="label"
         aria-label={label || ""}
         onChange={handleChange}
+        onBlur={handleBlur}
         options={selectOptions}
         filterOptions={filterOptions}
         clearable={clearable || false}
@@ -215,6 +228,11 @@ const Selectbox: React.FC<Props> = ({
               paddingRight: theme.spacing.sm,
             }),
           },
+          Placeholder: {
+            style: () => ({
+              color: theme.colors.fadedText60,
+            }),
+          },
           ValueContainer: {
             style: () => ({
               // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
@@ -244,6 +262,12 @@ const Selectbox: React.FC<Props> = ({
                 },
               },
             },
+          },
+          SingleValue: {
+            style: () => ({
+              // remove margin from select value so that there is no jumpb, e.g. when pressing backspace on a selected option and removing a character.
+              marginLeft: theme.spacing.none,
+            }),
           },
           SelectArrow: {
             component: ChevronDown,

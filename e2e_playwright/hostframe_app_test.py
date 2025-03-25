@@ -27,12 +27,15 @@ from e2e_playwright.conftest import (
     wait_until,
 )
 from e2e_playwright.shared.app_utils import (
+    expect_prefixed_markdown,
     get_observed_connection_statuses,
     register_connection_status_observer,
 )
 
 TEST_ASSETS_DIR: Final[Path] = Path(__file__).parent / "test_assets"
 HOSTFRAME_TEST_HTML: Final[str] = (TEST_ASSETS_DIR / "hostframe.html").read_text()
+
+EXPANDER_HEADER_IDENTIFIER = "summary"
 
 
 def _load_html_and_get_locators(
@@ -144,6 +147,19 @@ def test_handles_host_rerun_script_message(iframed_app: IframedPage):
     )
 
 
+def test_context_url_is_correct_when_hosted_in_iframe(
+    iframed_app: IframedPage, app_port: int
+):
+    frame_locator, _ = _load_html_and_get_locators(iframed_app)
+
+    frame_locator.get_by_test_id("stExpander").locator(
+        EXPANDER_HEADER_IDENTIFIER
+    ).click()
+    expect_prefixed_markdown(
+        frame_locator, "Full url:", f"http://localhost:{app_port}/"
+    )
+
+
 def test_handles_host_stop_script_message(iframed_app: IframedPage):
     frame_locator, toolbar_buttons = _load_html_and_get_locators(iframed_app)
     # Make sure script is running
@@ -247,7 +263,26 @@ def test_handles_host_terminate_and_restart_websocket_connection_messages(
     assert statuses[1] == "CONNECTING"
     assert statuses[2] == "CONNECTED"
 
-    # Check that the script state of the app indicates not running.
+    # Check that the connection state change triggers a rerun of the app.
+    expect(frame_locator.get_by_test_id("stStatusWidget")).to_be_visible()
     expect(frame_locator.get_by_test_id("stApp")).to_have_attribute(
-        "data-test-script-state", "notRunning"
+        "data-test-script-state", "running"
     )
+
+
+def test_color_picker_closes_without_security_error(iframed_app: IframedPage):
+    """
+    Our color picker component has a bug that causes a security error when
+    closing the color picker from an iframe with a different origin. See
+    `BaseColorPicker.tsx` for more details. This test verifies that the color
+    picker closes without causing a security error in an iframe.
+    """
+    frame_locator, _ = _load_html_and_get_locators(iframed_app)
+
+    # Open the color picker, then click somewhere else to close it.
+    frame_locator.get_by_test_id("stColorPickerBlock").click()
+    frame_locator.get_by_test_id("stMain").click()
+
+    # Wait a bit, then verify no error message is shown in the app.
+    iframed_app.page.wait_for_timeout(1000)
+    expect(frame_locator.get_by_test_id("stException")).not_to_be_attached()
