@@ -624,8 +624,6 @@ class ArrowMixin:
                 user_key=key,
                 form_id=proto.form_id,
                 data=proto.data,
-                width=width,
-                height=height,
                 use_container_width=use_container_width,
                 column_order=proto.column_order,
                 column_config=proto.columns,

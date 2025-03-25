@@ -899,8 +899,6 @@ class DataEditorMixin:
             user_key=key,
             form_id=current_form_id(self.dg),
             data=arrow_bytes,
-            width=width,
-            height=height,
             use_container_width=use_container_width,
             column_order=column_order,
             column_config_mapping=str(column_config_mapping),

@@ -594,7 +594,6 @@ class TextWidgetsMixin:
             form_id=current_form_id(self.dg),
             label=label,
             value=value,
-            height=height,
             max_chars=max_chars,
             help=help,
             placeholder=str(placeholder),
