@@ -311,12 +311,8 @@ class ContextProxy:
     @property
     @gather_metrics("context.ip_address")
     def ip_address(self) -> str | None:
-        """The IP address of the user, read-only."""
-        session_client_request = _get_request()
-        if session_client_request is not None:
-            remote_ip = session_client_request.remote_ip
-            if remote_ip == "::1":
-                return "127.0.0.1"
-
-            return session_client_request.remote_ip
-        return None
+        """The ip_address of the user, read-only."""
+        ctx = get_script_run_ctx()
+        if ctx is None or ctx.context_info is None:
+            return None
+        return ctx.context_info.ip_address
