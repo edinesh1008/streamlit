@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { FC, useEffect, useRef } from "react"
+import React, { FC, memo, useEffect, useLayoutEffect, useRef } from "react"
 
 import { Global } from "@emotion/react"
 
@@ -76,7 +76,9 @@ const ArrowVegaLiteChart: FC<Props> = ({
 
   // Create the view once the container is ready and re-create
   // if the spec changes or the dimensions change.
-  useEffect(() => {
+  // We utilize useLayoutEffect to ensure that the view is created
+  // after the container is mounted to avoid layout shift.
+  useLayoutEffect(() => {
     if (containerRef.current !== null) {
       createView(containerRef, spec)
     }
@@ -121,4 +123,4 @@ const ArrowVegaLiteChart: FC<Props> = ({
 
 const ArrowVegaLiteChartWithFullScreen =
   withFullScreenWrapper(ArrowVegaLiteChart)
-export default ArrowVegaLiteChartWithFullScreen
+export default memo(ArrowVegaLiteChartWithFullScreen)
