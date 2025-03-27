@@ -29,12 +29,19 @@ import { hasLightBackgroundColor } from "@streamlit/lib"
 const getNavTextColor = (
   theme: any,
   isActive: boolean,
-  disabled: boolean = false
+  disabled: boolean = false,
+  isTopNav?: boolean
 ): string => {
-  const isLightTheme = hasLightBackgroundColor(theme)
   if (disabled) {
     return theme.colors.fadedText40
   }
+
+  if (isTopNav) {
+    return theme.colors.bodyText
+  }
+
+  const isLightTheme = hasLightBackgroundColor(theme)
+
   if (isActive) {
     return theme.colors.bodyText
   }
@@ -148,6 +155,7 @@ export const StyledSidebarNavLinkListItem = styled.li(({ theme }) => ({
 export interface StyledSidebarNavLinkProps {
   isActive: boolean
   disabled: boolean
+  isTopNav?: boolean
 }
 
 export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
@@ -200,9 +208,9 @@ export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
 )
 
 export const StyledSidebarLinkText = styled.span<StyledSidebarNavLinkProps>(
-  ({ isActive, theme, disabled }) => {
+  ({ isActive, theme, disabled, isTopNav }) => {
     return {
-      color: getNavTextColor(theme, isActive, disabled),
+      color: getNavTextColor(theme, isActive, disabled, isTopNav),
       overflow: "hidden",
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",

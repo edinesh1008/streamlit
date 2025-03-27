@@ -34,6 +34,7 @@ export interface SidebarNavLinkProps {
   pageUrl: string
   icon: string | undefined | null
   onClick: (e: MouseEvent) => void
+  isTopNav?: boolean
   children: string
 }
 
@@ -42,6 +43,7 @@ const SidebarNavLink = ({
   pageUrl,
   icon,
   onClick,
+  isTopNav,
   children,
 }: SidebarNavLinkProps): ReactElement => {
   const theme: EmotionTheme = useTheme()
@@ -80,6 +82,7 @@ const SidebarNavLink = ({
         <StyledSidebarLinkText
           isActive={isActive}
           disabled={disableSidebarNavLinks}
+          isTopNav={isTopNav}
         >
           {children}
         </StyledSidebarLinkText>
