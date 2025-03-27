@@ -98,7 +98,7 @@ function TextInput({
 
   const theme = useTheme()
   const [id] = useState(() => uniqueId("text_input_"))
-  const { placeholder, formId } = element
+  const { placeholder, formId, maxChars } = element
 
   const commitWidgetValue = useCallback((): void => {
     setDirty(false)
@@ -126,15 +126,15 @@ function TextInput({
   }, [])
 
   const onChange = useOnInputChange({
-    formId: element.formId,
-    maxChars: element.maxChars,
+    formId,
+    maxChars,
     setDirty,
     setUiValue,
     setValueWithSource,
   })
 
   const onKeyPress = useSubmitFormViaEnterKey(
-    element.formId,
+    formId,
     commitWidgetValue,
     dirty,
     widgetMgr,
@@ -190,7 +190,7 @@ function TextInput({
               lineHeight: theme.lineHeights.inputWidget,
               // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
               paddingRight: theme.spacing.sm,
-              paddingLeft: theme.spacing.sm,
+              paddingLeft: theme.spacing.md,
               paddingBottom: theme.spacing.sm,
               paddingTop: theme.spacing.sm,
             },
@@ -214,8 +214,8 @@ function TextInput({
         <InputInstructions
           dirty={dirty}
           value={uiValue ?? ""}
-          maxLength={element.maxChars}
-          inForm={isInForm({ formId: element.formId })}
+          maxLength={maxChars}
+          inForm={isInForm({ formId })}
           allowEnterToSubmit={allowEnterToSubmit}
         />
       )}
