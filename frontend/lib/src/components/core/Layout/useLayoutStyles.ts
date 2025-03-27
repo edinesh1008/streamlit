@@ -18,16 +18,14 @@ import { useContext, useMemo } from "react"
 import { FlexContext } from "../Flex/FlexContext"
 
 export type UseLayoutStylesArgs<T> = {
-  width: React.CSSProperties["width"] | undefined
-  element:
+  width?: React.CSSProperties["width"] | undefined | null
+  element?:
     | (T & {
-        width?: number
-        height?: number
+        width?: string | null
+        height?: string | null
         useContainerWidth?: boolean | null
-        flex?: string
-        scale?: number
+        scale?: number | null
         size?: number | "stretch"
-        type?: string
       })
     | undefined
   isFlexContainer: boolean
@@ -37,7 +35,7 @@ const isNonZeroPositiveNumber = (value: unknown): value is number =>
   typeof value === "number" && value > 0 && !isNaN(value)
 
 export type UseLayoutStylesShape = {
-  width: React.CSSProperties["width"]
+  width?: React.CSSProperties["width"]
   maxWidth?: React.CSSProperties["maxWidth"]
   maxHeight?: React.CSSProperties["maxHeight"]
   flex?: React.CSSProperties["flex"]

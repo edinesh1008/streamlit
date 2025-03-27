@@ -43,7 +43,6 @@ export type UseLayoutStylesShape = {
   flex?: React.CSSProperties["flex"]
   overflowX?: React.CSSProperties["overflowX"]
   overflowY?: React.CSSProperties["overflowY"]
-  "--st-block-width": React.CSSProperties["width"]
   maxWidth?: React.CSSProperties["maxWidth"]
   marginLeft?: React.CSSProperties["marginLeft"]
 }

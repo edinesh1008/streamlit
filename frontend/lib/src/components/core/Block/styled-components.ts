@@ -88,20 +88,20 @@ export interface StyledHorizontalBlockProps {
   gap: string
 }
 
-export const StyledHorizontalBlock = styled.div<StyledHorizontalBlockProps>(
-  ({ theme, gap }) => {
-    const gapWidth = translateGapWidth(gap, theme)
+// export const StyledHorizontalBlock = styled.div<StyledHorizontalBlockProps>(
+//   ({ theme, gap }) => {
+//     const gapWidth = translateGapWidth(gap, theme)
 
-    return {
-      // While using flex for columns, padding is used for large screens and gap
-      // for small ones. This can be adjusted once more information is passed.
-      // More information and discussions can be found: Issue #2716, PR #2811
-      display: "flex",
-      flexGrow: 1,
-      gap: gapWidth,
-    }
-  }
-)
+//     return {
+//       // While using flex for columns, padding is used for large screens and gap
+//       // for small ones. This can be adjusted once more information is passed.
+//       // More information and discussions can be found: Issue #2716, PR #2811
+//       display: "flex",
+//       flexGrow: 1,
+//       gap: gapWidth,
+//     }
+//   }
+// )
 
 export interface StyledElementContainerProps {
   isStale: boolean
@@ -288,7 +288,7 @@ export interface StyledFlexContainerWrapperProps {
   flexDirection: React.CSSProperties["flexDirection"]
   align?: BlockProto.FlexContainer.Align
   justify?: BlockProto.FlexContainer.Justify
-  wrap: boolean
+  wrap?: boolean
   gap?: string
   flex?: React.CSSProperties["flex"]
   width?: React.CSSProperties["width"]

@@ -16,9 +16,14 @@
 
 import React, { createContext, FC, PropsWithChildren, useMemo } from "react"
 
+enum Direction {
+  HORIZONTAL = "row",
+  VERTICAL = "column",
+}
+
 export interface IFlexContext {
-  parentContainerDirection: "column" | "row" | undefined
-  direction: "column" | "row" | undefined
+  parentContainerDirection: Direction | undefined
+  direction: Direction | undefined
 }
 
 export const FlexContext = createContext<IFlexContext | null>(null)

@@ -56,7 +56,7 @@ import ElementNodeRenderer from "./ElementNodeRenderer"
 import {
   StyledColumn,
   StyledFlexContainerWrapper,
-  StyledHorizontalBlock,
+  StyledFlexContainerWrapperProps,
   StyledVerticalBlock,
   StyledVerticalBlockBorderWrapper,
   StyledVerticalBlockBorderWrapperProps,
@@ -70,6 +70,11 @@ export interface BlockPropsWithoutWidth extends BaseBlockProps {
 interface BlockPropsWithWidth extends BaseBlockProps {
   node: BlockNode
   width: React.CSSProperties["width"]
+}
+
+export enum Direction {
+  HORIZONTAL = "row",
+  VERTICAL = "column",
 }
 
 // Render BlockNodes (i.e. container nodes).
@@ -97,8 +102,19 @@ const BlockNodeRenderer = (props: BlockPropsWithWidth): ReactElement => {
     notNullOrUndefined(node.deltaBlock.dialog) ||
     notNullOrUndefined(node.deltaBlock.popover)
 
+  const direction = getDirectionOfBlock(node.deltaBlock)
+
+  if (node.deltaBlock.flexContainer) {
+    return <FlexBoxContainer direction={direction} {...childProps} />
+  }
+
+  if (node.deltaBlock.horizontal) {
+    return <ColumnContainer {...childProps} />
+  }
+
   const child: ReactElement = (
-    <LayoutBlock
+    <ContainerContentsFlexWrapper
+      direction={direction}
       {...childProps}
       disableFullscreenMode={disableFullscreenMode}
     />
@@ -205,35 +221,6 @@ const BlockNodeRenderer = (props: BlockPropsWithWidth): ReactElement => {
     }
     const tabsProps: TabProps = { ...childProps, isStale, renderTabContent }
     return <Tabs {...tabsProps} />
-  }
-
-  const flexContext = useContext(FlexContext)
-
-  if (notNullOrUndefined(node.deltaBlock.flexContainer?.direction)) {
-    let direction: "column" | "row" | undefined
-    let parentContainerDirection: "column" | "row" | undefined
-    if (flexContext?.direction) {
-      parentContainerDirection = flexContext.direction
-    }
-    if (
-      node.deltaBlock.flexContainer.direction ==
-      BlockProto.FlexContainer.Direction.VERTICAL
-    ) {
-      direction = "column"
-    } else if (
-      node.deltaBlock.flexContainer.direction ==
-      BlockProto.FlexContainer.Direction.HORIZONTAL
-    ) {
-      direction = "row"
-    }
-    return (
-      <FlexContextProvider
-        direction={direction}
-        parentContainerDirection={parentContainerDirection}
-      >
-        {child}
-      </FlexContextProvider>
-    )
   }
 
   return child
@@ -407,83 +394,159 @@ const VerticalBlock = (props: BlockPropsWithoutWidth): ReactElement => {
   )
 }
 
-const HorizontalBlock = (props: BlockPropsWithWidth): ReactElement => {
+const ColumnContainer = (props: BlockPropsWithWidth): ReactElement => {
   // Create a horizontal block as the parent for columns.
   // The children are always columns, but this is not checked. We just trust the Python side to
   // do the right thing, then we ask ChildRenderer to handle it.
   const gap = props.node.deltaBlock.horizontal?.gap ?? ""
+  const styles = {
+    gap,
+    flexDirection: Direction.HORIZONTAL,
+    flex: 1,
+  }
   return (
-    <StyledHorizontalBlock
-      gap={gap}
+    <StyledFlexContainerWrapper
       className="stHorizontalBlock"
       data-testid="stHorizontalBlock"
+      {...styles}
     >
       <ChildRenderer {...props} />
-    </StyledHorizontalBlock>
+    </StyledFlexContainerWrapper>
   )
 }
 
-const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
-  const border = props.node.deltaBlock.flexContainer?.border ?? false
-  const gap = props.node.deltaBlock.flexContainer?.gap ?? undefined
-  const align = props.node.deltaBlock.flexContainer?.align ?? undefined
-  const justify = props.node.deltaBlock.flexContainer?.justify ?? undefined
-  const wrap = props.node.deltaBlock.flexContainer?.wrap ?? true
-  let flexDirection: React.CSSProperties["flexDirection"] | undefined
-  if (
-    props.node.deltaBlock.flexContainer?.direction ===
-    BlockProto.FlexContainer.Direction.HORIZONTAL
-  ) {
-    flexDirection = "row"
-  } else if (
-    props.node.deltaBlock.flexContainer?.direction ===
-    BlockProto.FlexContainer.Direction.VERTICAL
-  ) {
-    flexDirection = "column"
+interface ContainerContentsFlexWrapperProps extends BaseBlockProps {
+  direction: Direction
+  node: BlockNode
+  styles?: StyledFlexContainerWrapperProps
+  activateScrollToBottom?: boolean
+}
+
+export const ContainerContentsFlexWrapper = (
+  props: ContainerContentsFlexWrapperProps
+): ReactElement => {
+  // TODO: confirm we don't need this for containers.
+  const {
+    values: [observedWidth],
+    elementRef: wrapperElement,
+    forceRecalculate,
+  } = useResizeObserver(useMemo(() => ["width"], []))
+
+  // The width should never be set to 0 since it can cause
+  // flickering effects.
+  const calculatedWidth = observedWidth <= 0 ? -1 : observedWidth
+
+  const defaultStyles: StyledFlexContainerWrapperProps = {
+    width: calculatedWidth,
+    flexDirection: props.direction,
+    flex: 1,
+    gap: "small",
+    // TODO: should maxWidth be here, seems in main branch we don't use it anymore
+    // Height is only for containers
   }
 
-  // Extract the user-specified key from the block ID (if provided):
-  const userKey = getKeyFromId(props.node.deltaBlock.id)
-  const styles = useLayoutStyles({
-    element: props.node.deltaBlock.flexContainer,
-    isFlexContainer: true,
-  })
+  const styles = props.styles ? props.styles : defaultStyles
 
   const propsWithCalculatedWidth = {
     ...props,
     width: styles.width,
   }
 
-  // To apply a border, we need to wrap the StyledVerticalBlockWrapper again, otherwise the width
-  // calculation would not take the padding into consideration.
+  // We need to update the observer whenever the scrolling is activated or deactivated
+  // Otherwise, it still tries to measure the width of the old wrapper element.
+  useEffect(() => {
+    forceRecalculate()
+  }, [forceRecalculate, props.activateScrollToBottom])
+
+  const userKey = getKeyFromId(props.node.deltaBlock.id)
+
   return (
     <StyledFlexContainerWrapper
-      border={border}
-      data-test-flex-container-type="flex_container"
-      className={classNames("stFlexContainer", convertKeyToClassName(userKey))}
-      data-testid="stFlexContainer"
-      flexDirection={flexDirection}
-      align={align}
-      justify={justify}
-      gap={gap}
-      wrap={wrap}
+      ref={wrapperElement} // TODO: will this work OK here?
       {...styles}
+      className={classNames(
+        getClassnamePrefix(props.direction),
+        convertKeyToClassName(userKey)
+      )}
+      data-testid={getClassnamePrefix(props.direction)}
     >
       <ChildRenderer {...propsWithCalculatedWidth} />
     </StyledFlexContainerWrapper>
   )
 }
 
-// A container block with one of two types of layouts: vertical and horizontal.
-function LayoutBlock(props: BlockPropsWithWidth): ReactElement {
-  if (props.node.deltaBlock.flexContainer) {
-    return <FlexContainerBlock {...props} />
-  }
-  if (props.node.deltaBlock.horizontal) {
-    return <HorizontalBlock {...props} />
+interface FlexBoxContainerProps extends BaseBlockProps {
+  direction: Direction // TODO: simplify direction
+  node: BlockNode
+}
+
+const FlexBoxContainer = (props: FlexBoxContainerProps): ReactElement => {
+  const flexContext = useContext(FlexContext)
+  let parentContainerDirection: Direction | undefined
+  if (flexContext?.direction) {
+    parentContainerDirection = flexContext.direction
   }
 
-  return <VerticalBlock {...props} />
+  // TODO: can we leave out the resize observer width for containers?
+  const layoutStyles = useLayoutStyles({
+    element: props.node.deltaBlock.flexContainer ?? undefined,
+    isFlexContainer: true,
+  })
+
+  const styles = {
+    ...layoutStyles,
+    border: props.node.deltaBlock.flexContainer?.border ?? false,
+    flexDirection: props.direction,
+  }
+
+  // TODO: assumption is this feature is for containers only since they are
+  // the only thing that can have height.
+  const activateScrollToBottom =
+    !!props.node.deltaBlock.flexContainer?.height &&
+    props.node.children.some(node => {
+      return (
+        node instanceof BlockNode && node.deltaBlock.type === "chatMessage"
+      )
+    })
+  // TODO: encorporate scroll to bottom.
+
+  return (
+    <FlexContextProvider
+      direction={props.direction}
+      parentContainerDirection={parentContainerDirection}
+    >
+      <ContainerContentsFlexWrapper
+        activateScrollToBottom={activateScrollToBottom}
+        styles={styles}
+        {...props}
+      />
+    </FlexContextProvider>
+  )
+}
+
+function getClassnamePrefix(direction: Direction): string {
+  return direction === Direction.HORIZONTAL
+    ? "stHorizontalBlock"
+    : "stVerticalBlock"
+}
+
+function getDirectionFlexContainer(flexContainer: BlockProto.IFlexContainer) {
+  if (
+    flexContainer.direction === BlockProto.FlexContainer.Direction.HORIZONTAL
+  ) {
+    return Direction.HORIZONTAL
+  }
+  return Direction.VERTICAL
+}
+
+function getDirectionOfBlock(block: BlockProto): Direction {
+  if (block.flexContainer) {
+    return getDirectionFlexContainer(block.flexContainer)
+  } else if (block.horizontal) {
+    return Direction.HORIZONTAL
+  } else {
+    return Direction.VERTICAL
+  }
 }
 
 export default VerticalBlock
