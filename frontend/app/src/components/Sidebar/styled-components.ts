@@ -156,6 +156,7 @@ export interface StyledSidebarNavLinkProps {
   isActive: boolean
   disabled: boolean
   isTopNav?: boolean
+  label?: string
 }
 
 export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
@@ -208,13 +209,23 @@ export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
 )
 
 export const StyledSidebarLinkText = styled.span<StyledSidebarNavLinkProps>(
-  ({ isActive, theme, disabled, isTopNav }) => {
+  ({ isActive, theme, disabled, isTopNav, label }) => {
     return {
       color: getNavTextColor(theme, isActive, disabled, isTopNav),
       overflow: "hidden",
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       display: "table-cell",
+      height: "2rem",
+      /* Pseudo-element to reserve bold width */
+      "&::after": {
+        content: `"${label}"` /* duplicate text */,
+        fontWeight: theme.fontWeights.bold /* bold version */,
+        visibility: "hidden" /* occupies space, not visible */,
+        display: "block",
+        width: "fit-content",
+        transform: "translateY(-100%)",
+      },
     }
   }
 )

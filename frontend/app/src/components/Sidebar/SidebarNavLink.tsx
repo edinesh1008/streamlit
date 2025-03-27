@@ -83,6 +83,7 @@ const SidebarNavLink = ({
           isActive={isActive}
           disabled={disableSidebarNavLinks}
           isTopNav={isTopNav}
+          label={children}
         >
           {children}
         </StyledSidebarLinkText>
