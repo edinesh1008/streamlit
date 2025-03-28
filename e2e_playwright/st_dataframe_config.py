@@ -763,3 +763,36 @@ st.dataframe(
     hide_index=True,
     use_container_width=False,
 )
+
+
+st.header("File column:")
+
+st.dataframe(
+    pd.DataFrame(
+        {
+            "files": [
+                {
+                    "contentType": "image/png",
+                    "modality": "image",
+                    "presigned_url": "https://picsum.photos/400/200?lock=12",
+                },
+                {
+                    "contentType": "image/png",
+                    "modality": "image",
+                    "presigned_url": "https://picsum.photos/400/200?lock=13",
+                },
+                {
+                    "contentType": "application/pdf",
+                    "modality": "document",
+                    "presigned_url": "https://streamlit.io/images/brand/streamlit-mark-color.png",
+                },
+                None,
+            ],
+        }
+    ),
+    hide_index=True,
+    use_container_width=False,
+    column_config={
+        "files": st.column_config.Column(width="medium"),
+    },
+)
