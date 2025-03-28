@@ -786,7 +786,7 @@ st.dataframe(
                     "contentType": "image/png",
                     "modality": "image",
                     "url": "https://picsum.photos/400/200?lock=13",
-                    "fileName": "other_image.png",
+                    "fileName": "other_image.jpg",
                 },
                 None,
             ],
