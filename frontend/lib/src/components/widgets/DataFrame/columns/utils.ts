@@ -343,6 +343,16 @@ export function isMaybeJson(data: any): boolean {
   return data && data.startsWith("{") && data.endsWith("}")
 }
 
+export function isMaybeFile(data: any): boolean {
+  return (
+    data &&
+    data.startsWith("{") &&
+    data.endsWith("}") &&
+    data.includes("presigned_url") &&
+    data.includes("modality")
+  )
+}
+
 /**
  * Converts the given value of unknown type to a string without
  * the risks of any exceptions.
