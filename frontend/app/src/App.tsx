@@ -1582,10 +1582,6 @@ export class App extends PureComponent<Props, State> {
     let queryString = this.getQueryString()
     let pageName = ""
 
-    let ip_address = getIpAddress()
-    console.log("RETURN IP ADDRESS")
-    console.log(ip_address)
-
     const contextInfo = {
       timezone: getTimezone(),
       timezoneOffset: getTimezoneOffset(),

@@ -248,7 +248,6 @@ let isFetchingIp = false
 export function getIpAddress(): string {
   // If we already have the IP, return it immediately
   if (cachedIpAddress) {
-    console.log("RETURN CACHED!!!!")
     return cachedIpAddress
   }
 
@@ -258,13 +257,12 @@ export function getIpAddress(): string {
 
     // Fetch the IP address in the background
     fetch("https://checkip.amazonaws.com/", {
-      signal: AbortSignal.timeout(1000), // 1 second timeout
+      signal: AbortSignal.timeout(2000), // 2 second timeout
     })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`)
         }
-        console.log("ADDRESSED FETCHED!!!")
         return response.text()
       })
       .then(data => {
