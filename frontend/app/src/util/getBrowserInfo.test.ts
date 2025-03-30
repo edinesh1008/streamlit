@@ -103,7 +103,7 @@ describe("getBrowserInfo", () => {
 
   it("should detect Chrome on Chrome OS", () => {
     mockUserAgent(
-      "Mozilla/5.0 (X11; CrOS x86_64 13421.99.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36"
+      "Mozilla/5.0 (X11; CrOS x86_64 13421.99.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36" // codespell:ignore
     )
 
     const result = getBrowserInfo()

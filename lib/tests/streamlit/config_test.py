@@ -602,16 +602,16 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual("test", config.get_where_defined("browser.serverAddress"))
 
         with pytest.raises(RuntimeError) as e:
-            config.get_where_defined("doesnt.exist")
-        self.assertEqual(str(e.value), 'Config key "doesnt.exist" not defined.')
+            config.get_where_defined("not.exist")
+        self.assertEqual(str(e.value), 'Config key "not.exist" not defined.')
 
     def test_get_option(self):
         config._set_option("browser.serverAddress", "some.bucket", "test")
         self.assertEqual("some.bucket", config.get_option("browser.serverAddress"))
 
         with pytest.raises(RuntimeError) as e:
-            config.get_option("doesnt.exist")
-        self.assertEqual(str(e.value), 'Config key "doesnt.exist" not defined.')
+            config.get_option("not.exist")
+        self.assertEqual(str(e.value), 'Config key "not.exist" not defined.')
 
     def test_with_no_theme_options(self):
         """Test that all theme options are None when no theme options are set."""

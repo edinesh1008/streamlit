@@ -263,7 +263,7 @@ function ComponentInstance(props: Props): ReactElement {
     }
   }, [isReadyTimeout, componentSourceUrl, componentName, registry])
 
-  // Send a render message to the custom component everytime relevant props change, such as the
+  // Send a render message to the custom component every time relevant props change, such as the
   // input args or the theme / width
   useEffect(() => {
     if (!isReadyRef.current) {

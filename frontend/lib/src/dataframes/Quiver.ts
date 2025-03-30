@@ -51,7 +51,7 @@ interface PandasStylerData {
 
   /** CSS ID to use for the Table.
    *
-   * Format ot the CSS ID: `T_${StylerUUID}`
+   * Format of the CSS ID: `T_${StylerUUID}`
    *
    * This id is used by styled tables and styled dataframes to associate
    * the Styler CSS with the styled data.

@@ -41,7 +41,7 @@ class StJsonAPITest(DeltaGeneratorTestCase):
         assert el.json.body == '{"array": "array([1, 2, 3, 4, 5])"}'
 
     def test_expanded_param(self):
-        """Test expanded paramter for `st.json`"""
+        """Test expanded parameter for `st.json`"""
         st.json(
             {
                 "level1": {"level2": {"level3": {"a": "b"}}, "c": "d"},

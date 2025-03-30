@@ -265,7 +265,7 @@ jobs:
       - build_info
 
     # The min pillow version we support in Streamlit cannot be installed on
-    # Ubuntu 24 -> thats why we use Ubuntu 22.04 here instead.
+    # Ubuntu 24 -> that's why we use Ubuntu 22.04 here instead.
     runs-on: ubuntu-22.04
 
     strategy:

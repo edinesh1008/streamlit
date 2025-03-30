@@ -296,9 +296,9 @@ class CachedFunc:
         #   *again*, while holding the lock. If the cache entry exists at this point, it means that
         #   another thread computed the value before us.
         #
-        #   This means that the happy path ("cache entry exists") is a wee bit faster because
+        #   This means that the happy path ("cache entry exists") is a bit faster because
         #   no lock is acquired. But the unhappy path ("cache entry needs to be recomputed") is
-        #   a wee bit slower, because we do two lookups for the entry.
+        #   a bit slower, because we do two lookups for the entry.
 
         with cache.compute_value_lock(value_key):
             # We've acquired the lock - but another thread may have acquired it first

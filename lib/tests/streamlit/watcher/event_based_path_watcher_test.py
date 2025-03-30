@@ -43,9 +43,9 @@ class EventBasedPathWatcherTest(unittest.TestCase):
         self.mock_util = self.util_patcher.start()
 
     def tearDown(self):
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.start.reset_mock()
-        fo._observer.schedule.reset_mock()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.start.reset_mock()
+        watcher._observer.schedule.reset_mock()
 
         self.observer_class_patcher.stop()
         self.util_patcher.stop()
@@ -59,10 +59,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/file.py", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb.assert_not_called()
 
@@ -86,10 +86,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/file.py", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb.assert_not_called()
 
@@ -113,10 +113,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/dir", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb.assert_not_called()
 
@@ -142,10 +142,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/dir", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_path = fo._observer.schedule.call_args[0][1]
+        folder_path = watcher._observer.schedule.call_args[0][1]
         assert folder_path == "/this/is/my/dir"
 
         ro.close()
@@ -162,10 +162,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
             "/this/is/my/dir/file.txt", cb
         )
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_path = fo._observer.schedule.call_args[0][1]
+        folder_path = watcher._observer.schedule.call_args[0][1]
         assert folder_path == "/this/is/my/dir"
 
         ro.close()
@@ -180,10 +180,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/dir", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb.assert_not_called()
 
@@ -220,10 +220,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
             allow_nonexistent=True,
         )
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         _, kwargs = self.mock_util.calc_md5_with_blocking_retries.call_args
         assert kwargs == {"glob_pattern": "*.py", "allow_nonexistent": True}
@@ -252,10 +252,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/file.py", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb.assert_not_called()
 
@@ -280,10 +280,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/file.py", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb.assert_not_called()
 
@@ -308,10 +308,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
 
         ro = event_based_path_watcher.EventBasedPathWatcher("/this/is/my/file.py", cb)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb.assert_not_called()
 
@@ -352,10 +352,10 @@ class EventBasedPathWatcherTest(unittest.TestCase):
         watcher1 = event_based_path_watcher.EventBasedPathWatcher(filename, cb1)
         watcher2 = event_based_path_watcher.EventBasedPathWatcher(filename, cb2)
 
-        fo = event_based_path_watcher._MultiPathWatcher.get_singleton()
-        fo._observer.schedule.assert_called_once()
+        watcher = event_based_path_watcher._MultiPathWatcher.get_singleton()
+        watcher._observer.schedule.assert_called_once()
 
-        folder_handler = fo._observer.schedule.call_args[0][0]
+        folder_handler = watcher._observer.schedule.call_args[0][0]
 
         cb1.assert_not_called()
         cb2.assert_not_called()

@@ -233,7 +233,7 @@ def _fragment(
                             # during execution (otherwise we can run into concurrency
                             # issues with multiple fragments). Use dg_stack because we
                             # just entered a container and [:-1] of the delta path
-                            # because thats the prefix of the fragment,
+                            # because that's the prefix of the fragment,
                             # e.g. [0, 3, 0] -> [0, 3].
                             # All fragment elements start with [0, 3].
                             active_dg = context_dg_stack.get()[-1]
@@ -391,7 +391,7 @@ def fragment(
         height: 220px
 
     This next example demonstrates how elements both inside and outside of a
-    fragement update with each app or fragment rerun. In this app, clicking
+    fragment update with each app or fragment rerun. In this app, clicking
     "Rerun full app" will increment both counters and update all values
     displayed in the app. In contrast, clicking "Rerun fragment" will only
     increment the counter within the fragment. In this case, the ``st.write``

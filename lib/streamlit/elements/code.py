@@ -65,7 +65,7 @@ class CodeMixin:
             Desired height of the code block expressed in pixels. If ``height``
             is ``None`` (default), Streamlit sets the element's height to fit
             its content. Vertical scrolling within the element is enabled when
-            the height does not accomodate all lines.
+            the height does not accommodate all lines.
 
         Examples
         --------

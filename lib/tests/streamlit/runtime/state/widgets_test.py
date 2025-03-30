@@ -624,5 +624,5 @@ class WidgetUserKeyTests(DeltaGeneratorTestCase):
         st.checkbox("checkbox", key="None")
 
         k = list(state._keys())[0]
-        # Incorrectly inidcates no user key
+        # Incorrectly indicates no user key
         assert user_key_from_element_id(k) is None

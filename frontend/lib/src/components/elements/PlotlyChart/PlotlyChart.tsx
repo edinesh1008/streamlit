@@ -477,7 +477,7 @@ export function PlotlyChart({
             ? () => {
                 // Plotly is also resetting the UI state already for
                 // deselect events. So, we don't need to do it on our side.
-                // Thats why the flag is false.
+                // That's why the flag is false.
                 resetSelectionsCallback(false)
               }
             : undefined

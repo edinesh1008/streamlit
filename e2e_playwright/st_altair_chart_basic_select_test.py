@@ -301,7 +301,7 @@ def _test_shift_click_point_selection_scatter_chart_displays_selection(
     wait_for_app_run(app)
 
     # move the mouse away so that we do not have any hover-menu effects on the chart when taking the screenshot.
-    # we re-use the screenshot for the unmounting test.
+    # we reuse the screenshot for the unmounting test.
     app.mouse.move(0, 0)
     app.wait_for_timeout(250)
 

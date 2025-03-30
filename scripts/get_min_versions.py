@@ -34,7 +34,7 @@ for requirement in package.requires():
     dependency = requirement.project_name
     if requirement.extras:
         dependency += "[" + ",".join(requirement.extras) + "]"
-    # We will see both the lower bound and upper bound parts of each requriment
+    # We will see both the lower bound and upper bound parts of each requirement
     # So we ignore the ones that aren't the lower bound.
     for comparator, version in requirement.specs:
         if comparator == "==":

@@ -72,7 +72,7 @@ def test_toggle_values_on_click(app: Page):
         # flaky with the last toggle without it.
         # It seems that it sometimes fails to click,
         # and in these cases the toggle was not scrolled into view.
-        # So, maybe thats the reason why it fails to click it.
+        # So, maybe that's the reason why it fails to click it.
         # But this is just a guess.
         toggle_element.scroll_into_view_if_needed()
         toggle_element.locator("label").click(delay=50, force=True)

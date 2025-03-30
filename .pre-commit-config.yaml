@@ -164,9 +164,26 @@ repos:
           /vendor/
           |^vendor/
           |^component-lib/declarations/apache-arrow
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args: [-L, "assertIn,nd,afterAll,Nam", "-w"]
+        exclude: |
+          (?x)
+          /vendor/
+          |^NOTICES$
+          |^e2e_playwright/test_assets/
+          |^frontend/yarn.lock$
+          |^frontend/.yarn/
+          |^CODE_OF_CONDUCT.md$
+          |^lib/streamlit/material_icon_names.py$
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
+      - id: no-commit-to-branch
+        args: [--branch, develop, --branch, main]
       - id: trailing-whitespace
         exclude: |
           (?x)
