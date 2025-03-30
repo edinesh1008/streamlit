@@ -194,5 +194,4 @@ repos:
         args: [--fix=auto]
         exclude: |
           (?x)
-          /vendor/
           |^NOTICES$
