@@ -190,3 +190,9 @@ repos:
           |^NOTICES$
           |^e2e_playwright/test_assets/
           |^LICENSE$
+      - id: mixed-line-ending
+        args: [--fix=auto]
+        exclude: |
+          (?x)
+          /vendor/
+          |^NOTICES$
