@@ -183,10 +183,6 @@ repos:
       - id: check-symlinks
       - id: check-case-conflict
       - id: check-merge-conflict
-      - id: check-ast
-        exclude: |
-          (?x)
-          ^e2e_playwright/compilation_error_dialog.py
       - id: end-of-file-fixer
         exclude: |
           (?x)
