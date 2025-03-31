@@ -1991,9 +1991,6 @@ export class App extends PureComponent<Props, State> {
         })
       : null
 
-    const widgetsDisabled =
-      inputsDisabled || connectionState !== ConnectionState.CONNECTED
-
     return (
       <AppContext.Provider
         value={{
@@ -2005,9 +2002,10 @@ export class App extends PureComponent<Props, State> {
           showToolbar: !isEmbed() || isToolbarDisplayed(),
           showColoredLine:
             (!hideColoredLine && !isEmbed()) || isColoredLineDisplayed(),
-          // host communication manager elements
           pageLinkBaseUrl,
           sidebarChevronDownshift,
+          widgetsDisabled:
+            inputsDisabled || connectionState !== ConnectionState.CONNECTED,
           gitInfo: this.state.gitInfo,
           appConfig,
         }}
@@ -2097,7 +2095,6 @@ export class App extends PureComponent<Props, State> {
                 scriptRunId={scriptRunId}
                 scriptRunState={scriptRunState}
                 widgetMgr={this.widgetMgr}
-                widgetsDisabled={widgetsDisabled}
                 uploadClient={this.uploadClient}
                 componentRegistry={this.componentRegistry}
                 formsData={this.state.formsData}
