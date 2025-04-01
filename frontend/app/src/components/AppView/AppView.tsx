@@ -59,7 +59,7 @@ import {
   StyledLogo,
   StyledLogoLink,
 } from "@streamlit/app/src/components/Sidebar/styled-components"
-import HeaderColoredLine from "@streamlit/app/src/components/HeaderColoredLine/HeaderColoredLine"
+import HeaderColoredLine from "@streamlit/app/src/components/HeaderColoredLine"
 
 const LOG = getLogger("AppView")
 export interface AppViewProps {
