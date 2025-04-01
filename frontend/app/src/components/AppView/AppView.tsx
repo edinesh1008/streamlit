@@ -264,18 +264,9 @@ function AppView(props: AppViewProps): ReactElement {
           parseInt(activeTheme.emotion.breakpoints.md, 10) - 0.02) // AUTO with small screen
   )
 
-  // This function is used by Header to toggle sidebar state
   const toggleSidebar = React.useCallback(() => {
     setSidebarCollapsed(prev => !prev)
   }, [])
-
-  // This function is passed to Sidebar to explicitly set the collapsed state
-  const handleSidebarCollapseChange = React.useCallback(
-    (collapsed: boolean) => {
-      setSidebarCollapsed(collapsed)
-    },
-    []
-  )
 
   // The tabindex is required to support scrolling by arrow keys.
   return (
@@ -299,7 +290,7 @@ function AppView(props: AppViewProps): ReactElement {
               hideSidebarNav={hideSidebarNav}
               expandSidebarNav={expandSidebarNav}
               isCollapsed={sidebarCollapsed}
-              onToggleCollapse={handleSidebarCollapseChange}
+              onToggleCollapse={setSidebarCollapsed}
             >
               <StyledSidebarBlockContainer>
                 {renderBlock(elements.sidebar)}
