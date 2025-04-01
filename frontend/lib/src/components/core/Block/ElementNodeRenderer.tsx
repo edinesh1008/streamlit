@@ -738,6 +738,9 @@ const ElementNodeRenderer = (
   const elementId = getElementId(node.element)
   const userKey = getKeyFromId(elementId)
 
+  const emptyHtml =
+    elementType === "html" && node.element.html?.empty ? "stHtml-empty" : ""
+
   // TODO: If would be great if we could return an empty fragment if isHidden is true, to keep the
   // DOM clean. But this would require the keys passed to ElementNodeRenderer at Block.tsx to be a
   // stable hash of some sort.
@@ -748,7 +751,8 @@ const ElementNodeRenderer = (
         className={classNames(
           "stElementContainer",
           "element-container",
-          convertKeyToClassName(userKey)
+          convertKeyToClassName(userKey),
+          emptyHtml
         )}
         data-testid="stElementContainer"
         data-stale={isStale}
