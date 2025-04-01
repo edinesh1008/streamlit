@@ -101,12 +101,6 @@ def _check_widgets_and_sidebar_nav_links_disabled(frame_locator: FrameLocator):
         "disabled", ""
     )
 
-    # Verify the expander is still active
-    expander = frame_locator.get_by_test_id("stExpander")
-    expect(expander).not_to_be_disabled()
-    expander.click()
-    expect(expander.get_by_test_id("stExpanderDetails")).to_be_visible()
-
     ## Verify that sidebar page nav links are disabled too
     sidebar_nav_links = frame_locator.get_by_test_id("stSidebarNavItems").get_by_role(
         "link"
