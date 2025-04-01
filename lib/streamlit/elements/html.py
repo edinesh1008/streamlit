@@ -101,8 +101,9 @@ class HtmlMixin:
 
         returned_dg = self.dg
         if styles:
-            # Send the styles to be rendered by the event container,
-            # that way they don't take up space in the app content
+            # Send the styles to be rendered separately with the
+            # empty field set so they don't take up space in the
+            # app content
             styles_proto = HtmlProto()
             styles_proto.body = styles
             styles_proto.empty = True
