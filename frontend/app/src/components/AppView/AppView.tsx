@@ -31,7 +31,6 @@ import {
   ScriptRunState,
   VerticalBlock,
   WidgetStateManager,
-  Icon,
 } from "@streamlit/lib"
 import { IAppPage, Logo, Navigation } from "@streamlit/protobuf"
 import ThemedSidebar from "@streamlit/app/src/components/Sidebar"
@@ -39,7 +38,6 @@ import EventContainer from "@streamlit/app/src/components/EventContainer"
 import { AppContext } from "@streamlit/app/src/components/AppContext"
 import Header from "@streamlit/app/src/components/Header"
 import TopNav from "@streamlit/app/src/components/TopNav/TopNav"
-import { ChevronRight } from "@emotion-icons/material-outlined"
 
 import {
   StyledAppViewBlockContainer,
