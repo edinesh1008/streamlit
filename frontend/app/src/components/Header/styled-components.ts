@@ -23,35 +23,39 @@ export interface StyledHeaderProps {
   isStale?: boolean
 }
 
-export const StyledHeader = styled.header<StyledHeaderProps>`
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  width: 100%;
-  background-color: ${({ theme }) => theme.colors?.bgColor || "white"};
-  min-height: 3.75rem;
-  height: 3.75rem;
-  z-index: 100;
-  pointer-events: auto;
-  position: sticky;
-  top: 0;
-  will-change: transform; /* Hint for browser optimization */
-  transform: translateZ(0); /* Force GPU rendering */
-  /* Define explicit rendering layer - prevents paint issues */
-  backface-visibility: hidden;
-  -webkit-font-smoothing: subpixel-antialiased;
-  flex: 1 1 auto;
-`
+export const StyledHeader = styled.header<StyledHeaderProps>(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  flexDirection: "column",
+  width: "100%",
+  backgroundColor: theme.colors.bgColor,
+  minHeight: "3.75rem",
+  height: "3.75rem",
+  zIndex: 100,
+  pointerEvents: "auto",
+  position: "sticky",
+  top: 0,
+  flex: "1 1 auto",
+}))
 
 export const StyledHeaderToolbar = styled.div<{
   theme: EmotionTheme
-}>`
-  display: flex;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  padding: 0;
-  pointer-events: auto;
-  position: relative;
-  z-index: 101;
-`
+}>(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  height: "100%",
+  width: "100%",
+  padding: 0,
+  pointerEvents: "auto",
+  position: "relative",
+  zIndex: 101,
+}))
+
+export const StyledOpenSidebarButton = styled.div(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  [`@media print`]: {
+    display: "none",
+  },
+}))

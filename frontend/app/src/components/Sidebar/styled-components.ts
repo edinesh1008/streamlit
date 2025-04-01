@@ -352,25 +352,26 @@ export const StyledSidebarOpenContainer =
     })
   )
 
-export const StyledOpenSidebarButton = styled.div(({ theme }) => {
-  return {
-    zIndex: theme.zIndices.header,
-    color: hasLightBackgroundColor(theme)
-      ? theme.colors.fadedText60
-      : theme.colors.bodyText,
-    marginTop: theme.spacing.twoXS,
+// TODO: port to header styles
+// export const StyledOpenSidebarButton = styled.div(({ theme }) => {
+//   return {
+//     zIndex: theme.zIndices.header,
+//     color: hasLightBackgroundColor(theme)
+//       ? theme.colors.fadedText60
+//       : theme.colors.bodyText,
+//     marginTop: theme.spacing.twoXS,
 
-    button: {
-      "&:hover": {
-        backgroundColor: theme.colors.darkenedBgMix25,
-      },
-    },
+//     button: {
+//       "&:hover": {
+//         backgroundColor: theme.colors.darkenedBgMix25,
+//       },
+//     },
 
-    [`@media print`]: {
-      display: "none",
-    },
-  }
-})
+//     [`@media print`]: {
+//       display: "none",
+//     },
+//   }
+// })
 
 export interface StyledCollapseSidebarButtonProps {
   showSidebarCollapse: boolean

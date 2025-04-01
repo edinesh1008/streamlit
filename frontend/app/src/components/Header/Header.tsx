@@ -20,11 +20,13 @@ import {
   BaseButton,
   BaseButtonKind,
   DynamicIcon,
-  Icon,
   LibContext,
 } from "@streamlit/lib"
-import { StyledHeader, StyledHeaderToolbar } from "./styled-components"
-import { ChevronRight } from "@emotion-icons/material-outlined"
+import {
+  StyledHeader,
+  StyledHeaderToolbar,
+  StyledOpenSidebarButton,
+} from "./styled-components"
 
 export interface HeaderProps {
   isStale?: boolean
@@ -88,16 +90,18 @@ const Header = ({
                 <div style={{ marginLeft: 12 }}>{logoComponent}</div>
               )}
               {hasSidebar && !isSidebarOpen && (
-                <BaseButton
-                  kind={BaseButtonKind.HEADER_NO_PADDING}
-                  onClick={onToggleSidebar}
-                >
-                  <DynamicIcon
-                    size="xl"
-                    iconValue={":material/keyboard_double_arrow_right:"}
-                    color={activeTheme.emotion.colors.fadedText60}
-                  />
-                </BaseButton>
+                <StyledOpenSidebarButton>
+                  <BaseButton
+                    kind={BaseButtonKind.HEADER_NO_PADDING}
+                    onClick={onToggleSidebar}
+                  >
+                    <DynamicIcon
+                      size="xl"
+                      iconValue={":material/keyboard_double_arrow_right:"}
+                      color={activeTheme.emotion.colors.fadedText60}
+                    />
+                  </BaseButton>
+                </StyledOpenSidebarButton>
               )}
             </div>
             {navigation}
