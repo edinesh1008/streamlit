@@ -50,6 +50,7 @@ import {
   StyledEventBlockContainer,
   StyledIFrameResizerAnchor,
   StyledInnerBottomContainer,
+  StyledMainContent,
   StyledSidebarBlockContainer,
   StyledStickyBottomContainer,
 } from "./styled-components"
@@ -339,13 +340,7 @@ function AppView(props: AppViewProps): ReactElement {
             </ThemedSidebar>
           </Profiler>
         )}
-        <div
-          style={{
-            overflow: "hidden",
-            width: "100%",
-            height: "100vh",
-          }}
-        >
+        <StyledMainContent>
           <Header
             hasSidebar={showSidebar}
             isSidebarOpen={showSidebar && !sidebarCollapsed}
@@ -421,7 +416,7 @@ function AppView(props: AppViewProps): ReactElement {
               </Profiler>
             )}
           </Component>
-        </div>
+        </StyledMainContent>
         {hasEventElements && (
           <Profiler id="Event">
             <EventContainer scriptRunId={elements.event.scriptRunId}>

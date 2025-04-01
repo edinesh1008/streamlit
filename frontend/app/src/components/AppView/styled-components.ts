@@ -213,3 +213,9 @@ export const StyledIFrameResizerAnchor = styled.div(({ theme }) => ({
   position: "relative",
   bottom: theme.spacing.none,
 }))
+
+export const StyledMainContent = styled.div(({ theme }) => ({
+  overflow: "hidden",
+  width: "100%",
+  height: "100vh",
+}))
