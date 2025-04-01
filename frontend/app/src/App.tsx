@@ -143,6 +143,7 @@ import { showDevelopmentOptions } from "./showDevelopmentOptions"
 import "@streamlit/app/src/assets/css/theme.scss"
 import { ThemeManager } from "./util/useThemeManager"
 import { AppNavigation, MaybeStateUpdate } from "./util/AppNavigation"
+import { useViewportSize } from "@streamlit/app/src/hooks/useViewportSize"
 
 // vite config builds global variable PACKAGE_METADATA
 declare const PACKAGE_METADATA: {
@@ -153,6 +154,7 @@ export interface Props {
   screenCast: ScreenCastHOC
   theme: ThemeManager
   streamlitExecutionStartedAt: number
+  isMobileViewport: boolean
 }
 
 interface State {
@@ -203,7 +205,6 @@ interface State {
   appConfig: AppConfig
   autoReruns: NodeJS.Timeout[]
   inputsDisabled: boolean
-  isMobileViewport: boolean
 }
 
 const INITIAL_SCRIPT_RUN_ID = "<null>"
@@ -320,7 +321,6 @@ export class App extends PureComponent<Props, State> {
       autoReruns: [],
       inputsDisabled: false,
       navigationPosition: Navigation.Position.SIDEBAR,
-      isMobileViewport: false,
     }
 
     this.connectionManager = null
@@ -540,10 +540,6 @@ export class App extends PureComponent<Props, State> {
     this.metricsMgr.enqueue("viewReport")
 
     window.addEventListener("popstate", this.onHistoryChange, false)
-
-    // Initial check and add resize listener
-    this.checkIfMobileViewport()
-    window.addEventListener("resize", this.checkIfMobileViewport)
   }
 
   componentDidUpdate(
@@ -596,18 +592,6 @@ export class App extends PureComponent<Props, State> {
     this.hostCommunicationMgr.closeHostCommunication()
 
     window.removeEventListener("popstate", this.onHistoryChange, false)
-    window.removeEventListener("resize", this.checkIfMobileViewport)
-  }
-
-  // Check if the current viewport is mobile-sized and update state accordingly
-  checkIfMobileViewport = (): void => {
-    // Define the breakpoint for mobile viewport (e.g., 768px)
-    const mobileBreakpoint = 768
-    const isMobile = window.innerWidth < mobileBreakpoint
-
-    if (isMobile !== this.state.isMobileViewport) {
-      this.setState({ isMobileViewport: isMobile })
-    }
   }
 
   /**
@@ -2005,12 +1989,11 @@ export class App extends PureComponent<Props, State> {
       inputsDisabled,
       appPages,
       navSections,
-      isMobileViewport,
       navigationPosition,
     } = this.state
 
     // Always use sidebar navigation on mobile, regardless of the server setting
-    const effectiveNavigationPosition = isMobileViewport
+    const effectiveNavigationPosition = this.props.isMobileViewport
       ? Navigation.Position.SIDEBAR
       : navigationPosition
 
@@ -2161,4 +2144,11 @@ export class App extends PureComponent<Props, State> {
 }
 
 const AppWithScreenCast = withScreencast(App)
-export default AppWithScreenCast
+
+// Wrapper component to handle viewport size
+const AppWrapper: React.FC<Omit<Props, "isMobileViewport">> = props => {
+  const { isMobile } = useViewportSize()
+  return <AppWithScreenCast {...props} isMobileViewport={isMobile} />
+}
+
+export default AppWrapper
