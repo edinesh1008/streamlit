@@ -26,15 +26,12 @@ export interface StyledHeaderProps {
 export const StyledHeader = styled.header<StyledHeaderProps>(({ theme }) => ({
   display: "flex",
   alignItems: "center",
-  flexDirection: "column",
   width: "100%",
   backgroundColor: theme.colors.bgColor,
   minHeight: "3.75rem",
   height: "3.75rem",
   zIndex: 100,
   pointerEvents: "auto",
-  position: "sticky",
-  top: 0,
   flex: "1 1 auto",
 }))
 
@@ -58,4 +55,30 @@ export const StyledOpenSidebarButton = styled.div(({ theme }) => ({
   [`@media print`]: {
     display: "none",
   },
+}))
+
+export const StyledHeaderContent = styled.div(({ theme }) => ({
+  flexShrink: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  margin: 0,
+  border: 0,
+}))
+
+export const StyledHeaderLeftSection = styled.div(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+}))
+
+export const StyledHeaderRightSection = styled.div(({ theme }) => ({
+  flexShrink: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  marginLeft: "auto",
+  height: "100%",
+  minWidth: "19.5rem",
+  marginRight: "1rem",
 }))

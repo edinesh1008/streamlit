@@ -26,6 +26,9 @@ import {
   StyledHeader,
   StyledHeaderToolbar,
   StyledOpenSidebarButton,
+  StyledHeaderContent,
+  StyledHeaderLeftSection,
+  StyledHeaderRightSection,
 } from "./styled-components"
 
 export interface HeaderProps {
@@ -69,23 +72,8 @@ const Header = ({
           data-testid="stToolbar"
           theme={activeTheme.emotion}
         >
-          <div
-            style={{
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              width: "100%",
-              margin: 0,
-              border: 0,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
+          <StyledHeaderContent>
+            <StyledHeaderLeftSection>
               {logoComponent && !isSidebarOpen && (
                 <div style={{ marginLeft: 12 }}>{logoComponent}</div>
               )}
@@ -103,25 +91,14 @@ const Header = ({
                   </BaseButton>
                 </StyledOpenSidebarButton>
               )}
-            </div>
+            </StyledHeaderLeftSection>
             {navigation}
             {rightContent && (
-              <div
-                style={{
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  marginLeft: "auto",
-                  height: "100%",
-                  minWidth: "19.5rem",
-                  marginRight: "1rem",
-                }}
-              >
+              <StyledHeaderRightSection>
                 {rightContent}
-              </div>
+              </StyledHeaderRightSection>
             )}
-          </div>
+          </StyledHeaderContent>
         </StyledHeaderToolbar>
       )}
     </StyledHeader>
