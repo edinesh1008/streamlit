@@ -212,6 +212,7 @@ export const StyledSidebarLinkText = styled.span<StyledSidebarNavLinkProps>(
   ({ isActive, theme, disabled, isTopNav, label }) => {
     return {
       color: getNavTextColor(theme, isActive, disabled, isTopNav),
+      fontSize: isTopNav ? theme.fontSizes.sm : theme.fontSizes.baseFontSize,
       overflow: "hidden",
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",

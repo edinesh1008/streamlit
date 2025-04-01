@@ -31,9 +31,11 @@ export const StyledNavSection = styled.div(({ theme }) => ({
   marginRight: theme.spacing.sm,
   display: "flex",
   alignItems: "center",
+  justifyContent: "center",
   cursor: "pointer",
   position: "relative",
   lineHeight: theme.lineHeights.menuItem,
+  fontSize: theme.fontSizes.sm,
   padding: `0 ${theme.spacing.sm}`,
   color: getNavTextColor(theme, false, false, true),
   borderRadius: theme.radii.default,
@@ -63,4 +65,9 @@ export const StyledSectionName = styled.div(({ theme }) => ({
 
 export const StyledPopoverContent = styled.div(({ theme }) => ({
   padding: `${theme.spacing.twoXS} 0`,
+  fontSize: theme.fontSizes.sm,
+}))
+
+export const StyledIconContainer = styled.div(({ theme }) => ({
+  marginLeft: theme.spacing.twoXS,
 }))

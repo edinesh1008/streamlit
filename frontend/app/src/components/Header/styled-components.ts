@@ -33,6 +33,7 @@ export const StyledHeader = styled.header<StyledHeaderProps>(({ theme }) => ({
   zIndex: theme.zIndices.header,
   pointerEvents: "auto",
   flex: "1 1 auto",
+  fontSize: theme.fontSizes.sm,
 }))
 
 export const StyledHeaderToolbar = styled.div<{
@@ -84,5 +85,5 @@ export const StyledHeaderRightSection = styled.div(({ theme }) => ({
 }))
 
 export const StyledLogoContainer = styled.div(({ theme }) => ({
-  marginLeft: theme.spacing.md,
+  marginLeft: theme.spacing.lg,
 }))

@@ -27,6 +27,7 @@ import {
   StyledNavSectionText,
   StyledSectionName,
   StyledPopoverContent,
+  StyledIconContainer,
 } from "./styled-components"
 import { IAppPage } from "@streamlit/protobuf"
 import { StreamlitEndpoints } from "@streamlit/connection"
@@ -104,7 +105,11 @@ const NavSection = ({
     >
       <StyledNavSection tabIndex={0}>
         <StyledNavSectionText>{title}</StyledNavSectionText>
-        {!hideChevron && <Icon content={KeyboardArrowDown} size="lg" />}
+        {!hideChevron && (
+          <StyledIconContainer>
+            <Icon content={KeyboardArrowDown} size="lg" />
+          </StyledIconContainer>
+        )}
       </StyledNavSection>
     </StatefulPopover>
   )
