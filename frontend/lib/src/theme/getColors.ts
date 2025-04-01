@@ -78,7 +78,6 @@ export const createEmotionColors = (genericColors: {
   [key: string]: string
 }): { [key: string]: string } => {
   const derivedColors = computeDerivedColors(genericColors)
-  const hasLightBg = getLuminance(genericColors.bgColor) > 0.5
 
   return {
     ...genericColors,
@@ -87,8 +86,6 @@ export const createEmotionColors = (genericColors: {
     codeTextColor: genericColors.green,
     codeBackgroundColor: derivedColors.bgMix,
 
-    metricPositiveDeltaColor: genericColors[markdownTextGreen(hasLightBg)],
-    metricNegativeDeltaColor: genericColors[markdownTextRed(hasLightBg)],
     metricNeutralDeltaColor: derivedColors.fadedText60,
 
     borderColor: derivedColors.fadedText10,
@@ -119,20 +116,12 @@ export function getDividerColors(theme: EmotionTheme): any {
   }
 }
 
-export function markdownTextRed(hasLightBg: boolean): string {
-  return hasLightBg ? "red80" : "red70"
-}
-
-export function markdownTextGreen(hasLightBg: boolean): string {
-  return hasLightBg ? "green90" : "green60"
-}
-
 export function getMarkdownTextColors(theme: EmotionTheme): any {
   const lightTheme = hasLightBackgroundColor(theme)
-  const red = theme.colors[markdownTextRed(lightTheme)]
+  const red = lightTheme ? theme.colors.red80 : theme.colors.red70
   const orange = lightTheme ? theme.colors.orange100 : theme.colors.orange60
   const yellow = lightTheme ? theme.colors.yellow100 : theme.colors.yellow40
-  const green = theme.colors[markdownTextGreen(lightTheme)]
+  const green = lightTheme ? theme.colors.green90 : theme.colors.green60
   const blue = lightTheme ? theme.colors.blue80 : theme.colors.blue50
   const violet = lightTheme ? theme.colors.purple80 : theme.colors.purple50
   const purple = lightTheme ? theme.colors.purple100 : theme.colors.purple80
