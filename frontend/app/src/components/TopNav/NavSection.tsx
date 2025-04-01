@@ -25,6 +25,8 @@ import {
   StyledNavSection,
   StyledSidebarNavLinkContainer,
   StyledNavSectionText,
+  StyledSectionName,
+  StyledPopoverContent,
 } from "./styled-components"
 import { IAppPage } from "@streamlit/protobuf"
 import { StreamlitEndpoints } from "@streamlit/connection"
@@ -62,7 +64,7 @@ const NavSection = ({
       triggerType="click"
       placement={PLACEMENT.bottomLeft}
       content={
-        <div style={{ padding: "0.25rem 0" }}>
+        <StyledPopoverContent>
           {sections.map(section => {
             const sectionName = section[0].sectionHeader
 
@@ -77,7 +79,7 @@ const NavSection = ({
               return (
                 <>
                   {index === 0 && showSections && (
-                    <div style={{ marginLeft: "0.5rem" }}>{sectionName}</div>
+                    <StyledSectionName>{sectionName}</StyledSectionName>
                   )}
                   <StyledSidebarNavLinkContainer>
                     <SidebarNavLink
@@ -97,7 +99,7 @@ const NavSection = ({
               )
             })
           })}
-        </div>
+        </StyledPopoverContent>
       }
     >
       <StyledNavSection tabIndex={0}>

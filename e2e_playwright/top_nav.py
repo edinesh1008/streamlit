@@ -100,42 +100,42 @@ testimonials = StreamlitPage(page_testimonials, title="Testimonials", icon="💬
 support = StreamlitPage(page_support, title="Support", icon="🆘")
 
 # Set up navigation and logos
-current_page = st.navigation(
-    [
-        home,
-        about,
-        contact,
-        services,
-        products,
-        blog,
-        faq,
-        team,
-        portfolio,
-        pricing,
-        testimonials,
-        support,
-    ],
-    position="top",
-)
-
-# with sections
 # current_page = st.navigation(
-#     {
-#         "Section 1": [home, about],
-#         "Section 2": [services, products],
-#         "Section 3": [blog, faq],
-#         "Section 4": [
-#             team,
-#             portfolio,
-#         ],
-#         "Section 5": [
-#             support,
-#             pricing,
-#         ],
-#         "Section 6": [testimonials],
-#     },
+#     [
+#         home,
+#         about,
+#         contact,
+#         services,
+#         products,
+#         blog,
+#         faq,
+#         team,
+#         portfolio,
+#         pricing,
+#         testimonials,
+#         support,
+#     ],
 #     position="top",
 # )
+
+# with sections
+current_page = st.navigation(
+    {
+        "Section 1": [home, about],
+        "Section 2": [services, products],
+        "Section 3": [blog, faq],
+        "Section 4": [
+            team,
+            portfolio,
+        ],
+        "Section 5": [
+            support,
+            pricing,
+        ],
+        "Section 6": [testimonials],
+    },
+    position="top",
+)
 
 
 st.logo("logo.jpg", size="large")

@@ -53,3 +53,13 @@ export const StyledNavSectionText = styled.span(({ theme }) => ({
 export const StyledSidebarNavLinkContainer = styled.div(({ theme }) => ({
   margin: `${theme.spacing.twoXS} ${theme.spacing.sm}`,
 }))
+
+export const StyledSectionName = styled.div(({ theme }) => ({
+  marginLeft: theme.spacing.sm,
+  marginTop: theme.spacing.sm,
+  marginBottom: theme.spacing.sm,
+}))
+
+export const StyledPopoverContent = styled.div(({ theme }) => ({
+  padding: `${theme.spacing.twoXS} 0`,
+}))
