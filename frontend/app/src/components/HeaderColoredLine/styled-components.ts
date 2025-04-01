@@ -23,5 +23,5 @@ export const StyledHeaderDecoration = styled.div(({ theme }) => ({
   left: theme.spacing.none,
   height: theme.sizes.headerDecorationHeight,
   backgroundImage: `linear-gradient(90deg, ${theme.colors.red70}, #fffd80)`,
-  zIndex: 100000000 /* Lowered from theme.zIndices.header to ensure it's below nav elements */,
+  zIndex: theme.zIndices.headerDecoration,
 }))
