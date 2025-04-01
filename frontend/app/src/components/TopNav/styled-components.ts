@@ -33,7 +33,8 @@ export const StyledNavSection = styled.div(({ theme }) => ({
   alignItems: "center",
   cursor: "pointer",
   position: "relative",
-  padding: `${theme.spacing.twoXS} ${theme.spacing.sm}`,
+  lineHeight: theme.lineHeights.menuItem,
+  padding: `0 ${theme.spacing.sm}`,
   color: getNavTextColor(theme, false, false, true),
   borderRadius: theme.radii.default,
   "&:hover": {
