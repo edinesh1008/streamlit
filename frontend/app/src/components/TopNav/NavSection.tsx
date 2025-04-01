@@ -23,7 +23,6 @@ import { KeyboardArrowDown } from "@emotion-icons/material-outlined"
 import { isNullOrUndefined } from "@streamlit/utils"
 import {
   StyledNavSection,
-  SidebarNavLinkContainer,
   StyledSidebarNavLinkContainer,
   StyledNavSectionText,
 } from "./styled-components"

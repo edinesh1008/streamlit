@@ -216,8 +216,6 @@ export const StyledSidebarLinkText = styled.span<StyledSidebarNavLinkProps>(
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       display: "table-cell",
-      // height: "2.5rem",
-      // lineHeight: "2.5rem",
       /* Pseudo-element to reserve bold width */
       "&::after": {
         content: `"${label}"` /* duplicate text */,
@@ -226,7 +224,6 @@ export const StyledSidebarLinkText = styled.span<StyledSidebarNavLinkProps>(
         display: "block",
         width: "fit-content",
         height: 0,
-        // transform: "translateY(-100%)",
       },
     }
   }
