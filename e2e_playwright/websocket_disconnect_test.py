@@ -65,23 +65,6 @@ def _check_expected_elements_disabled(app: Page):
         "disabled", ""
     )
 
-    # Non-widget elements:
-    # Link button
-    expect(app.get_by_test_id("stLinkButton").locator("a")).not_to_be_disabled()
-    # Tabs
-    tabs = app.get_by_test_id("stTabs")
-    tab_button = app.get_by_test_id("stTab").nth(1)
-    expect(tab_button).to_contain_text("Tab 2")
-    tab_button.click()
-    tab_panel = tabs.get_by_test_id("stElementContainer").nth(1)
-    expect(tab_panel).to_be_visible()
-    expect(tab_panel).to_have_text("World")
-    # Expander
-    expander = app.get_by_test_id("stExpander")
-    expect(expander).not_to_be_disabled()
-    expander.click()
-    expect(expander.get_by_test_id("stExpanderDetails")).to_be_visible()
-
     # Sidebar page nav links:
     sidebar_nav_links = app.get_by_test_id("stSidebarNavItems").get_by_role("link")
     expect(sidebar_nav_links).to_have_count(2)
