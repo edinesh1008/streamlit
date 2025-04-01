@@ -350,7 +350,6 @@ export const StyledCollapseSidebarButton =
 export const StyledSidebarNavSectionHeader = styled.header(({ theme }) => {
   return {
     fontSize: theme.fontSizes.sm,
-    fontWeight: theme.fontWeights.bold,
     color: getNavTextColor(theme, false),
     lineHeight: theme.lineHeights.small,
     paddingRight: theme.spacing.sm,
