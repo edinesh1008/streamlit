@@ -22,7 +22,6 @@ import React, {
   useState,
 } from "react"
 
-import { ChevronLeft, ChevronRight } from "@emotion-icons/material-outlined"
 import { useTheme } from "@emotion/react"
 import { getLogger } from "loglevel"
 import { Resizable } from "re-resizable"
@@ -33,11 +32,7 @@ import {
   BaseButtonKind,
   DynamicIcon,
   EmotionTheme,
-  Icon,
-  isColoredLineDisplayed,
-  isEmbed,
   IsSidebarContext,
-  LibContext,
 } from "@streamlit/lib"
 import { IAppPage, Logo, PageConfig } from "@streamlit/protobuf"
 import { localStorageAvailable } from "@streamlit/utils"
@@ -49,12 +44,10 @@ import {
   StyledLogo,
   StyledLogoLink,
   StyledNoLogoSpacer,
-  StyledOpenSidebarButton,
   StyledResizeHandle,
   StyledSidebar,
   StyledSidebarContent,
   StyledSidebarHeaderContainer,
-  StyledSidebarOpenContainer,
   StyledSidebarUserContent,
 } from "./styled-components"
 import SidebarNav from "./SidebarNav"

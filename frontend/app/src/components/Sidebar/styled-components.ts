@@ -322,57 +322,6 @@ export const StyledNoLogoSpacer = styled.div(({ theme }) => ({
   height: theme.sizes.largeLogoHeight,
 }))
 
-export interface StyledSidebarOpenContainerProps {
-  chevronDownshift: number
-}
-
-export const StyledSidebarOpenContainer =
-  styled.div<StyledSidebarOpenContainerProps>(
-    ({ theme, chevronDownshift }) => ({
-      position: "fixed",
-      top: chevronDownshift ? `${chevronDownshift}px` : theme.spacing.xl,
-      left: theme.spacing.twoXL,
-      zIndex: theme.zIndices.header,
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-
-      [`@media print`]: {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        marginTop: 0,
-
-        [`& > ${StyledLogo}`]: {
-          // Add more space to the actual app content by moving the logo a little bit more to the top.
-          // margin-bottom wouldn't work here to push the content down because the logo is absolutely positioned.
-          marginTop: 0,
-        },
-      },
-    })
-  )
-
-// TODO: port to header styles
-// export const StyledOpenSidebarButton = styled.div(({ theme }) => {
-//   return {
-//     zIndex: theme.zIndices.header,
-//     color: hasLightBackgroundColor(theme)
-//       ? theme.colors.fadedText60
-//       : theme.colors.bodyText,
-//     marginTop: theme.spacing.twoXS,
-
-//     button: {
-//       "&:hover": {
-//         backgroundColor: theme.colors.darkenedBgMix25,
-//       },
-//     },
-
-//     [`@media print`]: {
-//       display: "none",
-//     },
-//   }
-// })
-
 export interface StyledCollapseSidebarButtonProps {
   showSidebarCollapse: boolean
 }
