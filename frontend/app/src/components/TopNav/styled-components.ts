@@ -34,7 +34,7 @@ export const StyledNavSection = styled.div(({ theme }) => ({
   cursor: "pointer",
   position: "relative",
   padding: `${theme.spacing.twoXS} ${theme.spacing.sm}`,
-  color: getNavTextColor(theme, false, true),
+  color: getNavTextColor(theme, false, false, true),
   borderRadius: theme.radii.default,
   "&:hover": {
     backgroundColor: transparentize(theme.colors.darkenedBgMix25, 0.1),
