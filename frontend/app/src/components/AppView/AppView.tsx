@@ -259,37 +259,6 @@ function AppView(props: AppViewProps): ReactElement {
     />
   )
 
-  // Render logo component for header
-  // const renderLogo = (logo: Logo): ReactElement => {
-  //   const displayImage = logo.iconImage ? logo.iconImage : logo.image
-  //   const source = endpoints.buildMediaURL(displayImage)
-
-  //   const logoElement = (
-  //     <StyledLogo
-  //       src={source}
-  //       size={logo.size}
-  //       alt="Logo"
-  //       className="stLogo"
-  //       data-testid="stLogo"
-  //     />
-  //   )
-
-  //   if (logo.link) {
-  //     return (
-  //       <StyledLogoLink
-  //         href={logo.link}
-  //         target="_blank"
-  //         rel="noreferrer"
-  //         data-testid="stLogoLink"
-  //       >
-  //         {logoElement}
-  //       </StyledLogoLink>
-  //     )
-  //   }
-  //   return logoElement
-  // }
-
-  // New code:
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState<boolean>(
     initialSidebarState === 1 || // enum value for COLLAPSED
       (initialSidebarState === 2 &&
