@@ -26,17 +26,17 @@ export const StyledOverflowContainer = styled.div({
 })
 
 export const StyledNavSection = styled.div(({ theme }) => ({
-  marginLeft: "8px",
-  marginRight: "8px",
+  marginLeft: theme.spacing.sm,
+  marginRight: theme.spacing.sm,
   display: "flex",
   alignItems: "center",
-  height: "2rem",
+  height: theme.spacing.lg,
   cursor: "pointer",
   position: "relative",
-  padding: "4px 8px",
-  lineHeight: "2rem",
+  padding: `${theme.spacing.twoXS} ${theme.spacing.sm}`,
+  lineHeight: theme.spacing.lg,
   color: getNavTextColor(theme, false, true),
-  borderRadius: "4px",
+  borderRadius: theme.radii.md,
   "&:hover": {
     backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
