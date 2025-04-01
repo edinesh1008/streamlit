@@ -30,7 +30,7 @@ export const StyledHeader = styled.header<StyledHeaderProps>(({ theme }) => ({
   backgroundColor: theme.colors.bgColor,
   minHeight: "3.75rem",
   height: "3.75rem",
-  zIndex: 100,
+  zIndex: theme.zIndices.header,
   pointerEvents: "auto",
   flex: "1 1 auto",
 }))
@@ -45,7 +45,7 @@ export const StyledHeaderToolbar = styled.div<{
   padding: 0,
   pointerEvents: "auto",
   position: "relative",
-  zIndex: 101,
+  zIndex: theme.zIndices.header,
 }))
 
 export const StyledOpenSidebarButton = styled.div(({ theme }) => ({
