@@ -16,6 +16,7 @@
 
 import styled from "@emotion/styled"
 import { getNavTextColor } from "../Sidebar/styled-components"
+import { transparentize } from "color2k"
 
 export const StyledOverflowContainer = styled.div({
   display: "flex",
@@ -30,15 +31,13 @@ export const StyledNavSection = styled.div(({ theme }) => ({
   marginRight: theme.spacing.sm,
   display: "flex",
   alignItems: "center",
-  height: theme.spacing.lg,
   cursor: "pointer",
   position: "relative",
   padding: `${theme.spacing.twoXS} ${theme.spacing.sm}`,
-  lineHeight: theme.spacing.lg,
   color: getNavTextColor(theme, false, true),
-  borderRadius: theme.radii.md,
+  borderRadius: theme.radii.default,
   "&:hover": {
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    backgroundColor: transparentize(theme.colors.darkenedBgMix25, 0.1),
   },
 }))
 

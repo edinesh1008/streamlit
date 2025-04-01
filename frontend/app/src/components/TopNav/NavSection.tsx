@@ -100,7 +100,7 @@ const NavSection = ({
         </div>
       }
     >
-      <StyledNavSection>
+      <StyledNavSection tabIndex={0}>
         <StyledNavSectionText>{title}</StyledNavSectionText>
         {!hideChevron && <Icon content={KeyboardArrowDown} size="lg" />}
       </StyledNavSection>
