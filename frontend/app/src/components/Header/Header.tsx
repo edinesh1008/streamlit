@@ -29,6 +29,7 @@ import {
   StyledHeaderContent,
   StyledHeaderLeftSection,
   StyledHeaderRightSection,
+  StyledLogoContainer,
 } from "./styled-components"
 
 export interface HeaderProps {
@@ -75,7 +76,7 @@ const Header = ({
           <StyledHeaderContent>
             <StyledHeaderLeftSection>
               {logoComponent && !isSidebarOpen && (
-                <div style={{ marginLeft: 12 }}>{logoComponent}</div>
+                <StyledLogoContainer>{logoComponent}</StyledLogoContainer>
               )}
               {hasSidebar && !isSidebarOpen && (
                 <StyledOpenSidebarButton>

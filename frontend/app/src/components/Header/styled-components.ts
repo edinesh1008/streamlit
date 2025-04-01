@@ -82,3 +82,7 @@ export const StyledHeaderRightSection = styled.div(({ theme }) => ({
   minWidth: "19.5rem",
   marginRight: "1rem",
 }))
+
+export const StyledLogoContainer = styled.div(({ theme }) => ({
+  marginLeft: theme.spacing.md,
+}))
