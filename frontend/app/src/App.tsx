@@ -931,10 +931,7 @@ export class App extends PureComponent<Props, State> {
     )
   }
 
-  /**
-   * Handler for the "navigation" ForwardMsg command.
-   */
-  private handleNavigation(navigation: Navigation): void {
+  handleNavigation = (navigation: Navigation): void => {
     const sections = navigation.sections
     const appPages = navigation.appPages
     this.setState({
@@ -946,6 +943,7 @@ export class App extends PureComponent<Props, State> {
       expandSidebarNav: navigation.expanded,
       navigationPosition: navigation.position,
     })
+    this.maybeSetState(this.appNavigation.handleNavigation(navigation))
   }
 
   handlePageProfileMsg = (pageProfile: PageProfile): void => {
