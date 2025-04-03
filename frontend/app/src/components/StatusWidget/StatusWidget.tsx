@@ -97,12 +97,11 @@ interface PromptButtonProps {
   title: ReactNode
   disabled: boolean
   onClick: () => void
-  isMinimized: boolean
 }
 
 const PromptButton = (props: PromptButtonProps): ReactElement => {
   return (
-    <StyledAppButtonContainer isMinimized={props.isMinimized}>
+    <StyledAppButtonContainer>
       <BaseButton
         kind={BaseButtonKind.HEADER_BUTTON}
         disabled={props.disabled}
@@ -127,12 +126,7 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
   stopScript,
   allowRunOnSave,
 }) => {
-  const shouldMinimize = useCallback((): boolean => {
-    return window.scrollY > 32
-  }, [])
-  const [statusMinimized, setStatusMinimized] = useState(shouldMinimize)
   const [scriptChangedOnDisk, setScriptChangedOnDisk] = useState(false)
-  const [promptMinimized, setPromptMinimized] = useState(false)
   const [promptHovered, setPromptHovered] = useState(false)
   const [showRunningMan, setShowRunningMan] = useState(false)
   const minimizePromptTimer: React.MutableRefObject<Timer | null> =
@@ -157,29 +151,11 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
 
   const isConnected = connectionState === ConnectionState.CONNECTED
 
-  const minimizePromptAfterTimeout = useCallback((timeout: number): void => {
-    // Don't cut an existing timer short. If our timer is already
-    // running, and is due to expire later than the new timeout
-    // value, leave the timer alone.
-    if (minimizePromptTimer.current !== null) {
-      if (timeout > minimizePromptTimer.current.remainingTime) {
-        minimizePromptTimer.current.setTimeout(() => {
-          setPromptMinimized(true)
-        }, timeout)
-      }
+  const handleSessionEvent = useCallback((event: SessionEvent): void => {
+    if (event.type === "scriptChangedOnDisk") {
+      setScriptChangedOnDisk(true)
     }
   }, [])
-
-  const handleSessionEvent = useCallback(
-    (event: SessionEvent): void => {
-      if (event.type === "scriptChangedOnDisk") {
-        setScriptChangedOnDisk(true)
-        setPromptMinimized(false)
-        minimizePromptAfterTimeout(PROMPT_DISPLAY_INITIAL_TIMEOUT_MS)
-      }
-    },
-    [minimizePromptAfterTimeout]
-  )
 
   const showRunningManAfterInitialDelay = useCallback(
     (delay: number): void => {
@@ -192,18 +168,12 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
     []
   )
 
-  const handleScroll = useCallback((): void => {
-    setStatusMinimized(shouldMinimize())
-  }, [shouldMinimize])
-
   const onAppPromptHover = (): void => {
     setPromptHovered(true)
   }
 
   const onAppPromptUnhover = (): void => {
     setPromptHovered(false)
-    setPromptMinimized(false)
-    minimizePromptAfterTimeout(PROMPT_DISPLAY_HOVER_TIMEOUT_MS)
   }
 
   const handleStopScriptClick = (): void => {
@@ -255,16 +225,8 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
   }, [])
 
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll)
-    return () => {
-      window.removeEventListener("scroll", handleScroll)
-    }
-  }, [handleScroll])
-
-  useEffect(() => {
     if (scriptRunState === ScriptRunState.RUNNING) {
       setScriptChangedOnDisk(false)
-
       setPromptHovered(false)
     }
   }, [scriptRunState])
@@ -284,7 +246,6 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
   }, [scriptRunState, showRunningManAfterInitialDelay, isConnected])
 
   const renderScriptIsRunning = (): ReactNode => {
-    const minimized = statusMinimized
     const stopRequested = scriptRunState === ScriptRunState.STOP_REQUESTED
     const isNewYear = isNewYears()
     const runningSrc = isNewYear ? newYearsRunning : iconRunning
@@ -297,18 +258,8 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
     )
     return showRunningMan ? (
       <StyledAppStatus>
-        {minimized ? (
-          <Tooltip
-            placement={Placement.BOTTOM}
-            content="This script is currently running"
-          >
-            {runningIcon}
-          </Tooltip>
-        ) : (
-          runningIcon
-        )}
+        {runningIcon}
         <PromptButton
-          isMinimized={statusMinimized}
           title={stopRequested ? "Stopping..." : "Stop"}
           disabled={stopRequested}
           onClick={handleStopScriptClick}
@@ -321,8 +272,6 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
 
   const renderRerunScriptPrompt = (): ReactNode => {
     const rerunRequested = scriptRunState === ScriptRunState.RERUN_REQUESTED
-    const minimized = promptMinimized && !promptHovered
-    const { colors } = theme
     return (
       <Hotkeys keyName="a" onKeyDown={handleKeyDown}>
         <div onMouseEnter={onAppPromptHover} onMouseLeave={onAppPromptUnhover}>
@@ -332,18 +281,14 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
               iconValue={":material/info:"}
               color={theme.colors.fadedText60}
             />
-            <StyledAppStatusLabel isMinimized={minimized} isPrompt>
-              File change.
-            </StyledAppStatusLabel>
+            <StyledAppStatusLabel isPrompt>File change.</StyledAppStatusLabel>
             <PromptButton
-              isMinimized={minimized}
               title={<StyledShortcutLabel>Rerun</StyledShortcutLabel>}
               disabled={rerunRequested}
               onClick={handleRerunClick}
             />
             {allowRunOnSave && (
               <PromptButton
-                isMinimized={minimized}
                 title={<StyledShortcutLabel>Always rerun</StyledShortcutLabel>}
                 disabled={rerunRequested}
                 onClick={handleAlwaysRerunClick}
@@ -367,9 +312,7 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
           data-testid="stConnectionStatus"
         >
           <Icon size="sm" content={ui.icon} />
-          <StyledConnectionStatusLabel isMinimized={statusMinimized}>
-            {ui.label}
-          </StyledConnectionStatusLabel>
+          <StyledConnectionStatusLabel>{ui.label}</StyledConnectionStatusLabel>
         </StyledConnectionStatus>
       </Tooltip>
     )
