@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
+
 import streamlit as st
 from streamlit.navigation.page import StreamlitPage
 
@@ -85,6 +87,13 @@ def page_support():
     st.write("Get help and support.")
 
 
+def long_page():
+    st.title("Long Page")
+    for i in range(100):
+        st.write(f"This is the long page. {i}")
+        time.sleep(0.1)
+
+
 # Create pages using the defined functions
 home = StreamlitPage(page_home, title="Home", icon="🏠", default=True)
 about = StreamlitPage(page_about, title="About", icon="ℹ️")
@@ -98,44 +107,46 @@ portfolio = StreamlitPage(page_portfolio, title="Portfolio", icon="🖼️")
 pricing = StreamlitPage(page_pricing, title="Pricing", icon="💰")
 testimonials = StreamlitPage(page_testimonials, title="Testimonials", icon="💬")
 support = StreamlitPage(page_support, title="Support", icon="🆘")
-
+long_page = StreamlitPage(long_page, title="Long Page", icon="🔍")
 # Set up navigation and logos
-# current_page = st.navigation(
-#     [
-#         home,
-#         about,
-#         contact,
-#         services,
-#         products,
-#         blog,
-#         faq,
-#         team,
-#         portfolio,
-#         pricing,
-#         testimonials,
-#         support,
-#     ],
-#     position="top",
-# )
-
-# with sections
 current_page = st.navigation(
-    {
-        "Section 1": [home, about],
-        "Section 2": [services, products],
-        "Section 3": [blog, faq],
-        "Section 4": [
-            team,
-            portfolio,
-        ],
-        "Section 5": [
-            support,
-            pricing,
-        ],
-        "Section 6": [testimonials],
-    },
+    [
+        home,
+        about,
+        contact,
+        services,
+        products,
+        blog,
+        faq,
+        team,
+        portfolio,
+        pricing,
+        testimonials,
+        support,
+        long_page,
+    ],
     position="top",
 )
+
+
+# with sectionsssassddadf
+# current_page = st.navigation(
+#     {
+#         "Section 1": [home, about],
+#         "Section 2": [services, products],
+#         "Section 3": [blog, faq],
+#         "Section 4": [
+#             team,
+#             portfolio,
+#         ],
+#         "Section 5": [
+#             support,
+#             pricing,
+#         ],
+#         "Section 6": [testimonials, long_page],
+#     },
+#     position="top",
+# )
 
 
 st.logo("logo.jpg", size="large")

@@ -22,7 +22,6 @@ import React, {
   useState,
 } from "react"
 
-import { Info } from "@emotion-icons/open-iconic"
 import { useTheme } from "@emotion/react"
 import Hotkeys from "react-hot-keys"
 import { CSSTransition } from "react-transition-group"
@@ -31,6 +30,7 @@ import { SignalConnection } from "typed-signals"
 import {
   BaseButton,
   BaseButtonKind,
+  DynamicIcon,
   Icon,
   Placement,
   ScriptRunState,
@@ -307,9 +307,6 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
         ) : (
           runningIcon
         )}
-        <StyledAppStatusLabel isMinimized={statusMinimized} isPrompt={false}>
-          Running...
-        </StyledAppStatusLabel>
         <PromptButton
           isMinimized={statusMinimized}
           title={stopRequested ? "Stopping..." : "Stop"}
@@ -330,9 +327,13 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
       <Hotkeys keyName="a" onKeyDown={handleKeyDown}>
         <div onMouseEnter={onAppPromptHover} onMouseLeave={onAppPromptUnhover}>
           <StyledAppStatus>
-            <Icon content={Info} margin="0 sm 0 0" color={colors.bodyText} />
+            <DynamicIcon
+              size="lg"
+              iconValue={":material/info:"}
+              color={theme.colors.fadedText60}
+            />
             <StyledAppStatusLabel isMinimized={minimized} isPrompt>
-              Source file changed.
+              File change.
             </StyledAppStatusLabel>
             <PromptButton
               isMinimized={minimized}

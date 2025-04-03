@@ -88,7 +88,7 @@ export const StyledAppStatusLabel = styled.label<StyledAppStatusLabelProps>(
     fontSize: theme.fontSizes.sm,
     color: isPrompt ? theme.colors.bodyText : theme.colors.gray,
     textTransform: isPrompt ? "none" : "uppercase",
-    margin: `0 0 0 ${theme.spacing.lg}`,
+    margin: `0 0 0 ${theme.spacing.sm}`,
     whiteSpace: "nowrap",
     maxWidth: theme.sizes.appStatusMaxWidth,
     borderRadius: isPrompt ? theme.radii.md : undefined,
@@ -105,7 +105,7 @@ export interface StyledAppButtonContainerProps {
 
 export const StyledAppButtonContainer =
   styled.span<StyledAppButtonContainerProps>(({ isMinimized, theme }) => ({
-    marginLeft: theme.spacing.sm,
+    marginLeft: theme.spacing.xs,
     whiteSpace: "nowrap",
     transition: `opacity 200ms ease-out 0s,
   clip 200ms ease-out 0s, min-width 200ms ease-out 0s,

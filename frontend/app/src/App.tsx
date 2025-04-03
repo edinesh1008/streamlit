@@ -932,17 +932,7 @@ export class App extends PureComponent<Props, State> {
   }
 
   handleNavigation = (navigation: Navigation): void => {
-    const sections = navigation.sections
-    const appPages = navigation.appPages
-    this.setState({
-      appPages: appPages,
-      navSections: sections,
-      hideSidebarNav:
-        this.state.hideSidebarNav ||
-        navigation.position === Navigation.Position.HIDDEN,
-      expandSidebarNav: navigation.expanded,
-      navigationPosition: navigation.position,
-    })
+    this.setState({ navigationPosition: navigation.position })
     this.maybeSetState(this.appNavigation.handleNavigation(navigation))
   }
 
@@ -2027,7 +2017,6 @@ export class App extends PureComponent<Props, State> {
           showToolbar: !isEmbed() || isToolbarDisplayed(),
           showColoredLine:
             (!hideColoredLine && !isEmbed()) || isColoredLineDisplayed(),
-          // host communication manager elements
           pageLinkBaseUrl,
           sidebarChevronDownshift,
           widgetsDisabled:
