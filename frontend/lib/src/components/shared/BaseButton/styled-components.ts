@@ -425,16 +425,15 @@ export const StyledHeaderButton = styled(
   return {
     backgroundColor: theme.colors.transparent,
     border: "none",
-    padding: theme.spacing.sm,
+    padding: `0 ${theme.spacing.sm}`,
     fontSize: theme.fontSizes.sm,
     marginLeft: theme.spacing.threeXS,
     marginRight: theme.spacing.threeXS,
 
     lineHeight: theme.lineHeights.none,
 
-    // Override buttons min width and height, to ensure the hover state for icon buttons on the header is square
-    minWidth: theme.spacing.threeXL,
-    minHeight: theme.spacing.threeXL,
+    minWidth: theme.sizes.headerItemHeight,
+    minHeight: theme.sizes.headerItemHeight,
 
     "&:focus": {
       outline: "none",
