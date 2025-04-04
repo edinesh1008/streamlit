@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-import React from "react"
-import { StatefulPopover } from "baseui/popover"
-import { PLACEMENT } from "baseui/popover"
+import React, { useState } from "react"
+import { PLACEMENT, TRIGGER_TYPE, Popover as UIPopover } from "baseui/popover"
 import SidebarNavLink from "../Sidebar/SidebarNavLink"
 import { Icon } from "@streamlit/lib"
-import { KeyboardArrowDown } from "@emotion-icons/material-outlined"
+import {
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+} from "@emotion-icons/material-outlined"
 import { isNullOrUndefined } from "@streamlit/utils"
+import { useTheme } from "@emotion/react"
+import { hasLightBackgroundColor } from "@streamlit/lib"
+import { transparentize } from "color2k"
 import {
   StyledNavSection,
   StyledSidebarNavLinkContainer,
@@ -31,6 +36,7 @@ import {
 } from "./styled-components"
 import { IAppPage } from "@streamlit/protobuf"
 import { StreamlitEndpoints } from "@streamlit/connection"
+
 interface NavSectionProps {
   handlePageChange: (pageScriptHash: string) => void
   title: string
@@ -58,15 +64,20 @@ const NavSection = ({
     return null
   }
 
+  const [open, setOpen] = useState(false)
+  const theme = useTheme()
+  const lightBackground = hasLightBackgroundColor(theme)
   const showSections = sections.length > 1
 
+  const hoverBgColor = transparentize(theme.colors.darkenedBgMix25, 0.1)
+
   return (
-    <StatefulPopover
-      triggerType="click"
+    <UIPopover
+      triggerType={TRIGGER_TYPE.click}
       placement={PLACEMENT.bottomLeft}
-      content={
+      content={() => (
         <StyledPopoverContent>
-          {sections.map(section => {
+          {sections.map((section, sectionIndex) => {
             const sectionName = section[0].sectionHeader
 
             return section.map((item, index) => {
@@ -75,16 +86,22 @@ const NavSection = ({
                 if (item.pageScriptHash) {
                   handlePageChange(item.pageScriptHash)
                 }
+                setOpen(false)
                 return false
               }
+
+              // Convert potentially null pageName to string safely
+              const pageName = String(item.pageName || "")
+
               return (
-                <>
+                <React.Fragment key={`${sectionIndex}-${index}-${pageName}`}>
                   {index === 0 && showSections && (
                     <StyledSectionName>{sectionName}</StyledSectionName>
                   )}
                   <StyledSidebarNavLinkContainer>
                     <SidebarNavLink
                       {...item}
+                      icon={item.icon || null}
                       isTopNav={true}
                       isActive={currentPageScriptHash === item.pageScriptHash}
                       onClick={handleClick}
@@ -93,25 +110,84 @@ const NavSection = ({
                         item
                       )}
                     >
-                      {String(item.pageName)}
+                      {pageName}
                     </SidebarNavLink>
                   </StyledSidebarNavLinkContainer>
-                </>
+                </React.Fragment>
               )
             })
           })}
         </StyledPopoverContent>
-      }
+      )}
+      isOpen={open}
+      onClickOutside={() => setOpen(false)}
+      onClick={() => (open ? setOpen(false) : undefined)}
+      onEsc={() => setOpen(false)}
+      // Consistently render the content for smoother opening/closing
+      renderAll={true}
+      overrides={{
+        Body: {
+          style: () => ({
+            marginTop: theme.spacing.sm,
+            marginRight: theme.spacing.lg,
+            marginBottom: theme.spacing.lg,
+
+            maxHeight: "70vh",
+            overflow: "auto",
+            maxWidth: `calc(${theme.sizes.contentMaxWidth} - 2*${theme.spacing.lg})`,
+
+            borderTopLeftRadius: theme.radii.xl,
+            borderTopRightRadius: theme.radii.xl,
+            borderBottomRightRadius: theme.radii.xl,
+            borderBottomLeftRadius: theme.radii.xl,
+
+            borderLeftWidth: theme.sizes.borderWidth,
+            borderRightWidth: theme.sizes.borderWidth,
+            borderTopWidth: theme.sizes.borderWidth,
+            borderBottomWidth: theme.sizes.borderWidth,
+
+            borderLeftStyle: "solid",
+            borderRightStyle: "solid",
+            borderTopStyle: "solid",
+            borderBottomStyle: "solid",
+
+            borderLeftColor: theme.colors.borderColor,
+            borderRightColor: theme.colors.borderColor,
+            borderTopColor: theme.colors.borderColor,
+            borderBottomColor: theme.colors.borderColor,
+
+            boxShadow: lightBackground
+              ? "0px 4px 16px rgba(0, 0, 0, 0.16)"
+              : "0px 4px 16px rgba(0, 0, 0, 0.7)",
+
+            [`@media (max-width: ${theme.breakpoints.sm})`]: {
+              maxWidth: `calc(100% - ${theme.spacing.threeXL})`,
+            },
+          }),
+        },
+      }}
     >
-      <StyledNavSection tabIndex={0}>
-        <StyledNavSectionText>{title}</StyledNavSectionText>
-        {!hideChevron && (
-          <StyledIconContainer>
-            <Icon content={KeyboardArrowDown} size="lg" />
-          </StyledIconContainer>
-        )}
-      </StyledNavSection>
-    </StatefulPopover>
+      {/* This needs to be wrapped into a div for BaseWeb popover */}
+      <div>
+        <StyledNavSection
+          tabIndex={0}
+          onClick={() => setOpen(!open)}
+          style={{
+            backgroundColor: open ? hoverBgColor : "transparent",
+          }}
+        >
+          <StyledNavSectionText>{title}</StyledNavSectionText>
+          {!hideChevron && (
+            <StyledIconContainer>
+              <Icon
+                content={open ? KeyboardArrowUp : KeyboardArrowDown}
+                size="lg"
+              />
+            </StyledIconContainer>
+          )}
+        </StyledNavSection>
+      </div>
+    </UIPopover>
   )
 }
 
