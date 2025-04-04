@@ -167,14 +167,11 @@ const NavSection = ({
         },
       }}
     >
-      {/* This needs to be wrapped into a div for BaseWeb popover */}
       <div>
         <StyledNavSection
           tabIndex={0}
           onClick={() => setOpen(!open)}
-          style={{
-            backgroundColor: open ? hoverBgColor : "transparent",
-          }}
+          isOpen={open}
         >
           <StyledNavSectionText>{title}</StyledNavSectionText>
           {!hideChevron && (

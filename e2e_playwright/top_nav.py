@@ -109,44 +109,44 @@ testimonials = StreamlitPage(page_testimonials, title="Testimonials", icon="💬
 support = StreamlitPage(page_support, title="Support", icon="🆘")
 long_page = StreamlitPage(long_page, title="Long Page", icon="🔍")
 # Set up navigation and logos
-# current_page = st.navigation(
-#     [
-#         home,
-#         about,
-#         contact,
-#         services,
-#         products,
-#         blog,
-#         faq,
-#         team,
-#         portfolio,
-#         pricing,
-#         testimonials,
-#         support,
-#         long_page,
-#     ],
-#     position="top",
-# )
+current_page = st.navigation(
+    [
+        home,
+        about,
+        contact,
+        services,
+        products,
+        blog,
+        faq,
+        team,
+        portfolio,
+        pricing,
+        testimonials,
+        support,
+        long_page,
+    ],
+    position="top",
+)
 
 
 # with sectionsssassddadf
-current_page = st.navigation(
-    {
-        "Section 1": [home, about],
-        "Section 2": [services, products],
-        "Section 3": [blog, faq],
-        "Section 4": [
-            team,
-            portfolio,
-        ],
-        "Section 5": [
-            support,
-            pricing,
-        ],
-        "Section 6": [testimonials, long_page],
-    },
-    position="top",
-)
+# current_page = st.navigation(
+#     {
+#         "Section 1": [home, about],
+#         "Section 2": [services, products],
+#         "Section 3": [blog, faq],
+#         "Section 4": [
+#             team,
+#             portfolio,
+#         ],
+#         "Section 5": [
+#             support,
+#             pricing,
+#         ],
+#         "Section 6": [testimonials, long_page],
+#     },
+#     position="top",
+# )
 
 
 st.logo("logo.jpg", size="large")

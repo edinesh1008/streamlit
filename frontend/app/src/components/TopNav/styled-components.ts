@@ -26,23 +26,30 @@ export const StyledOverflowContainer = styled.div({
   overflow: "hidden",
 })
 
-export const StyledNavSection = styled.div(({ theme }) => ({
-  marginLeft: theme.spacing.sm,
-  marginRight: theme.spacing.sm,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  position: "relative",
-  lineHeight: theme.lineHeights.menuItem,
-  fontSize: theme.fontSizes.sm,
-  padding: `0 ${theme.spacing.sm}`,
-  color: getNavTextColor(theme, false, false, true),
-  borderRadius: theme.radii.default,
-  "&:hover": {
-    backgroundColor: transparentize(theme.colors.darkenedBgMix25, 0.1),
-  },
-}))
+interface StyledNavSectionProps {
+  isOpen: boolean
+}
+
+export const StyledNavSection = styled.div<StyledNavSectionProps>(
+  ({ theme, isOpen }) => ({
+    marginLeft: theme.spacing.sm,
+    marginRight: theme.spacing.sm,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    position: "relative",
+    lineHeight: theme.lineHeights.menuItem,
+    fontSize: theme.fontSizes.sm,
+    padding: `0 ${theme.spacing.sm}`,
+    color: getNavTextColor(theme, false, false, true),
+    borderRadius: theme.radii.default,
+    ...(isOpen ? { backgroundColor: theme.colors.darkenedBgMix25 } : {}),
+    "&:hover": {
+      backgroundColor: theme.colors.darkenedBgMix15,
+    },
+  })
+)
 
 export const StyledTopNavLinkContainer = styled.div(({ theme }) => ({
   margin: `${theme.spacing.sm} ${theme.spacing.sm}`,
