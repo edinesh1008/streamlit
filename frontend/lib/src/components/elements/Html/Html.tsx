@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-import React, { memo, ReactElement, useEffect, useMemo, useRef } from "react"
+import React, { memo, ReactElement, useEffect, useMemo } from "react"
 
 import dompurify from "dompurify"
 
 import { Html as HtmlProto } from "@streamlit/protobuf"
+
+import { useCalculatedWidth } from "~lib/hooks/useCalculatedWidth"
+
+import { StyledHtml } from "./styled-components"
 
 export interface HtmlProps {
   element: HtmlProto
@@ -61,13 +65,21 @@ const sanitizeString = (html: string): string => {
  */
 function Html({ element }: Readonly<HtmlProps>): ReactElement {
   const { body } = element
-  const htmlRef = useRef<HTMLDivElement | null>(null)
+  const [width, htmlRef] = useCalculatedWidth()
 
   const sanitizedHtml = useMemo(() => sanitizeString(body), [body])
 
   useEffect(() => {
+    // Side-effect to hide the element if it has no rendered content.
+    // This is a hack to avoid rendering empty children in the
+    // `StyledElementContainerLayoutWrapper`.
+    // If the DOM structure changes, this will break.
+
     if (
       htmlRef.current?.clientHeight === 0 &&
+      // Ensure that the element content has been sized, this will be -1 if the
+      // element width is still being evaluated
+      width >= 0 &&
       htmlRef.current.parentElement?.childElementCount === 1
     ) {
       // div has no rendered content - hide to avoid unnecessary spacing
@@ -78,7 +90,7 @@ function Html({ element }: Readonly<HtmlProps>): ReactElement {
   return (
     <>
       {sanitizedHtml && (
-        <div
+        <StyledHtml
           className="stHtml"
           data-testid="stHtml"
           ref={htmlRef}
