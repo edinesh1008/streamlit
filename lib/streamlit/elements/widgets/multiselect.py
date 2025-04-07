@@ -472,7 +472,6 @@ class MultiSelectMixin:
         if scale is not None:
             proto.scale = scale
 
-        serde = MultiSelectSerde(indexable_options, default_values)
         widget_state = register_widget(
             proto.id,
             on_change_handler=on_change,
