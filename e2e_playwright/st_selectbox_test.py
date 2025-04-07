@@ -51,7 +51,7 @@ def test_selectbox_widget_rendering(
 def test_selectbox_has_correct_initial_values(app: Page):
     """Test that st.selectbox returns the correct initial values."""
     markdown_elements = app.get_by_test_id("stMarkdown")
-    expect(markdown_elements).to_have_count(20)
+    expect(markdown_elements).to_have_count(21)
 
     expected = [
         "value 1: male",
@@ -75,6 +75,7 @@ def test_selectbox_has_correct_initial_values(app: Page):
         "value 18: male",
         "value 19: male",
         "value 20: male",
+        "value 21: male",
     ]
 
     for markdown_element, expected_text in zip(markdown_elements.all(), expected):
