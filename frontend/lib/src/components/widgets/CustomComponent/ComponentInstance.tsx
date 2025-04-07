@@ -74,6 +74,7 @@ export interface Props {
   widgetMgr: WidgetStateManager
   disabled: boolean
   element: ComponentInstanceProto
+  width: number
   fragmentId?: string
 }
 
@@ -180,7 +181,7 @@ function ComponentInstance(props: Props): ReactElement {
   const theme: EmotionTheme = useTheme()
   const [componentError, setComponentError] = useState<Error>()
 
-  const { disabled, element, registry, widgetMgr, fragmentId } = props
+  const { disabled, element, registry, widgetMgr, width, fragmentId } = props
   const { componentName, jsonArgs, specialArgs, url } = element
 
   const [parsedNewArgs, parsedDataframeArgs] = tryParseArgs(
@@ -275,7 +276,7 @@ function ComponentInstance(props: Props): ReactElement {
       theme,
       iframeRef.current ?? undefined
     )
-  }, [disabled, frameHeight, haveDataframeArgsChanged, jsonArgs, theme])
+  }, [disabled, frameHeight, haveDataframeArgsChanged, jsonArgs, theme, width])
 
   useEffect(() => {
     const handleSetFrameHeight = (height: number | undefined): void => {
