@@ -612,6 +612,8 @@ class LayoutsMixin:
         expanded: bool = False,
         *,
         icon: str | None = None,
+        width: Literal["stretch"] | int = "stretch",
+        scale: int = 1,
     ) -> DeltaGenerator:
         r"""Insert a multi-element container that can be expanded/collapsed.
 
@@ -713,6 +715,8 @@ class LayoutsMixin:
         expandable_proto.label = label
         if icon is not None:
             expandable_proto.icon = validate_icon_or_emoji(icon)
+        expandable_proto.width = str(width)
+        expandable_proto.scale = scale
 
         block_proto = BlockProto()
         block_proto.allow_empty = False
