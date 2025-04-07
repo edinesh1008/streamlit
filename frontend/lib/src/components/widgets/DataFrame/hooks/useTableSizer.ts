@@ -31,7 +31,7 @@ import { CustomGridTheme } from "./useCustomTheme"
 
 export type AutoSizerReturn = {
   // The minimum height that the data grid can be resized to
-  minHeight: number
+  minHeight: number | "100%"
   // The maximum height of the data grid can be resized to
   maxHeight: number
   // The minimum width of the data grid can be resized to
@@ -129,7 +129,7 @@ function useTableSizer(
   // resized between min and max width.
   let initialWidth: number | undefined
   // The maximum width of the data grid can be resized to.
-  let maxWidth = availableWidth
+  let maxWidth: number | "100%" = availableWidth
 
   if (element.useContainerWidth || element.width === "stretch") {
     // If user has set use_container_width,
