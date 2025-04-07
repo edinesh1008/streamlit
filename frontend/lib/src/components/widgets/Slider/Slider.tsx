@@ -44,7 +44,6 @@ import {
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import { Placement } from "~lib/components/shared/Tooltip"
 import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
-import { useLayoutStyles } from "~lib/components/core/Flex/useLayoutStyles"
 
 import {
   StyledThumb,
