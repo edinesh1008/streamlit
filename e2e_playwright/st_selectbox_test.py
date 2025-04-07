@@ -41,10 +41,10 @@ def test_selectbox_widget_rendering(
     assert_snapshot(selectbox_widgets.nth(11), name="st_selectbox-value_from_state")
     assert_snapshot(selectbox_widgets.nth(12), name="st_selectbox-markdown_label")
     # Add snapshots for the new selectboxes with width parameters
-    assert_snapshot(selectbox_widgets.nth(18), name="st_selectbox-width_stretch")
-    assert_snapshot(selectbox_widgets.nth(19), name="st_selectbox-width_fixed")
+    assert_snapshot(selectbox_widgets.nth(17), name="st_selectbox-width_stretch")
+    assert_snapshot(selectbox_widgets.nth(18), name="st_selectbox-width_fixed")
     assert_snapshot(
-        selectbox_widgets.nth(20), name="st_selectbox-width_stretch_container"
+        selectbox_widgets.nth(19), name="st_selectbox-width_stretch_container"
     )
 
 
