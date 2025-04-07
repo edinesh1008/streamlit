@@ -445,8 +445,9 @@ const FlexContainerBlock = (props: BlockPropsWithWidth): ReactElement => {
   // Extract the user-specified key from the block ID (if provided):
   const userKey = getKeyFromId(props.node.deltaBlock.id)
   const styles = useLayoutStyles({
-    element: props.node.deltaBlock.flexContainer,
+    element: props.node.deltaBlock.flexContainer ?? undefined,
     isFlexContainer: true,
+    width: undefined,
   })
 
   const propsWithCalculatedWidth = {

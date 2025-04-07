@@ -21,11 +21,11 @@ export type UseLayoutStylesArgs<T> = {
   width: React.CSSProperties["width"] | undefined
   element:
     | (T & {
-        width?: number | string
-        height?: number | string
+        width?: string | undefined | null
+        height?: string | undefined | null
         useContainerWidth?: boolean | undefined
         flex?: string
-        scale?: number
+        scale?: number | undefined | null
         size?: number | "stretch"
         type?: string
       })
