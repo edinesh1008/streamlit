@@ -17,6 +17,7 @@
 import { Theme } from "@emotion/react"
 import styled from "@emotion/styled"
 
+import { AlertContainer } from "@streamlit/lib"
 export interface StyledStreamlitMarkdownProps {
   isCaption: boolean
   isInSidebarOrDialog: boolean
@@ -225,6 +226,11 @@ export const StyledStreamlitMarkdown =
           marginBottom: theme.spacing.lg,
           // Prevent double borders
           borderCollapse: "collapse",
+        },
+
+        [`& ${AlertContainer}`]: {
+          // Add some space below alert blocks:
+          marginBottom: theme.spacing.lg,
         },
 
         tr: {
