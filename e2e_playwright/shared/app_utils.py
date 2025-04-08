@@ -17,9 +17,9 @@ from __future__ import annotations
 import platform
 import re
 from re import Pattern
-from typing import Literal
+from typing import Literal, cast
 
-from playwright.sync_api import Frame, Locator, Page, expect
+from playwright.sync_api import Frame, FrameLocator, Locator, Page, expect
 
 from e2e_playwright.conftest import wait_for_app_run
 
@@ -276,7 +276,7 @@ def get_markdown(
 
 
 def expect_prefixed_markdown(
-    locator: Locator | Page,
+    locator: FrameLocator | Locator | Page,
     expected_prefix: str,
     expected_markdown: str | Pattern[str],
     exact_match: bool = False,
@@ -664,7 +664,7 @@ def register_connection_status_observer(page_or_frame: Page | Frame | None) -> N
     if page_or_frame is None:
         return None
 
-    return page_or_frame.evaluate("""async () => {
+    page_or_frame.evaluate("""async () => {
         window.streamlitPlaywrightDebugConnectionStatuses = [];
         const callback = (mutationList, observer) => {
             if (!mutationList || mutationList.length === 0) {
@@ -699,8 +699,11 @@ def get_observed_connection_statuses(page_or_frame: Page | Frame | None) -> list
     if page_or_frame is None:
         return []
 
-    return page_or_frame.evaluate(
-        "() => window.streamlitPlaywrightDebugConnectionStatuses"
+    return cast(
+        "list[str]",
+        page_or_frame.evaluate(
+            "() => window.streamlitPlaywrightDebugConnectionStatuses"
+        ),
     )
 
 

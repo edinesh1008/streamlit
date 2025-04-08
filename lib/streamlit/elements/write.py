@@ -407,6 +407,14 @@ class WriteMixin:
                 kwargs,
             )
 
+        if len(args) == 1 and isinstance(args[0], str):
+            # Optimization: If there is only one arg, and it's a string,
+            # we can just call markdown directly and skip the buffer logic.
+            # This also prevents unnecessary usage of `st.empty()`.
+            # This covers > 80% of all `st.write` uses.
+            self.dg.markdown(args[0], unsafe_allow_html=unsafe_allow_html)
+            return
+
         string_buffer: list[str] = []
 
         # This bans some valid cases like: e = st.empty(); e.write("a", "b").
@@ -475,7 +483,9 @@ class WriteMixin:
                 flush_buffer()
                 self.dg.image(arg)
             elif type_util.is_keras_model(arg):
-                from tensorflow.python.keras.utils import vis_utils
+                from tensorflow.python.keras.utils import (  # type: ignore
+                    vis_utils,
+                )
 
                 flush_buffer()
                 dot = vis_utils.model_to_dot(arg)
@@ -528,7 +538,7 @@ class WriteMixin:
                 flush_buffer()
                 # We cast arg to type here to appease mypy, due to bug in mypy:
                 # https://github.com/python/mypy/issues/12933
-                self.dg.help(cast(type, arg))
+                self.dg.help(cast("type", arg))
             elif unsafe_allow_html and type_util.has_callable_attr(arg, "_repr_html_"):
                 self.dg.html(arg._repr_html_())
             elif type_util.has_callable_attr(
