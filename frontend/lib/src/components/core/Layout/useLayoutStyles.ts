@@ -33,9 +33,6 @@ export type UseLayoutStylesArgs<T> = {
   isFlexContainer: boolean
 }
 
-const isNonZeroPositiveNumber = (value: unknown): value is number =>
-  typeof value === "number" && value > 0 && !isNaN(value)
-
 export type UseLayoutStylesShape = {
   width: React.CSSProperties["width"]
   maxWidth?: React.CSSProperties["maxWidth"]
@@ -48,118 +45,86 @@ export type UseLayoutStylesShape = {
   alignSelf?: React.CSSProperties["alignSelf"]
 }
 
-const validateWidth = (
-  width:
-    | React.CSSProperties["width"]
-    | React.CSSProperties["height"]
-    | undefined
-): React.CSSProperties["width"] | React.CSSProperties["height"] => {
-  if (typeof width === "number") {
-    if (width === 0) {
-      // An element with no width should be treated as if it has no width set
-      // This is likely from the proto, where the default value is 0
-      return "auto"
-    }
-
-    if (width && width < 0) {
-      return "auto"
-    }
-
-    if (width !== undefined && isNaN(width)) {
-      return "auto"
-    }
-  }
-
-  return width
+export const isNumber = (
+  value: string | number | undefined | null
+): value is number => {
+  return (
+    !(typeof value === "string" && value.trim().length === 0) &&
+    value !== null &&
+    value !== undefined &&
+    !Number.isNaN(Number(value))
+  )
 }
 
-const checkAndFixOverflow = (
-  width: React.CSSProperties["width"],
-  containerWidth: React.CSSProperties["width"]
+export const getWidth = (
+  useContainerWidth: boolean,
+  commandWidth: string | undefined | null,
+  containerWidth: React.CSSProperties["width"] | undefined
 ) => {
-  if (width === undefined || containerWidth === undefined) {
-    return width
-  }
-  if (
-    Number.isInteger(Number(width)) &&
-    Number.isInteger(Number(containerWidth))
-  ) {
-    if (width > containerWidth) {
-      return containerWidth
-    }
-  }
-  return width
-}
-
-const getWidth = (
-  useContainerWidth: boolean | undefined,
-  commandWidth: string | number,
-  containerWidth: string | number
-) => {
-  if (useContainerWidth !== undefined && useContainerWidth) {
-    return validateWidth(containerWidth)
+  if (useContainerWidth) {
+    return containerWidth ?? "100%"
   }
   if (String(commandWidth) === "stretch") {
     return "100%"
-  } else if (!Number.isNaN(Number(commandWidth))) {
-    return `${validateWidth(commandWidth)}px`
   } else if (String(commandWidth) === "content") {
     return "fit-content"
+  } else if (isNumber(commandWidth) && commandWidth > 0) {
+    return `${commandWidth}px`
   }
   return "auto"
 }
 
-const getHeight = (commandHeight: string | number | undefined) => {
+export const getHeight = (commandHeight: string | undefined | null) => {
   if (String(commandHeight) === "stretch") {
     return "auto"
-  } else if (!Number.isNaN(Number(commandHeight))) {
-    return `${validateWidth(commandHeight)}px`
   } else if (String(commandHeight) === "content") {
     return "fit-content"
+  } else if (isNumber(commandHeight) && commandHeight > 0) {
+    return `${commandHeight}px`
   }
+
   return "auto"
 }
 
-const getFlex = (
-  useContainerWidth: boolean | undefined,
-  commandWidth: string | number,
-  commandHeight: string | number,
-  containerWidth: string | number,
+export const getFlex = (
+  useContainerWidth: boolean,
+  commandWidth: string | undefined | null,
+  commandHeight: string | undefined | null,
+  containerWidth: React.CSSProperties["width"] | undefined,
   direction: "row" | "column" | undefined,
-  scale: number | undefined
+  scale: number | undefined | null
 ) => {
-  if (useContainerWidth !== undefined && useContainerWidth) {
-    if (!Number.isNaN(Number(containerWidth))) {
-      return `1 1 ${validateWidth(containerWidth)}px`
-    } else {
+  if (useContainerWidth) {
+    if (isNumber(containerWidth)) {
+      return `1 1 ${containerWidth}px`
+    } else if (containerWidth !== undefined) {
       return `1 1 ${containerWidth}`
+    } else {
+      return undefined
     }
   }
   if (
-    commandWidth === "stretch" &&
+    String(commandWidth) === "stretch" &&
     scale !== undefined &&
     direction === "row"
   ) {
     return `${scale}`
   } else if (
-    commandHeight === "stretch" &&
+    String(commandHeight) === "stretch" &&
     scale !== undefined &&
     direction === "column"
   ) {
     return `${scale}`
-  } else if (!Number.isNaN(Number(commandWidth)) && direction === "row") {
-    return `0 1 ${validateWidth(commandWidth)}px`
-  } else if (
-    Number.isInteger(Number(commandHeight)) &&
-    direction === "column"
-  ) {
-    return `0 1 ${validateWidth(commandHeight)}px`
+  } else if (isNumber(commandWidth) && direction === "row") {
+    return `0 1 ${commandWidth}px`
+  } else if (isNumber(commandHeight) && direction === "column") {
+    return `0 1 ${commandHeight}px`
   }
   return undefined
 }
 
-const getVerticalScroll = (height: string | number) => {
-  return !Number.isNaN(Number(height)) && Number(height) > 0
+export const getVerticalScroll = (height: string | null | undefined) => {
+  return isNumber(height) && Number(height) > 0
 }
 
 /**
@@ -175,7 +140,7 @@ export const useLayoutStyles = <T>({
    */
   const commandWidth = element?.width
   const commandHeight = element?.height
-  const useContainerWidth = element?.useContainerWidth
+  const useContainerWidth = element?.useContainerWidth ?? false
   const flexContext = useContext(FlexContext)
 
   let direction: "column" | "row" | undefined
@@ -200,14 +165,14 @@ export const useLayoutStyles = <T>({
 
     if ("size" in element) {
       const size = element.size
-      const isNumeric = !isNaN(Number(size))
+      const isNumeric = isNumber(size)
       const isStretch = size === "stretch"
 
       const isHorizontal = direction === "row"
 
       if (isNumeric) {
         // Fixed size space
-        const sizeValue = `${validateWidth(size)}px`
+        const sizeValue = `${size}px`
 
         if (isHorizontal) {
           // In horizontal container, set width
@@ -226,18 +191,22 @@ export const useLayoutStyles = <T>({
         if (isHorizontal) {
           // In horizontal container, push horizontally
           return {
+            width: "auto",
             marginLeft: "auto",
           }
         } else {
           // In vertical container, push vertically
           return {
+            width: "auto",
             marginTop: "auto",
           }
         }
       }
 
       // Default fallback if size is not recognized
-      return {}
+      return {
+        width: "auto",
+      }
     }
 
     if ("imgs" in element) {
@@ -251,8 +220,8 @@ export const useLayoutStyles = <T>({
        * @see the Image.proto file
        */
       let flex
-      if (!Number.isNaN(Number(containerWidth))) {
-        flex = `${element.scale ?? 1} 1 ${validateWidth(containerWidth)}px`
+      if (isNumber(containerWidth)) {
+        flex = `${element.scale ?? 1} 1 ${containerWidth}px`
       } else {
         flex = `${element.scale ?? 1} 1 0%`
       }
