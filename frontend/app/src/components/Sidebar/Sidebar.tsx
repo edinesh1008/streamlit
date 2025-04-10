@@ -118,7 +118,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   )
 
   const sidebarRef = useRef<HTMLDivElement>(null)
-  const resizableRef = useRef<any>(null)
 
   const cachedSidebarWidth = localStorageAvailable()
     ? window.localStorage.getItem("sidebarWidth")
@@ -167,14 +166,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [])
 
   const onResizeStop = useCallback(
-    (_e: any, _direction: any, ref: any, _d: any) => {
-      // Use the actual ref width, not the delta, to avoid stale delta values
-      if (ref) {
-        const newWidth = ref.clientWidth || ref.offsetWidth
-        initializeSidebarWidth(newWidth)
-      }
+    (_e: any, _direction: any, _ref: any, d: any) => {
+      const newWidth = parseInt(sidebarWidth, 10) + d.width
+      initializeSidebarWidth(newWidth)
     },
-    [initializeSidebarWidth]
+    [initializeSidebarWidth, sidebarWidth]
   )
 
   useEffect(() => {
@@ -218,9 +214,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   function resetSidebarWidth(_event: any): void {
     // Double clicking on the resize handle resets sidebar to default width
-    setSidebarWidth(MIN_WIDTH)
-    if (localStorageAvailable()) {
-      window.localStorage.setItem("sidebarWidth", MIN_WIDTH)
+    if (event.detail === 2) {
+      setSidebarWidth(MIN_WIDTH)
+      if (localStorageAvailable()) {
+        window.localStorage.setItem("sidebarWidth", MIN_WIDTH)
+      }
     }
   }
 
@@ -326,13 +324,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           },
         }}
         handleComponent={{
-          right: <StyledResizeHandle onDoubleClick={resetSidebarWidth} />,
+          right: <StyledResizeHandle onClick={resetSidebarWidth} />,
         }}
         size={{
           width: sidebarWidth,
           height: "auto",
         }}
-        ref={resizableRef}
         as={StyledSidebar}
         onResizeStop={onResizeStop}
         // Props part of StyledSidebar, but not Resizable component
