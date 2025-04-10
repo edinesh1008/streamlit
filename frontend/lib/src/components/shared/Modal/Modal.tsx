@@ -26,6 +26,7 @@ import {
   ModalHeader as UIModalHeader,
 } from "baseui/modal"
 import merge from "lodash/merge"
+import { transparentize } from "polished"
 
 import BaseButton, { BaseButtonProps } from "~lib/components/shared/BaseButton"
 import { EmotionTheme } from "~lib/theme"
@@ -199,6 +200,14 @@ function Modal(props: StreamlitModalProps): ReactElement {
       style: {
         top: `calc(${spacing.twoXL} + .375rem)`, // Trying to center the button on the available space.
         right: spacing.twoXL,
+        // Remove default outline for all focus states
+        outline: "none",
+        // Add custom focus style only for keyboard focus
+        ":focus-visible": {
+          boxShadow: `0 0 0 0.2rem ${transparentize(0.5, colors.primary)}`,
+          // Ensure the button shape matches the focus ring
+          borderRadius: radii.default,
+        },
       },
     },
   }

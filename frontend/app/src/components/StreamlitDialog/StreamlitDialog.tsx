@@ -253,7 +253,7 @@ export interface WarningProps {
  */
 function warningDialog(props: WarningProps): ReactElement {
   return (
-    <Modal isOpen onClose={props.onClose} autoFocus={false}>
+    <Modal isOpen onClose={props.onClose}>
       <ModalHeader>{props.title}</ModalHeader>
       <ModalBody>{props.msg}</ModalBody>
     </Modal>
