@@ -632,10 +632,9 @@ class SliderMixin:
         def value_to_generic_type(v):
             if isinstance(v, Integral):
                 return SUPPORTED_TYPES[Integral]
-            elif isinstance(v, Real):
+            if isinstance(v, Real):
                 return SUPPORTED_TYPES[Real]
-            else:
-                return SUPPORTED_TYPES[type(v)]
+            return SUPPORTED_TYPES[type(v)]
 
         def all_same_type(items):
             return len(set(map(value_to_generic_type, items))) < 2

@@ -225,7 +225,7 @@ def _parse_value(value: Value) -> str:
         return "—"
     if isinstance(value, int) or isinstance(value, float) or isinstance(value, str):
         return str(value)
-    elif hasattr(value, "item"):
+    if hasattr(value, "item"):
         # Add support for numpy values (e.g. int16, float64, etc.)
         try:
             # Item could also be just a variable, so we use try, except
@@ -247,14 +247,13 @@ def _parse_delta(delta: Delta) -> str:
         return ""
     if isinstance(delta, str):
         return dedent(delta)
-    elif isinstance(delta, int) or isinstance(delta, float):
+    if isinstance(delta, int) or isinstance(delta, float):
         return str(delta)
-    else:
-        raise TypeError(
-            f"'{str(delta)}' is of type {str(type(delta))}, which is not an accepted type."
-            " delta only accepts: int, float, str, or None."
-            " Please convert the value to an accepted type."
-        )
+    raise TypeError(
+        f"'{str(delta)}' is of type {str(type(delta))}, which is not an accepted type."
+        " delta only accepts: int, float, str, or None."
+        " Please convert the value to an accepted type."
+    )
 
 
 def _determine_delta_color_and_direction(

@@ -109,12 +109,11 @@ def wait_for_workflow_completion(
             if conclusion == "failure":
                 # Only failed runs are expected to have updated snapshots.
                 return workflow_run
-            else:
-                print(
-                    f"The latest workflow run completed with status: {conclusion}. "
-                    "The snapshot update is only working on failed runs."
-                )
-                sys.exit(1)
+            print(
+                f"The latest workflow run completed with status: {conclusion}. "
+                "The snapshot update is only working on failed runs."
+            )
+            sys.exit(1)
         print(
             f"Workflow is still {status}. Waiting 60 seconds before checking again..."
         )
@@ -136,8 +135,7 @@ def get_artifacts(
             f"Error getting artifacts: {response.status_code} {response.text}"
         )
     data = response.json()
-    artifacts = data.get("artifacts", [])
-    return artifacts  # type: ignore
+    return data.get("artifacts", [])
 
 
 def download_artifact(artifact_url: str, token: str, download_path: str) -> None:

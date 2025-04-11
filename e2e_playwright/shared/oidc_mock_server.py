@@ -84,7 +84,7 @@ def oidc_app(environ, start_response, success=True):
         start_response(status, headers)
         return [json.dumps(response).encode()]
 
-    elif path == "/auth":
+    if path == "/auth":
         # Accept any authorization request and return code
         qs = parse_qs(environ.get("QUERY_STRING", ""))
 
@@ -105,7 +105,7 @@ def oidc_app(environ, start_response, success=True):
         start_response(status, headers)
         return []
 
-    elif path == "/token":
+    if path == "/token":
         length = int(environ.get("CONTENT_LENGTH", "0"))
 
         body = environ["wsgi.input"].read(length)
@@ -134,7 +134,7 @@ def oidc_app(environ, start_response, success=True):
         start_response(status, headers)
         return [json.dumps(response).encode()]
 
-    elif path == "/jwks":
+    if path == "/jwks":
         jwks = {
             "keys": [
                 {

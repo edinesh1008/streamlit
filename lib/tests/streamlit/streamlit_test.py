@@ -45,6 +45,7 @@ def get_version():
         m = pattern.match(line)
         if m:
             return m.group("version")
+    return None
 
 
 # Commands that don't result in rendered elements in the frontend

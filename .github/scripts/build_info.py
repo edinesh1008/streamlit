@@ -154,12 +154,11 @@ def get_changed_python_dependencies_files() -> list[str]:
     been modified.
     """
     changed_files = get_changed_files()
-    changed_dependencies_files = sorted(
+    return sorted(
         path
         for pattern in FILES_WITH_PYTHON_DEPENDENCIES
         for path in fnmatch.filter(changed_files, pattern)
     )
-    return changed_dependencies_files
 
 
 def check_if_pr_has_label(label: str, action: str) -> bool:
@@ -187,8 +186,7 @@ def get_github_input(input_key: str) -> str | None:
     if GITHUB_INPUTS_ENV_VAR not in os.environ:
         return None
     inputs = json.loads(os.environ[GITHUB_INPUTS_ENV_VAR]) or {}
-    input_value = inputs.get(input_key)
-    return input_value
+    return inputs.get(input_key)
 
 
 def is_canary_build() -> bool:
@@ -229,7 +227,7 @@ def is_canary_build() -> bool:
             print("- " + "- ".join(changed_dependencies_files))
             return True
         return False
-    elif GITHUB_EVENT_NAME == GithubEvent.PUSH.value:
+    if GITHUB_EVENT_NAME == GithubEvent.PUSH.value:
         default_branch = GITHUB_EVENT["repository"]["default_branch"]
         is_default_branch = (
             GITHUB_CONTEXT["ref_type"] == "branch"
@@ -242,7 +240,7 @@ def is_canary_build() -> bool:
             )
             return True
         return False
-    elif GITHUB_EVENT_NAME == GithubEvent.SCHEDULE.value:
+    if GITHUB_EVENT_NAME == GithubEvent.SCHEDULE.value:
         print(
             "Current build is canary, "
             f"because current github event name is {GITHUB_EVENT_NAME!r}"

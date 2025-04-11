@@ -298,11 +298,10 @@ class DataCaches(CacheStatsProvider):
     def get_storage_manager(self) -> CacheStorageManager:
         if runtime.exists():
             return runtime.get_instance().cache_storage_manager
-        else:
-            # When running in "raw mode", we can't access the CacheStorageManager,
-            # so we're falling back to InMemoryCache.
-            _LOGGER.warning("No runtime found, using MemoryCacheStorageManager")
-            return MemoryCacheStorageManager()
+        # When running in "raw mode", we can't access the CacheStorageManager,
+        # so we're falling back to InMemoryCache.
+        _LOGGER.warning("No runtime found, using MemoryCacheStorageManager")
+        return MemoryCacheStorageManager()
 
 
 # Singleton DataCaches instance

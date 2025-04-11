@@ -645,8 +645,7 @@ class ArrowMixin:
             )
             self.dg._enqueue("arrow_data_frame", proto)
             return cast("DataframeState", widget_state.value)
-        else:
-            return self.dg._enqueue("arrow_data_frame", proto)
+        return self.dg._enqueue("arrow_data_frame", proto)
 
     @gather_metrics("table")
     def table(self, data: Data = None) -> DeltaGenerator:

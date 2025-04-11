@@ -55,6 +55,7 @@ select = [
   "PYI",    # Linting rules for type annotations.
   "Q",      # Linting rules for quites
   "RUF100", # Unused noqa directive
+  "RET",    # Linting rules for return values.
   "S324",   # Check usage of insecure hashlib functions.
   "T20",    # Check for Print statements in python files.
   "TC",     # Linting for type-checking imports & forward references.

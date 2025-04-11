@@ -252,8 +252,7 @@ class WStates(MutableMapping[str, Any]):
             for widget_id in self.states.keys()
             if self.get_serialized(widget_id)
         ]
-        states = cast("list[WidgetStateProto]", states)
-        return states
+        return cast("list[WidgetStateProto]", states)
 
     def call_callback(self, widget_id: str) -> None:
         """Call the given widget's callback and return the callback's
@@ -751,12 +750,12 @@ def _is_stale_widget(
 ) -> bool:
     if not metadata:
         return True
-    elif metadata.id in active_widget_ids:
+    if metadata.id in active_widget_ids:
         return False
     # If we're running 1 or more fragments, but this widget is unrelated to any of the
     # fragments that we're running, then it should not be marked as stale as its value
     # may still be needed for a future fragment run or full script run.
-    elif fragment_ids_this_run and metadata.fragment_id not in fragment_ids_this_run:
+    if fragment_ids_this_run and metadata.fragment_id not in fragment_ids_this_run:
         return False
     return True
 

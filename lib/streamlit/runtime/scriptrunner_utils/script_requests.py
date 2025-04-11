@@ -111,9 +111,9 @@ def _coalesce_widget_states(
     """
     if not old_states and not new_states:
         return None
-    elif not old_states:
+    if not old_states:
         return new_states
-    elif not new_states:
+    if not new_states:
         return old_states
 
     states_by_id: dict[str, WidgetState] = {

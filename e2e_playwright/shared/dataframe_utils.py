@@ -464,3 +464,4 @@ def retry_interaction(func, max_attempts=3, delay_ms=100):
 
     if last_exception:
         raise last_exception
+    return None

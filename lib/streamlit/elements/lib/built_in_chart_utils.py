@@ -365,7 +365,7 @@ def _infer_vegalite_type(
     ]:
         return "quantitative"
 
-    elif typ == "categorical" and data.cat.ordered:
+    if typ == "categorical" and data.cat.ordered:
         # STREAMLIT MOD: The original code returns a tuple here:
         # return ("ordinal", data.cat.categories.tolist())
         # But returning the tuple here isn't compatible with our
@@ -373,9 +373,9 @@ def _infer_vegalite_type(
         # Altair already extracts the correct sort order somewhere else.
         # More info about the issue here: https://github.com/streamlit/streamlit/issues/7776
         return "ordinal"
-    elif typ in ["string", "bytes", "categorical", "boolean", "mixed", "unicode"]:
+    if typ in ["string", "bytes", "categorical", "boolean", "mixed", "unicode"]:
         return "nominal"
-    elif typ in [
+    if typ in [
         "datetime",
         "datetime64",
         "timedelta",
@@ -385,14 +385,13 @@ def _infer_vegalite_type(
         "period",
     ]:
         return "temporal"
-    else:
-        # STREAMLIT MOD: I commented this out since Streamlit doesn't use warnings.warn.
-        # warnings.warn(
-        #     "I don't know how to infer vegalite type from '{}'.  "
-        #     "Defaulting to nominal.".format(typ),
-        #     stacklevel=1,
-        # )
-        return "nominal"
+    # STREAMLIT MOD: I commented this out since Streamlit doesn't use warnings.warn.
+    # warnings.warn(
+    #     "I don't know how to infer vegalite type from '{}'.  "
+    #     "Defaulting to nominal.".format(typ),
+    #     stacklevel=1,
+    # )
+    return "nominal"
 
 
 def _get_pandas_index_attr(
@@ -552,7 +551,7 @@ def _melt_data(
 
     # Arrow has problems with object types after melting two different dtypes
     # pyarrow.lib.ArrowTypeError: "Expected a <TYPE> object, got a object"
-    fixed_df = dataframe_util.fix_arrow_incompatible_column_types(
+    return dataframe_util.fix_arrow_incompatible_column_types(
         melted_df,
         selected_columns=[
             *columns_to_leave_alone,
@@ -561,7 +560,6 @@ def _melt_data(
         ],
     )
 
-    return fixed_df
 
 
 def _maybe_reset_index_in_place(
@@ -661,18 +659,17 @@ def _parse_x_column(df: pd.DataFrame, x_from_user: str | None) -> str | None:
     if x_from_user is None:
         return None
 
-    elif isinstance(x_from_user, str):
+    if isinstance(x_from_user, str):
         if x_from_user not in df.columns:
             raise StreamlitColumnNotFoundError(df, x_from_user)
 
         return x_from_user
 
-    else:
-        raise StreamlitAPIException(
-            "x parameter should be a column name (str) or None to use the "
-            f" dataframe's index. Value given: {x_from_user} "
-            f"(type {type(x_from_user)})"
-        )
+    raise StreamlitAPIException(
+        "x parameter should be a column name (str) or None to use the "
+        f" dataframe's index. Value given: {x_from_user} "
+        f"(type {type(x_from_user)})"
+    )
 
 
 def _parse_y_columns(
@@ -927,9 +924,9 @@ def _update_encoding_with_stack(
     encoding: alt.X | alt.Y,
 ) -> None:
     if stack is None:
-        return None
+        return
     # Our layered option maps to vega's stack=False option
-    elif stack == "layered":
+    if stack == "layered":
         stack = False
 
     encoding["stack"] = stack
@@ -957,7 +954,7 @@ def _get_color_encoding(
             return alt.ColorValue(to_css_color(cast("Any", color_value)))
 
         # If the color value is a list of colors of approriate length, return that.
-        elif isinstance(color_value, (list, tuple)):
+        if isinstance(color_value, (list, tuple)):
             color_values = cast("Collection[Color]", color_value)
 
             if len(color_values) != len(y_column_list):
@@ -965,18 +962,17 @@ def _get_color_encoding(
 
             if len(color_values) == 1:
                 return alt.ColorValue(to_css_color(cast("Any", color_value[0])))
-            else:
-                return alt.Color(
-                    field=color_column if color_column is not None else alt.Undefined,
-                    scale=alt.Scale(range=[to_css_color(c) for c in color_values]),
-                    legend=_COLOR_LEGEND_SETTINGS,
-                    type="nominal",
-                    title=" ",
-                )
+            return alt.Color(
+                field=color_column if color_column is not None else alt.Undefined,
+                scale=alt.Scale(range=[to_css_color(c) for c in color_values]),
+                legend=_COLOR_LEGEND_SETTINGS,
+                type="nominal",
+                title=" ",
+            )
 
         raise StreamlitInvalidColorError(df, color_from_user)
 
-    elif color_column is not None:
+    if color_column is not None:
         column_type: VegaLiteType
 
         if color_column == _MELTED_COLOR_COLUMN_NAME:
@@ -1029,16 +1025,15 @@ def _get_size_encoding(
                 legend=_SIZE_LEGEND_SETTINGS,
             )
 
-        elif isinstance(size_value, (float, int)):
+        if isinstance(size_value, (float, int)):
             return alt.SizeValue(size_value)
-        elif size_value is None:
+        if size_value is None:
             return alt.SizeValue(100)
-        else:
-            raise StreamlitAPIException(
-                f"This does not look like a valid size: {repr(size_value)}"
-            )
+        raise StreamlitAPIException(
+            f"This does not look like a valid size: {repr(size_value)}"
+        )
 
-    elif size_column is not None or size_value is not None:
+    if size_column is not None or size_value is not None:
         raise Error(
             f"Chart type {chart_type.name} does not support size argument. "
             "This should never happen!"

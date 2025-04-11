@@ -26,6 +26,7 @@ def check_for_release_pr(pull):
 
     if label.find("release/") != -1:
         return pull["head"]["ref"]
+    return None
 
 
 def get_release_branch():
@@ -39,6 +40,7 @@ def get_release_branch():
         ref = check_for_release_pr(pull)
         if ref is not None:
             return ref
+    return None
 
 
 def main():

@@ -173,9 +173,8 @@ def _do_with_retries(
         except exceptions:
             if i >= _MAX_RETRIES - 1:
                 raise
-            else:
-                # Continue with loop to either retry or raise MaxRetriesError.
-                pass
+            # Continue with loop to either retry or raise MaxRetriesError.
+            pass
 
     raise MaxRetriesError(f"Unable to access file or folder: {path}")
 

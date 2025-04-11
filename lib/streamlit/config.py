@@ -466,8 +466,7 @@ def _logger_log_level() -> str:
     """
     if get_option("global.developmentMode"):
         return "debug"
-    else:
-        return "info"
+    return "info"
 
 
 @_create_option("logger.messageFormat", type_=str)
@@ -484,8 +483,7 @@ def _logger_message_format() -> str:
         from streamlit.logger import DEFAULT_LOG_MESSAGE
 
         return DEFAULT_LOG_MESSAGE
-    else:
-        return "%(asctime)s %(message)s"
+    return "%(asctime)s %(message)s"
 
 
 @_create_option(

@@ -54,7 +54,7 @@ def index_(iterable: Iterable[_Value], x: _Value) -> int:
     for i, value in enumerate(iterable):
         if x == value:
             return i
-        elif isinstance(value, float) and isinstance(x, float):
+        if isinstance(value, float) and isinstance(x, float):
             if abs(x - value) < _FLOAT_EQUALITY_EPSILON:
                 return i
     raise ValueError(f"{str(x)} is not in iterable")
@@ -89,8 +89,7 @@ def get_default_indices(
     indexable_options: Sequence[T], default: Sequence[Any] | Any | None = None
 ) -> list[int]:
     default_indices = check_and_convert_to_indices(indexable_options, default)
-    default_indices = default_indices if default_indices is not None else []
-    return default_indices
+    return default_indices if default_indices is not None else []
 
 
 E1 = TypeVar("E1", bound=Enum)

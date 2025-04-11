@@ -170,8 +170,7 @@ def _clean_paragraphs(txt: str) -> list[str]:
     # Strip both leading and trailing newlines.
     txt = txt.strip("\n")
     paragraphs = txt.split("\n\n")
-    cleaned_paragraphs = [
+    return [
         "\n".join(_clean(line) for line in paragraph.split("\n"))
         for paragraph in paragraphs
     ]
-    return cleaned_paragraphs

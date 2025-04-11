@@ -245,7 +245,7 @@ class WriteMixin:
         if not written_content:
             # If nothing was streamed, return an empty string.
             return ""
-        elif len(written_content) == 1 and isinstance(written_content[0], str):
+        if len(written_content) == 1 and isinstance(written_content[0], str):
             # If the output only contains a single string, return it as a string
             return written_content[0]
 

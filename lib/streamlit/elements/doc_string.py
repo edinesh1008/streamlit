@@ -270,9 +270,8 @@ def _get_variable_name_from_code_str(code):
     ):
         # A common pattern is to add "," at the end of a magic command to make it print.
         # This removes that final ",", so it looks nicer.
-        code = code.removesuffix(",")
+        return code.removesuffix(",")
 
-        return code
 
     arg_node = _get_stcommand_arg(tree)
 
@@ -282,7 +281,7 @@ def _get_variable_name_from_code_str(code):
 
     # If walrus, get name.
     # E.g. st.help(foo := 123) should give you "foo".
-    elif type(arg_node) is ast.NamedExpr:
+    if type(arg_node) is ast.NamedExpr:
         # This next "if" will always be true, but need to add this for the type-checking test to
         # pass.
         if type(arg_node.target) is ast.Name:

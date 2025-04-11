@@ -357,9 +357,8 @@ def gather_metrics(name: str, func: F | None = None) -> Callable[[F], F] | F:
             )
 
         return wrapper
-    else:
-        # To make mypy type narrow F | None -> F
-        non_optional_func = func
+    # To make mypy type narrow F | None -> F
+    non_optional_func = func
 
     @wraps(non_optional_func)
     def wrapped_func(*args, **kwargs):

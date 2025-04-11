@@ -691,7 +691,7 @@ def _mock_get_options_for_section(overrides=None) -> Callable[..., Any]:
     def get_options_for_section(section):
         if section == "theme":
             return theme_opts
-        elif section == "theme.sidebar":
+        if section == "theme.sidebar":
             return sidebar_theme_opts
         return config.get_options_for_section(section)
 
