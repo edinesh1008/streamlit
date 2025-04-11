@@ -107,7 +107,6 @@ def _srt_to_vtt(srt_data: str | bytes) -> bytes:
     return vtt_content.strip().encode("utf-8")
 
 
-
 def _handle_string_or_path_data(data_or_path: str | Path) -> bytes:
     """Handles string data, either as a file path or raw content."""
     if os.path.isfile(data_or_path):

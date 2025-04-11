@@ -217,7 +217,6 @@ def _pandas_style_to_css(
     return selector + " { " + declaration_block + " }"
 
 
-
 def _marshall_display_values(
     proto: ArrowProto, df: DataFrame, styles: Mapping[str, Any]
 ) -> None:

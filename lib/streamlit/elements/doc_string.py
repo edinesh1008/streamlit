@@ -272,7 +272,6 @@ def _get_variable_name_from_code_str(code):
         # This removes that final ",", so it looks nicer.
         return code.removesuffix(",")
 
-
     arg_node = _get_stcommand_arg(tree)
 
     # If st.help() is called without an argument, return no variable name.

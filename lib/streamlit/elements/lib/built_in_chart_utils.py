@@ -561,7 +561,6 @@ def _melt_data(
     )
 
 
-
 def _maybe_reset_index_in_place(
     df: pd.DataFrame, x_column: str | None, y_column_list: list[str]
 ) -> str | None:
