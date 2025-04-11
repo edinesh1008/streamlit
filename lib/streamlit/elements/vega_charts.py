@@ -50,6 +50,7 @@ from streamlit.errors import StreamlitAPIException
 from streamlit.proto.ArrowVegaLiteChart_pb2 import (
     ArrowVegaLiteChart as ArrowVegaLiteChartProto,
 )
+from streamlit.proto.MosaicChart_pb2 import MosaicChart as MosaicChartProto
 from streamlit.runtime.metrics_util import gather_metrics
 from streamlit.runtime.scriptrunner_utils.script_run_context import get_script_run_ctx
 from streamlit.runtime.state import WidgetCallback, register_widget
@@ -1977,6 +1978,13 @@ class VegaChartsMixin:
             "arrow_vega_lite_chart",
             vega_lite_proto,
             add_rows_metadata=add_rows_metadata,
+        )
+
+    def mosaic_chart(self) -> DeltaGenerator:
+        """Display a mosaic chart."""
+        return self.dg._enqueue(
+            "mosaic_chart",
+            MosaicChartProto(),
         )
 
     @property

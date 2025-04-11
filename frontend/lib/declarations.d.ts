@@ -25,6 +25,26 @@ declare module "@loaders.gl/gltf"
 
 declare module "native-file-system-adapter"
 
+declare module "@uwdata/vgplot" {
+  interface Coordinator {
+    databaseConnector: (connector: any) => Coordinator
+    exec: (query: any) => Promise<any>
+  }
+
+  interface PlotOptions {
+    x?: string
+    y?: string
+    [key: string]: any
+  }
+
+  export function coordinator(): Coordinator
+  export function wasmConnector(): any
+  export function loadCSV(tableName: string, path: string): any
+  export function from(tableName: string): any
+  export function areaY(source: any, options: PlotOptions): any
+  export function plot(...args: any[]): HTMLElement
+}
+
 declare module "fzy.js" {
   export function score(pattern: string, subject: string): number
   export function positions(pattern: string, subject: string): number[]

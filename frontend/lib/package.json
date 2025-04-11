@@ -56,6 +56,7 @@
     "@sindresorhus/slugify": "^2.2.1",
     "@streamlit/protobuf": "workspace:^",
     "@streamlit/utils": "workspace:^",
+    "@uwdata/vgplot": "^0.15.0",
     "apache-arrow": "^19.0.1",
     "axios": "^1.8.4",
     "baseui": "12.2.0",

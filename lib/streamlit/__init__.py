@@ -238,6 +238,7 @@ write = _main.write
 write_stream = _main.write_stream
 color_picker = _main.color_picker
 status = _main.status
+mosaic_chart = _main.mosaic_chart
 
 # Events - Note: these methods cannot be called directly on sidebar
 # (ex: st.sidebar.toast)

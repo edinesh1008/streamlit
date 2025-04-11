@@ -48,6 +48,7 @@ import {
   LinkButton as LinkButtonProto,
   Markdown as MarkdownProto,
   Metric as MetricProto,
+  MosaicChart as MosaicChartProto,
   MultiSelect as MultiSelectProto,
   NumberInput as NumberInputProto,
   PageLink as PageLinkProto,
@@ -178,6 +179,9 @@ const Selectbox = React.lazy(() => import("~lib/components/widgets/Selectbox"))
 const Slider = React.lazy(() => import("~lib/components/widgets/Slider"))
 const FileUploader = React.lazy(
   () => import("~lib/components/widgets/FileUploader")
+)
+const MosaicChart = React.lazy(
+  () => import("~lib/components/elements/MosaicChart")
 )
 const TextArea = React.lazy(() => import("~lib/components/widgets/TextArea"))
 const TextInput = React.lazy(() => import("~lib/components/widgets/TextInput"))
@@ -461,6 +465,11 @@ const RawElementNodeRenderer = (
           {...widgetProps}
         />
       )
+    }
+
+    case "mosaicChart": {
+      const mosaicChartProto = node.element.mosaicChart as MosaicChartProto
+      return <MosaicChart element={mosaicChartProto} {...widgetProps} />
     }
 
     case "audioInput": {
