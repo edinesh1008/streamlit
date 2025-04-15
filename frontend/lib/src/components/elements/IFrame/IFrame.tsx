@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { memo, ReactElement } from "react"
+import React, { memo, ReactElement, useEffect, useMemo, useRef } from "react"
+
+import { IFrameComponent, iframeResizer } from "iframe-resizer"
+// We are intentionally importing the raw text of the iframeResizer.contentWindow.min.js
+// file because it's a raw text file and not a module.
+// eslint-disable-next-line import/extensions
+import iframeResizerContentWindowMinJsText from "iframe-resizer/js/iframeResizer.contentWindow.min.js?raw"
 
 import { IFrame as IFrameProto } from "@streamlit/protobuf"
 
@@ -40,6 +46,7 @@ export interface IFrameProps {
 }
 
 function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
+  const { height } = element
   // Either 'src' or 'srcDoc' will be set in our element. If 'src'
   // is set, we're loading a remote URL in the iframe.
   const src = getNonEmptyString(element.src)
@@ -47,19 +54,69 @@ function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
     ? undefined
     : getNonEmptyString(element.srcdoc)
 
+  /**
+   * -1.0 indicates auto height
+   * @see #iframeV1AutoHeight
+   */
+  const isAutoHeight = height === -1.0
+
+  const srcDocWithResizeHandler = useMemo(() => {
+    if (!srcDoc) {
+      return undefined
+    }
+
+    if (isAutoHeight) {
+      return `${srcDoc}<script>${iframeResizerContentWindowMinJsText}</script>`
+    }
+
+    return srcDoc
+  }, [srcDoc, isAutoHeight])
+
+  const ref = useRef<IFrameComponent>(null)
+
+  useEffect(() => {
+    const iframeRef = ref.current
+
+    if (iframeRef) {
+      iframeResizer(
+        {
+          log: true,
+          // Use the current page's origin for security checks
+          checkOrigin: [window.location.origin],
+        },
+        iframeRef
+      )
+    }
+
+    return () => {
+      if (!iframeRef) {
+        return
+      }
+
+      const { iFrameResizer } = iframeRef
+
+      if (iFrameResizer) {
+        iFrameResizer.removeListeners()
+      }
+    }
+  }, [])
+
   return (
-    <StyledIframe
-      className="stIFrame"
-      data-testid="stIFrame"
-      allow={DEFAULT_IFRAME_FEATURE_POLICY}
-      disableScrolling={!element.scrolling}
-      src={src}
-      srcDoc={srcDoc}
-      height={element.height}
-      scrolling={element.scrolling ? "auto" : "no"}
-      sandbox={DEFAULT_IFRAME_SANDBOX_POLICY}
-      title="st.iframe"
-    />
+    <>
+      <StyledIframe
+        className="stIFrame"
+        data-testid="stIFrame"
+        allow={DEFAULT_IFRAME_FEATURE_POLICY}
+        disableScrolling={!element.scrolling}
+        src={src}
+        srcDoc={srcDocWithResizeHandler}
+        height={height}
+        scrolling={element.scrolling ? "auto" : "no"}
+        sandbox={DEFAULT_IFRAME_SANDBOX_POLICY}
+        title="st.iframe"
+        ref={ref}
+      />
+    </>
   )
 }
 

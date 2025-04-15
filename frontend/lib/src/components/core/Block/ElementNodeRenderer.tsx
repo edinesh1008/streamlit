@@ -323,6 +323,7 @@ const RawElementNodeRenderer = (
       )
 
     case "iframe":
+      console.log("iframe", node.element)
       return (
         <IFrame
           element={node.element.iframe as IFrameProto}

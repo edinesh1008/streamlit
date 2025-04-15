@@ -30,6 +30,8 @@ message IFrame {
 
   float width = 3;
   bool has_width = 4;
+  // Represents height in pixels. -1 indicates "auto".
+  // @see #iframeV1AutoHeight
   float height = 5;
 
   bool scrolling = 7;

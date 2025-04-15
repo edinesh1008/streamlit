@@ -19,6 +19,9 @@
 
 import streamlit as st
 
-st.components.v1.html("<div>This import and usage worked!</div>")
+html_content = "<div>This import and usage worked!</div><img src='https://placehold.co/600x400' /><img src='https://placehold.co/600x400' /><img src='https://placehold.co/600x400' />"
+
+st.components.v1.html(html_content)
+st.components.v1.html(html_content, height="auto")
 st.write(str(st.components.v1.iframe))
 st.write(str(st.components.v1.declare_component))

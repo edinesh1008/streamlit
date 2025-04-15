@@ -77,6 +77,9 @@ export class Streamlit {
 
   private static registeredMessageListener = false;
   private static lastFrameHeight?: number;
+  private static resizeObserver?: ResizeObserver;
+  private static mutationObserver?: MutationObserver;
+  private static debouncedUpdateHeight?: DebouncedFunc;
 
   /**
    * Tell Streamlit that the component is ready to start receiving data.
@@ -115,6 +118,69 @@ export class Streamlit {
 
     Streamlit.lastFrameHeight = height;
     Streamlit.sendBackMsg(ComponentMessageType.SET_FRAME_HEIGHT, { height });
+  };
+
+  /**
+   * Watch the frame height and update the component's height when it changes.
+   * This should be called only once when the component is mounted.
+   *
+   * @returns A function to stop watching the frame height.
+   */
+  public static watchFrameHeight = (): (() => void) => {
+    if (this.resizeObserver || this.mutationObserver) {
+      this.stopWatchingFrameHeight();
+    }
+
+    // Define a common handler for both observers
+    const updateHeight = () => {
+      // Avoid infinite loops by checking if the height has actually changed.
+      // Reading scrollHeight itself can trigger ResizeObserver/MutationObserver events in some cases.
+      const newHeight = document.body.scrollHeight;
+      Streamlit.setFrameHeight(newHeight);
+    };
+
+    // Debounce the updateHeight function
+    this.debouncedUpdateHeight = _debounce(updateHeight, 100);
+
+    // Use ResizeObserver to efficiently detect direct size changes.
+    this.resizeObserver = new ResizeObserver(this.debouncedUpdateHeight);
+    this.resizeObserver.observe(document.body);
+
+    // Use MutationObserver to catch other changes (e.g., adding/removing children)
+    // that might affect scrollHeight.
+    this.mutationObserver = new MutationObserver(this.debouncedUpdateHeight);
+    this.mutationObserver.observe(document.body, {
+      attributes: true, // Catch style changes
+      childList: true, // Catch added/removed elements
+      subtree: true, // Observe the entire subtree
+      characterData: true, // Catch text content changes
+    });
+
+    // Initial height check (not debounced)
+    updateHeight();
+
+    return () => {
+      this.stopWatchingFrameHeight();
+    };
+  };
+
+  /**
+   * Stop watching the frame height.
+   * Should be called by the users when the component is unmounted via the
+   * returned function from `watchFrameHeight`.
+   */
+  private static stopWatchingFrameHeight = (): void => {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = undefined;
+    this.mutationObserver?.disconnect();
+    this.mutationObserver = undefined;
+    // Setting lastFrameHeight to undefined ensures the next setFrameHeight call will always trigger
+    this.lastFrameHeight = undefined;
+    // Cancel any pending debounced calls
+    if (this.debouncedUpdateHeight) {
+      this.debouncedUpdateHeight.cancel();
+    }
+    this.debouncedUpdateHeight = undefined;
   };
 
   /**
@@ -304,4 +370,37 @@ function isTypedArray(value: any): value is TypedArray {
     value instanceof Float64Array ||
     isBigIntArray
   );
+}
+
+// Type for the debounced function including the cancel method
+interface DebouncedFunc {
+  (...args: any[]): void;
+  cancel: () => void;
+}
+
+// Simple debounce function
+function _debounce(
+  func: (...args: any[]) => void,
+  wait: number
+): DebouncedFunc {
+  let timeout: ReturnType<typeof setTimeout> | null;
+
+  const debounced = (...args: any[]) => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => {
+      timeout = null;
+      func(...args);
+    }, wait);
+  };
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+
+  return debounced;
 }
