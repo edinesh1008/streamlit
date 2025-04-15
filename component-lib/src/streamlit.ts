@@ -86,8 +86,15 @@ export class Streamlit {
    * Tell Streamlit that the component is ready to start receiving data.
    * Streamlit will defer emitting RENDER events until it receives the
    * COMPONENT_READY message.
+   *
+   * @param options - Configuration options.
+   * @param options.autoManageHeight - Whether to automatically manage the height of the component.
+   * @returns A function to clean up the component.
    */
-  public static setComponentReady = (): void => {
+  public static setComponentReady = (
+    options: { autoManageHeight?: boolean } = {}
+  ): (() => void) => {
+    const { autoManageHeight = false } = options;
     if (!Streamlit.registeredMessageListener) {
       // Register for message events if we haven't already
       window.addEventListener("message", Streamlit.onMessageEvent);
@@ -97,6 +104,8 @@ export class Streamlit {
     Streamlit.sendBackMsg(ComponentMessageType.COMPONENT_READY, {
       apiVersion: Streamlit.API_VERSION,
     });
+
+    return autoManageHeight ? Streamlit.watchFrameHeight() : () => {};
   };
 
   /**
