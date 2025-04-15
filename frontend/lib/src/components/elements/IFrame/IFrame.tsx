@@ -127,21 +127,19 @@ function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
   const finalHeight = useIframeHeight({ srcDoc, initialHeight, iframeRef })
 
   return (
-    <>
-      <StyledIframe
-        className="stIFrame"
-        data-testid="stIFrame"
-        allow={DEFAULT_IFRAME_FEATURE_POLICY}
-        disableScrolling={!element.scrolling}
-        src={src}
-        srcDoc={srcDoc}
-        height={finalHeight}
-        scrolling={element.scrolling ? "auto" : "no"}
-        sandbox={DEFAULT_IFRAME_SANDBOX_POLICY}
-        title="st.iframe"
-        ref={iframeRef}
-      />
-    </>
+    <StyledIframe
+      className="stIFrame"
+      data-testid="stIFrame"
+      allow={DEFAULT_IFRAME_FEATURE_POLICY}
+      disableScrolling={!element.scrolling}
+      src={src}
+      srcDoc={srcDoc}
+      height={finalHeight}
+      scrolling={element.scrolling ? "auto" : "no"}
+      sandbox={DEFAULT_IFRAME_SANDBOX_POLICY}
+      title="st.iframe"
+      ref={iframeRef}
+    />
   )
 }
 
