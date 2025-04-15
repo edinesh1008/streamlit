@@ -59,22 +59,15 @@ export class IframeSizer {
 
   private debouncedUpdateHeight: DebouncedFunc<[]> | undefined
 
-  private readonly sendMessageCallback: (type: string, data?: any) => void
-
-  private readonly setFrameHeightMessageType: string
+  private readonly setHeightCallback: (height: number) => void
 
   /**
    * Initializes the iframe sizing utility.
    * @param options - Configuration options.
-   * @param options.sendMessage - The function to use for sending messages.
-   * @param options.setFrameHeightMessage - The message type string for frame height updates.
+   * @param options.setHeightCallback - The function to call when the height needs to be updated.
    */
-  constructor(options: {
-    sendMessage: (type: string, data?: any) => void
-    setFrameHeightMessage: string
-  }) {
-    this.sendMessageCallback = options.sendMessage
-    this.setFrameHeightMessageType = options.setFrameHeightMessage
+  constructor(options: { setHeightCallback: (height: number) => void }) {
+    this.setHeightCallback = options.setHeightCallback
   }
 
   /**
@@ -101,7 +94,7 @@ export class IframeSizer {
     }
 
     this.lastFrameHeight = height
-    this.sendMessageCallback(this.setFrameHeightMessageType, { height })
+    this.setHeightCallback(height)
   }
 
   /**

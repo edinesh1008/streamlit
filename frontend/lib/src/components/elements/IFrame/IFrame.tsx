@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { memo, ReactElement, useEffect, useMemo, useRef } from "react"
-
-import { IFrameComponent, iframeResizer } from "iframe-resizer"
-// We are intentionally importing the raw text of the iframeResizer.contentWindow.min.js
-// file because it's a raw text file and not a module.
-// eslint-disable-next-line import/extensions
-import iframeResizerContentWindowMinJsText from "iframe-resizer/js/iframeResizer.contentWindow.min.js?raw"
+import React, { memo, ReactElement, useEffect, useRef, useState } from "react"
 
 import { IFrame as IFrameProto } from "@streamlit/protobuf"
+import { IframeSizer } from "@streamlit/utils"
 
 import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
 import {
@@ -41,12 +36,87 @@ function getNonEmptyString(
   return isNullOrUndefined(value) || value === "" ? undefined : value
 }
 
+/**
+ * Custom hook to manage the dynamic height of an iframe using IframeSizer.
+ */
+function useIframeHeight({
+  srcDoc,
+  initialHeight,
+  iframeRef,
+}: {
+  srcDoc: string | undefined
+  initialHeight: number
+  iframeRef: React.RefObject<HTMLIFrameElement>
+}): number | undefined {
+  const [currentHeight, setCurrentHeight] = useState<number | undefined>(
+    initialHeight
+  )
+
+  /**
+   * -1.0 indicates auto height
+   * @see #iframeV1AutoHeight
+   */
+  const isAutoHeight = initialHeight === -1.0
+
+  useEffect(() => {
+    // Reset height if dependencies change (e.g., srcDoc cleared, autoHeight disabled)
+    if (!srcDoc || !isAutoHeight) {
+      setCurrentHeight(initialHeight)
+      return undefined
+    }
+
+    const iframeElement = iframeRef.current
+    if (!iframeElement) {
+      return undefined
+    }
+
+    let sizer: IframeSizer | undefined
+    let stopWatching: (() => void) | undefined
+
+    const handleLoad = (): void => {
+      const contentBody = iframeElement.contentDocument?.body
+      if (!contentBody) {
+        // Cannot find body inside iframe
+        return
+      }
+
+      sizer = new IframeSizer({
+        setHeightCallback: (height: number) => {
+          // Set the state only if the height has actually changed
+          // to avoid potential loops if the height setting itself causes a resize.
+          setCurrentHeight(current => (current !== height ? height : current))
+        },
+      })
+
+      // Start watching the iframe's body for size changes
+      stopWatching = sizer.watchFrameHeight(contentBody)
+
+      // Initial height check after setup
+      sizer.setFrameHeight(undefined, contentBody)
+    }
+
+    // We need to wait for the iframe to load its content before we can access
+    // the contentDocument and its body.
+    iframeElement.addEventListener("load", handleLoad)
+
+    return () => {
+      iframeElement.removeEventListener("load", handleLoad)
+      stopWatching?.()
+    }
+  }, [srcDoc, isAutoHeight, initialHeight, iframeRef]) // Include initialHeight and iframeRef
+
+  // Return the dynamic height if conditions are met, otherwise the initial height
+  return isAutoHeight && srcDoc ? currentHeight : initialHeight
+}
+
 export interface IFrameProps {
   element: IFrameProto
 }
 
 function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
-  const { height } = element
+  const { height: initialHeight } = element
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
   // Either 'src' or 'srcDoc' will be set in our element. If 'src'
   // is set, we're loading a remote URL in the iframe.
   const src = getNonEmptyString(element.src)
@@ -54,52 +124,7 @@ function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
     ? undefined
     : getNonEmptyString(element.srcdoc)
 
-  /**
-   * -1.0 indicates auto height
-   * @see #iframeV1AutoHeight
-   */
-  const isAutoHeight = height === -1.0
-
-  const srcDocWithResizeHandler = useMemo(() => {
-    if (!srcDoc) {
-      return undefined
-    }
-
-    if (isAutoHeight) {
-      return `${srcDoc}<script>${iframeResizerContentWindowMinJsText}</script>`
-    }
-
-    return srcDoc
-  }, [srcDoc, isAutoHeight])
-
-  const ref = useRef<IFrameComponent>(null)
-
-  useEffect(() => {
-    const iframeRef = ref.current
-
-    if (iframeRef) {
-      iframeResizer(
-        {
-          log: true,
-          // Use the current page's origin for security checks
-          checkOrigin: [window.location.origin],
-        },
-        iframeRef
-      )
-    }
-
-    return () => {
-      if (!iframeRef) {
-        return
-      }
-
-      const { iFrameResizer } = iframeRef
-
-      if (iFrameResizer) {
-        iFrameResizer.removeListeners()
-      }
-    }
-  }, [])
+  const finalHeight = useIframeHeight({ srcDoc, initialHeight, iframeRef })
 
   return (
     <>
@@ -109,12 +134,12 @@ function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
         allow={DEFAULT_IFRAME_FEATURE_POLICY}
         disableScrolling={!element.scrolling}
         src={src}
-        srcDoc={srcDocWithResizeHandler}
-        height={height}
+        srcDoc={srcDoc}
+        height={finalHeight}
         scrolling={element.scrolling ? "auto" : "no"}
         sandbox={DEFAULT_IFRAME_SANDBOX_POLICY}
         title="st.iframe"
-        ref={ref}
+        ref={iframeRef}
       />
     </>
   )
