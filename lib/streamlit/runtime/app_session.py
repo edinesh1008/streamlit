@@ -181,7 +181,7 @@ class AppSession:
 
         Files that we watch include:
           - source files that already exist (for edits)
-          - `.py` files in the the main script's `pages/` directory (for file additions
+          - `.py` files in the main script's `pages/` directory (for file additions
             and deletions)
           - project and user-level config.toml files
           - the project-level secrets.toml files
@@ -383,12 +383,13 @@ class AppSession:
                 self._client_state.context_info.CopyFrom(client_state.context_info)
 
             rerun_data = RerunData(
-                client_state.query_string,
-                client_state.widget_states,
-                client_state.page_script_hash,
-                client_state.page_name,
+                query_string=client_state.query_string,
+                widget_states=client_state.widget_states,
+                page_script_hash=client_state.page_script_hash,
+                page_name=client_state.page_name,
                 fragment_id=fragment_id if fragment_id else None,
                 is_auto_rerun=client_state.is_auto_rerun,
+                cached_message_hashes=set(client_state.cached_message_hashes),
                 context_info=client_state.context_info,
             )
         else:

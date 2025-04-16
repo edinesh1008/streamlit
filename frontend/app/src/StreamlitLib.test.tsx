@@ -94,10 +94,6 @@ class Endpoints implements StreamlitEndpoints {
   public deleteFileAtURL(): Promise<void> {
     return Promise.reject(new Error("Unimplemented"))
   }
-
-  public fetchCachedForwardMsg(): Promise<Uint8Array> {
-    return Promise.reject(new Error("Unimplemented"))
-  }
 }
 
 interface Props {}
@@ -168,6 +164,7 @@ class StreamlitLibExample extends PureComponent<Props, State> {
       installationIdV3: "",
       commandLine: "",
       isHello: false,
+      isConnected: true,
     })
 
     // Initialize React state

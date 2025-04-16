@@ -80,8 +80,8 @@ def reorder_early_fixtures(metafunc: pytest.Metafunc):
 
     Copied from: https://github.com/pytest-dev/pytest/issues/1216#issuecomment-456109892
     """
-    for fixturedef in metafunc._arg2fixturedefs.values():
-        fixturedef = fixturedef[0]
+    for fixture_definitions in metafunc._arg2fixturedefs.values():
+        fixturedef = fixture_definitions[0]
         for mark in getattr(fixturedef.func, "pytestmark", []):
             if mark.name == "early":
                 order = metafunc.fixturenames
@@ -439,7 +439,7 @@ def iframed_app(page: Page, app_port: int) -> IframedPage:
                 },
             )
 
-        # intercept all requests to the fake iframe server and fullfil the request in
+        # intercept all requests to the fake iframe server and fulfill the request in
         # playwright
         page.route(fake_iframe_server_route, fulfill_iframe_request)
 

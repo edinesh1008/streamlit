@@ -32,6 +32,7 @@ export function mockSessionInfoProps(
     installationIdV3: "mockInstallationIdV3",
     maxCachedMessageAge: 123,
     isHello: false,
+    isConnected: true,
     ...overrides,
   }
 }
@@ -67,9 +68,6 @@ export function mockEndpoints(
       .fn()
       .mockRejectedValue(new Error("unimplemented mock endpoint")),
     deleteFileAtURL: vi
-      .fn()
-      .mockRejectedValue(new Error("unimplemented mock endpoint")),
-    fetchCachedForwardMsg: vi
       .fn()
       .mockRejectedValue(new Error("unimplemented mock endpoint")),
     ...overrides,
