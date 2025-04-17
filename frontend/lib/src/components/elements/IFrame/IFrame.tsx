@@ -50,10 +50,8 @@ function useIframeHeight({
   srcDoc: string | undefined
   initialHeight: number
   iframeRef: React.RefObject<HTMLIFrameElement>
-}): number | string | undefined {
-  const [currentHeight, setCurrentHeight] = useState<number | string>(
-    initialHeight
-  )
+}): number | undefined {
+  const [currentHeight, setCurrentHeight] = useState<number>(initialHeight)
 
   /**
    * -0.1 indicates "content"

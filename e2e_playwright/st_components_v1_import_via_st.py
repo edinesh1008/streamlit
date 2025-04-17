@@ -23,6 +23,7 @@ html_content = "<div>This import and usage worked!</div><img src='https://placeh
 
 st.components.v1.html(html_content)
 st.components.v1.html(html_content, height=150)
+st.components.v1.html(html_content, height=150, scrolling=True)
 st.components.v1.html(html_content, height="content")
 
 st.write(str(st.components.v1.iframe))
