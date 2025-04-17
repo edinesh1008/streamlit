@@ -83,6 +83,9 @@ def test_video_rendering_webm(app: Page, assert_snapshot: ImageCompareFunction):
     # Capture console messages
     app.on("console", lambda msg: print(msg.text))
 
+    messages = []
+    app.on("console", lambda msg: messages.append(msg.text))
+
     video_element = _select_video_to_show(app, "webm video with subtitles")
     _wait_until_video_has_data(app, video_element)
 
@@ -91,6 +94,8 @@ def test_video_rendering_webm(app: Page, assert_snapshot: ImageCompareFunction):
         name="video_element_webm_with_subtitles",
         image_threshold=0.1,
     )
+
+    assert False, messages  # noqa
 
 
 def test_displays_a_video_player(app: Page):
