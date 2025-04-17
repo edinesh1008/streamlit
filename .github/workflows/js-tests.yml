@@ -70,6 +70,10 @@ jobs:
           else
             echo "NOTICES is up to date."
           fi
+      - name: Check IS_DEV_ENV
+        run: |
+          echo "Show IS_DEV_ENV"
+          echo $NODE_ENV
       - name: Run frontend tests
         run: make jstestcoverage
       - name: Upload coverage json-summary

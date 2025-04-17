@@ -44,6 +44,13 @@ function Video({
   endpoints,
   elementMgr,
 }: Readonly<VideoProps>): ReactElement {
+  console.log("================================================")
+  console.log("================================================")
+  console.log("NODE_ENV in VIDEO COMPONENT")
+  console.log(process.env.NODE_ENV)
+  console.log("================================================")
+  console.log("================================================")
+
   const videoRef = useRef<HTMLVideoElement>(null)
 
   /* Element may contain "url" or "data" property. */
