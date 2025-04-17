@@ -48,11 +48,9 @@ jobs:
         run: make frontend-build-with-profiler
       - name: Run playwright tests
         run: |
-          echo "Show IS_DEV_ENV"
-          echo $NODE_ENV
           cd e2e_playwright
           rm -rf ./test-results
-          pytest st_video_test.py --browser webkit --browser chromium --browser firefox -n auto --reruns 1 -m "not performance"
+          pytest st_video_test.py --browser webkit --browser chromium --browser firefox -n auto --reruns 1 -m "not performance" -s
       - name: Upload failed test results
         uses: actions/upload-artifact@v4
         if: always()

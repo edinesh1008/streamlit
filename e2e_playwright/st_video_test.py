@@ -80,6 +80,9 @@ def test_video_rendering(app: Page, assert_snapshot: ImageCompareFunction):
 def test_video_rendering_webm(app: Page, assert_snapshot: ImageCompareFunction):
     """Test that `st.video` renders correctly webm video via screenshots matching."""
 
+    # Capture console messages
+    app.on("console", lambda msg: print(msg.text))
+
     video_element = _select_video_to_show(app, "webm video with subtitles")
     _wait_until_video_has_data(app, video_element)
 
