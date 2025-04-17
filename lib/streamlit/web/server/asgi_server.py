@@ -164,6 +164,28 @@ def create_uvicorn_server(app: Starlette) -> uvicorn.Server:
     )
 
 
+def main_mount_streamlit_app(
+    parent_app: Starlette, script_path: str, url_to_mount
+) -> None:
+    old_lifespan = parent_app.router.lifespan_context
+    my_server = Server(script_path, False)
+
+    @contextlib.asynccontextmanager
+    async def create_lifespan(app: Starlette):
+        await my_server._runtime.start()
+
+        async with old_lifespan(app) as cm1, my_server.create_lifespan(app) as cm2:
+            yield {**(cm1 or {}), **cm2}
+
+        my_server._runtime.stop()
+
+    parent_app.router.lifespan_context = create_lifespan
+
+    streamlit_app = my_server.create_exported_app()
+
+    parent_app.mount(url_to_mount, streamlit_app)
+
+
 class Server:
     def __init__(self, main_script_path: str, is_hello: bool):
         """Create the server. It won't be started yet."""
@@ -236,10 +258,7 @@ class Server:
             "media_file_storage": self._media_file_storage,
         }
 
-    def _create_app(self) -> Starlette:
-        """Create our Starlette web app."""
-        config.get_option("server.baseUrlPath")
-
+    def _create_routes(self) -> list[Route]:
         starlette_routes: list[Any] = [
             WebSocketRoute("/_stcore/stream", endpoint=ASGIBrowserWebSocketHandler),
             Route("/healthz", ASGIHealthHandler),
@@ -249,23 +268,47 @@ class Server:
             Route(MEDIA_ENDPOINT + "/{path:path}", endpoint=MediaFileHandler),
         ]
 
-        if config.get_option("global.developmentMode"):
-            _LOGGER.debug("Serving static content from the Node dev server")
-        else:
-            starlette_routes.append(
-                Mount(
-                    "/",
-                    app=StaticFiles(
-                        directory=file_util.get_static_dir(),
-                        html=True,
-                    ),
+        # if config.get_option("global.developmentMode"):
+        #     _LOGGER.debug("Serving static content from the Node dev server")
+        # else:
+        starlette_routes.append(
+            Mount(
+                "/",
+                app=StaticFiles(
+                    directory=file_util.get_static_dir(),
+                    html=True,
                 ),
-            )
+            ),
+        )
+
+        return starlette_routes
+
+    def _create_app(self) -> Starlette:
+        """Create our Starlette web app."""
+        config.get_option("server.baseUrlPath")
+
+        starlette_routes = self._create_routes()
 
         return Starlette(
             debug=True,
             routes=starlette_routes,
             lifespan=self.create_lifespan,
+            middleware=[Middleware(CORSMiddleware, allow_origins=["*"])],
+            # cookie_secret=config.get_option("server.cookieSecret"),
+            # xsrf_cookies=config.get_option("server.enableXsrfProtection"),
+            # # Set the websocket message size. The default value is too low.
+            # websocket_max_message_size=get_max_message_size_bytes(),
+            # **TORNADO_SETTINGS,  # type: ignore[arg-type]
+        )
+
+    def create_exported_app(self) -> Starlette:
+        """Create the exported app."""
+
+        starlette_routes = self._create_routes()
+
+        return Starlette(
+            debug=True,
+            routes=starlette_routes,
             middleware=[Middleware(CORSMiddleware, allow_origins=["*"])],
             # cookie_secret=config.get_option("server.cookieSecret"),
             # xsrf_cookies=config.get_option("server.enableXsrfProtection"),
