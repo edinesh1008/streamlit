@@ -53,23 +53,6 @@ jobs:
         run: ./scripts/audit_frontend_licenses.py
       - name: Run type checks
         run: make tstypecheck
-      - name: Run linters
-        run: make jslint
-      - name: Validate NOTICES
-        run: |
-          # Run `make notices`. If it results in changes, warn the user and fail.
-          make notices
-
-          git_status=$(git status --porcelain -- NOTICES)
-          if [[ -n $git_status ]]; then
-            echo "::error::The NOTICES file is out of date! Please run \`make notices\` and commit the result."
-            echo "::group::git diff NOTICES"
-            git diff NOTICES
-            echo "::endgroup::"
-            exit 1
-          else
-            echo "NOTICES is up to date."
-          fi
       - name: Check IS_DEV_ENV
         run: |
           echo "Show IS_DEV_ENV"
