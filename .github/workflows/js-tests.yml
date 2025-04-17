@@ -110,6 +110,10 @@ jobs:
       - name: Install node dependencies
         working-directory: component-lib
         run: yarn install
+      - name: Check IS_DEV_ENV
+        run: |
+          echo "Show IS_DEV_ENV"
+          echo $NODE_ENV
       - name: Run frontend tests
         working-directory: component-lib
         run: yarn test
