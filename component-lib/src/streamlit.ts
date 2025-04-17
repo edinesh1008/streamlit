@@ -88,13 +88,13 @@ export class Streamlit {
    * COMPONENT_READY message.
    *
    * @param options - Configuration options.
-   * @param options.autoManageHeight - Whether to automatically manage the height of the component.
+   * @param options.watchFrameHeight - Whether to automatically manage the height of the component.
    * @returns A function to clean up the component.
    */
   public static setComponentReady = (
-    options: { autoManageHeight?: boolean } = {}
+    options: { watchFrameHeight?: boolean } = {}
   ): (() => void) => {
-    const { autoManageHeight = false } = options;
+    const { watchFrameHeight = false } = options;
     if (!Streamlit.registeredMessageListener) {
       // Register for message events if we haven't already
       window.addEventListener("message", Streamlit.onMessageEvent);
@@ -105,7 +105,7 @@ export class Streamlit {
       apiVersion: Streamlit.API_VERSION,
     });
 
-    return autoManageHeight ? Streamlit.watchFrameHeight() : () => {};
+    return watchFrameHeight ? Streamlit.watchFrameHeight() : () => {};
   };
 
   /**

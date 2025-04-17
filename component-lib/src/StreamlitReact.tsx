@@ -70,7 +70,7 @@ export class StreamlitComponentBase<
  */
 export function withStreamlitConnection<ArgType = any>(
   WrappedComponent: React.ComponentType<ComponentProps>,
-  options: { autoManageHeight?: boolean } = {}
+  options: { watchFrameHeight?: boolean } = {}
 ): React.ComponentType {
   interface WrapperProps {}
 

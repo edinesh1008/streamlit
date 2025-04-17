@@ -23,8 +23,11 @@ import {
   DEFAULT_IFRAME_FEATURE_POLICY,
   DEFAULT_IFRAME_SANDBOX_POLICY,
 } from "~lib/util/IFrameUtil"
+import { assertNever } from "~lib/util/assertNever"
 
 import { StyledIframe } from "./styled-components"
+
+type IframeHeightMode = "content" | "pixels"
 
 /**
  * Return a string property from an element. If the string is
@@ -47,20 +50,20 @@ function useIframeHeight({
   srcDoc: string | undefined
   initialHeight: number
   iframeRef: React.RefObject<HTMLIFrameElement>
-}): number | undefined {
-  const [currentHeight, setCurrentHeight] = useState<number | undefined>(
+}): number | string | undefined {
+  const [currentHeight, setCurrentHeight] = useState<number | string>(
     initialHeight
   )
 
   /**
-   * -1.0 indicates auto height
-   * @see #iframeV1AutoHeight
+   * -0.1 indicates "content"
+   * @see #iframeV1Height
    */
-  const isAutoHeight = initialHeight === -1.0
+  const iframeHeightMode: IframeHeightMode =
+    parseFloat(initialHeight.toFixed(1)) === -0.1 ? "content" : "pixels"
 
   useEffect(() => {
-    // Reset height if dependencies change (e.g., srcDoc cleared, autoHeight disabled)
-    if (!srcDoc || !isAutoHeight) {
+    if (!srcDoc || iframeHeightMode === "pixels") {
       setCurrentHeight(initialHeight)
       return undefined
     }
@@ -82,9 +85,17 @@ function useIframeHeight({
 
       sizer = new IframeSizer({
         setHeightCallback: (height: number) => {
-          // Set the state only if the height has actually changed
-          // to avoid potential loops if the height setting itself causes a resize.
-          setCurrentHeight(current => (current !== height ? height : current))
+          switch (iframeHeightMode) {
+            case "content":
+              // Set the state only if the height has actually changed
+              // to avoid potential loops if the height setting itself causes a resize.
+              setCurrentHeight(current =>
+                current !== height ? height : current
+              )
+              break
+            default:
+              assertNever(iframeHeightMode)
+          }
         },
       })
 
@@ -103,10 +114,9 @@ function useIframeHeight({
       iframeElement.removeEventListener("load", handleLoad)
       stopWatching?.()
     }
-  }, [srcDoc, isAutoHeight, initialHeight, iframeRef]) // Include initialHeight and iframeRef
+  }, [srcDoc, initialHeight, iframeRef, iframeHeightMode])
 
-  // Return the dynamic height if conditions are met, otherwise the initial height
-  return isAutoHeight && srcDoc ? currentHeight : initialHeight
+  return currentHeight
 }
 
 export interface IFrameProps {
