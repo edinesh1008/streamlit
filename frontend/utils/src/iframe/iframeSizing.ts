@@ -15,13 +15,13 @@
  */
 
 // Type for the debounced function including the cancel method
-interface DebouncedFunc<T extends any[]> {
+interface DebouncedFunc<T extends unknown[]> {
   (...args: T): void
   cancel: () => void
 }
 
 // Simple debounce function
-function debounce<T extends any[]>(
+function debounce<T extends unknown[]>(
   func: (...args: T) => void,
   wait: number
 ): DebouncedFunc<T> {
