@@ -33,7 +33,7 @@ def test_components_iframe_rendering(
     """Test that our components v1 API correctly renders elements via screenshot matching."""
 
     elements = themed_app.locator("iframe")
-    expect(elements).to_have_count(3)
+    expect(elements).to_have_count(8)
 
     # Only doing a snapshot of the html component, since the iframe one
     # does not use a valid URL.
