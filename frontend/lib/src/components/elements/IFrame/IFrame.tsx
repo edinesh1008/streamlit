@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { memo, ReactElement, useEffect, useRef, useState } from "react"
+import React, { memo, ReactElement, useRef } from "react"
 
 import { IFrame as IFrameProto } from "@streamlit/protobuf"
-import { IframeSizer } from "@streamlit/utils"
 
-import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
 import {
   DEFAULT_IFRAME_FEATURE_POLICY,
   DEFAULT_IFRAME_SANDBOX_POLICY,
 } from "~lib/util/IFrameUtil"
-import { assertNever } from "~lib/util/assertNever"
+import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
 
 import { StyledIframe } from "./styled-components"
-
-type IframeHeightMode = "content" | "pixels"
+import { useIframeHeight } from "./useIframeHeight"
 
 /**
  * Return a string property from an element. If the string is
@@ -37,84 +34,6 @@ function getNonEmptyString(
   value: string | null | undefined
 ): string | undefined {
   return isNullOrUndefined(value) || value === "" ? undefined : value
-}
-
-/**
- * Custom hook to manage the dynamic height of an iframe using IframeSizer.
- */
-function useIframeHeight({
-  srcDoc,
-  initialHeight,
-  iframeRef,
-}: {
-  srcDoc: string | undefined
-  initialHeight: number
-  iframeRef: React.RefObject<HTMLIFrameElement>
-}): number | undefined {
-  const [currentHeight, setCurrentHeight] = useState<number>(initialHeight)
-
-  /**
-   * -0.1 indicates "content"
-   * @see #iframeV1Height
-   */
-  const iframeHeightMode: IframeHeightMode =
-    parseFloat(initialHeight.toFixed(1)) === -0.1 ? "content" : "pixels"
-
-  useEffect(() => {
-    if (!srcDoc || iframeHeightMode === "pixels") {
-      setCurrentHeight(initialHeight)
-      return undefined
-    }
-
-    const iframeElement = iframeRef.current
-    if (!iframeElement) {
-      return undefined
-    }
-
-    let sizer: IframeSizer | undefined
-    let stopWatching: (() => void) | undefined
-
-    const handleLoad = (): void => {
-      const contentBody = iframeElement.contentDocument?.body
-      if (!contentBody) {
-        // Cannot find body inside iframe
-        return
-      }
-
-      sizer = new IframeSizer({
-        setHeightCallback: (height: number) => {
-          switch (iframeHeightMode) {
-            case "content":
-              // Set the state only if the height has actually changed
-              // to avoid potential loops if the height setting itself causes a resize.
-              setCurrentHeight(current =>
-                current !== height ? height : current
-              )
-              break
-            default:
-              assertNever(iframeHeightMode)
-          }
-        },
-      })
-
-      // Start watching the iframe's body for size changes
-      stopWatching = sizer.watchFrameHeight(contentBody)
-
-      // Initial height check after setup
-      sizer.setFrameHeight(undefined, contentBody)
-    }
-
-    // We need to wait for the iframe to load its content before we can access
-    // the contentDocument and its body.
-    iframeElement.addEventListener("load", handleLoad)
-
-    return () => {
-      iframeElement.removeEventListener("load", handleLoad)
-      stopWatching?.()
-    }
-  }, [srcDoc, initialHeight, iframeRef, iframeHeightMode])
-
-  return currentHeight
 }
 
 export interface IFrameProps {
@@ -132,7 +51,7 @@ function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
     ? undefined
     : getNonEmptyString(element.srcdoc)
 
-  const finalHeight = useIframeHeight({ srcDoc, initialHeight, iframeRef })
+  const height = useIframeHeight({ srcDoc, initialHeight, iframeRef })
 
   return (
     <StyledIframe
@@ -142,7 +61,7 @@ function IFrame({ element }: Readonly<IFrameProps>): ReactElement {
       disableScrolling={!element.scrolling}
       src={src}
       srcDoc={srcDoc}
-      height={finalHeight}
+      height={height}
       scrolling={element.scrolling ? "auto" : "no"}
       sandbox={DEFAULT_IFRAME_SANDBOX_POLICY}
       title="st.iframe"
