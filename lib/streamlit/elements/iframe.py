@@ -29,7 +29,7 @@ class IframeMixin:
         self,
         src: str,
         width: int | None = None,
-        height: int | Literal["content", "stretch"] | None = "content",
+        height: int | Literal["content"] | None = "content",
         scrolling: bool = False,
     ) -> DeltaGenerator:
         """Load a remote URL in an iframe.
@@ -51,9 +51,8 @@ class IframeMixin:
             app's default element width.
 
         height : int
-            The height of the frame in CSS pixels. By default, this is ``150``.
-            Can be ``"content"`` to dynamically adjust height based on content.
-            Can be ``"stretch"`` to stretch the height to the height of the containing element.
+            The height of the frame in CSS pixels. Defaults to ``"content"``.
+            If ``"content"``, the iframe will dynamically adjust its height based on its content.
 
         scrolling : bool
             Whether to allow scrolling in the iframe. If this ``False``
@@ -84,7 +83,7 @@ class IframeMixin:
         self,
         html: str,
         width: int | None = None,
-        height: int | Literal["content", "stretch"] | None = "content",
+        height: int | Literal["content"] | None = "content",
         scrolling: bool = False,
     ) -> DeltaGenerator:
         """Display an HTML string in an iframe.
@@ -108,12 +107,10 @@ class IframeMixin:
             The width of the iframe in CSS pixels. By default, this is the
             app's default element width.
 
-        height : int | Literal["content", "stretch"]
-            The height of the frame in CSS pixels. Can be an integer (pixels)
-            or ``"content"`` or ``"stretch"``. If ``"content"``, the iframe will dynamically adjust
-            its height based on its content. If ``"stretch"``, the iframe will stretch to the height of the containing element.
-            If ``None`` (default), height is
-            set to ``150``.
+        height : int | Literal["content"]
+            The height of the frame in CSS pixels. Can be an integer (pixels) or ``"content"``.
+            If ``"content"``, the iframe will dynamically adjust its height based on its content.
+            If ``None`` (default), height is set to ``"content"``.
 
         scrolling : bool
             Whether to allow scrolling in the iframe. If this ``False``
@@ -152,7 +149,7 @@ def marshall(
     src: str | None = None,
     srcdoc: str | None = None,
     width: int | None = None,
-    height: int | Literal["content", "stretch"] | None = "content",
+    height: int | Literal["content"] | None = "content",
     scrolling: bool = False,
 ) -> None:
     """Marshalls data into an IFrame proto.
@@ -173,9 +170,8 @@ def marshall(
         The width of the frame in CSS pixels. Defaults to the app's
         default element width.
     height : int
-        The height of the frame in CSS pixels. Defaults to 150.
-        Can be ``"content"`` to dynamically adjust height based on content.
-        Can be ``"stretch"`` to stretch the height to the height of the containing element.
+        The height of the frame in CSS pixels. Defaults to ``"content"``.
+        If ``"content"``, the iframe will dynamically adjust its height based on its content.
     scrolling : bool
         If true, show a scrollbar when the content is larger than the iframe.
         Otherwise, never show a scrollbar.
