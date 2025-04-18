@@ -17,7 +17,10 @@ import re
 
 from playwright.sync_api import Page, expect
 
-from e2e_playwright.conftest import ImageCompareFunction
+from e2e_playwright.conftest import (
+    ImageCompareFunction,
+    wait_until,
+)
 from e2e_playwright.shared.app_utils import (
     check_top_level_class,
     get_element_by_key,
@@ -105,3 +108,21 @@ def test_custom_css_class_via_key(app: Page):
 # TODO(willhuang1997): add tests to ensure the messages actually go to the iframe
 # Relevant code is here from the past: https://github.com/streamlit/streamlit/blob/3d0b0603627037255790fe55a483f55fce5eff67/frontend/lib/src/components/widgets/CustomComponent/ComponentInstance.test.tsx#L257
 # Relevant PR is here: https://github.com/streamlit/streamlit/pull/7971
+
+
+def test_html_component_height_is_properly_calculated(app: Page):
+    """Test that the html component height is properly calculated."""
+    html_component = app.locator("iframe").nth(3)
+    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 860)
+
+    html_component = app.locator("iframe").nth(4)
+    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 150)
+
+    html_component = app.locator("iframe").nth(5)
+    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 150)
+
+    html_component = app.locator("iframe").nth(6)
+    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 860)
+
+    html_component = app.locator("iframe").nth(7)
+    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 860)
