@@ -19,25 +19,6 @@
 
 import streamlit as st
 
-html_content = "<div>This import and usage worked!</div><img src='https://placehold.co/600x400' /><img src='https://placehold.co/600x400' /><img src='https://placehold.co/600x400' />"
-
-# By default, this should take up the full height of the content
-st.components.v1.html(html_content)
-
-# This should take up 150px
-st.components.v1.html(html_content, height=150)
-
-# This should take up 150px and have a scrollbar
-st.components.v1.html(html_content, height=150, scrolling=True)
-
-# This should take up the full height of the content (same as if we didn't
-# specify height)
-st.components.v1.html(html_content, height="content")
-
-# This should take up the full height of the content and there should not be a
-# visible scrollbar because the height is properly calculated to the full height
-# of the content
-st.components.v1.html(html_content, height="content", scrolling=True)
-
+st.components.v1.html("<div>This import and usage worked!</div>")
 st.write(str(st.components.v1.iframe))
 st.write(str(st.components.v1.declare_component))
