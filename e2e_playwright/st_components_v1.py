@@ -33,13 +33,13 @@ test_component(key="component_1")
 
 def get_html_content(title: str):
     return f"""<div>This is an html component! {title}</div>
-<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="400" fill="#e0e0e0"/>
-  <text x="300" y="200" font-family="Arial" font-size="24" text-anchor="middle">600x400</text>
+<svg width="600" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="200" fill="#e0e0e0"/>
+  <text x="300" y="100" font-family="Arial" font-size="24" text-anchor="middle">600x200</text>
 </svg>
-<svg width="300" height="400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="300" height="400" fill="#e0e0e0"/>
-  <text x="150" y="200" font-family="Arial" font-size="24" text-anchor="middle">300x400</text>
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="200" fill="#e0e0e0"/>
+  <text x="150" y="100" font-family="Arial" font-size="24" text-anchor="middle">300x200</text>
 </svg>
 """
 

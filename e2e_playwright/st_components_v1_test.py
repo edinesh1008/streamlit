@@ -19,7 +19,6 @@ from playwright.sync_api import Page, expect
 
 from e2e_playwright.conftest import (
     ImageCompareFunction,
-    wait_until,
 )
 from e2e_playwright.shared.app_utils import (
     check_top_level_class,
@@ -110,19 +109,18 @@ def test_custom_css_class_via_key(app: Page):
 # Relevant PR is here: https://github.com/streamlit/streamlit/pull/7971
 
 
-def test_html_component_height_is_properly_calculated(app: Page):
+def test_html_component_height_is_properly_calculated(
+    app: Page, assert_snapshot: ImageCompareFunction
+):
     """Test that the html component height is properly calculated."""
-    html_component = app.locator("iframe").nth(3)
-    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 860)
+    iframes_cases = [
+        (3, "st_components-html-height-default"),
+        (4, "st_components-html-height-150"),
+        (5, "st_components-html-height-150-scrolling"),
+        (6, "st_components-html-height-content"),
+        (7, "st_components-html-height-content-scrolling"),
+    ]
 
-    html_component = app.locator("iframe").nth(4)
-    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 150)
-
-    html_component = app.locator("iframe").nth(5)
-    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 150)
-
-    html_component = app.locator("iframe").nth(6)
-    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 860)
-
-    html_component = app.locator("iframe").nth(7)
-    wait_until(app, lambda: math.floor(html_component.bounding_box()["height"]) == 860)
+    for i, name in iframes_cases:
+        html_component = app.locator("iframe").nth(i)
+        assert_snapshot(html_component, name=name)
