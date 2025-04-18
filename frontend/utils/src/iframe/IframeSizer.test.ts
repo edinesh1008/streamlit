@@ -159,6 +159,14 @@ describe("IframeSizer", () => {
       )
     })
 
+    it("should not call setHeightCallback if element is null", () => {
+      iframeSizer.setFrameHeight(150, null as unknown as HTMLElement)
+      expect(mockSetHeightCallback).not.toHaveBeenCalled()
+      expect(
+        iframeSizer.getInternalStateForTesting().lastFrameHeight
+      ).toBeUndefined()
+    })
+
     it("should call setHeightCallback with element scrollHeight if height is undefined", () => {
       // Update mock scrollHeight
       mockScrollHeight = 120
@@ -233,6 +241,23 @@ describe("IframeSizer", () => {
 
       // Start watching in beforeEach for relevant tests
       stopWatching = iframeSizer.watchFrameHeight(mockElement)
+    })
+
+    it("should return an empty function if element is null", () => {
+      // Reset the mocks to isolate this test from the beforeEach
+      mockResizeObserver.mockClear()
+      mockMutationObserver.mockClear()
+
+      const stopFn = iframeSizer.watchFrameHeight(
+        null as unknown as HTMLElement
+      )
+
+      // The returned function should be callable without errors
+      expect(() => stopFn()).not.toThrow()
+
+      // Ensure no observers were created
+      expect(mockResizeObserver).not.toHaveBeenCalled()
+      expect(mockMutationObserver).not.toHaveBeenCalled()
     })
 
     it("should call setHeightCallback immediately with initial scrollHeight", () => {
