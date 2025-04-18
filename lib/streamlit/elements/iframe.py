@@ -191,6 +191,6 @@ def marshall(
     if height == "content" or height is None:
         proto.height = -0.1
     else:
-        proto.height = float(height)
+        proto.height = height
 
     proto.scrolling = scrolling
