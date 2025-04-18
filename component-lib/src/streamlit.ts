@@ -16,9 +16,7 @@
 
 // Safari doesn't support the EventTarget class, so we use a shim.
 import { ArrowDataframeProto, ArrowTable } from "./ArrowTable";
-// TODO: Fix this import path. This won't actually work in the component lib
-// But this works now for a prototype.
-import { IframeSizer } from "../../frontend/utils/src/iframe/IframeSizer";
+import { IframeSizer } from "./IframeSizer";
 
 /** Object defining the currently set theme. */
 export interface Theme {

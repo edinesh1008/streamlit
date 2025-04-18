@@ -16,8 +16,8 @@
 
 // Type for the debounced function including the cancel method
 interface DebouncedFunc<T extends unknown[]> {
-  (...args: T): void
-  cancel: () => void
+  (...args: T): void;
+  cancel: () => void;
 }
 
 // Simple debounce function
@@ -25,41 +25,41 @@ function debounce<T extends unknown[]>(
   func: (...args: T) => void,
   wait: number
 ): DebouncedFunc<T> {
-  let timeout: ReturnType<typeof setTimeout> | null
+  let timeout: ReturnType<typeof setTimeout> | null;
 
   const debounced = (...args: T): void => {
     if (timeout) {
-      clearTimeout(timeout)
+      clearTimeout(timeout);
     }
     timeout = setTimeout(() => {
-      timeout = null
-      func(...args)
-    }, wait)
-  }
+      timeout = null;
+      func(...args);
+    }, wait);
+  };
 
   debounced.cancel = (): void => {
     if (timeout) {
-      clearTimeout(timeout)
-      timeout = null
+      clearTimeout(timeout);
+      timeout = null;
     }
-  }
+  };
 
-  return debounced
+  return debounced;
 }
 
 /**
  * Manages iframe height reporting and watching.
  */
 export class IframeSizer {
-  protected lastFrameHeight: number | undefined
+  protected lastFrameHeight: number | undefined;
 
-  protected resizeObserver: ResizeObserver | undefined
+  protected resizeObserver: ResizeObserver | undefined;
 
-  protected mutationObserver: MutationObserver | undefined
+  protected mutationObserver: MutationObserver | undefined;
 
-  protected debouncedUpdateHeight: DebouncedFunc<[]> | undefined
+  protected debouncedUpdateHeight: DebouncedFunc<[]> | undefined;
 
-  protected readonly setHeightCallback: (height: number) => void
+  protected readonly setHeightCallback: (height: number) => void;
 
   /**
    * Initializes the iframe sizing utility.
@@ -67,7 +67,7 @@ export class IframeSizer {
    * @param options.setHeightCallback - The function to call when the height needs to be updated.
    */
   constructor(options: { setHeightCallback: (height: number) => void }) {
-    this.setHeightCallback = options.setHeightCallback
+    this.setHeightCallback = options.setHeightCallback;
   }
 
   /**
@@ -82,22 +82,22 @@ export class IframeSizer {
     element: HTMLElement = document.body
   ): void {
     if (!element) {
-      return
+      return;
     }
 
     if (height === undefined) {
       // `height` is optional. If undefined, it defaults to the full height of the element
       // including its margins.
-      height = this.getElementFullHeight(element)
+      height = this.getElementFullHeight(element);
     }
 
     if (height === this.lastFrameHeight) {
       // Don't bother updating if our height hasn't changed.
-      return
+      return;
     }
 
-    this.lastFrameHeight = height
-    this.setHeightCallback(height)
+    this.lastFrameHeight = height;
+    this.setHeightCallback(height);
   }
 
   /**
@@ -109,11 +109,11 @@ export class IframeSizer {
    */
   public watchFrameHeight(element: HTMLElement = document.body): () => void {
     if (!element) {
-      return () => {}
+      return () => {};
     }
 
     if (this.resizeObserver || this.mutationObserver) {
-      this.stopWatchingFrameHeight()
+      this.stopWatchingFrameHeight();
     }
 
     // Define the updateHeight function
@@ -121,38 +121,38 @@ export class IframeSizer {
       // Calculate the full height of the element. Note that infinite update loops
       // are prevented by the check in setFrameHeight that avoids updates when
       // height hasn't changed.
-      const newHeight = this.getElementFullHeight(element)
+      const newHeight = this.getElementFullHeight(element);
 
       // Pass the element to setFrameHeight as well
-      this.setFrameHeight(newHeight, element)
-    }
+      this.setFrameHeight(newHeight, element);
+    };
 
     // Debounce the updateHeight function for observer callbacks
-    this.debouncedUpdateHeight = debounce(updateHeight, 100)
+    this.debouncedUpdateHeight = debounce(updateHeight, 100);
 
     // Use ResizeObserver to efficiently detect direct size changes.
     this.resizeObserver = new ResizeObserver(() => {
-      this.debouncedUpdateHeight?.()
-    })
-    this.resizeObserver.observe(element)
+      this.debouncedUpdateHeight?.();
+    });
+    this.resizeObserver.observe(element);
 
     // Use MutationObserver to catch other changes (e.g., adding/removing children)
     // that might affect scrollHeight.
     this.mutationObserver = new MutationObserver(() => {
-      this.debouncedUpdateHeight?.()
-    })
+      this.debouncedUpdateHeight?.();
+    });
     this.mutationObserver.observe(element, {
       attributes: true, // Catch style changes
       childList: true, // Catch added/removed elements
       subtree: true, // Observe the entire subtree
       characterData: true, // Catch text content changes
-    })
+    });
 
     // Initial height check (not debounced) - call updateHeight immediately
-    updateHeight()
+    updateHeight();
 
     // Return the stopWatchingFrameHeight method bound to this instance
-    return () => this.stopWatchingFrameHeight()
+    return () => this.stopWatchingFrameHeight();
   }
 
   /**
@@ -161,10 +161,10 @@ export class IframeSizer {
    * @returns The element's scrollHeight plus top and bottom margins.
    */
   protected getElementFullHeight(element: HTMLElement): number {
-    const computedStyle = window.getComputedStyle(element)
-    const marginTop = parseInt(computedStyle.marginTop, 10) || 0
-    const marginBottom = parseInt(computedStyle.marginBottom, 10) || 0
-    return element.scrollHeight + marginTop + marginBottom
+    const computedStyle = window.getComputedStyle(element);
+    const marginTop = parseInt(computedStyle.marginTop, 10) || 0;
+    const marginBottom = parseInt(computedStyle.marginBottom, 10) || 0;
+    return element.scrollHeight + marginTop + marginBottom;
   }
 
   /**
@@ -174,22 +174,22 @@ export class IframeSizer {
    */
   protected stopWatchingFrameHeight(): void {
     if (this.resizeObserver) {
-      this.resizeObserver.disconnect()
-      this.resizeObserver = undefined
+      this.resizeObserver.disconnect();
+      this.resizeObserver = undefined;
     }
 
     if (this.mutationObserver) {
-      this.mutationObserver.disconnect()
-      this.mutationObserver = undefined
+      this.mutationObserver.disconnect();
+      this.mutationObserver = undefined;
     }
 
     // Setting lastFrameHeight to undefined ensures the next setFrameHeight call will always trigger
-    this.lastFrameHeight = undefined
+    this.lastFrameHeight = undefined;
 
     // Cancel any pending debounced calls
     if (this.debouncedUpdateHeight) {
-      this.debouncedUpdateHeight.cancel()
-      this.debouncedUpdateHeight = undefined
+      this.debouncedUpdateHeight.cancel();
+      this.debouncedUpdateHeight = undefined;
     }
   }
 }
