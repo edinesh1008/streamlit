@@ -41,7 +41,7 @@ _LOGGER: Final = get_logger(__name__)
 class ASGISessionClient(SessionClient):
     """An ASGI session client that can send messages to the browser."""
 
-    def __init__(self, queue: asyncio.Queue) -> None:
+    def __init__(self, queue: asyncio.Queue[ForwardMsg]) -> None:
         self._queue = queue
 
     def write_forward_msg(self, msg: ForwardMsg) -> None:
@@ -56,6 +56,7 @@ class ASGIBrowserWebSocketHandler(WebSocketEndpoint):
     """Handles a WebSocket connection from the browser."""
 
     encoding = "bytes"
+    _queue: asyncio.Queue[ForwardMsg]
 
     def select_subprotocol(self, subprotocols: list[str]) -> str | None:
         """Return the first subprotocol in the given list.
@@ -120,7 +121,7 @@ class ASGIBrowserWebSocketHandler(WebSocketEndpoint):
 
         await websocket.accept(subprotocol=self.select_subprotocol(ws_protocols))
 
-        self._queue: asyncio.Queue = asyncio.Queue()
+        self._queue = asyncio.Queue["ForwardMsg"]()
         client = ASGISessionClient(queue=self._queue)
 
         self._drain_queue_task = asyncio.create_task(self._drain_queue(websocket))

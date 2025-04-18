@@ -18,7 +18,7 @@ import contextlib
 import errno
 import socket
 import sys
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, cast
 
 import uvicorn
 from starlette.applications import Starlette
@@ -136,7 +136,7 @@ def get_available_port() -> int:
             f"Cannot start Streamlit server. Port {port} is already in use, and "
             f"Streamlit was unable to find a free port after {MAX_PORT_SEARCH_RETRIES} attempts.",
         )
-    return port
+    return cast("int", port)
 
 
 def create_uvicorn_config(app: Starlette) -> uvicorn.Config:
@@ -252,7 +252,7 @@ class Server:
 
     @contextlib.asynccontextmanager
     async def create_lifespan(self, app: Starlette):
-        await self._runtime._async_objs.started
+        await self._runtime.wait_started()
         yield {
             "runtime": self._runtime,
             "media_file_storage": self._media_file_storage,
