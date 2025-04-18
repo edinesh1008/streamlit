@@ -18,7 +18,7 @@
 import { ArrowDataframeProto, ArrowTable } from "./ArrowTable";
 // TODO: Fix this import path. This won't actually work in the component lib
 // But this works now for a prototype.
-import { IframeSizer } from "../../frontend/utils/src/iframe/iframeSizing";
+import { IframeSizer } from "../../frontend/utils/src/iframe/IframeSizer";
 
 /** Object defining the currently set theme. */
 export interface Theme {
