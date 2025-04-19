@@ -55,6 +55,7 @@ INSTALL_REQUIRES = [
     # Without watchdog, we fallback to a polling file watcher to check for app changes.
     "watchdog>=2.1.5, <7; platform_system != 'Darwin'",
     "starlette",
+    "python-multipart",
     "uvicorn[standard]",
 ]
 

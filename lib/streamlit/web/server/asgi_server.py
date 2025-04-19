@@ -24,8 +24,10 @@ import uvicorn
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.staticfiles import StaticFiles
+from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 
 from streamlit import cli_util, config, file_util, util
 from streamlit.config_option import ConfigOption
@@ -33,6 +35,7 @@ from streamlit.logger import get_logger
 from streamlit.runtime import Runtime, RuntimeConfig, RuntimeState
 from streamlit.runtime.memory_media_file_storage import MemoryMediaFileStorage
 from streamlit.runtime.memory_uploaded_file_manager import MemoryUploadedFileManager
+from streamlit.runtime.uploaded_file_manager import UploadedFileManager, UploadedFileRec
 from streamlit.web.cache_storage_manager_config import (
     create_default_cache_storage_manager,
 )
@@ -49,6 +52,8 @@ from streamlit.web.server.server_util import DEVELOPMENT_PORT
 if TYPE_CHECKING:
     from collections.abc import Awaitable
 
+    from starlette.requests import Request
+
 _LOGGER: Final = get_logger(__name__)
 
 # When server.port is not available it will look for the next available port
@@ -61,6 +66,7 @@ UNIX_SOCKET_PREFIX: Final = "unix://"
 
 MEDIA_ENDPOINT: Final = "/media"
 UPLOAD_FILE_ENDPOINT: Final = "/_stcore/upload_file"
+ACTUAL_UPLOAD_FILE_ENDPOINT = "/_stcore/upload_file/{session_id:str}/{file_id:str}"
 STARLETTE_STREAM_ENDPOINT: Final = "/_stcore/stream"
 METRIC_ENDPOINT: Final = r"(?:st-metrics|_stcore/metrics)"
 MESSAGE_ENDPOINT: Final = r"_stcore/message"
@@ -93,7 +99,6 @@ def get_available_port() -> int:
     while call_count < MAX_PORT_SEARCH_RETRIES:
         address = config.get_option("server.address") or "localhost"
         port = config.get_option("server.port")
-        # print(port)
 
         if int(port) == DEVELOPMENT_PORT:
             _LOGGER.warning(
@@ -258,6 +263,75 @@ class Server:
             "media_file_storage": self._media_file_storage,
         }
 
+    async def upload_file_endpoint(self, request: Request):
+        """
+        Handles file upload for Streamlit using Starlette.
+        Expects a multipart/form-data or octet-stream request containing the file, plus `session_id` and `file_id` as form fields.
+        Supports PUT (upload) and OPTIONS (CORS preflight).
+        """
+
+        if request.method == "OPTIONS":
+            # CORS preflight response: 204 No Content with headers
+            headers = {
+                "Access-Control-Allow-Methods": "PUT, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Origin": "*",
+            }
+            return Response(status_code=204, headers=headers)
+
+        if request.method == "DELETE":
+            """Delete file request handler."""
+            session_id = request.path_params["session_id"]
+            file_id = request.path_params["file_id"]
+
+            request.state.runtime.uploaded_file_mgr.remove_file(
+                session_id=session_id, file_id=file_id
+            )
+            return Response(status_code=204)
+
+        if request.method != "PUT":
+            return JSONResponse(
+                {"error": "Only PUT and OPTIONS are allowed"}, status_code=405
+            )
+
+        form = await request.form()
+
+        file_upload = None
+        for _, value in form.multi_items():
+            if hasattr(value, "read"):
+                file_upload = value
+                break
+
+        if not file_upload:
+            return JSONResponse(
+                {"error": "No file part in the request"},
+                status_code=HTTP_400_BAD_REQUEST,
+            )
+
+        session_id = request.path_params["session_id"]
+        file_id = request.path_params["file_id"]
+
+        if not session_id or not file_id:
+            return JSONResponse(
+                {"error": "sessionId and fileId must be provided"},
+                status_code=HTTP_400_BAD_REQUEST,
+            )
+
+        contents = await file_upload.read()
+
+        file_mgr: UploadedFileManager = request.state.runtime.uploaded_file_mgr
+
+        uploaded_file_rec = UploadedFileRec(
+            file_id=file_id,
+            name=file_upload.filename,
+            type=file_upload.content_type,
+            data=contents,
+        )
+
+        file_mgr.add_file(session_id=session_id, file=uploaded_file_rec)
+
+        return JSONResponse({"status": "ok"}, status_code=HTTP_201_CREATED)
+
     def _create_routes(self) -> list[Route]:
         starlette_routes: list[Any] = [
             WebSocketRoute("/_stcore/stream", endpoint=ASGIBrowserWebSocketHandler),
@@ -266,6 +340,11 @@ class Server:
             Route("/_stcore/host-config", ASGIHostConfigHandler),
             # Add the media file route with a path parameter
             Route(MEDIA_ENDPOINT + "/{path:path}", endpoint=MediaFileHandler),
+            Route(
+                ACTUAL_UPLOAD_FILE_ENDPOINT,
+                endpoint=self.upload_file_endpoint,
+                methods=["PUT", "OPTIONS"],
+            ),
         ]
 
         # if config.get_option("global.developmentMode"):
