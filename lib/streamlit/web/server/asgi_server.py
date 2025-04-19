@@ -35,7 +35,7 @@ from streamlit.logger import get_logger
 from streamlit.runtime import Runtime, RuntimeConfig, RuntimeState
 from streamlit.runtime.memory_media_file_storage import MemoryMediaFileStorage
 from streamlit.runtime.memory_uploaded_file_manager import MemoryUploadedFileManager
-from streamlit.runtime.uploaded_file_manager import UploadedFileManager, UploadedFileRec
+from streamlit.runtime.uploaded_file_manager import UploadedFileRec
 from streamlit.web.cache_storage_manager_config import (
     create_default_cache_storage_manager,
 )
@@ -319,12 +319,12 @@ class Server:
 
         contents = await file_upload.read()
 
-        file_mgr: UploadedFileManager = request.state.runtime.uploaded_file_mgr
+        file_mgr: MemoryUploadedFileManager = request.state.runtime.uploaded_file_mgr
 
         uploaded_file_rec = UploadedFileRec(
             file_id=file_id,
-            name=file_upload.filename,
-            type=file_upload.content_type,
+            name=file_upload.filename,  # type: ignore[union-attr, arg-type]
+            type=file_upload.content_type,  # type: ignore[union-attr, arg-type]
             data=contents,
         )
 
