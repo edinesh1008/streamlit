@@ -1,0 +1,7 @@
+-e ../lib
+plotly
+matplotlib
+graphviz
+scipy
+seaborn
+vega_datasets
