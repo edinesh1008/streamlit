@@ -463,6 +463,38 @@ def _make_value_key(
     return value_key
 
 
+def _get_relevant_closure_values(func: FunctionType) -> tuple[Any, ...]:
+    """Extract closure values that are relevant for caching.
+
+    Parameters
+    ----------
+    func : FunctionType
+        The function whose closure values we want to extract.
+
+    Returns
+    -------
+    tuple
+        A tuple of closure values that should be included in the cache key.
+        Returns an empty tuple if the function has no closure or if the closure
+        values should not be included.
+    """
+    if func.__closure__ is None or not hasattr(func.__code__, "co_freevars"):
+        return ()
+
+    # Get names of variables referenced in the function
+    free_vars = func.__code__.co_freevars
+
+    # Create a list of closure values that are actually used
+    closure_values = []
+    for var_name, cell in zip(free_vars, func.__closure__):
+        # Skip private variables (starting with _)
+        if var_name.startswith("_"):
+            continue
+        closure_values.append((var_name, cell.cell_contents))
+
+    return tuple(closure_values)
+
+
 def _make_function_key(cache_type: CacheType, func: FunctionType) -> str:
     """Create the unique key for a function's cache.
 
@@ -497,6 +529,15 @@ def _make_function_key(cache_type: CacheType, func: FunctionType) -> str:
 
     update_hash(
         source_code, hasher=func_hasher, cache_type=cache_type, hash_source=func
+    )
+
+    # Include relevant closure values in the hash
+    closure_values = _get_relevant_closure_values(func)
+    update_hash(
+        closure_values,
+        hasher=func_hasher,
+        cache_type=cache_type,
+        hash_source=func,
     )
 
     return func_hasher.hexdigest()
