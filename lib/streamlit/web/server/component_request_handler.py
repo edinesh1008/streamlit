@@ -66,6 +66,15 @@ class ComponentRequestHandler(tornado.web.RequestHandler):
         self.write(contents)
         self.set_header("Content-Type", self.get_content_type(abspath))
 
+        # Add CSP headers
+        self.set_header(
+            "content-security-policy",
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'unsafe-inline' http://*.reg.streamlit.local:54200 http://localhost:3000 https://iq7vrb-sfengineering-pw-streamlit-cuj.awsuswest2preprod8.pp-snowflakecomputing.app:443; object-src 'none'; connect-src 'self'; frame-ancestors http://app.snowflake.local:9000 http://*.reg.streamlit.local:54200 http://localhost:3000 https://iq7vrb-sfengineering-pw-streamlit-cuj.awsuswest2preprod8.pp-snowflakecomputing.app:443;",
+        )
+        self.set_header("cross-origin-resource-policy", "cross-origin")
+        self.set_header("cross-origin-opener-policy", "cross-origin")
+        self.set_header("x-test-header", "test")
+
         self.set_extra_headers(path)
 
     def set_extra_headers(self, path: str) -> None:
