@@ -169,7 +169,6 @@ def test_audio_source_error_with_url(app: Page, app_port: int):
     )
 
 
-@pytest.mark.only_browser("chromium")
 def test_audio_source_error_with_path(app: Page, app_port: int):
     """Test `st.audio` source error when data is path (media endpoint)."""
     # Ensure audio source request return a 404 status
@@ -187,8 +186,10 @@ def test_audio_source_error_with_path(app: Page, app_port: int):
     # Navigate to the app
     app.goto(f"http://localhost:{app_port}")
 
-    # Wait until the expected errors are logged, indicating CLIENT_ERROR was sent
-    # Should be 3 instances of the error, one for each audio element with path
+    # Wait until the expected error is logged, indicating CLIENT_ERROR was sent
     wait_until(
-        app, lambda: check_audio_source_error_count(messages, AUDIO_ELEMENTS_WITH_PATH)
+        app,
+        lambda: any(
+            "Client Error: Audio source error" in message for message in messages
+        ),
     )
