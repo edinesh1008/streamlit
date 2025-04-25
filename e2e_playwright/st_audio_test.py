@@ -29,6 +29,10 @@ AUDIO_ELEMENTS_WITH_URL = 3
 
 def check_audio_source_error_count(messages: list[str], expected_count: int):
     """Check that the expected number of audio source error messages are logged."""
+    print("========HELPER===========", flush=True)
+    print(f"Messages: {messages}", flush=True)
+    print(f"Expected count: {expected_count}", flush=True)
+    print("=========HELPER==========", flush=True)
     assert (
         len(
             [
@@ -186,10 +190,10 @@ def test_audio_source_error_with_path(app: Page, app_port: int):
     # Navigate to the app
     app.goto(f"http://localhost:{app_port}")
 
+    print("===================", flush=True)
+    print(f"Messages: {messages}", flush=True)
+    print("===================", flush=True)
     # Wait until the expected error is logged, indicating CLIENT_ERROR was sent
     wait_until(
-        app,
-        lambda: any(
-            "Client Error: Audio source error" in message for message in messages
-        ),
+        app, lambda: check_audio_source_error_count(messages, AUDIO_ELEMENTS_WITH_PATH)
     )
