@@ -50,7 +50,7 @@ def test_clear_photo(app: Page):
     expect(app.get_by_test_id("stImage")).to_have_count(0)
 
 
-@pytest.mark.skip_browser("webkit")
+@pytest.mark.skip_browser("firefox")
 def test_shows_disabled_widget_correctly(
     themed_app: Page,
     assert_snapshot: ImageCompareFunction,
@@ -73,7 +73,7 @@ def test_shows_disabled_widget_correctly(
 
 
 # Webkit CI camera permission issue
-@pytest.mark.skip_browser("webkit")
+@pytest.mark.skip_browser("firefox")
 def test_take_photo_button_styling(app: Page):
     """Test that the Take Photo button is rendered properly when active/disabled."""
     camera_input_widgets = app.get_by_test_id("stCameraInput")
