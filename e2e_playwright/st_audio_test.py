@@ -41,8 +41,6 @@ def check_audio_source_error_count(messages: list[str], expected_count: int):
                 if "Client Error: Audio source error" in message
             ]
         )
-        # when test run on webkit, it will sometimes log extra instances of the error
-        # for the same source - so we use >= expected_count to avoid flakiness
         >= expected_count
     )
 
@@ -148,7 +146,7 @@ def test_audio_uses_unified_height(
     assert_snapshot(audio_element, name="st_audio-unified_height")
 
 
-@pytest.mark.only_browser("chromium")
+@pytest.mark.skip_browser("webkit")
 def test_audio_source_error_with_url(app: Page, app_port: int):
     """Test `st.audio` source error when data is a url."""
     # Ensure audio source request return a 404 status
@@ -173,6 +171,7 @@ def test_audio_source_error_with_url(app: Page, app_port: int):
     )
 
 
+@pytest.mark.skip_browser("webkit")
 def test_audio_source_error_with_path(app: Page, app_port: int):
     """Test `st.audio` source error when data is path (media endpoint)."""
     # Ensure audio source request return a 404 status
