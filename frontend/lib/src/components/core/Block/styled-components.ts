@@ -185,3 +185,53 @@ export const StyledFlexContainerBlock =
       }
     }
   )
+
+export interface StyledGridProps {
+  border: boolean
+  numRows: number
+  numCols: number
+}
+
+export const StyledGrid = styled.div<StyledGridProps>(
+  ({ theme, border, numRows, numCols }) => {
+    return {
+      display: "grid",
+      width: "100%",
+      maxWidth: "100%",
+      height: "auto",
+      columnGap: theme.spacing.lg,
+      rowGap: theme.spacing.lg,
+      ...(numCols && {
+        gridTemplateColumns: `repeat(${numCols}, 1fr)`,
+      }),
+      ...(numRows && {
+        gridTemplateRows: `repeat(${numRows}, 1fr)`,
+      }),
+      ...(border && {
+        border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+        borderRadius: theme.radii.default,
+        padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
+      }),
+    }
+  }
+)
+
+export interface StyledGridCellProps {
+  row: number
+  column: number
+  border: boolean
+}
+
+export const StyledGridCell = styled.div<StyledGridCellProps>(
+  ({ theme, row, column, border }) => {
+    return {
+      gridColumn: `${column} / span 1`,
+      gridRow: `${row} / span 1`,
+      ...(border && {
+        border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+        borderRadius: theme.radii.default,
+        padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
+      }),
+    }
+  }
+)

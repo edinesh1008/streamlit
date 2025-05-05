@@ -60,6 +60,8 @@ import {
   StyledColumn,
   StyledFlexContainerBlock,
   StyledFlexContainerBlockProps,
+  StyledGrid,
+  StyledGridCell,
 } from "./styled-components"
 
 const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
@@ -362,6 +364,32 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
       >
         {child}
       </StyledColumn>
+    )
+  }
+
+  if (node.deltaBlock.grid) {
+    return (
+      <StyledGrid
+        border={node.deltaBlock.grid.border ?? false}
+        numRows={node.deltaBlock.grid.numRows ?? 0}
+        numCols={node.deltaBlock.grid.numCols ?? 0}
+        className="stGrid"
+        data-testid="stGrid"
+      >
+        <ChildRenderer {...props} />
+      </StyledGrid>
+    )
+  }
+
+  if (node.deltaBlock.gridCell) {
+    return (
+      <StyledGridCell
+        row={node.deltaBlock.gridCell.row ?? 0}
+        column={node.deltaBlock.gridCell.column ?? 0}
+        border={node.deltaBlock.gridCell.border ?? false}
+      >
+        {child}
+      </StyledGridCell>
     )
   }
 

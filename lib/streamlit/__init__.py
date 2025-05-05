@@ -181,6 +181,7 @@ code = _main.code
 columns = _main.columns
 tabs = _main.tabs
 container = _main.container
+grid = _main.grid
 dataframe = _main.dataframe
 data_editor = _main.data_editor
 date_input = _main.date_input

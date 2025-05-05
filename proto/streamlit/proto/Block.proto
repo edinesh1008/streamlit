@@ -36,6 +36,8 @@ message Block {
     Popover popover = 10;
     Dialog dialog = 11;
     FlexContainer flex_container = 13;
+    Grid grid = 14;
+    GridCell grid_cell = 15;
   }
 
   bool allow_empty = 8;
@@ -49,6 +51,18 @@ message Block {
 
   message Horizontal {
     string gap = 1;
+  }
+
+  message Grid {
+    bool border = 1;
+    uint32 num_cols = 2;
+    uint32 num_rows = 3;
+  }
+
+  message GridCell {
+    bool border = 1;
+    uint32 row = 2;
+    uint32 column = 3;
   }
 
   message FlexContainer {
@@ -138,5 +152,5 @@ message Block {
     AvatarType avatar_type = 3;
   }
 
-  // Next ID: 14
+  // Next ID: 16
 }
