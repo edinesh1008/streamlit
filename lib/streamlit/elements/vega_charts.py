@@ -33,8 +33,8 @@ from typing import (
 
 from typing_extensions import TypeAlias
 
-import streamlit.elements.lib.dicttools as dicttools
 from streamlit import dataframe_util, type_util
+from streamlit.elements.lib import dicttools
 from streamlit.elements.lib.built_in_chart_utils import (
     AddRowsMetadata,
     ChartStackType,
@@ -227,7 +227,7 @@ class VegaLiteStateSerde:
 
     selection_parameters: Sequence[str]
 
-    def deserialize(self, ui_value: str | None, widget_id: str = "") -> VegaLiteState:
+    def deserialize(self, ui_value: str | None) -> VegaLiteState:
         empty_selection_state: VegaLiteState = {
             "selection": AttributeDictionary(
                 # Initialize the select state with empty dictionaries for each selection parameter.
@@ -238,13 +238,13 @@ class VegaLiteStateSerde:
         selection_state = (
             empty_selection_state
             if ui_value is None
-            else cast(VegaLiteState, AttributeDictionary(json.loads(ui_value)))
+            else cast("VegaLiteState", AttributeDictionary(json.loads(ui_value)))
         )
 
         if "selection" not in selection_state:
             selection_state = empty_selection_state
 
-        return cast(VegaLiteState, AttributeDictionary(selection_state))
+        return cast("VegaLiteState", AttributeDictionary(selection_state))
 
     def serialize(self, selection_state: VegaLiteState) -> str:
         return json.dumps(selection_state, default=str)
@@ -255,9 +255,9 @@ def _prepare_vega_lite_spec(
     use_container_width: bool,
     **kwargs,
 ) -> VegaLiteSpec:
-    if len(kwargs):
-        # Support passing in kwargs. Example:
-        #   marshall(proto, {foo: 'bar'}, baz='boz')
+    if kwargs:
+        # Support passing in kwargs.
+        # > marshall(proto, {foo: 'bar'}, baz='boz')
         # Merge spec with unflattened kwargs, where kwargs take precedence.
         # This only works for string keys, but kwarg keys are strings anyways.
         spec = dict(spec, **dicttools.unflatten(kwargs, _CHANNELS))
@@ -313,10 +313,10 @@ def _marshall_chart_data(
         del spec["datasets"]
 
     # Pull data out of spec dict when it's in a top-level 'data' key:
-    #   {data: df}
-    #   {data: {values: df, ...}}
-    #   {data: {url: 'url'}}
-    #   {data: {name: 'foo'}}
+    # > {data: df}
+    # > {data: {values: df, ...}}
+    # > {data: {url: 'url'}}
+    # > {data: {name: 'foo'}}
     if "data" in spec:
         data_spec = spec["data"]
 
@@ -1735,7 +1735,7 @@ class VegaChartsMixin:
               as a dictionary.
 
             To use selection events, the Vega-Lite spec defined in ``data`` or
-            ``spec`` must include selection parameters from the the charting
+            ``spec`` must include selection parameters from the charting
             library. To learn about defining interactions in Vega-Lite, see
             `Dynamic Behaviors with Parameters \
             <https://vega.github.io/vega-lite/docs/parameter.html>`_
@@ -1884,7 +1884,7 @@ class VegaChartsMixin:
             check_widget_policies(
                 self.dg,
                 key,
-                on_change=cast(WidgetCallback, on_select) if is_callback else None,
+                on_change=cast("WidgetCallback", on_select) if is_callback else None,
                 default_value=None,
                 writes_allowed=False,
                 enable_check_callback_rules=is_callback,
@@ -1970,7 +1970,7 @@ class VegaChartsMixin:
                 vega_lite_proto,
                 add_rows_metadata=add_rows_metadata,
             )
-            return cast(VegaLiteState, widget_state.value)
+            return cast("VegaLiteState", widget_state.value)
         # If its not used with selections activated, just return
         # the delta generator related to this element.
         return self.dg._enqueue(

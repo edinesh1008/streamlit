@@ -157,11 +157,11 @@ export const createEmotionTheme = (
   const {
     baseFontSize,
     baseRadius,
-    showBorderAroundInputs,
+    showWidgetBorder,
     headingFont,
     bodyFont,
     codeFont,
-    showSidebarSeparator,
+    showSidebarBorder,
     ...customColors
   } = themeInput
 
@@ -190,6 +190,7 @@ export const createEmotionTheme = (
     widgetBorderColor,
     borderColor,
     linkColor,
+    codeBackgroundColor,
   } = parsedColors
 
   const newGenericColors = { ...colors }
@@ -204,9 +205,14 @@ export const createEmotionTheme = (
   // by default for all custom themes.
   newGenericColors.secondary = newGenericColors.primary
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   const conditionalOverrides: any = {}
 
   conditionalOverrides.colors = createEmotionColors(newGenericColors)
+
+  if (notNullOrUndefined(codeBackgroundColor)) {
+    conditionalOverrides.colors.codeBackgroundColor = codeBackgroundColor
+  }
 
   if (notNullOrUndefined(borderColor)) {
     conditionalOverrides.colors.borderColor = borderColor
@@ -216,7 +222,7 @@ export const createEmotionTheme = (
     )
   }
 
-  if (showBorderAroundInputs || widgetBorderColor) {
+  if (showWidgetBorder || widgetBorderColor) {
     // widgetBorderColor from the themeInput is deprecated. For compatibility
     // with older SiS theming, we still apply it here if provided, but we should
     // consider full removing it at some point.
@@ -245,6 +251,10 @@ export const createEmotionTheme = (
     } else if (processedBaseRadius.endsWith("rem")) {
       radiusValue = parseFloat(processedBaseRadius)
     } else if (processedBaseRadius.endsWith("px")) {
+      radiusValue = parseFloat(processedBaseRadius)
+      cssUnit = "px"
+    } else if (!isNaN(parseFloat(processedBaseRadius))) {
+      // Fallback: if the value can be parsed as a number, treat it as pixels
       radiusValue = parseFloat(processedBaseRadius)
       cssUnit = "px"
     }
@@ -282,10 +292,11 @@ export const createEmotionTheme = (
     conditionalOverrides.fontSizes.baseFontSize = baseFontSize
   }
 
-  if (notNullOrUndefined(showSidebarSeparator)) {
-    conditionalOverrides.showSidebarSeparator = showSidebarSeparator
+  if (notNullOrUndefined(showSidebarBorder)) {
+    conditionalOverrides.showSidebarBorder = showSidebarBorder
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   const fontOverrides: any = {}
   if (headingFont) {
     fontOverrides.headingFont = parseFont(headingFont)
@@ -399,11 +410,18 @@ export const createTheme = (
 
   const emotion = createEmotionTheme(completedThemeInput, startingTheme)
 
+  // We need to deep clone the theme object to prevent a bug in BaseWeb that causes
+  // primitives to be modified globally. This cloning decouples our BaseWeb theme
+  // object from the shared primitive objects and prevents unintended side effects.
+  const basewebTheme = cloneDeep(
+    createBaseUiTheme(emotion, startingTheme.primitives)
+  )
+
   return {
     ...startingTheme,
     name: themeName,
     emotion,
-    basewebTheme: createBaseUiTheme(emotion, startingTheme.primitives),
+    basewebTheme,
     themeInput,
   }
 }
@@ -532,7 +550,7 @@ export function computeSpacingStyle(
     .join(" ")
 }
 
-function addCssUnit(n: number, unit: "px" | "rem"): string {
+export function addCssUnit(n: number, unit: "px" | "rem"): string {
   return `${n}${unit}`
 }
 

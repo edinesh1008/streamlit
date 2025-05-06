@@ -17,12 +17,13 @@
 from __future__ import annotations
 
 import copy
+import logging
 import os
 import secrets
 import threading
 from collections import OrderedDict
 from enum import Enum
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Final, Literal
 
 from blinker import Signal
 
@@ -55,14 +56,16 @@ _config_options: dict[str, ConfigOption] | None = None
 
 
 # Indicates that a config option was defined by the user.
-_USER_DEFINED = "<user defined>"
+_USER_DEFINED: Final = "<user defined>"
 
 # Indicates that a config option was defined either in an environment variable
 # or via command-line flag.
-_DEFINED_BY_FLAG = "command-line argument or environment variable"
+_DEFINED_BY_FLAG: Final = "command-line argument or environment variable"
 
 # Indicates that a config option was defined in an environment variable
-_DEFINED_BY_ENV_VAR = "environment variable"
+_DEFINED_BY_ENV_VAR: Final = "environment variable"
+
+_LOGGER: Final = logging.getLogger(__name__)
 
 
 class ShowErrorDetailsConfigOptions(str, Enum):
@@ -82,8 +85,9 @@ class ShowErrorDetailsConfigOptions(str, Enum):
         return val in ["false", "False", False]
 
         # Config options can be set from several places including the command-line and
-        # the user's script. Legacy config options (true/false) will have type string when set via
-        # command-line and bool when set via user script (e.g. st.set_option("client.showErrorDetails", False)).
+        # the user's script. Legacy config options (true/false) will have type string
+        # when set via command-line and bool when set via user script
+        # (e.g. st.set_option("client.showErrorDetails", False)).
 
 
 class CustomThemeCategories(str, Enum):
@@ -162,7 +166,8 @@ def set_user_option(key: str, value: Any) -> None:
         return
 
     raise StreamlitAPIException(
-        f"{key} cannot be set on the fly. Set as command line option, e.g. streamlit run script.py --{key}, or in config.toml instead."
+        f"{key} cannot be set on the fly. Set as command line option, e.g. "
+        "streamlit run script.py --{key}, or in config.toml instead."
     )
 
 
@@ -308,8 +313,11 @@ def _create_theme_options(
     type_: type = str,
 ) -> None:
     """
-    Create ConfigOption(s) for a theme-related config option and store it globally in this module.
-    The same config option can be supported for multiple categories, e.g. "theme" and "theme.sidebar".
+    Create ConfigOption(s) for a theme-related config option and store it globally in
+    this module.
+
+    The same config option can be supported for multiple categories, e.g. "theme"
+    and "theme.sidebar".
     """
     for cat in categories:
         section = cat if cat == "theme" else f"theme.{cat.value}"
@@ -318,13 +326,13 @@ def _create_theme_options(
             f"{section}.{name}",
             description=description,
             default_val=default_val,
-            scriptable=False,
             visibility=visibility,
+            type_=type_,
+            scriptable=False,
             deprecated=False,
             deprecation_text=None,
             expiration_date=None,
             replaced_by=None,
-            type_=type_,
             sensitive=False,
         )
 
@@ -340,7 +348,7 @@ def _delete_option(key: str) -> None:
             "_config_options should always be populated here."
         )
         del _config_options[key]
-    except Exception:
+    except Exception:  # noqa: S110
         # We don't care if the option already doesn't exist.
         pass
 
@@ -444,32 +452,6 @@ _create_option(
     type_=int,
 )
 
-_create_option(
-    "global.storeCachedForwardMessagesInMemory",
-    description="""
-        If True, store cached ForwardMsgs in backend memory. This is an
-        internal flag to validate a potential removal of the in-memory
-        forward message cache.
-    """,
-    visibility="hidden",
-    default_val=True,
-    type_=bool,
-)
-
-_create_option(
-    "global.includeFragmentRunsInForwardMessageCacheCount",
-    description="""
-        If True, the server will include fragment runs in the count for the
-        forward message cache. The implication is that apps with fragments may
-        see messages being removed from the cache faster. This aligns the server
-        count with the frontend count. This is a temporary fix while we assess the
-        design of the cache.
-    """,
-    visibility="hidden",
-    default_val=False,
-    type_=bool,
-)
-
 
 # Config Section: Logger #
 _create_section("logger", "Settings to customize Streamlit log messages.")
@@ -568,7 +550,7 @@ _create_option(
         - False        : This is deprecated. Streamlit displays "stacktrace"
                          error details.
     """,
-    default_val=ShowErrorDetailsConfigOptions.FULL,
+    default_val=ShowErrorDetailsConfigOptions.FULL.value,
     type_=str,
     scriptable=True,
 )
@@ -680,6 +662,20 @@ _create_option(
 
 _create_section("server", "Settings for the Streamlit server")
 
+
+_create_option(
+    "server.folderWatchList",
+    description="""
+        List of folders to watch for changes.
+
+        By default, Streamlit watches for files in the current working directory.
+        Use this parameter to specify additional folders to watch.
+
+        Note: This is a list of absolute paths.
+    """,
+    default_val=[],
+)
+
 _create_option(
     "server.folderWatchBlacklist",
     description="""
@@ -729,7 +725,11 @@ def _server_headless() -> bool:
     Default: false unless (1) we are on a Linux box where DISPLAY is unset, or
     (2) we are running in the Streamlit Atom plugin.
     """
-    if env_util.IS_LINUX_OR_BSD and not os.getenv("DISPLAY"):
+    if (
+        env_util.IS_LINUX_OR_BSD
+        and not os.getenv("DISPLAY")
+        and not os.getenv("WAYLAND_DISPLAY")
+    ):
         # We're running in Linux and DISPLAY is unset
         return True
 
@@ -836,7 +836,9 @@ _create_option(
     description="""
         Max size, in megabytes, for files uploaded with the file_uploader.
     """,
-    default_val=200,  # If this default is changed, please also update the docstring for `DeltaGenerator.file_uploader`.
+    # If this default is changed, please also update the docstring
+    # for `DeltaGenerator.file_uploader`.
+    default_val=200,
     type_=int,
 )
 
@@ -853,8 +855,9 @@ _create_option(
 _create_option(
     "server.enableArrowTruncation",
     description="""
-        Enable automatically truncating all data structures that get serialized into Arrow (e.g. DataFrames)
-        to ensure that the size is under `server.maxMessageSize`.
+        Enable automatically truncating all data structures that get serialized
+        into Arrow (e.g. DataFrames) to ensure that the size is under
+        `server.maxMessageSize`.
     """,
     visibility="hidden",
     default_val=False,
@@ -1052,48 +1055,72 @@ _create_theme_options(
     categories=["theme"],
     description="""
         The preset Streamlit theme that your custom theme inherits from.
-        One of "light" or "dark".
+        This can be one of the following: "light" or "dark".
     """,
 )
 
 _create_theme_options(
     "primaryColor",
     categories=["theme", CustomThemeCategories.SIDEBAR],
-    description="Primary accent color for interactive elements.",
+    description="""
+        Primary accent color.
+    """,
 )
 
 _create_theme_options(
     "backgroundColor",
     categories=["theme", CustomThemeCategories.SIDEBAR],
-    description="Background color for the main content area.",
+    description="""
+        Background color of the app.
+    """,
 )
 
 _create_theme_options(
     "secondaryBackgroundColor",
     categories=["theme", CustomThemeCategories.SIDEBAR],
-    description="Background color used for the sidebar and most interactive widgets.",
+    description="""
+        Background color used for most interactive widgets.
+    """,
 )
 
 _create_theme_options(
     "textColor",
     categories=["theme", CustomThemeCategories.SIDEBAR],
-    description="Color used for almost all text.",
+    description="""
+        Color used for almost all text.
+    """,
 )
 
 _create_theme_options(
     "linkColor",
     categories=["theme", CustomThemeCategories.SIDEBAR],
-    description="Color used for all links.",
-    visibility="hidden",
+    description="""
+        Color used for all links.
+    """,
+)
+
+_create_theme_options(
+    "codeBackgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Background color used for code blocks.
+    """,
 )
 
 _create_theme_options(
     "font",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
-        The font family for all text in the app, except code blocks. One of "sans serif",
-        "serif", or "monospace".
-        To use a custom font, it needs to be added via [theme.fontFaces].
+        The font family for all text, except code blocks. This can be one of
+        the following:
+        - "sans-serif"
+        - "serif"
+        - "monospace"
+        - the `font` value for a custom font table under [[theme.fontFaces]]
+        - a comma-separated list of these (as a single string) to specify
+          fallbacks
+        For example, you can use the following:
+        font = "cool-font, fallback-cool-font, sans-serif"
     """,
 )
 
@@ -1101,40 +1128,62 @@ _create_theme_options(
     "codeFont",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
-        The font family to use for code (monospace) in the app.
-        To use a custom font, it needs to be added via [theme.fontFaces].
+        The font family to use for code (monospace) in the sidebar. This can be
+        one of the following:
+        - "sans-serif"
+        - "serif"
+        - "monospace"
+        - the `font` value for a custom font table under [[theme.fontFaces]]
+        - a comma-separated list of these (as a single string) to specify
+          fallbacks
     """,
-    visibility="hidden",
 )
 
 _create_theme_options(
     "headingFont",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
-        The font family to use for headings in the app.
-        To use a custom font, it needs to be added via [theme.fontFaces].
+        The font family to use for headings. This can be one of the following:
+        - "sans-serif"
+        - "serif"
+        - "monospace"
+        - the `font` value for a custom font table under [[theme.fontFaces]]
+        - a comma-separated list of these (as a single string) to specify
+          fallbacks
+        If no heading font is set, Streamlit uses `theme.font` for headings.
     """,
-    visibility="hidden",
 )
 
 _create_theme_options(
     "fontFaces",
     categories=["theme"],
     description="""
-    Configure a list of font faces that you can use for the app & code fonts.
-""",
-    visibility="hidden",
+        An array of fonts to use in your app. Each font in the array is a table
+        (dictionary) with the following three attributes: font, url, weight,
+        and style. To host a font with your app, enable static file serving
+        with `server.enableStaticServing=true`. You can define multiple
+        [[theme.fontFaces]] tables.
+
+        For example, each font is defined in a [[theme.fontFaces]] table as
+        follows:
+        [[theme.fontFaces]]
+        font = "font_name"
+        url = "app/static/font_file.woff"
+        weight = 400
+        style = "normal"
+    """,
 )
 
 _create_theme_options(
     "baseRadius",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
-        The radius used as basis for the corners of most UI elements. Can be:
-        "none", "small", "medium", "large", "full", or the number in pixel or rem.
-        For example: "10px", "0.5rem", "1.2rem", "2rem".
+        The radius used as basis for the corners of most UI elements. This can
+        be one of the following: "none", "small", "medium", "large", "full",
+        or the number in pixels or rem. For example, you can use "10px",
+        "0.5rem", or "2rem". To follow best practices, use rem instead of
+        pixels when specifying a numeric size.
     """,
-    visibility="hidden",
 )
 
 _create_theme_options(
@@ -1143,39 +1192,35 @@ _create_theme_options(
     description="""
         The color of the border around elements.
     """,
-    visibility="hidden",
 )
 
 _create_theme_options(
-    "showBorderAroundInputs",
+    "showWidgetBorder",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
-        Whether to show a border around input elements (e.g. text_input, number_input,
-        file_uploader, etc).
+        Whether to show a border around input widgets.
     """,
     type_=bool,
-    visibility="hidden",
 )
 
 _create_theme_options(
     "baseFontSize",
     categories=["theme"],
     description="""
-        Sets the root font size (in pixels) for the app, which determines the overall
-        scale of text and UI elements. The default base font size is 16.
+        Sets the root font size (in pixels) for the app, which determines the
+        overall scale of text and UI elements. The default base font size is 16.
     """,
     type_=int,
-    visibility="hidden",
 )
 
 _create_theme_options(
-    "showSidebarSeparator",
+    "showSidebarBorder",
     categories=["theme"],
     description="""
-        Whether to show a vertical separator between the sidebar and the main content.
+        Whether to show a vertical separator between the sidebar and the main
+        content area.
     """,
     type_=bool,
-    visibility="hidden",
 )
 
 # Config Section: Secrets #
@@ -1191,8 +1236,8 @@ _create_option(
         will take precedence over earlier ones.
     """,
     default_val=[
-        # NOTE: The order here is important! Project-level secrets should overwrite global
-        # secrets.
+        # NOTE: The order here is important! Project-level secrets should overwrite
+        # global secrets.
         file_util.get_streamlit_file_path("secrets.toml"),
         file_util.get_project_streamlit_file_path("secrets.toml"),
     ],
@@ -1328,9 +1373,18 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
         Tells the config system where this was set.
 
     """
-    import toml
+    try:
+        import toml
 
-    parsed_config_file = toml.loads(raw_toml)
+        parsed_config_file = toml.loads(raw_toml)
+    except Exception:
+        # Catching any parsing exception to prevent this from breaking our
+        # config change watcher logic.
+        _LOGGER.exception(
+            "Error parsing config toml. This is most likely due to a syntax error "
+            "in the config.toml file. Please fix it and try again.",
+        )
+        return
 
     def process_section(section_path: str, section_data: dict[str, Any]) -> None:
         """Recursively process nested sections of the config file.
@@ -1373,8 +1427,7 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
                 process_section(option_name, value)
             else:
                 # It's a regular config option, set it
-                value = _maybe_read_env_variable(value)
-                _set_option(option_name, value, where_defined)
+                _set_option(option_name, _maybe_read_env_variable(value), where_defined)
 
     for section, options in parsed_config_file.items():
         process_section(section, options)
@@ -1418,12 +1471,12 @@ def _maybe_convert_to_number(v: Any) -> Any:
     """Convert v to int or float, or leave it as is."""
     try:
         return int(v)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     try:
         return float(v)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return v
@@ -1466,7 +1519,7 @@ def get_config_options(
     dict[str, ConfigOption]
         An ordered dict that maps config option names to their values.
     """
-    global _config_options
+    global _config_options  # noqa: PLW0603
 
     if not options_from_flags:
         options_from_flags = {}
@@ -1491,8 +1544,8 @@ def get_config_options(
             if not os.path.exists(filename):
                 continue
 
-            with open(filename, encoding="utf-8") as input:
-                file_contents = input.read()
+            with open(filename, encoding="utf-8") as file:
+                file_contents = file.read()
 
             _update_config_with_toml(file_contents, filename)
 
@@ -1522,8 +1575,8 @@ def _check_conflicts() -> None:
 
     # When using the Node server, we must always connect to 8501 (this is
     # hard-coded in JS). Otherwise, the browser would decide what port to
-    # connect to based on window.location.port, which in dev is going to
-    # be (3000)
+    # connect to based on window.location.port, which in dev is going
+    # to be (3000)
 
     # Import logger locally to prevent circular references
     from streamlit.logger import get_logger
@@ -1544,7 +1597,8 @@ def _check_conflicts() -> None:
         if not get_option("server.enableCORS") or get_option("global.developmentMode"):
             LOGGER.warning(
                 """
-Warning: the config option 'server.enableCORS=false' is not compatible with 'server.enableXsrfProtection=true'.
+Warning: the config option 'server.enableCORS=false' is not compatible with
+'server.enableXsrfProtection=true'.
 As a result, 'server.enableCORS' is being overridden to 'true'.
 
 More information:

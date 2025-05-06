@@ -39,6 +39,7 @@ const StyledJsonWrapper = styled.div(({ theme }) => ({
 
 interface JsonViewerProps {
   jsonValue: string | object | undefined | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   theme: any
 }
 
@@ -104,4 +105,4 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
   )
 }
 
-export default JsonViewer
+export default React.memo(JsonViewer)

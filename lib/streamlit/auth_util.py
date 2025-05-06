@@ -40,7 +40,7 @@ class AuthCache:
 
     # for set method, we are follow the same signature used in Authlib
     # the expires_in is not used in our case
-    def set(self, key, value, expires_in):
+    def set(self, key, value, expires_in):  # noqa: ARG002
         self.cache[key] = value
 
     def get_dict(self):
@@ -79,7 +79,7 @@ def get_secrets_auth_section() -> AttrDict:
     auth_section = AttrDict({})
     """Get the 'auth' section of the secrets.toml."""
     if secrets_singleton.load_if_toml_exists():
-        auth_section = cast(AttrDict, secrets_singleton.get("auth"))
+        auth_section = cast("AttrDict", secrets_singleton.get("auth"))
 
     return auth_section
 

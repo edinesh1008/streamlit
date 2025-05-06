@@ -22,6 +22,7 @@ import { ComponentMessageType } from "./enums"
 
 export type ComponentMessageListener = (
   type: ComponentMessageType,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   data: any
 ) => void
 
@@ -62,6 +63,34 @@ export class ComponentRegistry {
     if (!removed) {
       LOG.warn(`Could not deregister unregistered MessageEventSource!`)
     }
+  }
+
+  /**
+   * Check the source of a custom component for successful response
+   * If the response is not ok, or fetch otherwise fails, send an error to the host.
+   */
+  public checkSourceUrlResponse = (
+    sourceUrl: string,
+    customComponentName: string
+  ): Promise<void> => {
+    return this.endpoints.checkSourceUrlResponse(
+      sourceUrl,
+      "Custom Component",
+      customComponentName
+    )
+  }
+
+  public sendTimeoutError = (
+    source: string,
+    customComponentName: string
+  ): void => {
+    this.endpoints.sendClientErrorToHost(
+      "Custom Component",
+      "Request Timeout",
+      "Your app is having trouble loading the component.",
+      source,
+      customComponentName
+    )
   }
 
   /** Return a URL for fetching a resource for the given component. */

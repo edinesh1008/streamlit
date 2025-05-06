@@ -90,11 +90,8 @@ def _new_fragment_id_queue(
                 "functions during fragment reruns."
             )
 
-        assert (
-            new_queue := list(
-                dropwhile(lambda x: x != ctx.current_fragment_id, curr_queue)
-            )
-        ), (
+        new_queue = list(dropwhile(lambda x: x != ctx.current_fragment_id, curr_queue))
+        assert new_queue, (
             "Could not find current_fragment_id in fragment_id_queue. This should never happen."
         )
 
@@ -140,6 +137,7 @@ def rerun(  # type: ignore[misc]
     if ctx and ctx.script_requests:
         query_string = ctx.query_string
         page_script_hash = ctx.page_script_hash
+        cached_message_hashes = ctx.cached_message_hashes
 
         ctx.script_requests.request_rerun(
             RerunData(
@@ -147,6 +145,8 @@ def rerun(  # type: ignore[misc]
                 page_script_hash=page_script_hash,
                 fragment_id_queue=_new_fragment_id_queue(ctx, scope),
                 is_fragment_scoped_rerun=scope == "fragment",
+                cached_message_hashes=cached_message_hashes,
+                context_info=ctx.context_info,
             )
         )
         # Force a yield point so the runner can do the rerun
@@ -232,6 +232,7 @@ def switch_page(page: str | Path | StreamlitPage) -> NoReturn:  # type: ignore[m
         RerunData(
             query_string=ctx.query_string,
             page_script_hash=page_script_hash,
+            cached_message_hashes=ctx.cached_message_hashes,
         )
     )
     # Force a yield point so the runner can do the rerun
