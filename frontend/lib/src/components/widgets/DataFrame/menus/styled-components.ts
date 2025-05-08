@@ -75,7 +75,7 @@ export const StyledColumnHeaderRow = styled.div(({ theme }) => ({
   alignItems: "center",
   padding: `${theme.spacing.sm} ${theme.spacing.sm}`,
   cursor: "default",
-  gap: theme.spacing.sm,
+  gap: theme.spacing.twoXS,
 }))
 
 export const StyledTypeIconContainer = styled.div(({ theme }) => ({
