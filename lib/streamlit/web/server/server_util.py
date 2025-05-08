@@ -88,11 +88,12 @@ def get_cookie_secret() -> str:
 
 
 def is_xsrf_enabled():
-    csrf_enabled = config.get_option("server.enableXsrfProtection")
-    if not csrf_enabled and secrets_singleton.load_if_toml_exists():
-        auth_section = secrets_singleton.get("auth", None)
-        csrf_enabled = csrf_enabled or auth_section is not None
-    return csrf_enabled
+    return False
+    # csrf_enabled = config.get_option("server.enableXsrfProtection")
+    # if not csrf_enabled and secrets_singleton.load_if_toml_exists():
+    #     auth_section = secrets_singleton.get("auth", None)
+    #     csrf_enabled = csrf_enabled or auth_section is not None
+    # return csrf_enabled
 
 
 def _get_server_address_if_manually_set() -> str | None:

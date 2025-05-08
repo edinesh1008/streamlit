@@ -111,8 +111,13 @@ class _SpecialRequestHandler(tornado.web.RequestHandler):
 
     def set_default_headers(self):
         self.set_header("Cache-Control", "no-cache")
+        self.set_header("Service-Worker-Allowed", "/some-dummy-path")
         if allow_cross_origin_requests():
-            self.set_header("Access-Control-Allow-Origin", "*")
+            self.set_header(
+                "Access-Control-Allow-Origin",
+                "http://st6sdseexcruwxm5t3mnje.reg.streamlit.local:54200",
+            )
+            pass
 
     def options(self):
         """/OPTIONS handler for preflight CORS checks.

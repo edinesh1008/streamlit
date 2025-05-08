@@ -69,11 +69,12 @@ class ComponentRequestHandler(tornado.web.RequestHandler):
         # Add CSP headers
         self.set_header(
             "content-security-policy",
-            "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'unsafe-inline' http://*.reg.streamlit.local:54200 http://localhost:3000 https://iq7vrb-sfengineering-pw-streamlit-cuj.awsuswest2preprod8.pp-snowflakecomputing.app:443; object-src 'none'; connect-src 'self'; frame-ancestors http://app.snowflake.local:9000 http://*.reg.streamlit.local:54200 http://localhost:3000 https://iq7vrb-sfengineering-pw-streamlit-cuj.awsuswest2preprod8.pp-snowflakecomputing.app:443;",
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'unsafe-inline' http://app.snowflake.local:9000 http://*.reg.streamlit.local:54100 http://*.reg.streamlit.local:54200 http://localhost:3000; object-src 'none'; connect-src 'self' ws://app.snowflake.local:9000; frame-ancestors http://app.snowflake.local:9000 http://*.reg.streamlit.local:54100 http://*.reg.streamlit.local:54200 http://localhost:3000; img-src http: https: blob: data:; script-src http://localhost:3000;",
         )
         self.set_header("cross-origin-resource-policy", "cross-origin")
         self.set_header("cross-origin-opener-policy", "cross-origin")
         self.set_header("x-test-header", "test")
+        self.set_header("Service-Worker-Allowed", "/some-dummy-path")
 
         self.set_extra_headers(path)
 

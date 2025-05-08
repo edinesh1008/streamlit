@@ -60,8 +60,10 @@ class UploadFileRequestHandler(tornado.web.RequestHandler):
             self.set_header("Access-Control-Allow-Headers", "X-Xsrftoken, Content-Type")
             self.set_header("Vary", "Origin")
             self.set_header("Access-Control-Allow-Credentials", "true")
+            pass
         elif routes.allow_cross_origin_requests():
             self.set_header("Access-Control-Allow-Origin", "*")
+            pass
 
     def options(self, **kwargs):
         """/OPTIONS handler for preflight CORS checks.
