@@ -269,6 +269,68 @@ class LayoutsMixin:
 
         return cells
 
+    @gather_metrics("grid_two")
+    def grid_two(
+        self,
+        *,
+        num_cols: int = 1,
+        outer_border: bool | None = None,
+        key: Key | None = None,
+    ) -> DeltaGenerator:
+        """Insert a grid container.
+
+        Inserts a grid container into your app that can be used to create grid layouts.
+        Returns a grid that can be used to hold content.
+
+        Parameters
+        ----------
+        num_cols : int
+            Number of columns in the grid. Default is 1.
+
+        border : bool or None
+            Whether to show a border around the grid container. If ``None`` (default),
+            no border is shown.
+
+        key : str or None
+            An optional string to give this grid a stable identity.
+
+            Additionally, if ``key`` is provided, it will be used as CSS
+            class name prefixed with ``st-key-``.
+
+        Returns
+        -------
+        list of DeltaGenerator
+            A grid object that can be used to add elements to the grid.
+
+        Examples
+        --------
+        Create a 2x2 grid:
+
+        >>> import streamlit as st
+        >>>
+        >>> cells = st.grid(num_cells=4, num_cols=2)
+        >>> cells[0].write("Cell 1")
+        >>> cells[1].write("Cell 2")
+        >>> cells[2].write("Cell 3")
+        >>> cells[3].write("Cell 4")
+        """
+        key = to_key(key)
+
+        # Create the main grid container
+        grid_container_proto = BlockProto()
+        grid_container_proto.allow_empty = True
+
+        grid_proto = BlockProto.Grid()
+        grid_proto.border = outer_border or False
+
+        if num_cols > 0:
+            grid_proto.num_cols = num_cols
+
+        grid_container_proto.grid.CopyFrom(grid_proto)
+        grid_container = self.dg._block(grid_container_proto)
+
+        return grid_container
+
     @gather_metrics("columns")
     def columns(
         self,

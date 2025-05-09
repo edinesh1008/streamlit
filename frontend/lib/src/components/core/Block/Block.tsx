@@ -367,11 +367,26 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
     )
   }
 
-  if (node.deltaBlock.grid) {
+  if (node.deltaBlock.grid && node.deltaBlock.grid.numRows) {
     return (
       <StyledGrid
         border={node.deltaBlock.grid.border ?? false}
         numRows={node.deltaBlock.grid.numRows ?? 0}
+        numCols={node.deltaBlock.grid.numCols ?? 0}
+        className="stGrid"
+        data-testid="stGrid"
+      >
+        <ChildRenderer {...props} />
+      </StyledGrid>
+    )
+  } else if (node.deltaBlock.grid) {
+    const numCols = node.deltaBlock.grid.numCols ?? 0
+    let children = node.children.length
+    let numRows = Math.ceil(children / numCols)
+    return (
+      <StyledGrid
+        border={node.deltaBlock.grid.border ?? false}
+        numRows={numRows}
         numCols={node.deltaBlock.grid.numCols ?? 0}
         className="stGrid"
         data-testid="stGrid"
