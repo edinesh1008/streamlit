@@ -105,8 +105,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   const theme: EmotionTheme = useTheme()
 
   const { activeTheme } = useContext(LibContext)
-  const { hideSidebarNav, appPages, appLogo } = useAppContext()
-  const { initialSidebarState } = useRequiredContext(SidebarContext)
+  const { appPages, appLogo } = useAppContext()
+  const { hideSidebarNav, initialSidebarState } =
+    useRequiredContext(SidebarContext)
 
   const mediumBreakpointPx = calculateMaxBreakpoint(theme.breakpoints.md)
   const sideBarInitiallyCollapsed = shouldCollapse(

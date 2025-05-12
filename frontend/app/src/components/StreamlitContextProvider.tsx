@@ -44,8 +44,6 @@ type AppContextValues = {
   appPages: IAppPage[]
   appLogo: Logo | null
   sidebarChevronDownshift: number
-  expandSidebarNav: boolean
-  hideSidebarNav: boolean
   widgetsDisabled: boolean
   gitInfo: IGitInfo | null
 }
@@ -76,6 +74,8 @@ type FormsContextValues = {
 
 type SidebarContextValues = {
   initialSidebarState: PageConfig.SidebarState
+  expandSidebarNav: boolean
+  hideSidebarNav: boolean
   pageLinkBaseUrl: string
 }
 
@@ -96,8 +96,6 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   appPages,
   appLogo,
   sidebarChevronDownshift,
-  expandSidebarNav,
-  hideSidebarNav,
   widgetsDisabled,
   gitInfo,
   // LibContext
@@ -122,6 +120,8 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   formsData,
   // SidebarContext
   initialSidebarState,
+  expandSidebarNav,
+  hideSidebarNav,
   pageLinkBaseUrl,
   // Children passed through
   children,
@@ -135,8 +135,6 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
       appPages,
       appLogo,
       sidebarChevronDownshift,
-      expandSidebarNav,
-      hideSidebarNav,
       widgetsDisabled,
       gitInfo,
     }),
@@ -147,8 +145,6 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
       appPages,
       appLogo,
       sidebarChevronDownshift,
-      expandSidebarNav,
-      hideSidebarNav,
       widgetsDisabled,
       gitInfo,
     ]
@@ -198,9 +194,11 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   const sidebarContextProps = useMemo<SidebarContextProps>(
     () => ({
       initialSidebarState,
+      expandSidebarNav,
+      hideSidebarNav,
       pageLinkBaseUrl,
     }),
-    [initialSidebarState, pageLinkBaseUrl]
+    [initialSidebarState, expandSidebarNav, hideSidebarNav, pageLinkBaseUrl]
   )
 
   // formsData is not a stable reference, so memoization does not help

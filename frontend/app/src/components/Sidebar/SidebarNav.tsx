@@ -135,14 +135,10 @@ const SidebarNav = ({
   hasSidebarElements,
 }: Props): ReactElement | null => {
   const [expanded, setExpanded] = useState(false)
-  const {
-    expandSidebarNav,
-    currentPageScriptHash,
-    onPageChange,
-    navSections,
-  } = useAppContext()
+  const { currentPageScriptHash, onPageChange, navSections } = useAppContext()
 
-  const { pageLinkBaseUrl } = useRequiredContext(SidebarContext)
+  const { expandSidebarNav, pageLinkBaseUrl } =
+    useRequiredContext(SidebarContext)
 
   useEffect(() => {
     const cachedSidebarNavExpanded =

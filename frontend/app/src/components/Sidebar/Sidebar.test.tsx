@@ -54,6 +54,8 @@ function renderSidebar(
   const sidebarContextProps: SidebarContextProps = {
     initialSidebarState: PageConfig.SidebarState.AUTO,
     pageLinkBaseUrl: "",
+    expandSidebarNav: true,
+    hideSidebarNav: false,
     ...overrideSidebarContextProps,
   }
 
@@ -83,8 +85,6 @@ function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
     appPages: [],
     appLogo: null,
     sidebarChevronDownshift: 0,
-    expandSidebarNav: false,
-    hideSidebarNav: false,
     widgetsDisabled: false,
     gitInfo: null,
     ...context,
@@ -295,14 +295,13 @@ describe("Sidebar Component", () => {
     // Update the mock to return a context with hideSidebarNav set to true
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
       getContextOutput({
-        hideSidebarNav: true,
         appPages: [
           { pageName: "streamlit_app", pageScriptHash: "page_hash" },
           { pageName: "streamlit_app2", pageScriptHash: "page_hash2" },
         ],
       })
     )
-    renderSidebar()
+    renderSidebar({}, { hideSidebarNav: true })
 
     expect(screen.queryByTestId("stSidebarNav")).not.toBeInTheDocument()
   })

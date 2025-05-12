@@ -28,6 +28,20 @@ export interface SidebarContextProps {
   initialSidebarState: PageConfig.SidebarState
 
   /**
+   * Whether to expand the sidebar nav.
+   * Pulled from appContext in SidebarNav
+   * @see SidebarNav
+   */
+  expandSidebarNav: boolean
+
+  /**
+   * Whether to hide the sidebar nav. Can also be configured via host message.
+   * Pulled from appContext in Sidebar
+   * @see Sidebar
+   */
+  hideSidebarNav: boolean
+
+  /**
    * Part of URL construction for an app page in a multi-page app;
    * this is set from the host communication manager via host message.
    * Pulled from appContext in SidebarNav

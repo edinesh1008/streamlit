@@ -67,8 +67,6 @@ function getAppContextOutput(
     appPages: [],
     appLogo: null,
     sidebarChevronDownshift: 0,
-    expandSidebarNav: false,
-    hideSidebarNav: false,
     widgetsDisabled: false,
     gitInfo: null,
     ...context,
@@ -190,28 +188,27 @@ describe("SidebarNav", () => {
   })
 
   it("does not render View less button when explicitly asked to expand", () => {
-    // Update the mock to return a context with widgetsDisabled set to true
-    vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getAppContextOutput({ expandSidebarNav: true })
+    renderSidebarNav(
+      {
+        hasSidebarElements: true,
+        appPages: [
+          {
+            pageScriptHash: "main_page_hash",
+            pageName: "streamlit app",
+            urlPathname: "streamlit_app",
+            isDefault: true,
+          },
+        ].concat(
+          Array.from({ length: 12 }, (_, index) => ({
+            pageScriptHash: `other_page_hash${index}`,
+            pageName: `my other page${index}`,
+            urlPathname: `my_other_page${index}`,
+            isDefault: false,
+          }))
+        ),
+      },
+      { expandSidebarNav: true }
     )
-    renderSidebarNav({
-      hasSidebarElements: true,
-      appPages: [
-        {
-          pageScriptHash: "main_page_hash",
-          pageName: "streamlit app",
-          urlPathname: "streamlit_app",
-          isDefault: true,
-        },
-      ].concat(
-        Array.from({ length: 12 }, (_, index) => ({
-          pageScriptHash: `other_page_hash${index}`,
-          pageName: `my other page${index}`,
-          urlPathname: `my_other_page${index}`,
-          isDefault: false,
-        }))
-      ),
-    })
 
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
     expect(
