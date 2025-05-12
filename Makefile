@@ -358,6 +358,7 @@ notices:
 	./scripts/append_license.sh frontend/app/src/assets/img/Open-Iconic.LICENSE
 	./scripts/append_license.sh frontend/lib/src/vendor/bokeh/bokeh-LICENSE.txt
 	./scripts/append_license.sh frontend/lib/src/vendor/react-bootstrap-LICENSE.txt
+	./scripts/append_license.sh frontend/lib/src/vendor/fzy.js/fzyjs-LICENSE.txt
 
 .PHONY: headers
 # Update the license header on all source files.
@@ -369,7 +370,7 @@ headers:
 # Write the minimum versions of our dependencies to a constraints file.
 gen-min-dep-constraints:
 	make develop >/dev/null
-	python scripts/get_min_versions.py >lib/min-constraints-gen.txt
+	python scripts/get_min_versions.py >scripts/assets/min-constraints-gen.txt
 
 .PHONY: pre-commit-install
 # Pre-commit install.

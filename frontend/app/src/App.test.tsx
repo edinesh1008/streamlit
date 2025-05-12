@@ -1373,7 +1373,7 @@ describe("App", () => {
   })
 
   describe("App.onHistoryChange", () => {
-    const NEW_SESSION_JSON = {
+    const CURRENT_NEW_SESSION_JSON = {
       config: {
         gatherUsageStats: false,
         maxCachedMessageAge: 0,
@@ -1406,7 +1406,7 @@ describe("App", () => {
       pageScriptHash: "top_hash",
       fragmentIdsThisRun: [],
     }
-    const NAVIGATION_JSON = {
+    const THIS_NAVIGATION_JSON = {
       appPages: [
         {
           pageScriptHash: "top_hash",
@@ -1434,29 +1434,29 @@ describe("App", () => {
       renderApp(getProps())
 
       sendForwardMessage("newSession", {
-        ...NEW_SESSION_JSON,
+        ...CURRENT_NEW_SESSION_JSON,
         pageScriptHash: "sub_hash",
       })
       sendForwardMessage("navigation", {
-        ...NAVIGATION_JSON,
+        ...THIS_NAVIGATION_JSON,
         pageScriptHash: "sub_hash",
       })
 
       sendForwardMessage("newSession", {
-        ...NEW_SESSION_JSON,
+        ...CURRENT_NEW_SESSION_JSON,
         pageScriptHash: "top_hash",
       })
       sendForwardMessage("navigation", {
-        ...NAVIGATION_JSON,
+        ...THIS_NAVIGATION_JSON,
         pageScriptHash: "top_hash",
       })
 
       sendForwardMessage("newSession", {
-        ...NEW_SESSION_JSON,
+        ...CURRENT_NEW_SESSION_JSON,
         pageScriptHash: "sub_hash",
       })
       sendForwardMessage("navigation", {
-        ...NAVIGATION_JSON,
+        ...THIS_NAVIGATION_JSON,
         pageScriptHash: "sub_hash",
       })
 
@@ -1508,11 +1508,11 @@ describe("App", () => {
       expect(connectionManager.sendMessage).not.toBeCalled()
 
       sendForwardMessage("newSession", {
-        ...NEW_SESSION_JSON,
+        ...CURRENT_NEW_SESSION_JSON,
         pageScriptHash: "sub_hash",
       })
       sendForwardMessage("navigation", {
-        ...NAVIGATION_JSON,
+        ...THIS_NAVIGATION_JSON,
         pageScriptHash: "sub_hash",
       })
       window.history.back()
@@ -3282,7 +3282,7 @@ describe("App", () => {
       // make sure that no new messages were sent after switching the page
       // despite advancing the timer. We could check whether clearInterval
       // was called, but this check is more observing the behavior than checking
-      // the exact interals.
+      // the exact internals.
       const oldCallCountPlusPageChangeRequest = times + 1
       expect(connectionManager.sendMessage).toBeCalledTimes(
         oldCallCountPlusPageChangeRequest

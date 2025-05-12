@@ -101,7 +101,8 @@ def test_use_column_width_parameter(app: Page, assert_snapshot: ImageCompareFunc
     assert_snapshot(columns_container, name="st_image-use_column_width")
 
     expect(app.get_by_test_id("stMainBlockContainer")).to_contain_text(
-        "The use_column_width parameter has been deprecated and will be removed in a future release. Please utilize the use_container_width parameter instead."
+        "The use_column_width parameter has been deprecated and will be removed in a "
+        "future release. Please utilize the use_container_width parameter instead."
     )
 
 
@@ -146,12 +147,6 @@ def test_svg_images(app: Page, assert_snapshot: ImageCompareFunction):
     meta_tag_svg = get_image(app, "Text SVG with meta tags.").locator("img")
     expect(meta_tag_svg).to_have_css("max-width", "100%")
     assert_snapshot(meta_tag_svg, name="st_image-svg_with_meta_tags")
-
-    # TODO(lukasmasuch): This svg does not correctly work in Safari and Firefox
-    # Test "Red Circle"
-    # red_circle = get_image(app, "Red Circle.").locator("img")
-    # expect(red_circle).to_have_css("max-width", "100%")
-    # assert_snapshot(red_circle, name="st_image-svg_red_circle")
 
     # Test "Red Circle with internal dimensions"
     red_circle_internal_dim = get_image(

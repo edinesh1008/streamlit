@@ -192,7 +192,7 @@ def test_importtime_median_under_threshold():
     and check if it's under a static threshold.
     """
     # Define an acceptable threshold for import time (in microseconds).
-    # This value is also depenend a bit on the machine it's run on,
+    # This value is also dependent a bit on the machine it's run on,
     # so needs to be mainly adjusted to our CI runners.
     # While its important to keep the import time low, you can
     # modify this threshold if it's really needed to add some new features.
@@ -207,8 +207,8 @@ def test_importtime_median_under_threshold():
         cmd = [sys.executable, "-X", "importtime", "-c", "import streamlit"]
         p = subprocess.run(cmd, stderr=subprocess.PIPE, check=True)
 
-        # The last line of stderr has the total import time, e.g.:
-        # "import time: self [us] | cumulative [us] | streamlit"
+        # The last line of stderr has the total import time:
+        # import time: self [us] | cumulative [us] | streamlit
         line = p.stderr.splitlines()[-1]
         field = line.split(b"|")[-2].strip()  # e.g. b"123456"
         total_us = int(field)  # convert to integer microseconds
