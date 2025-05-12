@@ -23,7 +23,11 @@ import {
   within,
 } from "@testing-library/react"
 
-import { mockEndpoints, render } from "@streamlit/lib"
+import {
+  mockEndpoints,
+  renderWithContexts,
+  SidebarContextProps,
+} from "@streamlit/lib"
 import { Logo, PageConfig } from "@streamlit/protobuf"
 import { AppContextProps } from "@streamlit/app/src/components/AppContext"
 import * as StreamlitContextProviderModule from "@streamlit/app/src/components/StreamlitContextProvider"
@@ -43,20 +47,35 @@ const mockEndpointProp = mockEndpoints({
   sendClientErrorToHost,
 })
 
-function renderSidebar(props: Partial<SidebarProps> = {}): RenderResult {
-  return render(
+function renderSidebar(
+  props: Partial<SidebarProps> = {},
+  overrideSidebarContextProps: Partial<SidebarContextProps> = {}
+): RenderResult {
+  const sidebarContextProps: SidebarContextProps = {
+    initialSidebarState: PageConfig.SidebarState.AUTO,
+    ...overrideSidebarContextProps,
+  }
+
+  return renderWithContexts(
     <Sidebar
       endpoints={mockEndpointProp}
       chevronDownshift={0}
       hasElements
       {...props}
-    />
+    />,
+    // LibContext overrides
+    {},
+    // FormsContext overrides
+    {},
+    // SidebarContext overrides
+    {
+      ...sidebarContextProps,
+    }
   )
 }
 
 function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
   return {
-    initialSidebarState: PageConfig.SidebarState.AUTO,
     pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),
@@ -86,9 +105,10 @@ describe("Sidebar Component", () => {
   })
 
   it("should render expanded", () => {
-    renderSidebar({
-      initialSidebarState: PageConfig.SidebarState.EXPANDED,
-    })
+    renderSidebar(
+      {},
+      { initialSidebarState: PageConfig.SidebarState.EXPANDED }
+    )
 
     expect(screen.getByTestId("stSidebar")).toHaveAttribute(
       "aria-expanded",
@@ -97,9 +117,10 @@ describe("Sidebar Component", () => {
   })
 
   it("should render collapsed", () => {
-    renderSidebar({
-      initialSidebarState: PageConfig.SidebarState.COLLAPSED,
-    })
+    renderSidebar(
+      {},
+      { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
+    )
 
     expect(screen.getByTestId("stSidebar")).toHaveAttribute(
       "aria-expanded",
@@ -108,9 +129,10 @@ describe("Sidebar Component", () => {
   })
 
   it("should collapse on toggle if expanded", () => {
-    renderSidebar({
-      initialSidebarState: PageConfig.SidebarState.EXPANDED,
-    })
+    renderSidebar(
+      {},
+      { initialSidebarState: PageConfig.SidebarState.EXPANDED }
+    )
 
     expect(screen.getByTestId("stSidebar")).toHaveAttribute(
       "aria-expanded",
@@ -135,9 +157,10 @@ describe("Sidebar Component", () => {
   })
 
   it("should expand on toggle if collapsed", () => {
-    renderSidebar({
-      initialSidebarState: PageConfig.SidebarState.COLLAPSED,
-    })
+    renderSidebar(
+      {},
+      { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
+    )
 
     expect(screen.getByTestId("stSidebar")).toHaveAttribute(
       "aria-expanded",
@@ -219,10 +242,10 @@ describe("Sidebar Component", () => {
   })
 
   it("uses the default chevron spacing if chevronDownshift is zero", () => {
-    renderSidebar({
-      chevronDownshift: 0,
-      initialSidebarState: PageConfig.SidebarState.COLLAPSED,
-    })
+    renderSidebar(
+      { chevronDownshift: 0 },
+      { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
+    )
 
     expect(screen.getByTestId("stSidebarCollapsedControl")).toHaveStyle(
       "top: 1.25rem"
@@ -230,10 +253,10 @@ describe("Sidebar Component", () => {
   })
 
   it("uses the given chevron spacing if chevronDownshift is nonzero", () => {
-    renderSidebar({
-      chevronDownshift: 50,
-      initialSidebarState: PageConfig.SidebarState.COLLAPSED,
-    })
+    renderSidebar(
+      { chevronDownshift: 50 },
+      { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
+    )
 
     expect(screen.getByTestId("stSidebarCollapsedControl")).toHaveStyle(
       "top: 50px"
@@ -343,9 +366,10 @@ describe("Sidebar Component", () => {
         })
       )
       const sourceSpy = vi.spyOn(mockEndpointProp, "buildMediaURL")
-      renderSidebar({
-        initialSidebarState: PageConfig.SidebarState.COLLAPSED,
-      })
+      renderSidebar(
+        {},
+        { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
+      )
 
       const openSidebarContainer = screen.getByTestId(
         "stSidebarCollapsedControl"
@@ -369,9 +393,11 @@ describe("Sidebar Component", () => {
         })
       )
       const sourceSpy = vi.spyOn(mockEndpointProp, "buildMediaURL")
-      renderSidebar({
-        initialSidebarState: PageConfig.SidebarState.COLLAPSED,
-      })
+      renderSidebar(
+        {},
+        { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
+      )
+
       const openSidebarContainer = screen.getByTestId(
         "stSidebarCollapsedControl"
       )

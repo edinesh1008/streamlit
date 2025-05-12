@@ -16,17 +16,9 @@
 
 import { createContext } from "react"
 
-import { IAppPage, IGitInfo, Logo, PageConfig } from "@streamlit/protobuf"
+import { IAppPage, IGitInfo, Logo } from "@streamlit/protobuf"
 
 export interface AppContextProps {
-  /**
-   * The sidebar's default display state.
-   * Set from the PageConfig protobuf.
-   * Pulled from appContext in AppView as prop to ThemedSidebar.
-   * @see Sidebar
-   */
-  initialSidebarState: PageConfig.SidebarState
-
   /**
    * Part of URL construction for an app page in a multi-page app;
    * this is set from the host communication manager via host message.
@@ -113,7 +105,6 @@ export interface AppContextProps {
 }
 
 export const AppContext = createContext<AppContextProps | null>({
-  initialSidebarState: PageConfig.SidebarState.AUTO,
   pageLinkBaseUrl: "",
   currentPageScriptHash: "",
   onPageChange: () => {},

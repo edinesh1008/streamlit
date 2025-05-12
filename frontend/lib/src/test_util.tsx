@@ -24,6 +24,8 @@ import {
   RenderResult,
 } from "@testing-library/react"
 
+import { PageConfig } from "@streamlit/protobuf"
+
 /* eslint-enable */
 import ThemeProvider from "./components/core/ThemeProvider"
 import { baseTheme } from "./theme"
@@ -38,6 +40,10 @@ import { WindowDimensionsProvider } from "./components/shared/WindowDimensions/P
 import { createFormsData } from "./WidgetStateManager"
 import { ComponentRegistry } from "./components/widgets/CustomComponent/ComponentRegistry"
 import { mockEndpoints } from "./mocks/mocks"
+import {
+  SidebarContext,
+  SidebarContextProps,
+} from "./components/core/SidebarContext"
 
 export const TestAppWrapper: FC<PropsWithChildren> = ({ children }) => {
   return (
@@ -81,7 +87,8 @@ export function mockWindowLocation(hostname: string): void {
 export const renderWithContexts = (
   component: ReactElement,
   overrideLibContextProps: Partial<LibContextProps>,
-  overrideFormsContextProps?: Partial<FormsContextProps>
+  overrideFormsContextProps?: Partial<FormsContextProps>,
+  overrideSidebarContextProps?: Partial<SidebarContextProps>
 ): RenderResult => {
   const defaultLibContextProps = {
     isFullScreen: false,
@@ -106,6 +113,10 @@ export const renderWithContexts = (
     formsData: createFormsData(),
   }
 
+  const defaultSidebarContextProps = {
+    initialSidebarState: PageConfig.SidebarState.AUTO,
+  }
+
   return reactTestingLibraryRender(component, {
     wrapper: ({ children }) => (
       <ThemeProvider theme={baseTheme.emotion}>
@@ -113,14 +124,21 @@ export const renderWithContexts = (
           <LibContext.Provider
             value={{ ...defaultLibContextProps, ...overrideLibContextProps }}
           >
-            <FormsContext.Provider
+            <SidebarContext.Provider
               value={{
-                ...defaultFormsContextProps,
-                ...overrideFormsContextProps,
+                ...defaultSidebarContextProps,
+                ...overrideSidebarContextProps,
               }}
             >
-              {children}
-            </FormsContext.Provider>
+              <FormsContext.Provider
+                value={{
+                  ...defaultFormsContextProps,
+                  ...overrideFormsContextProps,
+                }}
+              >
+                {children}
+              </FormsContext.Provider>
+            </SidebarContext.Provider>
           </LibContext.Provider>
         </WindowDimensionsProvider>
       </ThemeProvider>

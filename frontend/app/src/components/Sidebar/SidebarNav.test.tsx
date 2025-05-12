@@ -21,7 +21,7 @@ import { screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 
 import { mockEndpoints, render } from "@streamlit/lib"
-import { IAppPage, PageConfig } from "@streamlit/protobuf"
+import { IAppPage } from "@streamlit/protobuf"
 import { AppContextProps } from "@streamlit/app/src/components/AppContext"
 import * as StreamlitContextProviderModule from "@streamlit/app/src/components/StreamlitContextProvider"
 
@@ -55,7 +55,6 @@ const getProps = (props: Partial<Props> = {}): Props => ({
 
 function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
   return {
-    initialSidebarState: PageConfig.SidebarState.AUTO,
     pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),

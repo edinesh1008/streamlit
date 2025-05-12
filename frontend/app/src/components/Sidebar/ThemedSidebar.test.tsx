@@ -22,6 +22,7 @@ import {
   emotionLightTheme,
   mockEndpoints,
   render,
+  renderWithContexts,
   ThemeConfig,
 } from "@streamlit/lib"
 import { CustomThemeConfig } from "@streamlit/protobuf"
@@ -41,13 +42,13 @@ function getProps(
 
 describe("ThemedSidebar Component", () => {
   it("should render without crashing", () => {
-    render(<ThemedSidebar {...getProps()} />)
+    renderWithContexts(<ThemedSidebar {...getProps()} />, {})
 
     expect(screen.getByTestId("stSidebar")).toBeInTheDocument()
   })
 
   it("should switch bgColor and secondaryBgColor", () => {
-    render(<ThemedSidebar {...getProps()} />)
+    renderWithContexts(<ThemedSidebar {...getProps()} />, {})
 
     expect(screen.getByTestId("stSidebar")).toHaveStyle({
       backgroundColor: emotionLightTheme.colors.secondaryBg,

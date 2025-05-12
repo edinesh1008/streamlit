@@ -43,8 +43,9 @@ import {
   isEmbed,
   IsSidebarContext,
   LibContext,
+  SidebarContext,
+  useRequiredContext,
 } from "@streamlit/lib"
-import { PageConfig } from "@streamlit/protobuf"
 import { localStorageAvailable } from "@streamlit/utils"
 import { shouldCollapse } from "@streamlit/app/src/components/Sidebar/utils"
 import { useAppContext } from "@streamlit/app/src/components/StreamlitContextProvider"
@@ -69,7 +70,6 @@ export interface SidebarProps {
   endpoints: StreamlitEndpoints
   chevronDownshift: number
   children?: ReactElement
-  initialSidebarState?: PageConfig.SidebarState
   hasElements: boolean
 }
 
@@ -100,10 +100,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   endpoints,
   chevronDownshift,
   children,
-  initialSidebarState,
   hasElements,
 }) => {
   const theme: EmotionTheme = useTheme()
+
+  const { activeTheme } = useContext(LibContext)
+  const { hideSidebarNav, appPages, appLogo } = useAppContext()
+  const { initialSidebarState } = useRequiredContext(SidebarContext)
+
   const mediumBreakpointPx = calculateMaxBreakpoint(theme.breakpoints.md)
   const sideBarInitiallyCollapsed = shouldCollapse(
     initialSidebarState,
@@ -126,9 +130,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [lastInnerWidth, setLastInnerWidth] = useState<number>(
     window ? window.innerWidth : Infinity
   )
-
-  const { activeTheme } = useContext(LibContext)
-  const { hideSidebarNav, appPages, appLogo } = useAppContext()
 
   useEffect(() => {
     setCollapsedSidebar(

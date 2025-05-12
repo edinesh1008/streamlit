@@ -25,6 +25,8 @@ import {
   LibContext,
   LibContextProps,
   ScriptRunState,
+  SidebarContext,
+  SidebarContextProps,
   ThemeConfig,
   useRequiredContext,
 } from "@streamlit/lib"
@@ -36,7 +38,6 @@ import {
 
 // Type for AppContext props
 type AppContextValues = {
-  initialSidebarState: PageConfig.SidebarState
   pageLinkBaseUrl: string
   currentPageScriptHash: string
   onPageChange: (pageScriptHash: string) => void
@@ -74,8 +75,15 @@ type FormsContextValues = {
   formsData: FormsData
 }
 
+type SidebarContextValues = {
+  initialSidebarState: PageConfig.SidebarState
+}
+
 export type StreamlitContextProviderProps = PropsWithChildren<
-  AppContextValues & LibContextValues & FormsContextValues
+  AppContextValues &
+    LibContextValues &
+    FormsContextValues &
+    SidebarContextValues
 >
 
 /**
@@ -84,7 +92,6 @@ export type StreamlitContextProviderProps = PropsWithChildren<
  */
 const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   // AppContext
-  initialSidebarState,
   pageLinkBaseUrl,
   navSections,
   appPages,
@@ -114,13 +121,14 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   onPageChange,
   // FormsContext
   formsData,
+  // SidebarContext
+  initialSidebarState,
   // Children passed through
   children,
 }: StreamlitContextProviderProps) => {
   // Memoized object for AppContext values
   const appContextProps = useMemo<AppContextProps>(
     () => ({
-      initialSidebarState,
       pageLinkBaseUrl,
       currentPageScriptHash,
       onPageChange,
@@ -134,7 +142,6 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
       gitInfo,
     }),
     [
-      initialSidebarState,
       pageLinkBaseUrl,
       currentPageScriptHash,
       onPageChange,
@@ -189,6 +196,14 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
     ]
   )
 
+  // Memoized object for SidebarContext values
+  const sidebarContextProps = useMemo<SidebarContextProps>(
+    () => ({
+      initialSidebarState,
+    }),
+    [initialSidebarState]
+  )
+
   // formsData is not a stable reference, so memoization does not help
   // eslint-disable-next-line @eslint-react/no-unstable-context-value
   const formsContextProps: FormsContextProps = {
@@ -198,9 +213,11 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   return (
     <AppContext.Provider value={appContextProps}>
       <LibContext.Provider value={libContextProps}>
-        <FormsContext.Provider value={formsContextProps}>
-          {children}
-        </FormsContext.Provider>
+        <SidebarContext.Provider value={sidebarContextProps}>
+          <FormsContext.Provider value={formsContextProps}>
+            {children}
+          </FormsContext.Provider>
+        </SidebarContext.Provider>
       </LibContext.Provider>
     </AppContext.Provider>
   )

@@ -119,8 +119,7 @@ function AppView(props: AppViewProps): ReactElement {
     return () => window.removeEventListener("hashchange", listener, false)
   }, [sendMessageToHost])
 
-  const { initialSidebarState, sidebarChevronDownshift, widgetsDisabled } =
-    useAppContext()
+  const { sidebarChevronDownshift, widgetsDisabled } = useAppContext()
 
   const { addScriptFinishedHandler, removeScriptFinishedHandler } =
     useContext(LibContext)
@@ -233,7 +232,6 @@ function AppView(props: AppViewProps): ReactElement {
         <Profiler id="Sidebar">
           <ThemedSidebar
             endpoints={endpoints}
-            initialSidebarState={initialSidebarState}
             hasElements={hasSidebarElements}
           >
             <StyledSidebarBlockContainer>

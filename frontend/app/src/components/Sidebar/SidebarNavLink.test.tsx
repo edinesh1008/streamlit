@@ -37,7 +37,6 @@ const getProps = (
 
 function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
   return {
-    initialSidebarState: 0,
     pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),

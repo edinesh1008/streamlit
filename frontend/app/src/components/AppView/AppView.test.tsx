@@ -27,6 +27,7 @@ import {
   mockEndpoints,
   mockSessionInfo,
   render,
+  renderWithContexts,
   WidgetStateManager,
 } from "@streamlit/lib"
 import {
@@ -34,7 +35,6 @@ import {
   Element,
   ForwardMsgMetadata,
   Logo as LogoProto,
-  PageConfig,
 } from "@streamlit/protobuf"
 import { AppContextProps } from "@streamlit/app/src/components/AppContext"
 import * as StreamlitContextProviderModule from "@streamlit/app/src/components/StreamlitContextProvider"
@@ -45,7 +45,6 @@ const FAKE_SCRIPT_HASH = "fake_script_hash"
 
 function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
   return {
-    initialSidebarState: PageConfig.SidebarState.AUTO,
     pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),
@@ -161,14 +160,14 @@ describe("AppView element", () => {
         new BlockNode(FAKE_SCRIPT_HASH, [main, sidebar, event, bottom])
       ),
     })
-    render(<AppView {...props} />)
+    renderWithContexts(<AppView {...props} />, {})
 
     const sidebarDOMElement = screen.queryByTestId("stSidebar")
     expect(sidebarDOMElement).toBeInTheDocument()
   })
 
   it("renders a sidebar when there are no elements but multiple pages", () => {
-    render(<AppView {...getProps({ multiplePages: true })} />)
+    renderWithContexts(<AppView {...getProps({ multiplePages: true })} />, {})
 
     const sidebarDOMElement = screen.queryByTestId("stSidebar")
     expect(sidebarDOMElement).toBeInTheDocument()
@@ -220,7 +219,7 @@ describe("AppView element", () => {
       ),
       multiplePages: true,
     })
-    render(<AppView {...props} />)
+    renderWithContexts(<AppView {...props} />, {})
 
     const sidebarDOMElement = screen.queryByTestId("stSidebar")
     expect(sidebarDOMElement).toBeInTheDocument()
@@ -353,7 +352,7 @@ describe("AppView element", () => {
         embedded: true,
       })
 
-      render(<AppView {...props} />)
+      renderWithContexts(<AppView {...props} />, {})
       const style = window.getComputedStyle(
         screen.getByTestId("stMainBlockContainer")
       )
