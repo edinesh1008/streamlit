@@ -115,7 +115,9 @@ export const renderWithContexts = (
 
   const defaultSidebarContextProps = {
     initialSidebarState: PageConfig.SidebarState.AUTO,
+    sidebarChevronDownshift: 0,
     pageLinkBaseUrl: "",
+    activeTheme: baseTheme,
   }
 
   return reactTestingLibraryRender(component, {

@@ -24,6 +24,7 @@ import {
 } from "@testing-library/react"
 
 import {
+  baseTheme,
   mockEndpoints,
   renderWithContexts,
   SidebarContextProps,
@@ -53,7 +54,9 @@ function renderSidebar(
 ): RenderResult {
   const sidebarContextProps: SidebarContextProps = {
     initialSidebarState: PageConfig.SidebarState.AUTO,
+    sidebarChevronDownshift: 0,
     pageLinkBaseUrl: "",
+    activeTheme: baseTheme,
     ...overrideSidebarContextProps,
   }
 

@@ -18,22 +18,42 @@ import { createContext } from "react"
 
 import { PageConfig } from "@streamlit/protobuf"
 
+import { ThemeConfig } from "~lib/theme"
 export interface SidebarContextProps {
   /**
    * The sidebar's default display state.
    * Set from the PageConfig protobuf.
-   * Pulled from appContext in AppView as prop to ThemedSidebar.
+   * Pulled from sidebarContext in Sidebar.
    * @see Sidebar
    */
   initialSidebarState: PageConfig.SidebarState
 
   /**
+   * If non-zero, this is the number of pixels that the sidebar's
+   * "chevron" icon is shifted. (If sidebarChevronDownshift is 0, then
+   * the current theme's spacing is used.);
+   * this is set from the host communication manager via host message.
+   * Pulled from sidebarContext in ThemedSidebar
+   * @see Sidebar (StyledSidebarOpenContainer)
+   */
+  sidebarChevronDownshift: number
+
+  /**
    * Part of URL construction for an app page in a multi-page app;
    * this is set from the host communication manager via host message.
-   * Pulled from appContext in SidebarNav
+   * Pulled from sidebarContext in SidebarNav
    * @see SidebarNav
    */
   pageLinkBaseUrl: string
+
+  /**
+   * The currently active app theme.
+   * Pulled from context in ThemedSidebar to create sidebar theme and pass to
+   * theme provider. Pulled in Sidebar for StyledOpenSidebarButton
+   * @see ThemedSidebar
+   * @see Sidebar
+   */
+  activeTheme: ThemeConfig
 }
 
 /**

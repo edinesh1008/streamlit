@@ -76,7 +76,9 @@ type FormsContextValues = {
 
 type SidebarContextValues = {
   initialSidebarState: PageConfig.SidebarState
+  sidebarChevronDownshift: number
   pageLinkBaseUrl: string
+  activeTheme: ThemeConfig
 }
 
 export type StreamlitContextProviderProps = PropsWithChildren<
@@ -95,7 +97,6 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   navSections,
   appPages,
   appLogo,
-  sidebarChevronDownshift,
   expandSidebarNav,
   hideSidebarNav,
   widgetsDisabled,
@@ -105,7 +106,6 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   setFullScreen,
   addScriptFinishedHandler,
   removeScriptFinishedHandler,
-  activeTheme,
   setTheme,
   availableThemes,
   addThemes,
@@ -115,14 +115,16 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   scriptRunState,
   scriptRunId,
   componentRegistry,
-  // Used in both contexts
-  currentPageScriptHash,
   onPageChange,
   // FormsContext
   formsData,
   // SidebarContext
   initialSidebarState,
   pageLinkBaseUrl,
+  // Used in multiple contexts
+  currentPageScriptHash,
+  sidebarChevronDownshift,
+  activeTheme,
   // Children passed through
   children,
 }: StreamlitContextProviderProps) => {
@@ -198,9 +200,16 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   const sidebarContextProps = useMemo<SidebarContextProps>(
     () => ({
       initialSidebarState,
+      sidebarChevronDownshift,
       pageLinkBaseUrl,
+      activeTheme,
     }),
-    [initialSidebarState, pageLinkBaseUrl]
+    [
+      initialSidebarState,
+      sidebarChevronDownshift,
+      pageLinkBaseUrl,
+      activeTheme,
+    ]
   )
 
   // formsData is not a stable reference, so memoization does not help

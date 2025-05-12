@@ -58,9 +58,8 @@ export interface AppContextProps {
    * "chevron" icon is shifted. (If sidebarChevronDownshift is 0, then
    * the current theme's spacing is used.);
    * this is set from the host communication manager via host message.
-   * Pulled from appContext in AppView & ThemedSidebar
+   * Pulled from appContext in AppView
    * @see AppView (StyledSidebarOpenContainer)
-   * @see Sidebar (StyledSidebarOpenContainer)
    */
   sidebarChevronDownshift: number
 

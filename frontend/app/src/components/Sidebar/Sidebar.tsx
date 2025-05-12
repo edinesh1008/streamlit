@@ -17,7 +17,6 @@
 import React, {
   ReactElement,
   useCallback,
-  useContext,
   useEffect,
   useRef,
   useState,
@@ -42,7 +41,6 @@ import {
   isColoredLineDisplayed,
   isEmbed,
   IsSidebarContext,
-  LibContext,
   SidebarContext,
   useRequiredContext,
 } from "@streamlit/lib"
@@ -104,9 +102,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const theme: EmotionTheme = useTheme()
 
-  const { activeTheme } = useContext(LibContext)
   const { hideSidebarNav, appPages, appLogo } = useAppContext()
-  const { initialSidebarState } = useRequiredContext(SidebarContext)
+  const { initialSidebarState, activeTheme } =
+    useRequiredContext(SidebarContext)
 
   const mediumBreakpointPx = calculateMaxBreakpoint(theme.breakpoints.md)
   const sideBarInitiallyCollapsed = shouldCollapse(
@@ -295,7 +293,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {renderLogo(true)}
         <StyledOpenSidebarButton
           theme={
-            // Use the active theme from the LibContext to use the main theme
+            // Use the active theme from the SidebarContext to use the main theme
             // for styling the open button since otherwise it would use the colors
             // of the sidebar theme (which is not what we want here).
             activeTheme.emotion
