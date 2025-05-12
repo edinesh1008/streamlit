@@ -115,6 +115,7 @@ export const renderWithContexts = (
 
   const defaultSidebarContextProps = {
     initialSidebarState: PageConfig.SidebarState.AUTO,
+    pageLinkBaseUrl: "",
   }
 
   return reactTestingLibraryRender(component, {

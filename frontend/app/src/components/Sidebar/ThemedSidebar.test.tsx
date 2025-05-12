@@ -21,7 +21,6 @@ import { screen } from "@testing-library/react"
 import {
   emotionLightTheme,
   mockEndpoints,
-  render,
   renderWithContexts,
   ThemeConfig,
 } from "@streamlit/lib"

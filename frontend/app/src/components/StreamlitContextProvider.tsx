@@ -38,7 +38,6 @@ import {
 
 // Type for AppContext props
 type AppContextValues = {
-  pageLinkBaseUrl: string
   currentPageScriptHash: string
   onPageChange: (pageScriptHash: string) => void
   navSections: string[]
@@ -77,6 +76,7 @@ type FormsContextValues = {
 
 type SidebarContextValues = {
   initialSidebarState: PageConfig.SidebarState
+  pageLinkBaseUrl: string
 }
 
 export type StreamlitContextProviderProps = PropsWithChildren<
@@ -92,7 +92,6 @@ export type StreamlitContextProviderProps = PropsWithChildren<
  */
 const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   // AppContext
-  pageLinkBaseUrl,
   navSections,
   appPages,
   appLogo,
@@ -123,13 +122,13 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   formsData,
   // SidebarContext
   initialSidebarState,
+  pageLinkBaseUrl,
   // Children passed through
   children,
 }: StreamlitContextProviderProps) => {
   // Memoized object for AppContext values
   const appContextProps = useMemo<AppContextProps>(
     () => ({
-      pageLinkBaseUrl,
       currentPageScriptHash,
       onPageChange,
       navSections,
@@ -142,7 +141,6 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
       gitInfo,
     }),
     [
-      pageLinkBaseUrl,
       currentPageScriptHash,
       onPageChange,
       navSections,
@@ -200,8 +198,9 @@ const StreamlitContextProvider: React.FC<StreamlitContextProviderProps> = ({
   const sidebarContextProps = useMemo<SidebarContextProps>(
     () => ({
       initialSidebarState,
+      pageLinkBaseUrl,
     }),
-    [initialSidebarState]
+    [initialSidebarState, pageLinkBaseUrl]
   )
 
   // formsData is not a stable reference, so memoization does not help

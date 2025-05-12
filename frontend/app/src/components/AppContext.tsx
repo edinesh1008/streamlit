@@ -20,14 +20,6 @@ import { IAppPage, IGitInfo, Logo } from "@streamlit/protobuf"
 
 export interface AppContextProps {
   /**
-   * Part of URL construction for an app page in a multi-page app;
-   * this is set from the host communication manager via host message.
-   * Pulled from appContext in SidebarNav
-   * @see SidebarNav
-   */
-  pageLinkBaseUrl: string
-
-  /**
    * The current page of a multi-page app.
    * Pulled from appContext in SidebarNavLink
    * @see SidebarNavLink
@@ -105,7 +97,6 @@ export interface AppContextProps {
 }
 
 export const AppContext = createContext<AppContextProps | null>({
-  pageLinkBaseUrl: "",
   currentPageScriptHash: "",
   onPageChange: () => {},
   navSections: [],

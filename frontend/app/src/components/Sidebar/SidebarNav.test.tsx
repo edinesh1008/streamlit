@@ -17,10 +17,14 @@
 import React from "react"
 
 import * as reactDeviceDetect from "react-device-detect"
-import { screen } from "@testing-library/react"
+import { RenderResult, screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 
-import { mockEndpoints, render } from "@streamlit/lib"
+import {
+  mockEndpoints,
+  renderWithContexts,
+  SidebarContextProps,
+} from "@streamlit/lib"
 import { IAppPage } from "@streamlit/protobuf"
 import { AppContextProps } from "@streamlit/app/src/components/AppContext"
 import * as StreamlitContextProviderModule from "@streamlit/app/src/components/StreamlitContextProvider"
@@ -33,7 +37,7 @@ vi.mock("~lib/util/Hooks", async () => ({
   useIsOverflowing: vi.fn(),
 }))
 
-const getProps = (props: Partial<Props> = {}): Props => ({
+const getProps = (propsOverride: Partial<Props> = {}): Props => ({
   appPages: [
     {
       pageScriptHash: "main_page_hash",
@@ -50,12 +54,13 @@ const getProps = (props: Partial<Props> = {}): Props => ({
   collapseSidebar: vi.fn(),
   hasSidebarElements: false,
   endpoints: mockEndpoints(),
-  ...props,
+  ...propsOverride,
 })
 
-function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
+function getAppContextOutput(
+  context: Partial<AppContextProps>
+): AppContextProps {
   return {
-    pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),
     navSections: [],
@@ -70,10 +75,27 @@ function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
   }
 }
 
+const renderSidebarNav = (
+  propsOverride: Partial<Props> = {},
+  sidebarContextOverride: Partial<SidebarContextProps> = {}
+): RenderResult => {
+  const props = getProps(propsOverride)
+
+  return renderWithContexts(
+    <SidebarNav {...props} />,
+    // LibContext overrides
+    {},
+    // FormsContext overrides
+    {},
+    // SidebarContext overrides
+    { ...sidebarContextOverride }
+  )
+}
+
 describe("SidebarNav", () => {
   beforeEach(() => {
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getContextOutput({})
+      getAppContextOutput({})
     )
   })
 
@@ -84,7 +106,7 @@ describe("SidebarNav", () => {
   })
 
   it("replaces underscores with spaces in pageName", () => {
-    render(<SidebarNav {...getProps()} />)
+    renderSidebarNav()
 
     expect(screen.getByText("streamlit app")).toBeInTheDocument()
     expect(screen.getByText("my other page")).toBeInTheDocument()
@@ -113,7 +135,7 @@ describe("SidebarNav", () => {
         })
       const props = getProps({ endpoints: mockEndpoints({ buildAppPageURL }) })
 
-      render(<SidebarNav {...props} />)
+      renderSidebarNav(props)
 
       const links = screen.getAllByRole("link")
       expect(links).toHaveLength(2)
@@ -130,40 +152,36 @@ describe("SidebarNav", () => {
   })
 
   it("does not add separator below if there are no sidebar elements", () => {
-    render(<SidebarNav {...getProps({ hasSidebarElements: false })} />)
+    renderSidebarNav({ hasSidebarElements: false })
     expect(
       screen.queryByTestId("stSidebarNavSeparator")
     ).not.toBeInTheDocument()
   })
 
   it("adds separator below if the sidebar also has elements", () => {
-    render(<SidebarNav {...getProps({ hasSidebarElements: true })} />)
+    renderSidebarNav({ hasSidebarElements: true })
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
   })
 
   it("renders View more button when there are 13 elements", () => {
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 12 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 12 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
     expect(screen.getByTestId("stSidebarNavViewButton")).toHaveTextContent(
@@ -174,30 +192,26 @@ describe("SidebarNav", () => {
   it("does not render View less button when explicitly asked to expand", () => {
     // Update the mock to return a context with widgetsDisabled set to true
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getContextOutput({ expandSidebarNav: true })
+      getAppContextOutput({ expandSidebarNav: true })
     )
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 12 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 12 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
     expect(
@@ -206,28 +220,24 @@ describe("SidebarNav", () => {
   })
 
   it("renders View more button when there are more than 13 elements", () => {
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 13 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 13 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
     expect(screen.getByTestId("stSidebarNavViewButton")).toHaveTextContent(
@@ -236,28 +246,24 @@ describe("SidebarNav", () => {
   })
 
   it("does not render View more button when there are < 13 elements", () => {
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 11 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 11 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     expect(
       screen.queryByTestId("stSidebarNavViewButton")
@@ -267,28 +273,24 @@ describe("SidebarNav", () => {
 
   it("renders View less button when expanded", async () => {
     const user = userEvent.setup()
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 13 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 13 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     // Click on the separator to expand the nav component.
     await user.click(screen.getByTestId("stSidebarNavViewButton"))
@@ -300,28 +302,24 @@ describe("SidebarNav", () => {
   it("renders View less button when user prefers expansion", () => {
     window.localStorage.setItem("sidebarNavState", "expanded")
 
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 13 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 13 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     const viewLessButton = screen.getByText("View less")
     expect(viewLessButton).toBeInTheDocument()
@@ -330,28 +328,24 @@ describe("SidebarNav", () => {
   })
 
   it("is unexpanded by default, displaying 10 links when > 12 pages", () => {
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 13 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 13 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     const navLinks = screen.getAllByTestId("stSidebarNavLink")
     expect(navLinks).toHaveLength(10)
@@ -359,28 +353,24 @@ describe("SidebarNav", () => {
 
   it("toggles to expanded and back when the View more/less buttons are clicked", async () => {
     const user = userEvent.setup()
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-            },
-          ].concat(
-            Array.from({ length: 13 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+        },
+      ].concat(
+        Array.from({ length: 13 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+        }))
+      ),
+    })
 
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
     expect(screen.getAllByTestId("stSidebarNavLink")).toHaveLength(10)
@@ -396,33 +386,29 @@ describe("SidebarNav", () => {
   it("displays partial sections", async () => {
     // Update the mock to return a context with navSections
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getContextOutput({ navSections: ["section 1", "section 2"] })
+      getAppContextOutput({ navSections: ["section 1", "section 2"] })
     )
     const user = userEvent.setup()
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-              sectionHeader: "section 1",
-            },
-          ].concat(
-            Array.from({ length: 13 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-              sectionHeader: `section ${(index % 2) + 1}`,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+          sectionHeader: "section 1",
+        },
+      ].concat(
+        Array.from({ length: 13 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+          sectionHeader: `section ${(index % 2) + 1}`,
+        }))
+      ),
+    })
 
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
     expect(screen.getAllByTestId("stSidebarNavLink")).toHaveLength(10)
@@ -442,37 +428,33 @@ describe("SidebarNav", () => {
   it("will not display a section if no pages in it are visible", async () => {
     // Update the mock to return a context with navSections
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getContextOutput({
+      getAppContextOutput({
         navSections: ["section 1", "section 2", "section 3"],
       })
     )
     const user = userEvent.setup()
     // First section has 6 pages, second section has 4 pages, third section has 4 pages
     // Since 6+4 = 10, only the first two sections should be visible
-    render(
-      <SidebarNav
-        {...getProps({
-          hasSidebarElements: true,
-          appPages: [
-            {
-              pageScriptHash: "main_page_hash",
-              pageName: "streamlit app",
-              urlPathname: "streamlit_app",
-              isDefault: true,
-              sectionHeader: "section 1",
-            },
-          ].concat(
-            Array.from({ length: 13 }, (_, index) => ({
-              pageScriptHash: `other_page_hash${index}`,
-              pageName: `my other page${index}`,
-              urlPathname: `my_other_page${index}`,
-              isDefault: false,
-              sectionHeader: `section ${(index % 3) + 1}`,
-            }))
-          ),
-        })}
-      />
-    )
+    renderSidebarNav({
+      hasSidebarElements: true,
+      appPages: [
+        {
+          pageScriptHash: "main_page_hash",
+          pageName: "streamlit app",
+          urlPathname: "streamlit_app",
+          isDefault: true,
+          sectionHeader: "section 1",
+        },
+      ].concat(
+        Array.from({ length: 13 }, (_, index) => ({
+          pageScriptHash: `other_page_hash${index}`,
+          pageName: `my other page${index}`,
+          urlPathname: `my_other_page${index}`,
+          isDefault: false,
+          sectionHeader: `section ${(index % 3) + 1}`,
+        }))
+      ),
+    })
 
     expect(screen.getByTestId("stSidebarNavSeparator")).toBeInTheDocument()
     expect(screen.getAllByTestId("stSidebarNavLink")).toHaveLength(10)
@@ -492,11 +474,12 @@ describe("SidebarNav", () => {
   it("passes the pageScriptHash to onPageChange if a link is clicked", async () => {
     const onPageChange = vi.fn()
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getContextOutput({ onPageChange })
+      getAppContextOutput({ onPageChange })
     )
     const user = userEvent.setup()
+
     const props = getProps()
-    render(<SidebarNav {...props} />)
+    renderSidebarNav(props)
 
     const links = screen.getAllByTestId("stSidebarNavLink")
     await user.click(links[1])
@@ -509,14 +492,14 @@ describe("SidebarNav", () => {
   it("collapses sidebar on page change when on mobile", async () => {
     const onPageChange = vi.fn()
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getContextOutput({ onPageChange })
+      getAppContextOutput({ onPageChange })
     )
     const user = userEvent.setup()
     // @ts-expect-error
     reactDeviceDetect.isMobile = true
 
     const props = getProps()
-    render(<SidebarNav {...props} />)
+    renderSidebarNav(props)
 
     const links = screen.getAllByTestId("stSidebarNavLink")
     await user.click(links[1])
@@ -527,14 +510,12 @@ describe("SidebarNav", () => {
   })
 
   it("handles default and custom page icons", () => {
-    const props = getProps({
+    renderSidebarNav({
       appPages: [
         { pageName: "streamlit_app" },
         { pageName: "my_other_page", icon: "🦈" },
       ],
     })
-
-    render(<SidebarNav {...props} />)
 
     const links = screen.getAllByTestId("stSidebarNavLink")
     expect(links).toHaveLength(2)
@@ -544,10 +525,9 @@ describe("SidebarNav", () => {
   it("indicates the current page as active", () => {
     // Update the mock to return a context with widgetsDisabled set to true
     vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
-      getContextOutput({ currentPageScriptHash: "other_page_hash" })
+      getAppContextOutput({ currentPageScriptHash: "other_page_hash" })
     )
-    const props = getProps()
-    render(<SidebarNav {...props} />)
+    renderSidebarNav()
 
     const links = screen.getAllByTestId("stSidebarNavLink")
     expect(links).toHaveLength(2)

@@ -26,6 +26,14 @@ export interface SidebarContextProps {
    * @see Sidebar
    */
   initialSidebarState: PageConfig.SidebarState
+
+  /**
+   * Part of URL construction for an app page in a multi-page app;
+   * this is set from the host communication manager via host message.
+   * Pulled from appContext in SidebarNav
+   * @see SidebarNav
+   */
+  pageLinkBaseUrl: string
 }
 
 /**

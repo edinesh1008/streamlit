@@ -28,6 +28,7 @@ import groupBy from "lodash/groupBy"
 // isMobile field sanely.
 import * as reactDeviceDetect from "react-device-detect"
 
+import { SidebarContext, useRequiredContext } from "@streamlit/lib"
 import { localStorageAvailable } from "@streamlit/utils"
 import { StreamlitEndpoints } from "@streamlit/connection"
 import { IAppPage } from "@streamlit/protobuf"
@@ -135,12 +136,13 @@ const SidebarNav = ({
 }: Props): ReactElement | null => {
   const [expanded, setExpanded] = useState(false)
   const {
-    pageLinkBaseUrl,
     expandSidebarNav,
     currentPageScriptHash,
     onPageChange,
     navSections,
   } = useAppContext()
+
+  const { pageLinkBaseUrl } = useRequiredContext(SidebarContext)
 
   useEffect(() => {
     const cachedSidebarNavExpanded =

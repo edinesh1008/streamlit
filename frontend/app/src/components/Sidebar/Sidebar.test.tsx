@@ -53,6 +53,7 @@ function renderSidebar(
 ): RenderResult {
   const sidebarContextProps: SidebarContextProps = {
     initialSidebarState: PageConfig.SidebarState.AUTO,
+    pageLinkBaseUrl: "",
     ...overrideSidebarContextProps,
   }
 
@@ -76,7 +77,6 @@ function renderSidebar(
 
 function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
   return {
-    pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),
     navSections: [],
