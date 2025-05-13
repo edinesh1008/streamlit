@@ -61,12 +61,7 @@ function renderSidebar(
   }
 
   return renderWithContexts(
-    <Sidebar
-      endpoints={mockEndpointProp}
-      chevronDownshift={0}
-      hasElements
-      {...props}
-    />,
+    <Sidebar endpoints={mockEndpointProp} hasElements {...props} />,
     // LibContext overrides
     {},
     // FormsContext overrides
@@ -246,7 +241,7 @@ describe("Sidebar Component", () => {
 
   it("uses the default chevron spacing if chevronDownshift is zero", () => {
     renderSidebar(
-      { chevronDownshift: 0 },
+      {},
       { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
     )
 
@@ -257,8 +252,11 @@ describe("Sidebar Component", () => {
 
   it("uses the given chevron spacing if chevronDownshift is nonzero", () => {
     renderSidebar(
-      { chevronDownshift: 50 },
-      { initialSidebarState: PageConfig.SidebarState.COLLAPSED }
+      {},
+      {
+        initialSidebarState: PageConfig.SidebarState.COLLAPSED,
+        sidebarChevronDownshift: 50,
+      }
     )
 
     expect(screen.getByTestId("stSidebarCollapsedControl")).toHaveStyle(

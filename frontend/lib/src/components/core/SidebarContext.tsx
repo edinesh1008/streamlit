@@ -31,9 +31,9 @@ export interface SidebarContextProps {
   /**
    * If non-zero, this is the number of pixels that the sidebar's
    * "chevron" icon is shifted. (If sidebarChevronDownshift is 0, then
-   * the current theme's spacing is used.);
-   * this is set from the host communication manager via host message.
-   * Pulled from sidebarContext in ThemedSidebar
+   * the current theme's spacing is used.)
+   * Set from the host communication manager via host message.
+   * Pulled from sidebarContext in Sidebar
    * @see Sidebar (StyledSidebarOpenContainer)
    */
   sidebarChevronDownshift: number

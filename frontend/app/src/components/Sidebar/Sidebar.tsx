@@ -66,7 +66,6 @@ import SidebarNav from "./SidebarNav"
 
 export interface SidebarProps {
   endpoints: StreamlitEndpoints
-  chevronDownshift: number
   children?: ReactElement
   hasElements: boolean
 }
@@ -96,15 +95,17 @@ function headerDecorationVisible(): boolean {
 
 const Sidebar: React.FC<SidebarProps> = ({
   endpoints,
-  chevronDownshift,
   children,
   hasElements,
 }) => {
   const theme: EmotionTheme = useTheme()
 
   const { hideSidebarNav, appPages, appLogo } = useAppContext()
-  const { initialSidebarState, activeTheme } =
-    useRequiredContext(SidebarContext)
+  const {
+    initialSidebarState,
+    activeTheme,
+    sidebarChevronDownshift: chevronDownshift,
+  } = useRequiredContext(SidebarContext)
 
   const mediumBreakpointPx = calculateMaxBreakpoint(theme.breakpoints.md)
   const sideBarInitiallyCollapsed = shouldCollapse(
@@ -283,7 +284,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   // If header decoration visible, move sidebar down so decoration doesn't go below it
   const sidebarAdjust = !isEmbedded && headerDecorationVisible()
 
-  // The tabindex is required to support scrolling by arrow keys.
   return (
     <>
       <StyledSidebarOpenContainer

@@ -74,8 +74,7 @@ const ThemedSidebar = ({
   children,
   ...sidebarProps
 }: Omit<SidebarProps, "chevronDownshift">): ReactElement => {
-  const { activeTheme, sidebarChevronDownshift: chevronDownshift } =
-    useRequiredContext(SidebarContext)
+  const { activeTheme } = useRequiredContext(SidebarContext)
   const sidebarTheme = createSidebarTheme(activeTheme)
 
   return (
@@ -83,9 +82,7 @@ const ThemedSidebar = ({
       theme={sidebarTheme.emotion}
       baseuiTheme={sidebarTheme.basewebTheme}
     >
-      <Sidebar {...sidebarProps} chevronDownshift={chevronDownshift}>
-        {children}
-      </Sidebar>
+      <Sidebar {...sidebarProps}>{children}</Sidebar>
     </ThemeProvider>
   )
 }
