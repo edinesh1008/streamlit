@@ -17,9 +17,9 @@
 import React, { memo, ReactElement, useCallback } from "react"
 
 import {
-  createElement,
-  Prism as SyntaxHighlighter,
-} from "react-syntax-highlighter"
+  SyntaxHighlighter,
+  useLazyCreateElement,
+} from "~lib/components/shared/LazySyntaxHighlighter"
 
 import CopyButton from "./CopyButton"
 import {
@@ -43,11 +43,20 @@ function StreamlitSyntaxHighlighter({
   height,
   children,
 }: Readonly<StreamlitSyntaxHighlighterProps>): ReactElement {
+  const needsCustomRenderer = showLineNumbers && wrapLines
+
+  const createElement = useLazyCreateElement()
+
   const renderer = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
-    ({ rows, stylesheet, useInlineStyles }: any): any =>
+    ({ rows, stylesheet, useInlineStyles }: any): any => {
+      if (!createElement) {
+        // This should ideally not be reached if the component doesn't render
+        // until createElement is set, but it's a safe fallback.
+        return null
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
-      rows.map((row: any, index: any): any => {
+      return rows.map((row: any, index: any): any => {
         const rowChildren = row.children
 
         if (rowChildren) {
@@ -72,9 +81,15 @@ function StreamlitSyntaxHighlighter({
           useInlineStyles,
           key: index,
         })
-      }),
-    []
+      })
+    },
+    [createElement]
   )
+
+  if (needsCustomRenderer && !createElement) {
+    // Wait for createElement to be loaded before rendering if we need it
+    return <></>
+  }
 
   return (
     <StyledCodeBlock className="stCode" data-testid="stCode">
@@ -93,7 +108,7 @@ function StreamlitSyntaxHighlighter({
           // using a renderer that wraps individual lines of code in their
           // own spans.
           // https://github.com/react-syntax-highlighter/react-syntax-highlighter/issues/376
-          renderer={showLineNumbers && wrapLines ? renderer : undefined}
+          renderer={needsCustomRenderer ? renderer : undefined}
         >
           {children}
         </SyntaxHighlighter>

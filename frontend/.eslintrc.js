@@ -248,6 +248,11 @@ module.exports = {
             name: "timezone-mock",
             message: "Please use the withTimezones test harness instead",
           },
+          {
+            name: "react-syntax-highlighter",
+            message:
+              "Please use the LazySyntaxHighlighter import instead of the direct import of react-syntax-highlighter for bundle size reasons.",
+          },
         ],
       },
     ],
