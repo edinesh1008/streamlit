@@ -18,7 +18,7 @@ import React, { ReactElement } from "react"
 
 import ReactMarkdown from "react-markdown"
 // eslint-disable-next-line testing-library/no-manual-cleanup
-import { cleanup, screen } from "@testing-library/react"
+import { cleanup, screen, waitFor } from "@testing-library/react"
 import { transparentize } from "color2k"
 
 import { render } from "~lib/test_util"
@@ -535,8 +535,12 @@ describe("CustomCodeTag Element", () => {
     const props = getCustomCodeTagProps({ className: "language-plaintext" })
     render(<CustomCodeTag {...props} />)
 
-    const stCode = await screen.findByTestId("stCode")
-    expect(stCode.innerHTML.indexOf(`class="language-plaintext"`)).not.toBe(-1)
+    await waitFor(async () => {
+      const stCode = await screen.findByTestId("stCode")
+      expect(stCode.innerHTML.indexOf(`class="language-plaintext"`)).not.toBe(
+        -1
+      )
+    })
   })
 
   it("should render copy button when code block has content", async () => {
