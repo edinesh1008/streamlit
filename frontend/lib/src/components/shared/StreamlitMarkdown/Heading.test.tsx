@@ -39,11 +39,11 @@ const getHeadingProps = (
 })
 
 describe("Heading", () => {
-  it("renders properly after a new line", () => {
+  it("renders properly after a new line", async () => {
     const props = getHeadingProps()
     render(<Heading {...props} />)
 
-    const heading = screen.getByRole("heading")
+    const heading = await screen.findByRole("heading")
     expect(heading).toHaveTextContent("hello world")
     expect(heading).not.toHaveTextContent("this is a new line")
     expect(screen.getByText("this is a new line")).toBeInTheDocument()
@@ -162,7 +162,7 @@ describe("Heading", () => {
     expect(screen.queryByRole("blockquote")).not.toBeInTheDocument()
   })
 
-  it("does not render tables", () => {
+  it("does not render tables", async () => {
     const props = getHeadingProps({
       body: `| Syntax | Description |
            | ----------- | ----------- |
@@ -171,7 +171,7 @@ describe("Heading", () => {
     })
     render(<Heading {...props} />)
 
-    expect(screen.getByTestId("stMarkdownContainer")).toHaveTextContent(
+    expect(await screen.findByTestId("stMarkdownContainer")).toHaveTextContent(
       "| Syntax | Description || ----------- | ----------- | | Header | Title | | Paragraph | Text |"
     )
     expect(screen.getByRole("heading")).toHaveTextContent(
@@ -188,12 +188,12 @@ describe("Heading", () => {
     expect(screen.queryByTestId("stHeadingDivider")).not.toBeInTheDocument()
   })
 
-  it("renders a divider with given color", () => {
+  it("renders a divider with given color", async () => {
     // correct divider color mapping handled in Block.tsx
     const props = getHeadingProps({ divider: "#0068c9" })
     render(<Heading {...props} />)
 
-    const divider = screen.getByTestId("stHeadingDivider")
+    const divider = await screen.findByTestId("stHeadingDivider")
     expect(divider).toBeInTheDocument()
     expect(divider).toHaveStyle("background-color: #0068c9")
   })

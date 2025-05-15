@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { memo, ReactElement, useCallback } from "react"
+import React, { memo, ReactElement, Suspense, useCallback } from "react"
 
 import {
   SyntaxHighlighter,
@@ -94,24 +94,26 @@ function StreamlitSyntaxHighlighter({
   return (
     <StyledCodeBlock className="stCode" data-testid="stCode">
       <StyledPre height={height}>
-        <SyntaxHighlighter
-          language={language}
-          PreTag="div"
-          customStyle={{ backgroundColor: "transparent" }}
-          // We set an empty style object here because we have our own CSS styling that
-          // reacts on our theme.
-          style={{}}
-          lineNumberStyle={{}}
-          showLineNumbers={showLineNumbers}
-          wrapLongLines={wrapLines}
-          // Fix bug with wrapLongLines+showLineNumbers (see link below) by
-          // using a renderer that wraps individual lines of code in their
-          // own spans.
-          // https://github.com/react-syntax-highlighter/react-syntax-highlighter/issues/376
-          renderer={needsCustomRenderer ? renderer : undefined}
-        >
-          {children}
-        </SyntaxHighlighter>
+        <Suspense fallback={<></>}>
+          <SyntaxHighlighter
+            language={language}
+            PreTag="div"
+            customStyle={{ backgroundColor: "transparent" }}
+            // We set an empty style object here because we have our own CSS styling that
+            // reacts on our theme.
+            style={{}}
+            lineNumberStyle={{}}
+            showLineNumbers={showLineNumbers}
+            wrapLongLines={wrapLines}
+            // Fix bug with wrapLongLines+showLineNumbers (see link below) by
+            // using a renderer that wraps individual lines of code in their
+            // own spans.
+            // https://github.com/react-syntax-highlighter/react-syntax-highlighter/issues/376
+            renderer={needsCustomRenderer ? renderer : undefined}
+          >
+            {children}
+          </SyntaxHighlighter>
+        </Suspense>
       </StyledPre>
       {typeof children === "string" && children.trim() !== "" && (
         <StyledCopyButtonContainer>

@@ -523,28 +523,28 @@ st.write("Hello")
 })
 
 describe("CustomCodeTag Element", () => {
-  it("should render without crashing", () => {
+  it("should render without crashing", async () => {
     const props = getCustomCodeTagProps()
     render(<CustomCodeTag {...props} />)
 
-    const stCode = screen.getByTestId("stCode")
+    const stCode = await screen.findByTestId("stCode")
     expect(stCode).toBeInTheDocument()
   })
 
-  it("should render as plaintext", () => {
+  it("should render as plaintext", async () => {
     const props = getCustomCodeTagProps({ className: "language-plaintext" })
     render(<CustomCodeTag {...props} />)
 
-    const stCode = screen.getByTestId("stCode")
+    const stCode = await screen.findByTestId("stCode")
     expect(stCode.innerHTML.indexOf(`class="language-plaintext"`)).not.toBe(-1)
   })
 
-  it("should render copy button when code block has content", () => {
+  it("should render copy button when code block has content", async () => {
     const props = getCustomCodeTagProps({
       children: ["i am not empty"],
     })
     render(<CustomCodeTag {...props} />)
-    const copyButton = screen.getByTitle("Copy to clipboard")
+    const copyButton = await screen.findByTitle("Copy to clipboard")
 
     expect(copyButton).not.toBeNull()
   })
