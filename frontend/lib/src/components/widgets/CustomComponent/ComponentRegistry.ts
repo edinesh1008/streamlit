@@ -91,6 +91,7 @@ export class ComponentRegistry {
       source,
       customComponentName
     )
+    console.log("timeout error")
   }
 
   /** Return a URL for fetching a resource for the given component. */

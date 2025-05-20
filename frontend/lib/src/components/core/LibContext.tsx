@@ -21,6 +21,8 @@ import { ScriptRunState } from "~lib/ScriptRunState"
 import { ComponentRegistry } from "~lib/components/widgets/CustomComponent"
 import { baseTheme, ThemeConfig } from "~lib/theme"
 
+import { CustomerRendererMap } from "./ComponentAppRenderer"
+
 /**
  * The lib config contains various configurations that the host platform can
  * use to configure streamlit-lib frontend behavior. This should to be treated as part of the public
@@ -136,6 +138,12 @@ export interface LibContextProps {
    * @see ComponentInstance
    */
   componentRegistry: ComponentRegistry
+
+  /**
+   * Allows the hosting surface to override Streamlit's built in component's
+   * react components, if it desires.
+   */
+  customRendererMap: CustomerRendererMap
 }
 
 const noOpEndpoints: StreamlitEndpoints = {
@@ -169,4 +177,5 @@ export const LibContext = createContext<LibContextProps>({
   scriptRunId: "",
   // This should be overwritten
   componentRegistry: new ComponentRegistry(noOpEndpoints),
+  customRendererMap: new Map(),
 })

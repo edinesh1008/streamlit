@@ -89,6 +89,7 @@ import Heading from "~lib/components/shared/StreamlitMarkdown/Heading"
 import { LibContext } from "~lib/components/core/LibContext"
 import { getElementId } from "~lib/util/utils"
 import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
+import { CustomerRendererMap } from "src/components/core/ComponentAppRenderer"
 
 import {
   BaseBlockProps,
@@ -171,6 +172,7 @@ export interface ElementNodeRendererProps extends BaseBlockProps {
 
 interface RawElementNodeRendererProps extends ElementNodeRendererProps {
   isStale: boolean
+  customRendererMap?: CustomerRendererMap
 }
 
 function hideIfStale(isStale: boolean, component: ReactElement): ReactElement {
@@ -181,7 +183,7 @@ function hideIfStale(isStale: boolean, component: ReactElement): ReactElement {
 const RawElementNodeRenderer = (
   props: RawElementNodeRendererProps
 ): ReactElement => {
-  const { node } = props
+  const { node, customRendererMap } = props
 
   if (!node) {
     throw new Error("ElementNode not found.")
@@ -196,6 +198,16 @@ const RawElementNodeRenderer = (
     widgetMgr: props.widgetMgr,
     disabled: props.widgetsDisabled,
     fragmentId: node.fragmentId,
+  }
+
+  const renderer = customRendererMap?.get(node.element.type ?? "")
+  if (renderer) {
+    return renderer({
+      node,
+      ...widgetProps,
+      disableFullscreenMode: props.disableFullscreenMode ?? false,
+      fragmentId: node.fragmentId ?? "", // Ensure fragmentId is always a string
+    })
   }
 
   switch (node.element.type) {
@@ -689,8 +701,13 @@ const RawElementNodeRenderer = (
 const ElementNodeRenderer = (
   props: ElementNodeRendererProps
 ): ReactElement => {
-  const { isFullScreen, fragmentIdsThisRun, scriptRunState, scriptRunId } =
-    useContext(LibContext)
+  const {
+    isFullScreen,
+    fragmentIdsThisRun,
+    scriptRunState,
+    scriptRunId,
+    customRendererMap,
+  } = useContext(LibContext)
   const { node } = props
 
   const elementType = node.element.type || ""
@@ -738,7 +755,11 @@ const ElementNodeRenderer = (
               />
             }
           >
-            <RawElementNodeRenderer {...props} isStale={isStale} />
+            <RawElementNodeRenderer
+              {...props}
+              customRendererMap={customRendererMap}
+              isStale={isStale}
+            />
           </Suspense>
         </ErrorBoundary>
       </StyledElementContainerLayoutWrapper>
