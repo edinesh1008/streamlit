@@ -22,6 +22,8 @@ export const radii = {
   default: "0.5rem",
   xl: "0.75rem",
   xxl: "1rem",
+  // This is the radius used in buttons:
+  button: "0.5rem",
   // Chat input enforces a more rounded look:
   chatInput: "1.25rem",
   // Ensures that the element is fully rounded:
