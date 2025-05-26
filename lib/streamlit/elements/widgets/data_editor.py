@@ -29,7 +29,7 @@ from typing import (
     overload,
 )
 
-from typing_extensions import TypeAlias
+from typing_extensions import Required, TypeAlias
 
 from streamlit import dataframe_util
 from streamlit import logger as _logger
@@ -128,9 +128,9 @@ class EditingState(TypedDict, total=False):
         the deleted row.
     """
 
-    edited_rows: dict[int, dict[str, str | int | float | bool | None]]
-    added_rows: list[dict[str, str | int | float | bool | None]]
-    deleted_rows: list[int]
+    edited_rows: Required[dict[int, dict[str, str | int | float | bool | None]]]
+    added_rows: Required[list[dict[str, str | int | float | bool | None]]]
+    deleted_rows: Required[list[int]]
 
 
 @dataclass
@@ -150,13 +150,13 @@ class DataEditorSerde:
 
         # Make sure that all editing state keys are present:
         if "edited_rows" not in data_editor_state:
-            data_editor_state["edited_rows"] = {}
+            data_editor_state["edited_rows"] = {}  # type: ignore[unreachable]
 
         if "deleted_rows" not in data_editor_state:
-            data_editor_state["deleted_rows"] = []
+            data_editor_state["deleted_rows"] = []  # type: ignore[unreachable]
 
         if "added_rows" not in data_editor_state:
-            data_editor_state["added_rows"] = []
+            data_editor_state["added_rows"] = []  # type: ignore[unreachable]
 
         # Convert the keys (numerical row positions) to integers.
         # The keys are strings because they are serialized to JSON.
