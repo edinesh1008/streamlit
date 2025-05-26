@@ -97,8 +97,8 @@ EditableData = TypeVar(
 # All data types supported by the data editor.
 DataTypes: TypeAlias = Union[
     "pd.DataFrame",
-    "pd.Series",
-    "pd.Index",
+    "pd.Series[Any]",
+    "pd.Index[Any]",
     "Styler",
     "pa.Table",
     "np.ndarray[Any, np.dtype[np.float64]]",
@@ -334,8 +334,8 @@ def _apply_row_additions(
     if isinstance(df.index, pd.RangeIndex):
         # Extract metadata from the range index:
         index_type = "range"
-        index_stop = cast("int", df.index.stop)
-        index_step = cast("int", df.index.step)
+        index_stop = df.index.stop
+        index_step = df.index.step
     elif isinstance(df.index, pd.Index) and pd.api.types.is_integer_dtype(
         df.index.dtype
     ):
@@ -422,7 +422,7 @@ def _apply_dataframe_edits(
         _apply_row_additions(df, data_editor_state["added_rows"], dataframe_schema)
 
 
-def _is_supported_index(df_index: pd.Index) -> bool:
+def _is_supported_index(df_index: pd.Index[Any]) -> bool:
     """Check if the index is supported by the data editor component.
 
     Parameters
@@ -466,7 +466,8 @@ def _fix_column_headers(data_df: pd.DataFrame) -> None:
     if isinstance(data_df.columns, pd.MultiIndex):
         # Flatten hierarchical column headers to a single level:
         data_df.columns = [
-            "_".join(map(str, header)) for header in data_df.columns.to_flat_index()
+            "_".join(map(str, header))
+            for header in data_df.columns.to_flat_index()  # type: ignore
         ]
     elif pd.api.types.infer_dtype(data_df.columns) != "string":
         # If the column names are not all strings, we need to convert them to strings
@@ -538,7 +539,7 @@ def _check_type_compatibilities(
     indices = [(INDEX_IDENTIFIER, data_df.index)]
 
     for column in indices + list(data_df.items()):
-        column_name, _ = column
+        column_name = str(column[0])
         column_data_kind = dataframe_schema[column_name]
 
         # TODO(lukasmasuch): support column config via numerical index here?
@@ -697,11 +698,11 @@ class DataEditorMixin:
             - A string to set the display label of the column.
 
             - One of the column types defined under ``st.column_config``, e.g.
-              ``st.column_config.NumberColumn("Dollar values”, format=”$ %d")`` to show
+              ``st.column_config.NumberColumn("Dollar values", format="$ %d")`` to show
               a column as dollar amounts. See more info on the available column types
               and config options `here <https://docs.streamlit.io/develop/api-reference/data/st.column_config>`_.
 
-            To configure the index column(s), use ``_index`` as the column name.
+            To configure the index column(s), use "_index" as the column name.
 
         num_rows : "fixed" or "dynamic"
             Specifies if the user can add and delete rows in the data editor.
@@ -871,7 +872,7 @@ class DataEditorMixin:
         for column_name, column_data in data_df.items():
             if dataframe_util.is_colum_type_arrow_incompatible(column_data):
                 update_column_config(
-                    column_config_mapping, column_name, {"disabled": True}
+                    column_config_mapping, str(column_name), {"disabled": True}
                 )
                 # Convert incompatible type to string
                 data_df[column_name] = column_data.astype("string")

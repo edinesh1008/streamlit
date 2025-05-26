@@ -417,7 +417,7 @@ class _CacheFuncHasher:
         if type_util.is_type(obj, "pandas.core.series.Series"):
             import pandas as pd
 
-            series_obj: pd.Series = cast("pd.Series", obj)
+            series_obj: pd.Series[Any] = cast("pd.Series[Any]", obj)
             self.update(h, series_obj.size)
             self.update(h, series_obj.dtype.name)
 
