@@ -20,4 +20,4 @@ types-setuptools
 types-toml
 types-typed-ast
 types-cachetools
-types-pandas
+pandas-stubs
