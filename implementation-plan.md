@@ -53,3 +53,4 @@ Add two new optional boolean parameters to `st.table` to allow hiding column hea
 3. Python unit tests
 4. Frontend implementation
 5. E2E tests
+
