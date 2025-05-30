@@ -363,6 +363,10 @@ const RawElementNodeRenderer = (
       )
 
     case "spinner":
+      if ((node.element.spinner as SpinnerProto).isComplete) {
+        return <></>
+      }
+
       return (
         <Spinner
           element={node.element.spinner as SpinnerProto}

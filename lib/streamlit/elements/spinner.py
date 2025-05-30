@@ -91,6 +91,7 @@ def spinner(
                     spinner_proto.text = clean_text(text)
                     spinner_proto.cache = _cache
                     spinner_proto.show_time = show_time
+                    spinner_proto.is_complete = False
                     message._enqueue("spinner", spinner_proto)
 
         add_script_run_ctx(threading.Timer(DELAY_SECS, set_message)).start()
@@ -101,14 +102,10 @@ def spinner(
         if display_message_lock:
             with display_message_lock:
                 display_message = False
-            if "chat_message" in set(message._active_dg._ancestor_block_types):
-                # Temporary stale element fix:
-                # For chat messages, we are resetting the spinner placeholder to an
-                # empty container instead of an empty placeholder (st.empty) to have
-                # it removed from the delta path. Empty containers are ignored in the
-                # frontend since they are configured with allow_empty=False. This
-                # prevents issues with stale elements caused by the spinner being
-                # rendered only in some situations (e.g. for caching).
-                message.container()
-            else:
-                message.empty()
+
+            spinner_proto = SpinnerProto()
+            spinner_proto.text = clean_text(text)
+            spinner_proto.cache = _cache
+            spinner_proto.show_time = show_time
+            spinner_proto.is_complete = True
+            message._enqueue("spinner", spinner_proto)

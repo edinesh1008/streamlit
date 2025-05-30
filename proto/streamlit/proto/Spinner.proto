@@ -28,4 +28,6 @@ message Spinner {
 
   // Whether to show elapsed time next to the spinner text.
   bool show_time = 3;
+
+  bool is_complete = 4;
 }

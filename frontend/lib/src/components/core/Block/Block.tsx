@@ -72,11 +72,14 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
 
   // Capture all the element ids to avoid rendering the same element twice
   const elementKeySet = new Set<string>()
+  let clearableCount = 0
+  let blockCount = 0
 
   return (
     <>
       {props.node.children &&
         props.node.children.map((node: AppNode, index: number): ReactNode => {
+          const indexOffset = clearableCount + blockCount
           const disableFullscreenMode =
             libConfig.disableFullscreenMode || props.disableFullscreenMode
 
@@ -90,7 +93,16 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
               node,
             }
 
-            const key = getElementId(node.element) || index.toString()
+            let key = getElementId(node.element)
+            if (key === undefined) {
+              if (node.element.type === "spinner") {
+                key = `transient-${clearableCount}`
+                clearableCount += 1
+              } else {
+                key = (index - indexOffset).toString()
+              }
+            }
+
             // Avoid rendering the same element twice. We assume the first one is the one we want
             // because the page is rendered top to bottom, so a valid widget would be rendered
             // correctly and we assume the second one is therefore stale (or throw an error).
@@ -116,9 +128,12 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
               node,
             }
 
+            const key = `block-${blockCount.toString()}`
+            blockCount += 1
+
             // TODO: Update to match React best practices
             // eslint-disable-next-line @eslint-react/no-array-index-key, @typescript-eslint/no-use-before-define
-            return <BlockNodeRenderer key={index} {...childProps} />
+            return <BlockNodeRenderer key={key} {...childProps} />
           }
 
           // We don't have any other node types!
