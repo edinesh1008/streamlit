@@ -130,7 +130,7 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
   const shouldMinimize = useCallback((): boolean => {
     return window.scrollY > 32
   }, [])
-  const [statusMinimized, setStatusMinimized] = useState(shouldMinimize())
+  const [statusMinimized, setStatusMinimized] = useState(shouldMinimize)
   const [scriptChangedOnDisk, setScriptChangedOnDisk] = useState(false)
   const [promptMinimized, setPromptMinimized] = useState(false)
   const [promptHovered, setPromptHovered] = useState(false)
@@ -264,6 +264,7 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
   useEffect(() => {
     if (scriptRunState === ScriptRunState.RUNNING) {
       setScriptChangedOnDisk(false)
+
       setPromptHovered(false)
     }
   }, [scriptRunState])
@@ -399,27 +400,17 @@ const StatusWidget: React.FC<StatusWidgetProps> = ({
   // via `this.curView`, so that we can fade out our previous state
   // if `renderWidget` returns null after returning a non-null value.
   const curView = useRef<ReactNode>()
-  // TODO: Update to match React best practices
-  // eslint-disable-next-line react-compiler/react-compiler
   const prevView = curView.current
-  // TODO: Update to match React best practices
-  // eslint-disable-next-line react-compiler/react-compiler
   curView.current = renderWidget()
 
-  // TODO: Update to match React best practices
-  // eslint-disable-next-line react-compiler/react-compiler
   if (isNullOrUndefined(curView.current) && isNullOrUndefined(prevView)) {
     return <></>
   }
 
   let animateIn: boolean
   let renderView: ReactNode
-  // TODO: Update to match React best practices
-  // eslint-disable-next-line react-compiler/react-compiler
   if (notNullOrUndefined(curView.current)) {
     animateIn = true
-    // TODO: Update to match React best practices
-    // eslint-disable-next-line react-compiler/react-compiler
     renderView = curView.current
   } else {
     animateIn = false

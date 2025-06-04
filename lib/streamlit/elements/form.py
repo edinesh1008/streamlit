@@ -17,6 +17,14 @@ import textwrap
 from typing import TYPE_CHECKING, Literal, cast
 
 from streamlit.elements.lib.form_utils import FormData, current_form_id, is_in_form
+from streamlit.elements.lib.layout_utils import (
+    Height,
+    Width,
+    get_height_config,
+    get_width_config,
+    validate_height,
+    validate_width,
+)
 from streamlit.elements.lib.policies import (
     check_cache_replay_rules,
     check_session_state_rules,
@@ -67,6 +75,8 @@ class FormMixin:
         *,
         enter_to_submit: bool = True,
         border: bool = True,
+        width: Width = "stretch",
+        height: Height = "content",
     ) -> DeltaGenerator:
         """Create a form that batches elements together with a "Submit" button.
 
@@ -181,6 +191,10 @@ class FormMixin:
         block_proto.form.clear_on_submit = clear_on_submit
         block_proto.form.enter_to_submit = enter_to_submit
         block_proto.form.border = border
+        validate_width(width, allow_content=True)
+        block_proto.width_config.CopyFrom(get_width_config(width))
+        validate_height(height, allow_content=True)
+        block_proto.height_config.CopyFrom(get_height_config(height))
         block_dg = self.dg._block(block_proto)
 
         # Attach the form's button info to the newly-created block's
@@ -202,7 +216,7 @@ class FormMixin:
         disabled: bool = False,
         use_container_width: bool = False,
     ) -> bool:
-        """Display a form submit button.
+        r"""Display a form submit button.
 
         When this button is clicked, all widget values inside the form will be
         sent from the user's browser to your Streamlit server in a batch.
@@ -225,7 +239,7 @@ class FormMixin:
             Unsupported Markdown elements are unwrapped so only their children
             (text contents) render. Display unsupported elements as literal
             characters by backslash-escaping them. E.g.,
-            ``"1\\. Not an ordered list"``.
+            ``"1\. Not an ordered list"``.
 
             See the ``body`` parameter of |st.markdown|_ for additional,
             supported Markdown directives.
@@ -269,7 +283,7 @@ class FormMixin:
               of the icon in snake case.
 
               For example, ``icon=":material/thumb_up:"`` will display the
-              Thumb Up icon. Find additional icons in the `Material Symbols \
+              Thumb Up icon. Find additional icons in the `Material Symbols
               <https://fonts.google.com/icons?icon.set=Material+Symbols&icon.style=Rounded>`_
               font library.
         disabled : bool
