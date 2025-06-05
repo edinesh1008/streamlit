@@ -24,6 +24,7 @@ def get_all_vega_lite_charts(app: Page) -> Locator:
     vega_lite_charts = app.get_by_test_id("stVegaLiteChart")
     # Ensure that all canvas objects are rendered:
     expect(vega_lite_charts.locator("canvas")).to_have_count(VEGA_LITE_CHART_COUNT)
+    app.wait_for_timeout(2000)
     return vega_lite_charts
 
 
