@@ -77,6 +77,7 @@ def test_vega_lite_chart_same_plot_different_ways(
     vega_lite_charts = get_all_vega_lite_charts(themed_app)
 
     for idx in range(5, 9):
+        vega_lite_charts.nth(idx).scroll_into_view_if_needed()
         assert_snapshot(vega_lite_charts.nth(idx), name=f"st_vega_lite_chart-{idx}")
 
 
@@ -87,6 +88,7 @@ def test_vega_lite_chart_streamlit_theme(
     vega_lite_charts = get_all_vega_lite_charts(themed_app)
 
     for idx in range(9, 11):
+        vega_lite_charts.nth(idx).scroll_into_view_if_needed()
         assert_snapshot(
             vega_lite_charts.nth(idx), name=f"st_vega_lite_chart-theming_{idx}"
         )
