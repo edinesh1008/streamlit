@@ -177,8 +177,16 @@ message CustomThemeConfig {
   optional bool show_sidebar_border = 23;
   optional CustomThemeConfig sidebar = 24;
   optional string code_background_color = 25;
+  optional string info_text_color = 29;
+  optional string info_background_color = 30;
+  optional string error_text_color = 31;
+  optional string error_background_color = 32;
+  optional string success_text_color = 33;
+  optional string success_background_color = 34;
+  optional string warning_text_color = 35;
+  optional string warning_background_color = 36;
 
-  // Next ID: 28
+  // Next ID: 37
 }
 
 message FontFace {

@@ -182,6 +182,98 @@ export const parseRadius = (
   return [radiusValue, cssUnit]
 }
 
+/**
+ * Helper function to set conditionalOverrides color values based on themeInput values
+ * @param conditionalOverrideColors: the colors object from the baseThemeConfig
+ * @param parsedColors: provides valid color values passed in themeInput
+ * @param showWidgetBorder: used to handle setting of widgetBorderColor
+ * @returns conditionalOverrides with updated color values
+ */
+export const setThemeInputOverrideColors = (
+  conditionalOverrideColors: { [key: string]: string },
+  parsedColors: Record<string, string>,
+  showWidgetBorder: boolean | null | undefined
+): { [key: string]: string } => {
+  const {
+    dataframeBorderColor,
+    widgetBorderColor,
+    borderColor,
+    codeBackgroundColor,
+    infoTextColor,
+    infoBackgroundColor,
+    errorTextColor,
+    errorBackgroundColor,
+    successTextColor,
+    successBackgroundColor,
+    warningTextColor,
+    warningBackgroundColor,
+  } = parsedColors
+
+  if (notNullOrUndefined(codeBackgroundColor)) {
+    conditionalOverrideColors.codeBackgroundColor = codeBackgroundColor
+  }
+
+  // The alert (info, error, success, warning) text/bg colors are set here and then
+  // used for baseweb notifications (createEmotionTheme is called before createBaseUiTheme,
+  // which sets notificationInfoText = colors.info, etc.)
+  if (notNullOrUndefined(infoTextColor)) {
+    conditionalOverrideColors.info = infoTextColor
+  }
+
+  if (notNullOrUndefined(infoBackgroundColor)) {
+    conditionalOverrideColors.infoBg = infoBackgroundColor
+  }
+
+  if (notNullOrUndefined(errorTextColor)) {
+    conditionalOverrideColors.danger = errorTextColor
+  }
+
+  if (notNullOrUndefined(errorBackgroundColor)) {
+    conditionalOverrideColors.dangerBg = errorBackgroundColor
+  }
+
+  if (notNullOrUndefined(successTextColor)) {
+    conditionalOverrideColors.success = successTextColor
+  }
+
+  if (notNullOrUndefined(successBackgroundColor)) {
+    conditionalOverrideColors.successBg = successBackgroundColor
+  }
+
+  if (notNullOrUndefined(warningTextColor)) {
+    conditionalOverrideColors.warning = warningTextColor
+  }
+
+  if (notNullOrUndefined(warningBackgroundColor)) {
+    conditionalOverrideColors.warningBg = warningBackgroundColor
+  }
+
+  if (notNullOrUndefined(borderColor)) {
+    conditionalOverrideColors.borderColor = borderColor
+
+    const borderColorLight = transparentize(borderColor, 0.55)
+    // Used for tabs border and expander when stale
+    conditionalOverrideColors.borderColorLight = borderColorLight
+    // Set the fallback here for dataframe & table border color
+    conditionalOverrideColors.dataframeBorderColor = borderColorLight
+  }
+
+  if (notNullOrUndefined(dataframeBorderColor)) {
+    // If dataframeBorderColor explicitly set, override borderColorLight fallback
+    conditionalOverrideColors.dataframeBorderColor = dataframeBorderColor
+  }
+
+  if (showWidgetBorder || widgetBorderColor) {
+    // widgetBorderColor from the themeInput is deprecated. For compatibility
+    // with older SiS theming, we still apply it here if provided, but we should
+    // consider full removing it at some point.
+    conditionalOverrideColors.widgetBorderColor =
+      widgetBorderColor || conditionalOverrideColors.borderColor
+  }
+
+  return conditionalOverrideColors
+}
+
 export const createEmotionTheme = (
   themeInput: Partial<ICustomThemeConfig>,
   baseThemeConfig = baseTheme
@@ -237,11 +329,7 @@ export const createEmotionTheme = (
     backgroundColor: bgColor,
     primaryColor: primary,
     textColor: bodyText,
-    dataframeBorderColor,
-    widgetBorderColor,
-    borderColor,
     linkColor,
-    codeBackgroundColor,
   } = parsedColors
 
   const newGenericColors = { ...colors }
@@ -259,34 +347,15 @@ export const createEmotionTheme = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   const conditionalOverrides: any = {}
 
+  // Set the default colors
   conditionalOverrides.colors = createEmotionColors(newGenericColors)
 
-  if (notNullOrUndefined(codeBackgroundColor)) {
-    conditionalOverrides.colors.codeBackgroundColor = codeBackgroundColor
-  }
-
-  if (notNullOrUndefined(borderColor)) {
-    conditionalOverrides.colors.borderColor = borderColor
-
-    const borderColorLight = transparentize(borderColor, 0.55)
-    // Used for tabs border and expander when stale
-    conditionalOverrides.colors.borderColorLight = borderColorLight
-    // Set the fallback here for dataframe & table border color
-    conditionalOverrides.colors.dataframeBorderColor = borderColorLight
-  }
-
-  if (notNullOrUndefined(dataframeBorderColor)) {
-    // If dataframeBorderColor explicitly set, override borderColorLight fallback
-    conditionalOverrides.colors.dataframeBorderColor = dataframeBorderColor
-  }
-
-  if (showWidgetBorder || widgetBorderColor) {
-    // widgetBorderColor from the themeInput is deprecated. For compatibility
-    // with older SiS theming, we still apply it here if provided, but we should
-    // consider full removing it at some point.
-    conditionalOverrides.colors.widgetBorderColor =
-      widgetBorderColor || conditionalOverrides.colors.borderColor
-  }
+  // Override default colors based on values from themeInput
+  conditionalOverrides.colors = setThemeInputOverrideColors(
+    conditionalOverrides.colors,
+    parsedColors,
+    showWidgetBorder
+  )
 
   if (notNullOrUndefined(baseRadius)) {
     conditionalOverrides.radii = {

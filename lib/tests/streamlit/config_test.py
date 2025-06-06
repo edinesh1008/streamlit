@@ -497,6 +497,14 @@ class ConfigTest(unittest.TestCase):
                 "theme.showWidgetBorder",
                 "theme.linkColor",
                 "theme.codeBackgroundColor",
+                "theme.infoTextColor",
+                "theme.infoBackgroundColor",
+                "theme.errorTextColor",
+                "theme.errorBackgroundColor",
+                "theme.successTextColor",
+                "theme.successBackgroundColor",
+                "theme.warningTextColor",
+                "theme.warningBackgroundColor",
                 "theme.showSidebarBorder",
                 "theme.sidebar.primaryColor",
                 "theme.sidebar.backgroundColor",
@@ -512,6 +520,14 @@ class ConfigTest(unittest.TestCase):
                 "theme.sidebar.showWidgetBorder",
                 "theme.sidebar.linkColor",
                 "theme.sidebar.codeBackgroundColor",
+                "theme.sidebar.infoTextColor",
+                "theme.sidebar.infoBackgroundColor",
+                "theme.sidebar.errorTextColor",
+                "theme.sidebar.errorBackgroundColor",
+                "theme.sidebar.successTextColor",
+                "theme.sidebar.successBackgroundColor",
+                "theme.sidebar.warningTextColor",
+                "theme.sidebar.warningBackgroundColor",
                 "global.appTest",
                 "global.developmentMode",
                 "global.disableWidgetStateDuplicationWarning",
@@ -677,6 +693,14 @@ class ConfigTest(unittest.TestCase):
             "fontFaces": None,
             "baseFontSize": None,
             "codeBackgroundColor": None,
+            "infoTextColor": None,
+            "infoBackgroundColor": None,
+            "errorTextColor": None,
+            "errorBackgroundColor": None,
+            "successTextColor": None,
+            "successBackgroundColor": None,
+            "warningTextColor": None,
+            "warningBackgroundColor": None,
             "showSidebarBorder": None,
         }
         assert config.get_options_for_section("theme") == expected
@@ -697,6 +721,14 @@ class ConfigTest(unittest.TestCase):
         config._set_option("theme.showWidgetBorder", True, "test")
         config._set_option("theme.linkColor", "#2EC163", "test")
         config._set_option("theme.codeBackgroundColor", "#29361e", "test")
+        config._set_option("theme.infoTextColor", "#FFB6C1", "test")
+        config._set_option("theme.infoBackgroundColor", "#FFB6C1", "test")
+        config._set_option("theme.errorTextColor", "#FFB6C1", "test")
+        config._set_option("theme.errorBackgroundColor", "#FFB6C1", "test")
+        config._set_option("theme.successTextColor", "#FFB6C1", "test")
+        config._set_option("theme.successBackgroundColor", "#FFB6C1", "test")
+        config._set_option("theme.warningTextColor", "#FFB6C1", "test")
+        config._set_option("theme.warningBackgroundColor", "#FFB6C1", "test")
         config._set_option("theme.font", "Inter", "test")
         config._set_option("theme.headingFont", "Inter", "test")
         config._set_option(
@@ -730,6 +762,14 @@ class ConfigTest(unittest.TestCase):
             "headingFont": "Inter",
             "codeFont": "Monaspace Argon",
             "codeBackgroundColor": "#29361e",
+            "infoTextColor": "#FFB6C1",
+            "infoBackgroundColor": "#FFB6C1",
+            "errorTextColor": "#FFB6C1",
+            "errorBackgroundColor": "#FFB6C1",
+            "successTextColor": "#FFB6C1",
+            "successBackgroundColor": "#FFB6C1",
+            "warningTextColor": "#FFB6C1",
+            "warningBackgroundColor": "#FFB6C1",
             "fontFaces": [
                 {
                     "family": "Inter",
@@ -760,6 +800,14 @@ class ConfigTest(unittest.TestCase):
         config._set_option("theme.sidebar.headingFont", "Inter", "test")
         config._set_option("theme.sidebar.codeFont", "Monaspace Argon", "test")
         config._set_option("theme.sidebar.codeBackgroundColor", "#29361e", "test")
+        config._set_option("theme.sidebar.infoTextColor", "#FFB6C1", "test")
+        config._set_option("theme.sidebar.infoBackgroundColor", "#FFB6C1", "test")
+        config._set_option("theme.sidebar.errorTextColor", "#FFB6C1", "test")
+        config._set_option("theme.sidebar.errorBackgroundColor", "#FFB6C1", "test")
+        config._set_option("theme.sidebar.successTextColor", "#FFB6C1", "test")
+        config._set_option("theme.sidebar.successBackgroundColor", "#FFB6C1", "test")
+        config._set_option("theme.sidebar.warningTextColor", "#FFB6C1", "test")
+        config._set_option("theme.sidebar.warningBackgroundColor", "#FFB6C1", "test")
 
         expected = {
             "primaryColor": "#FFF000",
@@ -776,6 +824,14 @@ class ConfigTest(unittest.TestCase):
             "headingFont": "Inter",
             "codeFont": "Monaspace Argon",
             "codeBackgroundColor": "#29361e",
+            "infoTextColor": "#FFB6C1",
+            "infoBackgroundColor": "#FFB6C1",
+            "errorTextColor": "#FFB6C1",
+            "errorBackgroundColor": "#FFB6C1",
+            "successTextColor": "#FFB6C1",
+            "successBackgroundColor": "#FFB6C1",
+            "warningTextColor": "#FFB6C1",
+            "warningBackgroundColor": "#FFB6C1",
         }
         assert config.get_options_for_section("theme.sidebar") == expected
 

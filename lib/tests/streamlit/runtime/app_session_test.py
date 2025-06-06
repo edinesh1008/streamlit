@@ -647,6 +647,14 @@ def _mock_get_options_for_section(
         "showWidgetBorder": True,
         "textColor": "black",
         "codeBackgroundColor": "blue",
+        "infoTextColor": "green",
+        "infoBackgroundColor": "light green",
+        "errorTextColor": "red",
+        "errorBackgroundColor": "light red",
+        "successTextColor": "blue",
+        "successBackgroundColor": "light blue",
+        "warningTextColor": "yellow",
+        "warningBackgroundColor": "light yellow",
     }
 
     if overrides.get("sidebar") is not None:
@@ -687,6 +695,14 @@ def _mock_get_options_for_section(
         "showSidebarBorder": True,
         "textColor": "black",
         "codeBackgroundColor": "blue",
+        "infoTextColor": "green",
+        "infoBackgroundColor": "light green",
+        "errorTextColor": "red",
+        "errorBackgroundColor": "light red",
+        "successTextColor": "blue",
+        "successBackgroundColor": "light blue",
+        "warningTextColor": "yellow",
+        "warningBackgroundColor": "light yellow",
     }
 
     for k, v in overrides.items():
@@ -1144,6 +1160,14 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "textColor": None,
                     "sidebar": None,
                     "codeBackgroundColor": None,
+                    "infoTextColor": None,
+                    "infoBackgroundColor": None,
+                    "errorTextColor": None,
+                    "errorBackgroundColor": None,
+                    "successTextColor": None,
+                    "successBackgroundColor": None,
+                    "warningTextColor": None,
+                    "warningBackgroundColor": None,
                 }
             )
         )
@@ -1178,6 +1202,14 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "textColor": None,
                     "sidebar": None,
                     "codeBackgroundColor": None,
+                    "infoTextColor": None,
+                    "infoBackgroundColor": None,
+                    "errorTextColor": None,
+                    "errorBackgroundColor": None,
+                    "successTextColor": None,
+                    "successBackgroundColor": None,
+                    "warningTextColor": None,
+                    "warningBackgroundColor": None,
                 }
             )
         )
@@ -1212,6 +1244,14 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "showSidebarBorder": None,
                     "textColor": None,
                     "codeBackgroundColor": None,
+                    "infoTextColor": None,
+                    "infoBackgroundColor": None,
+                    "errorTextColor": None,
+                    "errorBackgroundColor": None,
+                    "successTextColor": None,
+                    "successBackgroundColor": None,
+                    "warningTextColor": None,
+                    "warningBackgroundColor": None,
                     "sidebar": {
                         # primaryColor not set to None
                         "backgroundColor": None,
@@ -1227,6 +1267,14 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                         "showWidgetBorder": None,
                         "textColor": None,
                         "codeBackgroundColor": None,
+                        "infoTextColor": None,
+                        "infoBackgroundColor": None,
+                        "errorTextColor": None,
+                        "errorBackgroundColor": None,
+                        "successTextColor": None,
+                        "successBackgroundColor": None,
+                        "warningTextColor": None,
+                        "warningBackgroundColor": None,
                     },
                 }
             )

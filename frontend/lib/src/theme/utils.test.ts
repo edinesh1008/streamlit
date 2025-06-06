@@ -28,8 +28,9 @@ import {
 } from "~lib/theme/index"
 import { ThemeConfig } from "~lib/theme/types"
 import { LocalStore } from "~lib/util/storageUtils"
+import { mockTheme } from "~lib/mocks/mockTheme"
 
-import { hasLightBackgroundColor } from "./getColors"
+import { createEmotionColors, hasLightBackgroundColor } from "./getColors"
 import {
   AUTO_THEME_NAME,
   bgColorToBaseString,
@@ -46,6 +47,7 @@ import {
   parseFont,
   removeCachedTheme,
   setCachedTheme,
+  setThemeInputOverrideColors,
   toThemeInput,
 } from "./utils"
 
@@ -930,6 +932,99 @@ describe("createEmotionTheme", () => {
     const theme = createEmotionTheme(themeInput)
     expect(theme.colors.borderColor).toBe("red")
     expect(theme.colors.dataframeBorderColor).toBe("green")
+  })
+})
+
+describe("setThemeInputOverrideColors", () => {
+  it("sets all color values correctly when provided in parsedColors", () => {
+    const theme = createEmotionTheme({})
+    const initialColors = createEmotionColors(mockTheme.emotion.colors)
+
+    const parsedColors = {
+      codeBackgroundColor: "red",
+      infoTextColor: "green",
+      infoBackgroundColor: "lightgreen",
+      errorTextColor: "darkred",
+      errorBackgroundColor: "lightred",
+      successTextColor: "darkgreen",
+      successBackgroundColor: "lightgreen",
+      warningTextColor: "orange",
+      warningBackgroundColor: "lightyellow",
+      borderColor: "gray",
+      dataframeBorderColor: "darkgray",
+      widgetBorderColor: "purple",
+    }
+
+    const result = setThemeInputOverrideColors(
+      initialColors,
+      parsedColors,
+      true
+    )
+
+    // Check that all provided colors are set correctly
+    expect(result.codeBackgroundColor).toBe("red")
+    expect(result.info).toBe("green")
+    expect(result.infoBg).toBe("lightgreen")
+    // danger is used for st.error
+    expect(result.danger).toBe("darkred")
+    expect(result.dangerBg).toBe("lightred")
+    expect(result.success).toBe("darkgreen")
+    expect(result.successBg).toBe("lightgreen")
+    expect(result.warning).toBe("orange")
+    expect(result.warningBg).toBe("lightyellow")
+    expect(result.borderColor).toBe("gray")
+    expect(result.dataframeBorderColor).toBe("darkgray")
+    expect(result.widgetBorderColor).toBe("purple")
+
+    // Check that borderColorLight is set based on borderColor
+    expect(result.borderColorLight).toBe(transparentize("gray", 0.55))
+
+    // Check that existing colors from createEmotionColors are preserved
+    expect(result.primary).toBe(theme.colors.primary)
+    expect(result.bgColor).toBe(theme.colors.bgColor)
+    expect(result.bodyText).toBe(theme.colors.bodyText)
+  })
+
+  it("preserves original colors when parsedColors values are null or undefined", () => {
+    const theme = createEmotionTheme({})
+    const initialColors = createEmotionColors(mockTheme.emotion.colors)
+
+    const parsedColors: Record<string, string> = {
+      // Empty parsedColors object to test when values are not provided
+    }
+
+    const result = setThemeInputOverrideColors(
+      initialColors,
+      parsedColors,
+      false
+    )
+
+    // Check that all colors are preserved when not provided in parsedColors
+    expect(result.codeBackgroundColor).toBe(initialColors.codeBackgroundColor)
+    expect(result.info).toBe(theme.colors.info)
+    expect(result.infoBg).toBe(theme.colors.infoBg)
+    expect(result.danger).toBe(theme.colors.danger)
+    expect(result.dangerBg).toBe(theme.colors.dangerBg)
+    expect(result.success).toBe(theme.colors.success)
+    expect(result.successBg).toBe(theme.colors.successBg)
+    expect(result.warning).toBe(theme.colors.warning)
+    expect(result.warningBg).toBe(theme.colors.warningBg)
+    expect(result.borderColor).toBe(initialColors.borderColor)
+    expect(result.dataframeBorderColor).toBe(
+      initialColors.dataframeBorderColor
+    )
+    expect(result.widgetBorderColor).toBe(initialColors.widgetBorderColor)
+
+    // Check that borderColorLight falls back to fadedText05 when borderColor
+    // & dataframeBorderColor are not provided
+    expect(result.borderColorLight).toBe(theme.colors.fadedText05)
+
+    // Check that original colors from createEmotionColors are preserved
+    expect(result.primary).toBe(theme.colors.primary)
+    expect(result.bgColor).toBe(theme.colors.bgColor)
+    expect(result.secondaryBg).toBe(theme.colors.secondaryBg)
+    expect(result.bodyText).toBe(theme.colors.bodyText)
+    expect(result.linkColor).toBe(initialColors.linkColor)
   })
 })
 

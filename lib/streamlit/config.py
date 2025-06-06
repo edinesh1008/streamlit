@@ -1299,6 +1299,70 @@ _create_theme_options(
     type_=bool,
 )
 
+_create_theme_options(
+    "infoTextColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The color of the text in st.info messages.
+    """,
+)
+
+_create_theme_options(
+    "infoBackgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The background color of st.info messages.
+    """,
+)
+
+_create_theme_options(
+    "errorTextColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The color of the text in st.error messages.
+    """,
+)
+
+_create_theme_options(
+    "errorBackgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The background color of st.error messages.
+    """,
+)
+
+_create_theme_options(
+    "successTextColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The color of the text in st.success messages.
+    """,
+)
+
+_create_theme_options(
+    "successBackgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The background color of st.success messages.
+    """,
+)
+
+_create_theme_options(
+    "warningTextColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The color of the text in st.warning messages.
+    """,
+)
+
+_create_theme_options(
+    "warningBackgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The background color of st.warning messages.
+    """,
+)
+
 # Config Section: Secrets #
 
 _create_section("secrets", "Secrets configuration.")
