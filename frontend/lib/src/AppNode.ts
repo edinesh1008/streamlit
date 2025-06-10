@@ -377,6 +377,10 @@ export class ElementNode implements AppNode {
   }
 }
 
+function isTransient(appNode: AppNode) {
+  return appNode instanceof ElementNode && appNode.element.type === "spinner"
+}
+
 /**
  * If there is only one NamedDataSet, return it.
  * If there is a NamedDataset that matches the given name, return it.
@@ -464,8 +468,17 @@ export class BlockNode implements AppNode {
 
     const newChildren = this.children.slice()
     if (path.length === 1) {
-      // Base case
-      newChildren[childIndex] = node
+      if (isTransient(node) && !isTransient(newChildren[childIndex])) {
+        // If the node is transient, and it is not replacing a transient
+        // element, we insert at the childIndex. This will ensure that
+        // the transient element do not remove other elements so that
+        // those elements have a chance to maintain their React state
+        newChildren.splice(childIndex, 0, node)
+      } else {
+        // A non-transient element always replaces the existing element
+        // A transient element replaces an existing transient element
+        newChildren[childIndex] = node
+      }
     } else {
       // Pop the current element off our path, and recurse into our children
       newChildren[childIndex] = newChildren[childIndex].setIn(
