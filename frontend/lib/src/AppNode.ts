@@ -165,6 +165,10 @@ export interface AppNode {
   getElements(elementSet?: Set<Element>): Set<Element>
 }
 
+function isTransient(appNode: AppNode) {
+  return appNode instanceof ElementNode && appNode.element.type === "spinner"
+}
+
 /**
  * A leaf AppNode. Contains a single element to render.
  */
@@ -291,7 +295,7 @@ export class ElementNode implements AppNode {
   }
 
   public removeTransientNodes(): ElementNode | undefined {
-    return this.element.spinner?.isComplete ? undefined : this
+    return isTransient(this) ? undefined : this
   }
 
   public getElements(elements?: Set<Element>): Set<Element> {
@@ -375,10 +379,6 @@ export class ElementNode implements AppNode {
       }
     })
   }
-}
-
-function isTransient(appNode: AppNode) {
-  return appNode instanceof ElementNode && appNode.element.type === "spinner"
 }
 
 /**
