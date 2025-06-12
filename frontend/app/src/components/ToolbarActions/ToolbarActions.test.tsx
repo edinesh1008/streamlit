@@ -89,12 +89,18 @@ describe("ActionButton", () => {
     // Verify the onClick was called
     expect(onClickMock).toHaveBeenCalled()
 
+    // Wait for requestAnimationFrame to complete
+    await waitForTimeout()
+
     // The button should still be hovered (cursor should still be over it)
     // In a real browser, this would maintain the hover state
     // We can't easily test CSS hover states in jsdom, but we can verify
     // the button is still interactive and hasn't lost focus
     expect(button).toBeInTheDocument()
     expect(button).not.toBeDisabled()
+
+    // The button should be focused after click to maintain hover-like state
+    expect(button).toHaveFocus()
   })
 })
 
@@ -184,7 +190,7 @@ describe("ToolbarActions", () => {
     // Click the Share button while hovering
     await user.click(shareButton)
 
-    // Wait for setTimeout to complete
+    // Wait for requestAnimationFrame to complete
     await waitForTimeout()
 
     // Verify the host message was sent
@@ -192,6 +198,10 @@ describe("ToolbarActions", () => {
       type: "TOOLBAR_ITEM_CALLBACK",
       key: "share",
     })
+
+    // With our fix, the button should maintain focus after click
+    // which helps preserve the hover-like appearance
+    expect(shareButton).toHaveFocus()
 
     // The issue is that after clicking, the hover state is lost
     // even though the cursor is still over the button

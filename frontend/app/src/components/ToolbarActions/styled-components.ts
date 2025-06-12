@@ -61,6 +61,18 @@ export const StyledToolbarActions = styled.div(({ theme }) => ({
       cursor: "pointer !important",
     },
 
+    // Force hover state when the temporary class is applied
+    "&.force-hover-state": {
+      backgroundColor: `${theme.colors.darkenedBgMix25} !important`,
+      cursor: "pointer !important",
+    },
+
+    // Ensure forced hover state works even when focused
+    "&.force-hover-state:focus": {
+      backgroundColor: `${theme.colors.darkenedBgMix25} !important`,
+      cursor: "pointer !important",
+    },
+
     // Prevent focus outline from interfering with hover state
     "&:focus": {
       outline: "none",

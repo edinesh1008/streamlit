@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { MouseEvent, ReactElement } from "react"
+import React, { MouseEvent, ReactElement, useCallback } from "react"
 
 import {
   BaseButton,
@@ -41,20 +41,37 @@ export function ActionButton({
   icon,
   onClick,
 }: ActionButtonProps): ReactElement {
-  const handleClick = (event: MouseEvent<HTMLButtonElement>): void => {
-    // Prevent default behavior that might interfere with hover state
-    event.preventDefault()
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>): void => {
+      const button = event.currentTarget
 
-    // Call the onClick handler immediately
-    onClick()
+      // Store the current hover state before any processing
+      const wasHovered = button.matches(":hover")
 
-    // Prevent the event from bubbling up which could cause focus changes
-    event.stopPropagation()
+      // Call the onClick handler immediately
+      onClick()
 
-    // Ensure the button doesn't lose focus/hover state by preventing blur
-    // We do this by keeping the button as the active element
-    event.currentTarget.focus()
-  }
+      // Use requestAnimationFrame to ensure hover state is preserved
+      // after any potential DOM updates from the onClick handler
+      requestAnimationFrame(() => {
+        if (button && wasHovered) {
+          // Ensure the button maintains its hover appearance
+          // by keeping it as the focused element without losing hover
+          button.focus({ preventScroll: true })
+
+          // Add a temporary class to force hover state if needed
+          button.classList.add("force-hover-state")
+
+          // Remove the temporary class after a short delay to allow
+          // natural hover state to take over
+          setTimeout(() => {
+            button.classList.remove("force-hover-state")
+          }, 100)
+        }
+      })
+    },
+    [onClick]
+  )
 
   return (
     <div className="stToolbarActionButton" data-testid="stToolbarActionButton">
@@ -101,14 +118,14 @@ function ToolbarActions({
               label: key,
             })
 
-            // Send the message immediately but use setTimeout to ensure
-            // it doesn't interfere with the current event handling
-            setTimeout((): void => {
+            // Use requestAnimationFrame instead of setTimeout to better
+            // coordinate with browser rendering and preserve hover state
+            requestAnimationFrame((): void => {
               sendMessageToHost({
                 type: "TOOLBAR_ITEM_CALLBACK",
                 key,
               })
-            }, 0)
+            })
           }}
         />
       ))}
