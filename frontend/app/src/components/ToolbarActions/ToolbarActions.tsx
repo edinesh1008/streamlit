@@ -43,32 +43,20 @@ export function ActionButton({
 }: ActionButtonProps): ReactElement {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>): void => {
-      const button = event.currentTarget
-
-      // Store the current hover state before any processing
-      const wasHovered = button.matches(":hover")
-
-      // Call the onClick handler immediately
+      // Call the onClick handler first
       onClick()
 
-      // Use requestAnimationFrame to ensure hover state is preserved
-      // after any potential DOM updates from the onClick handler
-      requestAnimationFrame(() => {
-        if (button && wasHovered) {
-          // Ensure the button maintains its hover appearance
-          // by keeping it as the focused element without losing hover
+      // Prevent any default behavior that might interfere with hover state
+      event.preventDefault()
+
+      // Keep the button focused to maintain interactive appearance
+      // Use a small delay to ensure this happens after any host communication
+      setTimeout(() => {
+        const button = event.currentTarget
+        if (button && document.contains(button)) {
           button.focus({ preventScroll: true })
-
-          // Add a temporary class to force hover state if needed
-          button.classList.add("force-hover-state")
-
-          // Remove the temporary class after a short delay to allow
-          // natural hover state to take over
-          setTimeout(() => {
-            button.classList.remove("force-hover-state")
-          }, 100)
         }
-      })
+      }, 10)
     },
     [onClick]
   )
@@ -118,13 +106,10 @@ function ToolbarActions({
               label: key,
             })
 
-            // Use requestAnimationFrame instead of setTimeout to better
-            // coordinate with browser rendering and preserve hover state
-            requestAnimationFrame((): void => {
-              sendMessageToHost({
-                type: "TOOLBAR_ITEM_CALLBACK",
-                key,
-              })
+            // Send the message to host immediately
+            sendMessageToHost({
+              type: "TOOLBAR_ITEM_CALLBACK",
+              key,
             })
           }}
         />

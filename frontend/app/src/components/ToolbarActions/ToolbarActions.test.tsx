@@ -89,8 +89,8 @@ describe("ActionButton", () => {
     // Verify the onClick was called
     expect(onClickMock).toHaveBeenCalled()
 
-    // Wait for requestAnimationFrame to complete
-    await waitForTimeout()
+    // Wait for the setTimeout to complete
+    await new Promise(resolve => setTimeout(resolve, 20))
 
     // The button should still be hovered (cursor should still be over it)
     // In a real browser, this would maintain the hover state
@@ -190,8 +190,8 @@ describe("ToolbarActions", () => {
     // Click the Share button while hovering
     await user.click(shareButton)
 
-    // Wait for requestAnimationFrame to complete
-    await waitForTimeout()
+    // Wait for the setTimeout to complete
+    await new Promise(resolve => setTimeout(resolve, 20))
 
     // Verify the host message was sent
     expect(sendMessageToHostMock).toHaveBeenCalledWith({
