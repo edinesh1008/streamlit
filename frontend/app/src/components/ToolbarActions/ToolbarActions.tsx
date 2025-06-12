@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { ReactElement, MouseEvent } from "react"
+import React, { MouseEvent, ReactElement } from "react"
 
 import {
   BaseButton,
@@ -41,13 +41,19 @@ export function ActionButton({
   icon,
   onClick,
 }: ActionButtonProps): ReactElement {
-  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    // Prevent default behavior that might interfere with hover state
+    event.preventDefault()
+
     // Call the onClick handler immediately
     onClick()
 
-    // Prevent the button from losing focus which can affect hover state
-    // We do this by stopping the event from propagating further
+    // Prevent the event from bubbling up which could cause focus changes
     event.stopPropagation()
+
+    // Ensure the button doesn't lose focus/hover state by preventing blur
+    // We do this by keeping the button as the active element
+    event.currentTarget.focus()
   }
 
   return (
@@ -90,20 +96,19 @@ function ToolbarActions({
           key={key}
           label={label}
           icon={icon}
-          onClick={() => {
+          onClick={(): void => {
             metricsMgr.enqueue("menuClick", {
               label: key,
             })
 
-            // Use requestAnimationFrame to defer the host message sending
-            // This ensures the current event loop completes before sending the message,
-            // which helps preserve the button's hover state
-            requestAnimationFrame(() => {
+            // Send the message immediately but use setTimeout to ensure
+            // it doesn't interfere with the current event handling
+            setTimeout((): void => {
               sendMessageToHost({
                 type: "TOOLBAR_ITEM_CALLBACK",
                 key,
               })
-            })
+            }, 0)
           }}
         />
       ))}

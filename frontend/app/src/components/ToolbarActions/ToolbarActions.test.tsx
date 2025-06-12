@@ -28,9 +28,9 @@ import ToolbarActions, {
   ToolbarActionsProps,
 } from "./ToolbarActions"
 
-// Helper function to wait for requestAnimationFrame
-const waitForAnimationFrame = () =>
-  new Promise(resolve => requestAnimationFrame(resolve))
+// Helper function to wait for setTimeout
+const waitForTimeout = (): Promise<void> =>
+  new Promise(resolve => setTimeout(() => resolve(), 10))
 
 describe("ActionButton", () => {
   const getProps = (
@@ -129,8 +129,8 @@ describe("ToolbarActions", () => {
     const favoriteButton = screen.getAllByTestId("stBaseButton-header")[0]
     await user.click(favoriteButton)
 
-    // Wait for requestAnimationFrame to complete
-    await waitForAnimationFrame()
+    // Wait for setTimeout to complete
+    await waitForTimeout()
 
     expect(props.sendMessageToHost).toHaveBeenLastCalledWith({
       type: "TOOLBAR_ITEM_CALLBACK",
@@ -140,8 +140,8 @@ describe("ToolbarActions", () => {
     const shareButton = screen.getByRole("button", { name: "Share" })
     await user.click(shareButton)
 
-    // Wait for requestAnimationFrame to complete
-    await waitForAnimationFrame()
+    // Wait for setTimeout to complete
+    await waitForTimeout()
 
     expect(props.sendMessageToHost).toHaveBeenLastCalledWith({
       type: "TOOLBAR_ITEM_CALLBACK",
@@ -184,8 +184,8 @@ describe("ToolbarActions", () => {
     // Click the Share button while hovering
     await user.click(shareButton)
 
-    // Wait for requestAnimationFrame to complete
-    await waitForAnimationFrame()
+    // Wait for setTimeout to complete
+    await waitForTimeout()
 
     // Verify the host message was sent
     expect(sendMessageToHostMock).toHaveBeenCalledWith({
