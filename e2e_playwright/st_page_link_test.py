@@ -31,14 +31,14 @@ def test_page_links(app: Page, assert_snapshot: ImageCompareFunction):
 
     assert_snapshot(page_link_links.nth(7), name="st_page_link-icon")
     assert_snapshot(page_link_links.nth(10), name="st_page_link-disabled")
-    assert_snapshot(page_link_links.nth(11), name="st_page_link-material-icon")
+    assert_snapshot(page_link_links.nth(12), name="st_page_link-material-icon")
 
     # st.Page object page links
-    assert_snapshot(page_link_links.nth(12), name="st_page_link-st_page_with_icon")
+    assert_snapshot(page_link_links.nth(13), name="st_page_link-st_page_with_icon")
     assert_snapshot(
-        page_link_links.nth(13), name="st_page_link-st_page_with_material_icon"
+        page_link_links.nth(14), name="st_page_link-st_page_with_material_icon"
     )
-    assert_snapshot(page_link_links.nth(14), name="st_page_link-st_page_icon_override")
+    assert_snapshot(page_link_links.nth(15), name="st_page_link-st_page_icon_override")
 
     # Sidebar page links
     assert_snapshot(page_link_links.nth(1), name="st_page_link-sidebar-icon")
