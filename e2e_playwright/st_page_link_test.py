@@ -29,20 +29,20 @@ def test_page_links(app: Page, assert_snapshot: ImageCompareFunction):
     # (one for normal, one for mobile tooltip) so indices are off
     page_link_links = page_link_elements.get_by_test_id("stPageLink-NavLink")
 
-    assert_snapshot(page_link_links.nth(1), name="st_page_link-icon")
-    assert_snapshot(page_link_links.nth(4), name="st_page_link-disabled")
-    assert_snapshot(page_link_links.nth(6), name="st_page_link-material-icon")
+    assert_snapshot(page_link_links.nth(7), name="st_page_link-icon")
+    assert_snapshot(page_link_links.nth(10), name="st_page_link-disabled")
+    assert_snapshot(page_link_links.nth(11), name="st_page_link-material-icon")
 
     # st.Page object page links
-    assert_snapshot(page_link_links.nth(7), name="st_page_link-st_page_with_icon")
+    assert_snapshot(page_link_links.nth(12), name="st_page_link-st_page_with_icon")
     assert_snapshot(
-        page_link_links.nth(8), name="st_page_link-st_page_with_material_icon"
+        page_link_links.nth(13), name="st_page_link-st_page_with_material_icon"
     )
-    assert_snapshot(page_link_links.nth(9), name="st_page_link-st_page_icon_override")
+    assert_snapshot(page_link_links.nth(14), name="st_page_link-st_page_icon_override")
 
     # Sidebar page links
-    assert_snapshot(page_link_links.nth(11), name="st_page_link-sidebar-icon")
-    assert_snapshot(page_link_links.nth(14), name="st_page_link-sidebar-disabled")
+    assert_snapshot(page_link_links.nth(1), name="st_page_link-sidebar-icon")
+    assert_snapshot(page_link_links.nth(4), name="st_page_link-sidebar-disabled")
 
 
 def test_default_container_width(app: Page, assert_snapshot: ImageCompareFunction):
