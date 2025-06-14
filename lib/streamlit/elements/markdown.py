@@ -16,13 +16,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final, Literal, cast
 
+from streamlit.elements.lib.layout_utils import (
+    LayoutConfig,
+    Width,
+    WidthWithoutContent,
+    validate_width,
+)
 from streamlit.proto.Markdown_pb2 import Markdown as MarkdownProto
 from streamlit.runtime.metrics_util import gather_metrics
 from streamlit.string_util import clean_text, validate_icon_or_emoji
 from streamlit.type_util import SupportsStr, is_sympy_expression
 
 if TYPE_CHECKING:
-    import sympy  # type: ignore
+    import sympy
 
     from streamlit.delta_generator import DeltaGenerator
 
@@ -37,6 +43,7 @@ class MarkdownMixin:
         unsafe_allow_html: bool = False,
         *,  # keyword-only arguments:
         help: str | None = None,
+        width: Width = "stretch",
     ) -> DeltaGenerator:
         r"""Display string formatted as Markdown.
 
@@ -110,6 +117,11 @@ class MarkdownMixin:
             including the Markdown directives described in the ``body``
             parameter of ``st.markdown``.
 
+        width : int or "stretch" or "content"
+            The width of the markdown element. Can be an integer (pixels),
+            "stretch" (default) to use the full width of the container, or "content"
+            to size based on the content.
+
         Examples
         --------
         >>> import streamlit as st
@@ -141,7 +153,10 @@ class MarkdownMixin:
         if help:
             markdown_proto.help = help
 
-        return self.dg._enqueue("markdown", markdown_proto)
+        validate_width(width, allow_content=True)
+        layout_config = LayoutConfig(width=width)
+
+        return self.dg._enqueue("markdown", markdown_proto, layout_config=layout_config)
 
     @gather_metrics("caption")
     def caption(
@@ -150,6 +165,7 @@ class MarkdownMixin:
         unsafe_allow_html: bool = False,
         *,  # keyword-only arguments:
         help: str | None = None,
+        width: Width = "stretch",
     ) -> DeltaGenerator:
         """Display text in small font.
 
@@ -189,6 +205,11 @@ class MarkdownMixin:
             including the Markdown directives described in the ``body``
             parameter of ``st.markdown``.
 
+        width : int or "stretch" or "content"
+            The width of the caption. Can be an integer (pixels), "stretch"
+            (default) to use the full width of the container, or "content" to
+            size based on the content.
+
         Examples
         --------
         >>> import streamlit as st
@@ -204,7 +225,11 @@ class MarkdownMixin:
         caption_proto.element_type = MarkdownProto.Type.CAPTION
         if help:
             caption_proto.help = help
-        return self.dg._enqueue("markdown", caption_proto)
+
+        validate_width(width, allow_content=True)
+        layout_config = LayoutConfig(width=width)
+
+        return self.dg._enqueue("markdown", caption_proto, layout_config=layout_config)
 
     @gather_metrics("latex")
     def latex(
@@ -212,6 +237,7 @@ class MarkdownMixin:
         body: SupportsStr | sympy.Expr,
         *,  # keyword-only arguments:
         help: str | None = None,
+        width: Width = "stretch",
     ) -> DeltaGenerator:
         # This docstring needs to be "raw" because of the backslashes in the
         # example below.
@@ -235,6 +261,12 @@ class MarkdownMixin:
             including the Markdown directives described in the ``body``
             parameter of ``st.markdown``.
 
+        width : int or "stretch" or "content"
+            The width of the LaTeX expression. If "stretch" (default), the
+            expression will take up the full width of the container. If "content",
+            the expression will take up only as much width as needed. If an integer,
+            the width will be set to that number of pixels.
+
         Example
         -------
         >>> import streamlit as st
@@ -246,21 +278,33 @@ class MarkdownMixin:
         ...     ''')
 
         """
+
         if is_sympy_expression(body):
             import sympy
 
             body = sympy.latex(body)
 
         latex_proto = MarkdownProto()
-        latex_proto.body = "$$\n%s\n$$" % clean_text(body)
+        latex_proto.body = f"$$\n{clean_text(body)}\n$$"
         latex_proto.element_type = MarkdownProto.Type.LATEX
         if help:
             latex_proto.help = help
-        return self.dg._enqueue("markdown", latex_proto)
+
+        validate_width(width, allow_content=True)
+        layout_config = LayoutConfig(width=width)
+
+        return self.dg._enqueue("markdown", latex_proto, layout_config=layout_config)
 
     @gather_metrics("divider")
-    def divider(self) -> DeltaGenerator:
+    def divider(self, *, width: WidthWithoutContent = "stretch") -> DeltaGenerator:
         """Display a horizontal rule.
+
+        Parameters
+        ----------
+        width : int or "stretch"
+            The width of the divider. If "stretch" (default), the divider will
+            take up the full width of the container. If an integer, the width
+            will be set to that number of pixels.
 
         .. note::
             You can achieve the same effect with st.write("---") or
@@ -273,10 +317,15 @@ class MarkdownMixin:
         >>> st.divider()
 
         """
+
         divider_proto = MarkdownProto()
         divider_proto.body = MARKDOWN_HORIZONTAL_RULE_EXPRESSION
         divider_proto.element_type = MarkdownProto.Type.DIVIDER
-        return self.dg._enqueue("markdown", divider_proto)
+
+        validate_width(width, allow_content=False)
+        layout_config = LayoutConfig(width=width)
+
+        return self.dg._enqueue("markdown", divider_proto, layout_config=layout_config)
 
     @gather_metrics("badge")
     def badge(
@@ -294,6 +343,7 @@ class MarkdownMixin:
             "grey",
             "primary",
         ] = "blue",
+        width: Width = "content",
     ) -> DeltaGenerator:
         """Display a colored badge with an icon and label.
 
@@ -348,6 +398,11 @@ class MarkdownMixin:
             ``"primary"``, Streamlit will use the default primary accent color
             unless you set the ``theme.primaryColor`` configuration option.
 
+        width : int or "stretch" or "content"
+            The width of the badge. Can be an integer (pixels), "stretch" to
+            use the full width of the container, or "content" (default) to size
+            based on the content.
+
         Examples
         --------
         Create standalone badges with ``st.badge`` (with or without icons). If
@@ -368,10 +423,7 @@ class MarkdownMixin:
             height: 220px
 
         """
-        if icon is not None:
-            icon_str = validate_icon_or_emoji(icon) + " "
-        else:
-            icon_str = ""
+        icon_str = validate_icon_or_emoji(icon) + " " if icon is not None else ""
 
         # Escape [ and ] characters in the label to prevent breaking the directive syntax
         escaped_label = label.replace("[", "\\[").replace("]", "\\]")
@@ -379,7 +431,11 @@ class MarkdownMixin:
         badge_proto = MarkdownProto()
         badge_proto.body = f":{color}-badge[{icon_str}{escaped_label}]"
         badge_proto.element_type = MarkdownProto.Type.NATIVE
-        return self.dg._enqueue("markdown", badge_proto)
+
+        validate_width(width, allow_content=True)
+        layout_config = LayoutConfig(width=width)
+
+        return self.dg._enqueue("markdown", badge_proto, layout_config=layout_config)
 
     @property
     def dg(self) -> DeltaGenerator:

@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 
 from e2e_playwright.conftest import (
     ImageCompareFunction,
@@ -30,17 +30,21 @@ from e2e_playwright.shared.app_utils import (
 )
 
 
-def main_heading(app: Page):
+def main_heading(app: Page) -> Locator:
     return app.get_by_test_id("stHeading").nth(0)
 
 
-def page_heading(app: Page):
+def page_heading(app: Page) -> Locator:
     return app.get_by_test_id("stHeading").nth(1)
 
 
 def check_field(
-    app: Page, *, hide_sidebarnav=False, dynamic_pages=False, add_sidebar_elements=False
-):
+    app: Page,
+    *,
+    hide_sidebarnav: bool = False,
+    dynamic_pages: bool = False,
+    add_sidebar_elements: bool = False,
+) -> None:
     if hide_sidebarnav:
         click_checkbox(app, "Hide sidebar")
 
@@ -70,7 +74,7 @@ expected_page_order = [
 
 def get_page_link(
     app: Page, page_name: str, page_order: list[str] = expected_page_order
-):
+) -> Locator:
     return (
         app.get_by_test_id("stSidebarNav").locator("a").nth(page_order.index(page_name))
     )
@@ -403,19 +407,6 @@ def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
     )
     assert_snapshot(app.get_by_test_id("stSidebar"), name="sidebar-logo")
 
-    # Collapse the sidebar
-    app.get_by_test_id("stSidebarContent").hover()
-    app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
-    app.wait_for_timeout(500)
-
-    # Collapsed logo
-    expect(
-        app.get_by_test_id("stSidebarCollapsedControl").locator("a")
-    ).to_have_attribute("href", "https://www.example.com")
-    assert_snapshot(
-        app.get_by_test_id("stSidebarCollapsedControl"), name="collapsed-logo"
-    )
-
 
 def test_page_link_with_path(app: Page):
     """Test st.page_link works with a path."""
@@ -572,16 +563,20 @@ def test_logo_source_errors(app: Page, app_port: int):
     app.goto(f"http://localhost:{app_port}")
 
     # Wait until the expected error is logged, indicating CLIENT_ERROR was sent
-    # for the logo in the main app area and the sidebar
-    wait_until(
-        app,
-        lambda: any(
-            "Client Error: Logo source error" in message for message in messages
-        ),
-    )
     wait_until(
         app,
         lambda: any(
             "Client Error: Sidebar Logo source error" in message for message in messages
+        ),
+    )
+
+    app.get_by_test_id("stSidebarContent").hover()
+    app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
+
+    # Wait until the expected error is logged, indicating CLIENT_ERROR was sent
+    wait_until(
+        app,
+        lambda: any(
+            "Client Error: Header Logo source error" in message for message in messages
         ),
     )

@@ -32,7 +32,7 @@ import { WidgetStateManager } from "~lib/WidgetStateManager"
 import { bgColorToBaseString, toExportedTheme } from "~lib/theme"
 import { mockEndpoints } from "~lib/mocks/mocks"
 import { mockTheme } from "~lib/mocks/mockTheme"
-import { customRenderLibContext } from "~lib/test_util"
+import { renderWithContexts } from "~lib/test_util"
 import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
 
 import ComponentInstance, {
@@ -68,6 +68,7 @@ const MOCK_COMPONENT_NAME = "mock_component_name"
 
 describe("ComponentInstance", () => {
   let logWarnSpy: MockInstance
+  let originalStreamlitWindowObj: typeof window.__streamlit
   const getComponentRegistry = (): ComponentRegistry => {
     return new ComponentRegistry(mockEndpoints())
   }
@@ -85,12 +86,17 @@ describe("ComponentInstance", () => {
       elementRef: { current: null },
       values: [250],
     })
+    originalStreamlitWindowObj = window.__streamlit
+  })
+
+  afterEach(() => {
+    window.__streamlit = originalStreamlitWindowObj
   })
 
   it("registers a message listener on render", () => {
     const componentRegistry = getComponentRegistry()
     const registerListener = vi.spyOn(componentRegistry, "registerListener")
-    customRenderLibContext(
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
         disabled={false}
@@ -114,7 +120,7 @@ describe("ComponentInstance", () => {
       componentRegistry,
       "deregisterListener"
     )
-    const { unmount } = customRenderLibContext(
+    const { unmount } = renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
         disabled={false}
@@ -134,7 +140,7 @@ describe("ComponentInstance", () => {
   })
 
   it("renders its iframe correctly", () => {
-    customRenderLibContext(
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
         disabled={false}
@@ -159,8 +165,32 @@ describe("ComponentInstance", () => {
     expect(iframe).toHaveClass("stCustomComponentV1")
   })
 
+  it("includes window.__streamlit?.CUSTOM_COMPONENT_CLIENT_ID in queryString if set", () => {
+    window.__streamlit = { CUSTOM_COMPONENT_CLIENT_ID: "foobar" }
+    renderWithContexts(
+      <ComponentInstance
+        element={createElementProp()}
+        disabled={false}
+        widgetMgr={
+          new WidgetStateManager({
+            sendRerunBackMsg: vi.fn(),
+            formsDataChanged: vi.fn(),
+          })
+        }
+      />,
+      {
+        componentRegistry: getComponentRegistry(),
+      }
+    )
+    const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
+    expect(iframe).toHaveAttribute(
+      "src",
+      "http://a.mock.url?__streamlit_parent_client_id=foobar&streamlitUrl=http%3A%2F%2Flocalhost%3A3000%2F"
+    )
+  })
+
   it("displays a skeleton initially with a certain height", () => {
-    customRenderLibContext(
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
         disabled={false}
@@ -184,7 +214,7 @@ describe("ComponentInstance", () => {
   })
 
   it("will not displays a skeleton when height is explicitly set to 0", () => {
-    customRenderLibContext(
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp({ height: 0 })}
         disabled={false}
@@ -208,7 +238,7 @@ describe("ComponentInstance", () => {
   describe("COMPONENT_READY handler", () => {
     it("posts a RENDER message to the iframe", () => {
       const jsonArgs = { foo: "string", bar: 5 }
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
           disabled={false}
@@ -243,7 +273,7 @@ describe("ComponentInstance", () => {
     })
 
     it("hides the skeleton and maintains iframe height of 0", () => {
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp()}
           disabled={false}
@@ -280,7 +310,7 @@ describe("ComponentInstance", () => {
 
     it("prevents RENDER message until component is ready", () => {
       const jsonArgs = { foo: "string", bar: 5 }
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
           disabled={false}
@@ -306,7 +336,7 @@ describe("ComponentInstance", () => {
       // (This can happen during development, when the component's devserver
       // reloads.)
       const jsonArgs = { foo: "string", bar: 5 }
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
           disabled={false}
@@ -355,7 +385,7 @@ describe("ComponentInstance", () => {
 
     it("send render message whenever the args change and the component is ready", () => {
       let jsonArgs = { foo: "string", bar: 5 }
-      const { rerender } = customRenderLibContext(
+      const { rerender } = renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
           disabled={false}
@@ -411,7 +441,7 @@ describe("ComponentInstance", () => {
       })
 
       const jsonArgs = { foo: "string", bar: 5 }
-      const { rerender } = customRenderLibContext(
+      const { rerender } = renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
           disabled={false}
@@ -469,7 +499,7 @@ describe("ComponentInstance", () => {
     it("errors on unrecognized API version", () => {
       const badAPIVersion = CUSTOM_COMPONENT_API_VERSION + 1
       const jsonArgs = { foo: "string", bar: 5 }
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
           disabled={false}
@@ -506,7 +536,7 @@ describe("ComponentInstance", () => {
       const element = createElementProp(jsonArgs, [
         new SpecialArg({ key: "foo" }),
       ])
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={element}
           disabled={false}
@@ -526,8 +556,8 @@ describe("ComponentInstance", () => {
       ).toBeVisible()
     })
 
-    it("warns if COMPONENT_READY hasn't been received after a timeout", () => {
-      customRenderLibContext(
+    it("warns if COMPONENT_READY hasn't been received after a timeout", async () => {
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp()}
           disabled={false}
@@ -543,7 +573,7 @@ describe("ComponentInstance", () => {
         }
       )
       // Advance past our warning timeout, and force a re-render.
-      act(() => vi.advanceTimersByTime(COMPONENT_READY_WARNING_TIME_MS))
+      await act(() => vi.advanceTimersByTime(COMPONENT_READY_WARNING_TIME_MS))
 
       expect(
         screen.getByText(/The app is attempting to load the component from/)
@@ -558,7 +588,7 @@ describe("ComponentInstance", () => {
         componentRegistry,
         "checkSourceUrlResponse"
       )
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp()}
           disabled={false}
@@ -580,7 +610,7 @@ describe("ComponentInstance", () => {
       )
     })
 
-    it("triggers component registry's sendTimeoutError when component has timed out waiting for READY message", () => {
+    it("triggers component registry's sendTimeoutError when component has timed out waiting for READY message", async () => {
       const componentRegistry = getComponentRegistry()
       // spy on Component Registry's sendTimeoutError method
       const sendTimeoutErrorSpy = vi.spyOn(
@@ -588,7 +618,7 @@ describe("ComponentInstance", () => {
         "sendTimeoutError"
       )
 
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp()}
           disabled={false}
@@ -604,7 +634,7 @@ describe("ComponentInstance", () => {
         }
       )
       // Advance past our warning timeout, and force a re-render.
-      act(() => vi.advanceTimersByTime(COMPONENT_READY_WARNING_TIME_MS))
+      await act(() => vi.advanceTimersByTime(COMPONENT_READY_WARNING_TIME_MS))
 
       expect(sendTimeoutErrorSpy).toHaveBeenCalledWith(
         "http://a.mock.url?streamlitUrl=http%3A%2F%2Flocalhost%3A3000%2F",
@@ -622,7 +652,7 @@ describe("ComponentInstance", () => {
       }
 
       const element = createElementProp(jsonValue)
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={element}
           disabled={false}
@@ -683,7 +713,7 @@ describe("ComponentInstance", () => {
       const jsonValue = {}
 
       const element = createElementProp(jsonValue)
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={element}
           disabled={false}
@@ -752,7 +782,7 @@ describe("ComponentInstance", () => {
       }
 
       const element = createElementProp(jsonValue)
-      customRenderLibContext(
+      renderWithContexts(
         <ComponentInstance
           element={element}
           disabled={false}
@@ -796,7 +826,7 @@ describe("ComponentInstance", () => {
       it("updates the frameHeight without re-rendering", () => {
         const jsonValue = {}
         const element = createElementProp(jsonValue)
-        customRenderLibContext(
+        renderWithContexts(
           <ComponentInstance
             element={element}
             disabled={false}
@@ -854,7 +884,7 @@ describe("ComponentInstance", () => {
         }
 
         const element = createElementProp(jsonValue)
-        customRenderLibContext(
+        renderWithContexts(
           <ComponentInstance
             element={element}
             disabled={false}

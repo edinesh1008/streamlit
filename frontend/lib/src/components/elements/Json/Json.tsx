@@ -19,12 +19,12 @@ import React, { memo, ReactElement, useRef } from "react"
 import JSON5 from "json5"
 import Clipboard from "clipboard"
 import ReactJson from "react-json-view"
-import { useTheme } from "@emotion/react"
 
 import { Json as JsonProto } from "@streamlit/protobuf"
 
 import ErrorElement from "~lib/components/shared/ErrorElement"
-import { EmotionTheme, hasLightBackgroundColor } from "~lib/theme"
+import { hasLightBackgroundColor } from "~lib/theme"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { ensureError } from "~lib/util/ErrorHandling"
 
 import { StyledJsonWrapper } from "./styled-components"
@@ -37,7 +37,7 @@ export interface JsonProps {
  * Functional element representing JSON structured text.
  */
 function Json({ element }: Readonly<JsonProps>): ReactElement {
-  const theme: EmotionTheme = useTheme()
+  const theme = useEmotionTheme()
 
   const elementRef = useRef<HTMLDivElement>(null)
 
@@ -48,6 +48,7 @@ function Json({ element }: Readonly<JsonProps>): ReactElement {
     const error = ensureError(e)
     try {
       bodyObject = JSON5.parse(element.body)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (json5Error) {
       // If content fails to parse as Json, rebuild the error message
       // to show where the problem occurred.

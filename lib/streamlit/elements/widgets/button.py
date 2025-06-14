@@ -420,7 +420,7 @@ class ButtonMixin:
         data with a cached function. When working with a download button, it's
         similarly recommended to convert your data into a downloadable format
         with a cached function. Caching ensures that the app reruns
-        effeciently.
+        efficiently.
 
         >>> import streamlit as st
         >>> import pandas as pd
@@ -818,6 +818,7 @@ class ButtonMixin:
             user_key=key,
             # download_button is not allowed to be used in a form.
             form_id=None,
+            dg=self.dg,
             label=label,
             icon=icon,
             file_name=file_name,
@@ -931,6 +932,10 @@ class ButtonMixin:
             page_link_proto.page = page.url_path
             if label is None:
                 page_link_proto.label = page.title
+            if icon is None:
+                page_link_proto.icon = page.icon
+                # Here the StreamlitPage's icon is already validated
+                # (using validate_icon_or_emoji) during its initialization
         else:
             # Convert Path to string if necessary
             if isinstance(page, Path):
@@ -940,10 +945,9 @@ class ButtonMixin:
             if is_url(page):
                 if label is None or label == "":
                     raise StreamlitMissingPageLabelError()
-                else:
-                    page_link_proto.page = page
-                    page_link_proto.external = True
-                    return self.dg._enqueue("page_link", page_link_proto)
+                page_link_proto.page = page
+                page_link_proto.external = True
+                return self.dg._enqueue("page_link", page_link_proto)
 
             ctx_main_script = ""
             all_app_pages = {}
@@ -1010,6 +1014,7 @@ class ButtonMixin:
             user_key=key,
             # Only the
             form_id=form_id,
+            dg=self.dg,
             label=label,
             icon=icon,
             help=help,
@@ -1028,7 +1033,7 @@ class ButtonMixin:
                 raise StreamlitAPIException(
                     f"`st.button()` can't be used in an `st.form()`.{FORM_DOCS_INFO}"
                 )
-            elif not is_in_form(self.dg) and is_form_submitter:
+            if not is_in_form(self.dg) and is_form_submitter:
                 raise StreamlitAPIException(
                     f"`st.form_submit_button()` must be used inside an `st.form()`.{FORM_DOCS_INFO}"
                 )
@@ -1106,7 +1111,7 @@ def marshall_file(
         data_as_bytes = data.read() or b""
         mimetype = mimetype or "application/octet-stream"
     else:
-        raise RuntimeError("Invalid binary data format: %s" % type(data))
+        raise StreamlitAPIException(f"Invalid binary data format: {type(data)}")
 
     if runtime.exists():
         file_url = runtime.get_instance().media_file_mgr.add(

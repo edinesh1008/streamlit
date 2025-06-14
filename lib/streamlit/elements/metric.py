@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any, Literal, Union, cast
 
 from typing_extensions import TypeAlias
 
+from streamlit.elements.lib.layout_utils import LayoutConfig, Width, validate_width
 from streamlit.elements.lib.policies import maybe_raise_label_warnings
 from streamlit.elements.lib.utils import (
     LabelVisibility,
@@ -58,6 +59,7 @@ class MetricMixin:
         help: str | None = None,
         label_visibility: LabelVisibility = "visible",
         border: bool = False,
+        width: Width = "stretch",
     ) -> DeltaGenerator:
         r"""Display a metric in big bold font, with an optional indicator of how the metric changed.
 
@@ -114,13 +116,18 @@ class MetricMixin:
         label_visibility : "visible", "hidden", or "collapsed"
             The visibility of the label. The default is ``"visible"``. If this
             is ``"hidden"``, Streamlit displays an empty spacer instead of the
-            label, which can help keep the widget alligned with other widgets.
+            label, which can help keep the widget aligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
         border : bool
             Whether to show a border around the metric container. If this is
             ``False`` (default), no border is shown. If this is ``True``, a
             border is shown.
+
+        width : int or "stretch" or "content"
+            The width of the metric. Can be either an integer (pixels), "stretch", or "content".
+            Defaults to "stretch". If "stretch", the metric will stretch to fill the available
+            space. If "content", the metric will adjust its width to fit its content.
 
         Examples
         --------
@@ -204,7 +211,10 @@ class MetricMixin:
             label_visibility
         )
 
-        return self.dg._enqueue("metric", metric_proto)
+        validate_width(width, allow_content=True)
+        layout_config = LayoutConfig(width=width)
+
+        return self.dg._enqueue("metric", metric_proto, layout_config=layout_config)
 
     @property
     def dg(self) -> DeltaGenerator:
@@ -223,13 +233,13 @@ def _parse_label(label: str) -> str:
 def _parse_value(value: Value) -> str:
     if value is None:
         return "—"
-    if isinstance(value, int) or isinstance(value, float) or isinstance(value, str):
+    if isinstance(value, (int, float, str)):
         return str(value)
-    elif hasattr(value, "item"):
+    if hasattr(value, "item"):
         # Add support for numpy values (e.g. int16, float64, etc.)
         try:
             # Item could also be just a variable, so we use try, except
-            if isinstance(value.item(), float) or isinstance(value.item(), int):
+            if isinstance(value.item(), (float, int)):
                 return str(value.item())
         except Exception:  # noqa: S110
             # If the numpy item is not a valid value, the TypeError below will be raised.
@@ -247,14 +257,13 @@ def _parse_delta(delta: Delta) -> str:
         return ""
     if isinstance(delta, str):
         return dedent(delta)
-    elif isinstance(delta, int) or isinstance(delta, float):
+    if isinstance(delta, (int, float)):
         return str(delta)
-    else:
-        raise TypeError(
-            f"'{delta}' is of type {type(delta)}, which is not an accepted type."
-            " delta only accepts: int, float, str, or None."
-            " Please convert the value to an accepted type."
-        )
+    raise TypeError(
+        f"'{delta}' is of type {type(delta)}, which is not an accepted type."
+        " delta only accepts: int, float, str, or None."
+        " Please convert the value to an accepted type."
+    )
 
 
 def _determine_delta_color_and_direction(
