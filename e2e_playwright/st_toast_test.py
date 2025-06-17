@@ -23,14 +23,14 @@ def test_default_toast_rendering(
     """Test that toasts are correctly rendered."""
     themed_app.keyboard.press("r")
     wait_for_app_loaded(themed_app)
-    themed_app.wait_for_timeout(250)
+    themed_app.wait_for_timeout(1000)
 
     toasts = themed_app.get_by_test_id("stToast")
-    expect(toasts).to_have_count(3)
-    toasts.nth(2).hover()
+    expect(toasts).to_have_count(4)
+    toasts.nth(3).hover()
 
-    expect(toasts.nth(2)).to_contain_text("🐶This is a default toast message")
-    assert_snapshot(toasts.nth(2), name="toast-default")
+    expect(toasts.nth(3)).to_contain_text("🐶This is a default toast message")
+    assert_snapshot(toasts.nth(3), name="toast-default")
 
 
 def test_collapsed_toast_rendering(
@@ -39,17 +39,17 @@ def test_collapsed_toast_rendering(
     """Test collapsed long toasts are correctly rendered."""
     themed_app.keyboard.press("r")
     wait_for_app_loaded(themed_app)
-    themed_app.wait_for_timeout(250)
+    themed_app.wait_for_timeout(1000)
 
     toasts = themed_app.get_by_test_id("stToast")
-    expect(toasts).to_have_count(3)
-    toasts.nth(1).hover()
+    expect(toasts).to_have_count(4)
+    toasts.nth(2).hover()
 
-    expect(toasts.nth(1)).to_contain_text(
+    expect(toasts.nth(2)).to_contain_text(
         "🦄Random toast message that is a really really really really really really "
         "really long message, going wayview moreClose"
     )
-    assert_snapshot(toasts.nth(1), name="toast-collapsed")
+    assert_snapshot(toasts.nth(2), name="toast-collapsed")
 
 
 def test_expanded_toast_rendering(
@@ -58,21 +58,21 @@ def test_expanded_toast_rendering(
     """Test expanded long toasts are correctly rendered."""
     themed_app.keyboard.press("r")
     wait_for_app_loaded(themed_app)
-    themed_app.wait_for_timeout(250)
+    themed_app.wait_for_timeout(1000)
 
     toasts = themed_app.get_by_test_id("stToast")
-    expect(toasts).to_have_count(3)
-    toasts.nth(1).hover()
+    expect(toasts).to_have_count(4)
+    toasts.nth(2).hover()
 
     expand = themed_app.get_by_text("view more")
     expect(expand).to_have_count(1)
     expand.click()
 
-    expect(toasts.nth(1)).to_contain_text(
+    expect(toasts.nth(2)).to_contain_text(
         "🦄Random toast message that is a really really really really really really "
         "really long message, going way past the 3 line limitview lessClose"
     )
-    assert_snapshot(toasts.nth(1), name="toast-expanded")
+    assert_snapshot(toasts.nth(2), name="toast-expanded")
 
 
 def test_toast_with_material_icon_rendering(
@@ -81,14 +81,30 @@ def test_toast_with_material_icon_rendering(
     """Test that toasts with material icons are correctly rendered."""
     themed_app.keyboard.press("r")
     wait_for_app_loaded(themed_app)
-    themed_app.wait_for_timeout(250)
+    themed_app.wait_for_timeout(1000)
 
     toasts = themed_app.get_by_test_id("stToast")
-    expect(toasts).to_have_count(3)
+    expect(toasts).to_have_count(4)
+    toasts.nth(1).hover()
+
+    expect(toasts.nth(1)).to_contain_text("cabinYour edited image was saved!Close")
+    assert_snapshot(toasts.nth(1), name="toast-material-icon")
+
+
+def test_persistent_toast_rendering(
+    themed_app: Page, assert_snapshot: ImageCompareFunction
+):
+    """Test that persistent toasts are correctly rendered and not automatically dismissed."""
+    themed_app.keyboard.press("r")
+    wait_for_app_loaded(themed_app)
+    themed_app.wait_for_timeout(5000)  # Wait for other toasts to disappear
+
+    toasts = themed_app.get_by_test_id("stToast")
+    expect(toasts).to_have_count(1)
     toasts.nth(0).hover()
 
-    expect(toasts.nth(0)).to_contain_text("cabinYour edited image was saved!Close")
-    assert_snapshot(toasts.nth(0), name="toast-material-icon")
+    expect(toasts.nth(0)).to_contain_text("🔥This toast never disappears")
+    assert_snapshot(toasts.nth(0), name="toast-persistent")
 
 
 def test_toast_above_dialog(app: Page, assert_snapshot: ImageCompareFunction):
@@ -98,7 +114,7 @@ def test_toast_above_dialog(app: Page, assert_snapshot: ImageCompareFunction):
 
     app.keyboard.press("r")
     wait_for_app_loaded(app)
-    app.wait_for_timeout(250)
+    app.wait_for_timeout(5000)
 
     # Trigger dialog
     app.get_by_text("Trigger dialog").click()

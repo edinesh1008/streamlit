@@ -25,4 +25,8 @@ message Toast {
 
     // Emoji
     string icon = 2;
+
+    // The time in seconds that the toast should be displayed.
+    // A duration of -1 indicates that the toast should be persistent.
+    double duration = 3;
 }

@@ -41,6 +41,7 @@ import {
 export interface ToastProps {
   body: string
   icon?: string
+  duration?: number
 }
 
 function generateToastOverrides(theme: EmotionTheme): ToastOverrides {
@@ -111,7 +112,7 @@ export function shortenMessage(fullMessage: string): string {
   return fullMessage
 }
 
-function Toast({ body, icon }: Readonly<ToastProps>): ReactElement {
+function Toast({ body, icon, duration }: Readonly<ToastProps>): ReactElement {
   const theme = useEmotionTheme()
   const displayMessage = shortenMessage(body)
   const shortened = body !== displayMessage
@@ -166,6 +167,8 @@ function Toast({ body, icon }: Readonly<ToastProps>): ReactElement {
     // to reference that toast for update/removal
     const newKey = toaster.info(toastContent, {
       overrides: { ...styleOverrides },
+      autoHideDuration:
+        duration && duration < 0 ? 0 : duration && duration * 1000,
     })
     setToastKey(newKey)
 

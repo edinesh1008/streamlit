@@ -41,6 +41,7 @@ class ToastMixin:
         body: SupportsStr,
         *,  # keyword-only args:
         icon: str | None = None,
+        duration: float | int | str = 4.0,
     ) -> DeltaGenerator:
         """Display a short message, known as a notification "toast".
         The toast appears in the app's top-right corner and disappears after four seconds.
@@ -79,6 +80,9 @@ class ToastMixin:
               <https://fonts.google.com/icons?icon.set=Material+Symbols&icon.style=Rounded>`_
               font library.
 
+        duration : float, int, or "always"
+            The time in seconds that the toast should be displayed.
+            If ``duration`` is ``"always"`` (default), the toast will be persistent.
 
         Example
         -------
@@ -89,6 +93,20 @@ class ToastMixin:
         toast_proto = ToastProto()
         toast_proto.body = clean_text(validate_text(body))
         toast_proto.icon = validate_icon_or_emoji(icon)
+
+        if isinstance(duration, str):
+            if duration == "always":
+                toast_proto.duration = -1.0
+            else:
+                raise StreamlitAPIException(
+                    'The only accepted string value for `duration` is `"always"`.'
+                )
+        elif isinstance(duration, (int, float)):
+            toast_proto.duration = duration
+        else:
+            raise StreamlitAPIException(
+                f'`duration` must be a `float`, `int`, or `"always"`. Got: {type(duration).__name__}'
+            )
         return self.dg._enqueue("toast", toast_proto)
 
     @property

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+/// <reference types="jest" />
+
 import React, { ReactElement } from "react"
 
 import { RenderResult, screen, waitFor, within } from "@testing-library/react"
-import { PLACEMENT, ToasterContainer } from "baseui/toast"
+import { PLACEMENT, ToasterContainer, toaster } from "baseui/toast"
 import { userEvent } from "@testing-library/user-event"
 
 import { Toast as ToastProto } from "@streamlit/protobuf"
@@ -33,8 +35,6 @@ import Toast, { shortenMessage, ToastProps } from "./Toast"
 const createContainer = (): ReactElement => (
   <ToasterContainer
     placement={PLACEMENT.bottomRight}
-    // increasing autoHideDuration to 10s to avoid test flakiness
-    autoHideDuration={10000}
     overrides={{
       Root: {
         props: {
@@ -60,6 +60,12 @@ const renderComponent = (props: ToastProps): RenderResult =>
   )
 
 describe("Toast Component", () => {
+  const toasterInfoSpy = jest.spyOn(toaster, "info")
+
+  beforeEach(() => {
+    toasterInfoSpy.mockClear()
+  })
+
   test("renders default toast", () => {
     const props = getProps()
     renderComponent(props)
@@ -77,6 +83,34 @@ describe("Toast Component", () => {
     const toastElement = screen.getByTestId("stToast")
     expect(toastElement).toBeInTheDocument()
     expect(toastElement).toHaveClass("stToast")
+  })
+
+  test("passes the right autoHideDuration to the toaster", () => {
+    const props = getProps({
+      duration: 10,
+    })
+    renderComponent(props)
+
+    expect(toasterInfoSpy).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        autoHideDuration: 10000,
+      })
+    )
+  })
+
+  test("passes the right autoHideDuration to the toaster when duration is 'always'", () => {
+    const props = getProps({
+      duration: -1,
+    })
+    renderComponent(props)
+
+    expect(toasterInfoSpy).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({
+        autoHideDuration: 0,
+      })
+    )
   })
 
   test("renders long toast messages with expand option", () => {

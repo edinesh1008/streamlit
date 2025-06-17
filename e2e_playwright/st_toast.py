@@ -24,6 +24,7 @@ st.toast(
 )
 
 st.toast("Your edited image was saved!", icon=":material/cabin:")
+st.toast("This toast never disappears", icon="🔥", duration="always")
 
 
 @st.dialog("Streamlit Toast Notification")

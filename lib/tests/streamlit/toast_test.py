@@ -46,6 +46,46 @@ class ToastTest(DeltaGeneratorTestCase):
         assert c.body == "toast text"
         assert c.icon == "🦄"
 
+    def test_valid_duration_int(self):
+        """Test that it can be called with a valid integer duration."""
+        st.toast("toast text", duration=5)
+
+        c = self.get_delta_from_queue().new_element.toast
+        self.assertEqual(c.duration, 5.0)
+
+    def test_valid_duration_float(self):
+        """Test that it can be called with a valid float duration."""
+        st.toast("toast text", duration=0.5)
+
+        c = self.get_delta_from_queue().new_element.toast
+        self.assertEqual(c.duration, 0.5)
+
+    def test_valid_duration_always_string(self):
+        """Test that it can be called with 'always' as a duration."""
+        st.toast("toast text", duration="always")
+
+        c = self.get_delta_from_queue().new_element.toast
+        self.assertEqual(c.duration, -1.0)
+
+    def test_invalid_duration_string(self):
+        """Test that an error is raised with an invalid string for duration."""
+        with pytest.raises(StreamlitAPIException) as e:
+            st.toast("toast text", duration="invalid")
+        self.assertEqual(
+            str(e.value),
+            'The only accepted string value for `duration` is `"always"`.',
+        )
+
+    def test_invalid_duration_type(self):
+        """Test that an error is raised with an invalid type for duration."""
+
+        with pytest.raises(StreamlitAPIException) as e:
+            st.toast("toast text", duration=None)
+        self.assertEqual(
+            str(e.value),
+            '`duration` must be a `float`, `int`, or `"always"`. Got: NoneType',
+        )
+
     def test_invalid_icon(self):
         """Test that an error is raised if an invalid icon is provided."""
         with pytest.raises(StreamlitAPIException) as e:
