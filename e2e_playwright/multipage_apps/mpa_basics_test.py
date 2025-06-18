@@ -25,6 +25,7 @@ from e2e_playwright.shared.app_utils import (
     get_button_group,
     get_segment_button,
     goto_app,
+    wait_for_all_images_to_be_loaded,
 )
 
 
@@ -283,6 +284,7 @@ def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
     expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
         "href", "https://www.example.com"
     )
+    wait_for_all_images_to_be_loaded(app)
     assert_snapshot(app.get_by_test_id("stSidebar"), name="sidebar-logo")
 
     # Collapse the sidebar
@@ -300,6 +302,7 @@ def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
 
     collapsed_logo_image = logo_link_element.get_by_test_id("stHeaderLogo")
     expect(collapsed_logo_image).to_be_visible()
+    wait_for_all_images_to_be_loaded(app)
     assert_snapshot(collapsed_logo_image, name="collapsed-header-logo")
 
 
@@ -317,6 +320,8 @@ def test_renders_small_logos(app: Page, assert_snapshot: ImageCompareFunction):
     expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
         "href", "https://www.example.com"
     )
+
+    wait_for_all_images_to_be_loaded(app)
     assert_snapshot(app.get_by_test_id("stSidebar"), name="small-sidebar-logo")
 
 
@@ -334,6 +339,7 @@ def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
     expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
         "href", "https://www.example.com"
     )
+    wait_for_all_images_to_be_loaded(app)
     assert_snapshot(app.get_by_test_id("stSidebar"), name="large-sidebar-logo")
 
     # Collapse the sidebar
@@ -354,6 +360,7 @@ def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
 
     collapsed_logo_image = logo_link_element.get_by_test_id("stHeaderLogo")
     expect(collapsed_logo_image).to_be_visible()
+    wait_for_all_images_to_be_loaded(app)
     assert_snapshot(collapsed_logo_image, name="large-collapsed-header-logo")
 
 
