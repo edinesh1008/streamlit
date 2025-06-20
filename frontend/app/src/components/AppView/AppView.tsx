@@ -205,26 +205,31 @@ function AppView(props: AppViewProps): ReactElement {
       (initialSidebarState === PageConfig.SidebarState.AUTO &&
         window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10))
   )
+
+  const isSidebarStateCollapsed =
+    initialSidebarState === PageConfig.SidebarState.COLLAPSED
+  const isSidebarStateAuto =
+    initialSidebarState === PageConfig.SidebarState.AUTO
+  const isWindowSmallerThanBreakpoint =
+    window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10)
   console.log(
     "=== AppView: initialSidebarState Collapsed?:",
-    initialSidebarState === PageConfig.SidebarState.COLLAPSED
+    isSidebarStateCollapsed
+  )
+  console.log("=== AppView: initialSidebarState Auto?:", isSidebarStateAuto)
+  console.log(
+    "=== AppView: isWindowSmallerThanBreakpoint:",
+    isWindowSmallerThanBreakpoint
   )
   console.log(
-    "=== AppView: initialSidebarState Auto?:",
-    initialSidebarState === PageConfig.SidebarState.AUTO
-  )
-  console.log("=== AppView: window.innerWidth:", window.innerWidth)
-  console.log(
-    "=== AppView: breakpoints.md:",
-    activeTheme.emotion.breakpoints.md
+    "=== AppView: 2nd condition (with variables):",
+    isSidebarStateCollapsed ||
+      (isSidebarStateAuto && isWindowSmallerThanBreakpoint)
   )
   console.log(
-    "=== AppView: getInt:",
-    parseInt(activeTheme.emotion.breakpoints.md, 10)
-  )
-  console.log(
-    "=== AppView: innerWidth <= breakpoints.md:",
-    window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10)
+    "=== AppView: 2nd condition:",
+    initialSidebarState === PageConfig.SidebarState.AUTO &&
+      window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10)
   )
   console.log("=== AppView: isSidebarCollapsed:", isSidebarCollapsed)
 
