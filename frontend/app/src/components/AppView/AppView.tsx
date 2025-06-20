@@ -199,69 +199,53 @@ function AppView(props: AppViewProps): ReactElement {
     />
   )
 
-  const [isSidebarCollapsed, setSidebarIsCollapsed] = useState<boolean>(
-    () =>
-      initialSidebarState === PageConfig.SidebarState.COLLAPSED ||
-      (initialSidebarState === PageConfig.SidebarState.AUTO &&
-        window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10))
-  )
-
   const isSidebarStateCollapsed =
     initialSidebarState === PageConfig.SidebarState.COLLAPSED
   const isSidebarStateAuto =
     initialSidebarState === PageConfig.SidebarState.AUTO
   const isWindowSmallerThanBreakpoint =
     window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10)
-  console.log(
-    "=== AppView: initialSidebarState Collapsed?:",
-    isSidebarStateCollapsed
-  )
-  console.log("=== AppView: initialSidebarState Auto?:", isSidebarStateAuto)
+
+  console.log("=== AppView: isSidebarStateCollapsed:", isSidebarStateCollapsed)
+  console.log("=== AppView: isSidebarStateAuto:", isSidebarStateAuto)
   console.log(
     "=== AppView: isWindowSmallerThanBreakpoint:",
     isWindowSmallerThanBreakpoint
   )
-  console.log(
-    "=== AppView: 2nd condition (with variables):",
-    isSidebarStateCollapsed ||
+
+  // both receive initialSidebarState of 0 === AUTO
+  // isWindowSmallerThanBreakpoint: false in both
+
+  // isSidebarCollapsed: false evaluates to false in local
+  // isSidebarCollapsed: evaluates to true in CC
+
+  const [isSidebarCollapsed, setSidebarIsCollapsed] = useState<boolean>(
+    () =>
+      isSidebarStateCollapsed ||
       (isSidebarStateAuto && isWindowSmallerThanBreakpoint)
   )
-  console.log(
-    "=== AppView: 2nd condition:",
-    initialSidebarState === PageConfig.SidebarState.AUTO &&
-      window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10)
-  )
+
   console.log("=== AppView: isSidebarCollapsed:", isSidebarCollapsed)
 
   // sometimes the initialSidebarState is not updated until after the script runs with a set_page_config
   useEffect(() => {
-    const isSidebarCollapsed =
-      initialSidebarState === PageConfig.SidebarState.COLLAPSED ||
-      (initialSidebarState === PageConfig.SidebarState.AUTO &&
-        window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10))
+    const sidebarStateCollapsed =
+      initialSidebarState === PageConfig.SidebarState.COLLAPSED
+    const sidebarStateAuto =
+      initialSidebarState === PageConfig.SidebarState.AUTO
+    const windowSmallerThanBreakpoint =
+      window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10)
 
     console.log(
-      "=== AppView: useEffect: initialSidebarState:",
-      initialSidebarState
-    )
-    console.log(
-      "=== AppView: useEffect: breakpoints.md:",
-      activeTheme.emotion.breakpoints.md
-    )
-    console.log(
-      "=== AppView: useEffect: window.innerWidth:",
-      window.innerWidth
-    )
-    console.log(
-      "=== AppView: useEffect isSidebarCollapsed:",
-      isSidebarCollapsed
+      "=== AppView: useEffect FIRED",
+      sidebarStateCollapsed,
+      sidebarStateAuto,
+      windowSmallerThanBreakpoint
     )
 
     setSidebarIsCollapsed(
-      initialSidebarState === PageConfig.SidebarState.COLLAPSED ||
-        (initialSidebarState === PageConfig.SidebarState.AUTO &&
-          window.innerWidth <=
-            parseInt(activeTheme.emotion.breakpoints.md, 10))
+      sidebarStateCollapsed ||
+        (sidebarStateAuto && windowSmallerThanBreakpoint)
     )
   }, [initialSidebarState, activeTheme.emotion.breakpoints.md])
 
