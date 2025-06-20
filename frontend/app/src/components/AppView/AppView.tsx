@@ -136,6 +136,7 @@ function AppView(props: AppViewProps): ReactElement {
   }, [sendMessageToHost])
 
   const { initialSidebarState, widgetsDisabled, showToolbar } = useAppContext()
+  console.log("=== AppView: initialSidebarState:", initialSidebarState)
 
   const {
     addScriptFinishedHandler,
@@ -156,6 +157,7 @@ function AppView(props: AppViewProps): ReactElement {
       !hideSidebarNav &&
       appPages.length > 1) ||
     showSidebarOverride
+  console.log("=== AppView: showSidebar:", showSidebar)
 
   useEffect(() => {
     // Handle sidebar flicker/unmount with MPA & hideSidebarNav
@@ -203,9 +205,16 @@ function AppView(props: AppViewProps): ReactElement {
       (initialSidebarState === PageConfig.SidebarState.AUTO &&
         window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10))
   )
+  console.log("=== AppView: isSidebarCollapsed:", isSidebarCollapsed)
 
   // sometimes the initialSidebarState is not updated until after the script runs with a set_page_config
   useEffect(() => {
+    const isSidebarCollapsed =
+      initialSidebarState === PageConfig.SidebarState.COLLAPSED ||
+      (initialSidebarState === PageConfig.SidebarState.AUTO &&
+        window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10))
+
+    console.log("=== AppView: isSidebarCollapsed:", isSidebarCollapsed)
     setSidebarIsCollapsed(
       initialSidebarState === PageConfig.SidebarState.COLLAPSED ||
         (initialSidebarState === PageConfig.SidebarState.AUTO &&
