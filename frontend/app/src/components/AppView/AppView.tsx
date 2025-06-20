@@ -157,7 +157,6 @@ function AppView(props: AppViewProps): ReactElement {
       !hideSidebarNav &&
       appPages.length > 1) ||
     showSidebarOverride
-  console.log("=== AppView: showSidebar:", showSidebar)
 
   useEffect(() => {
     // Handle sidebar flicker/unmount with MPA & hideSidebarNav
@@ -220,8 +219,7 @@ function AppView(props: AppViewProps): ReactElement {
   // isSidebarCollapsed: evaluates to true in CC
 
   const [isSidebarCollapsed, setSidebarIsCollapsed] = useState<boolean>(
-    () =>
-      isSidebarStateCollapsed ||
+    isSidebarStateCollapsed ||
       (isSidebarStateAuto && isWindowSmallerThanBreakpoint)
   )
 
