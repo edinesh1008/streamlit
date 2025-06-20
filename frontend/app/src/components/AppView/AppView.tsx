@@ -218,6 +218,14 @@ function AppView(props: AppViewProps): ReactElement {
     "=== AppView: breakpoints.md:",
     activeTheme.emotion.breakpoints.md
   )
+  console.log(
+    "=== AppView: getInt:",
+    parseInt(activeTheme.emotion.breakpoints.md, 10)
+  )
+  console.log(
+    "=== AppView: innerWidth <= breakpoints.md:",
+    window.innerWidth <= parseInt(activeTheme.emotion.breakpoints.md, 10)
+  )
   console.log("=== AppView: isSidebarCollapsed:", isSidebarCollapsed)
 
   // sometimes the initialSidebarState is not updated until after the script runs with a set_page_config
