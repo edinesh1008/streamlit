@@ -12,14 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 from playwright.sync_api import Page, expect
 
-from e2e_playwright.conftest import ImageCompareFunction
+from e2e_playwright.conftest import (
+    ImageCompareFunction,
+    wait_until,
+)
 from e2e_playwright.shared.app_utils import (
     check_top_level_class,
     click_checkbox,
     get_element_by_key,
+    goto_app,
 )
+
+DOWNLOAD_BUTTON_ELEMENTS = 15
+
+
+def check_download_button_source_error_count(messages: list[str], expected_count: int):
+    """Check that the expected number of download button source error messages are logged."""
+    assert (
+        len(
+            [
+                message
+                for message in messages
+                if "Client Error: Download Button source error" in message
+            ]
+        )
+        == expected_count
+    )
 
 
 def test_download_button_widget_rendering(
@@ -27,7 +48,7 @@ def test_download_button_widget_rendering(
 ):
     """Test that download buttons are correctly rendered via screenshot matching."""
     download_buttons = themed_app.get_by_test_id("stDownloadButton")
-    expect(download_buttons).to_have_count(14)
+    expect(download_buttons).to_have_count(15)
 
     assert_snapshot(download_buttons.nth(0), name="st_download_button-default")
     assert_snapshot(download_buttons.nth(1), name="st_download_button-disabled")
@@ -45,22 +66,23 @@ def test_download_button_widget_rendering(
     assert_snapshot(
         download_buttons.nth(10), name="st_download_button-disabled_tertiary"
     )
+    assert_snapshot(download_buttons.nth(11), name="st_download_button-help")
 
 
-def test_show_tooltip_on_hover(app: Page, assert_snapshot: ImageCompareFunction):
+def test_show_tooltip_on_hover(app: Page):
     download_button = app.get_by_test_id("stDownloadButton").nth(5)
     download_button.hover()
     expect(app.get_by_test_id("stTooltipContent")).to_have_text("Example help text")
 
 
 def test_value_correct_on_click(app: Page):
-    download_button = app.get_by_test_id("stDownloadButton").nth(11).locator("button")
+    download_button = app.get_by_test_id("stDownloadButton").nth(12).locator("button")
     download_button.click()
     expect(app.get_by_test_id("stMarkdown").first).to_have_text("value: True")
 
 
 def test_value_not_reset_on_reclick(app: Page):
-    download_button = app.get_by_test_id("stDownloadButton").nth(11).locator("button")
+    download_button = app.get_by_test_id("stDownloadButton").nth(12).locator("button")
     download_button.click()
     download_button.click()
     expect(app.get_by_test_id("stMarkdown").first).to_have_text("value: True")
@@ -101,7 +123,7 @@ def test_click_calls_callback(app: Page):
 
 
 def test_reset_on_other_widget_change(app: Page):
-    download_button = app.get_by_test_id("stDownloadButton").nth(13).locator("button")
+    download_button = app.get_by_test_id("stDownloadButton").nth(14).locator("button")
     download_button.click()
     expect(app.get_by_test_id("stMarkdown").nth(2)).to_have_text("value: True")
     expect(app.get_by_test_id("stMarkdown").nth(3)).to_have_text(
@@ -115,7 +137,7 @@ def test_reset_on_other_widget_change(app: Page):
     )
 
 
-def test_downloads_RAR_file_on_click(app: Page):
+def test_downloads_rar_file_on_click(app: Page):
     # Start waiting for the download
     with app.expect_download() as download_info:
         # Perform the action that initiates download
@@ -170,3 +192,31 @@ def test_check_top_level_class(app: Page):
 def test_custom_css_class_via_key(app: Page):
     """Test that the element can have a custom css class via the key argument."""
     expect(get_element_by_key(app, "download_button")).to_be_visible()
+
+
+@pytest.mark.flaky(reruns=4)
+def test_download_button_source_error(app: Page, app_port: int):
+    """Test that the download button source error is correctly logged."""
+    # Ensure download source request return a 404 status
+    app.route(
+        f"http://localhost:{app_port}/media/**",
+        lambda route: route.fulfill(
+            status=404, headers={"Content-Type": "text/plain"}, body="Not Found"
+        ),
+    )
+
+    # Capture console messages
+    messages = []
+    app.on("console", lambda msg: messages.append(msg.text))
+
+    # Navigate to the app
+    goto_app(app, f"http://localhost:{app_port}")
+
+    # Wait until the expected error is logged, indicating CLIENT_ERROR was sent
+    wait_until(
+        app,
+        lambda: check_download_button_source_error_count(
+            messages, DOWNLOAD_BUTTON_ELEMENTS
+        ),
+        timeout=10000,
+    )

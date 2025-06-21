@@ -32,7 +32,7 @@ import { WidgetStateManager } from "~lib/WidgetStateManager"
 import { bgColorToBaseString, toExportedTheme } from "~lib/theme"
 import { mockEndpoints } from "~lib/mocks/mocks"
 import { mockTheme } from "~lib/mocks/mockTheme"
-import { render } from "~lib/test_util"
+import { renderWithContexts } from "~lib/test_util"
 import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
 
 import ComponentInstance, {
@@ -68,6 +68,7 @@ const MOCK_COMPONENT_NAME = "mock_component_name"
 
 describe("ComponentInstance", () => {
   let logWarnSpy: MockInstance
+  let originalStreamlitWindowObj: typeof window.__streamlit
   const getComponentRegistry = (): ComponentRegistry => {
     return new ComponentRegistry(mockEndpoints())
   }
@@ -82,19 +83,22 @@ describe("ComponentInstance", () => {
       .mockImplementation(() => {})
 
     vi.spyOn(UseResizeObserver, "useResizeObserver").mockReturnValue({
-      elementRef: React.createRef(),
-      forceRecalculate: vitest.fn(),
+      elementRef: { current: null },
       values: [250],
     })
+    originalStreamlitWindowObj = window.__streamlit
+  })
+
+  afterEach(() => {
+    window.__streamlit = originalStreamlitWindowObj
   })
 
   it("registers a message listener on render", () => {
     const componentRegistry = getComponentRegistry()
     const registerListener = vi.spyOn(componentRegistry, "registerListener")
-    render(
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
-        registry={componentRegistry}
         disabled={false}
         widgetMgr={
           new WidgetStateManager({
@@ -102,7 +106,10 @@ describe("ComponentInstance", () => {
             formsDataChanged: vi.fn(),
           })
         }
-      />
+      />,
+      {
+        componentRegistry,
+      }
     )
     expect(registerListener).toHaveBeenCalledTimes(1)
   })
@@ -113,10 +120,9 @@ describe("ComponentInstance", () => {
       componentRegistry,
       "deregisterListener"
     )
-    const { unmount } = render(
+    const { unmount } = renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
-        registry={componentRegistry}
         disabled={false}
         widgetMgr={
           new WidgetStateManager({
@@ -124,18 +130,19 @@ describe("ComponentInstance", () => {
             formsDataChanged: vi.fn(),
           })
         }
-      />
+      />,
+      {
+        componentRegistry,
+      }
     )
     unmount()
     expect(deregisterListener).toHaveBeenCalledTimes(1)
   })
 
   it("renders its iframe correctly", () => {
-    const componentRegistry = getComponentRegistry()
-    render(
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
-        registry={componentRegistry}
         disabled={false}
         widgetMgr={
           new WidgetStateManager({
@@ -143,7 +150,10 @@ describe("ComponentInstance", () => {
             formsDataChanged: vi.fn(),
           })
         }
-      />
+      />,
+      {
+        componentRegistry: getComponentRegistry(),
+      }
     )
     const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
     expect(iframe).toHaveAttribute(
@@ -155,12 +165,11 @@ describe("ComponentInstance", () => {
     expect(iframe).toHaveClass("stCustomComponentV1")
   })
 
-  it("displays a skeleton initially with a certain height", () => {
-    const componentRegistry = getComponentRegistry()
-    render(
+  it("includes window.__streamlit?.CUSTOM_COMPONENT_CLIENT_ID in queryString if set", () => {
+    window.__streamlit = { CUSTOM_COMPONENT_CLIENT_ID: "foobar" }
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp()}
-        registry={componentRegistry}
         disabled={false}
         widgetMgr={
           new WidgetStateManager({
@@ -168,7 +177,33 @@ describe("ComponentInstance", () => {
             formsDataChanged: vi.fn(),
           })
         }
-      />
+      />,
+      {
+        componentRegistry: getComponentRegistry(),
+      }
+    )
+    const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
+    expect(iframe).toHaveAttribute(
+      "src",
+      "http://a.mock.url?__streamlit_parent_client_id=foobar&streamlitUrl=http%3A%2F%2Flocalhost%3A3000%2F"
+    )
+  })
+
+  it("displays a skeleton initially with a certain height", () => {
+    renderWithContexts(
+      <ComponentInstance
+        element={createElementProp()}
+        disabled={false}
+        widgetMgr={
+          new WidgetStateManager({
+            sendRerunBackMsg: vi.fn(),
+            formsDataChanged: vi.fn(),
+          })
+        }
+      />,
+      {
+        componentRegistry: getComponentRegistry(),
+      }
     )
     const skeleton = screen.getByTestId("stSkeleton")
     expect(skeleton).toBeInTheDocument()
@@ -179,11 +214,9 @@ describe("ComponentInstance", () => {
   })
 
   it("will not displays a skeleton when height is explicitly set to 0", () => {
-    const componentRegistry = getComponentRegistry()
-    render(
+    renderWithContexts(
       <ComponentInstance
         element={createElementProp({ height: 0 })}
-        registry={componentRegistry}
         disabled={false}
         widgetMgr={
           new WidgetStateManager({
@@ -191,7 +224,10 @@ describe("ComponentInstance", () => {
             formsDataChanged: vi.fn(),
           })
         }
-      />
+      />,
+      {
+        componentRegistry: getComponentRegistry(),
+      }
     )
     expect(screen.queryByTestId("stSkeleton")).not.toBeInTheDocument()
 
@@ -202,11 +238,9 @@ describe("ComponentInstance", () => {
   describe("COMPONENT_READY handler", () => {
     it("posts a RENDER message to the iframe", () => {
       const jsonArgs = { foo: "string", bar: 5 }
-      const componentRegistry = getComponentRegistry()
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -214,7 +248,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
       // @ts-expect-error
@@ -236,11 +273,9 @@ describe("ComponentInstance", () => {
     })
 
     it("hides the skeleton and maintains iframe height of 0", () => {
-      const componentRegistry = getComponentRegistry()
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp()}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -248,7 +283,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
 
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
@@ -272,11 +310,9 @@ describe("ComponentInstance", () => {
 
     it("prevents RENDER message until component is ready", () => {
       const jsonArgs = { foo: "string", bar: 5 }
-      const componentRegistry = getComponentRegistry()
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -284,7 +320,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
       // @ts-expect-error
@@ -297,11 +336,9 @@ describe("ComponentInstance", () => {
       // (This can happen during development, when the component's devserver
       // reloads.)
       const jsonArgs = { foo: "string", bar: 5 }
-      const componentRegistry = getComponentRegistry()
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -309,7 +346,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
       // @ts-expect-error
@@ -345,11 +385,9 @@ describe("ComponentInstance", () => {
 
     it("send render message whenever the args change and the component is ready", () => {
       let jsonArgs = { foo: "string", bar: 5 }
-      const componentRegistry = getComponentRegistry()
-      const { rerender } = render(
+      const { rerender } = renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -357,7 +395,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
       // @ts-expect-error
@@ -379,7 +420,6 @@ describe("ComponentInstance", () => {
       rerender(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -396,17 +436,14 @@ describe("ComponentInstance", () => {
     it("send render message when viewport changes", () => {
       let width = 100
       vi.spyOn(UseResizeObserver, "useResizeObserver").mockReturnValue({
-        elementRef: React.createRef(),
-        forceRecalculate: vitest.fn(),
+        elementRef: { current: null },
         values: [width],
       })
 
       const jsonArgs = { foo: "string", bar: 5 }
-      const componentRegistry = getComponentRegistry()
-      const { rerender } = render(
+      const { rerender } = renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -414,7 +451,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
       // @ts-expect-error
@@ -436,15 +476,13 @@ describe("ComponentInstance", () => {
 
       // Update the spy to return the new width
       vi.spyOn(UseResizeObserver, "useResizeObserver").mockReturnValue({
-        elementRef: React.createRef(),
-        forceRecalculate: vitest.fn(),
+        elementRef: { current: null },
         values: [width],
       })
 
       rerender(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -461,11 +499,9 @@ describe("ComponentInstance", () => {
     it("errors on unrecognized API version", () => {
       const badAPIVersion = CUSTOM_COMPONENT_API_VERSION + 1
       const jsonArgs = { foo: "string", bar: 5 }
-      const componentRegistry = getComponentRegistry()
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp(jsonArgs)}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -473,7 +509,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
       // SET COMPONENT_READY
@@ -497,11 +536,9 @@ describe("ComponentInstance", () => {
       const element = createElementProp(jsonArgs, [
         new SpecialArg({ key: "foo" }),
       ])
-      const componentRegistry = getComponentRegistry()
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={element}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -509,19 +546,20 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       expect(
         screen.getByText("Unrecognized SpecialArg type: undefined")
       ).toBeVisible()
     })
 
-    it("warns if COMPONENT_READY hasn't been received after a timeout", () => {
-      const componentRegistry = getComponentRegistry()
-      render(
+    it("warns if COMPONENT_READY hasn't been received after a timeout", async () => {
+      renderWithContexts(
         <ComponentInstance
           element={createElementProp()}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -529,14 +567,79 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       // Advance past our warning timeout, and force a re-render.
-      act(() => vi.advanceTimersByTime(COMPONENT_READY_WARNING_TIME_MS))
+      await act(() => vi.advanceTimersByTime(COMPONENT_READY_WARNING_TIME_MS))
 
       expect(
         screen.getByText(/The app is attempting to load the component from/)
       ).toBeVisible()
+    })
+  })
+
+  describe("Error handling", () => {
+    it("triggers component registry's checkSourceUrlResponse when component is mounted", () => {
+      const componentRegistry = getComponentRegistry()
+      const checkSourceUrlResponseSpy = vi.spyOn(
+        componentRegistry,
+        "checkSourceUrlResponse"
+      )
+      renderWithContexts(
+        <ComponentInstance
+          element={createElementProp()}
+          disabled={false}
+          widgetMgr={
+            new WidgetStateManager({
+              sendRerunBackMsg: vi.fn(),
+              formsDataChanged: vi.fn(),
+            })
+          }
+        />,
+        {
+          componentRegistry,
+        }
+      )
+
+      expect(checkSourceUrlResponseSpy).toHaveBeenCalledWith(
+        "http://a.mock.url?streamlitUrl=http%3A%2F%2Flocalhost%3A3000%2F",
+        MOCK_COMPONENT_NAME
+      )
+    })
+
+    it("triggers component registry's sendTimeoutError when component has timed out waiting for READY message", async () => {
+      const componentRegistry = getComponentRegistry()
+      // spy on Component Registry's sendTimeoutError method
+      const sendTimeoutErrorSpy = vi.spyOn(
+        componentRegistry,
+        "sendTimeoutError"
+      )
+
+      renderWithContexts(
+        <ComponentInstance
+          element={createElementProp()}
+          disabled={false}
+          widgetMgr={
+            new WidgetStateManager({
+              sendRerunBackMsg: vi.fn(),
+              formsDataChanged: vi.fn(),
+            })
+          }
+        />,
+        {
+          componentRegistry,
+        }
+      )
+      // Advance past our warning timeout, and force a re-render.
+      await act(() => vi.advanceTimersByTime(COMPONENT_READY_WARNING_TIME_MS))
+
+      expect(sendTimeoutErrorSpy).toHaveBeenCalledWith(
+        "http://a.mock.url?streamlitUrl=http%3A%2F%2Flocalhost%3A3000%2F",
+        MOCK_COMPONENT_NAME
+      )
     })
   })
 
@@ -548,12 +651,10 @@ describe("ComponentInstance", () => {
         list: [1, "foo", false],
       }
 
-      const componentRegistry = getComponentRegistry()
       const element = createElementProp(jsonValue)
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={element}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -561,7 +662,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
 
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
@@ -593,6 +697,7 @@ describe("ComponentInstance", () => {
           source: iframe.contentWindow,
         })
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
       const widgetMgr = (WidgetStateManager as any).mock.instances[0]
       expect(widgetMgr.setJsonValue).toHaveBeenCalledWith(
         element,
@@ -607,12 +712,10 @@ describe("ComponentInstance", () => {
     it("handles bytes values", () => {
       const jsonValue = {}
 
-      const componentRegistry = getComponentRegistry()
       const element = createElementProp(jsonValue)
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={element}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -622,7 +725,10 @@ describe("ComponentInstance", () => {
           }
           // Also verify that we can pass a fragmentID down to setBytesValue.
           fragmentId="myFragmentId"
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
 
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
@@ -656,6 +762,7 @@ describe("ComponentInstance", () => {
           source: iframe.contentWindow,
         })
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
       const widgetMgr = (WidgetStateManager as any).mock.instances[0]
       expect(widgetMgr.setBytesValue).toHaveBeenCalledWith(
         element,
@@ -674,12 +781,10 @@ describe("ComponentInstance", () => {
         list: [1, "foo", false],
       }
 
-      const componentRegistry = getComponentRegistry()
       const element = createElementProp(jsonValue)
-      render(
+      renderWithContexts(
         <ComponentInstance
           element={element}
-          registry={componentRegistry}
           disabled={false}
           widgetMgr={
             new WidgetStateManager({
@@ -687,7 +792,10 @@ describe("ComponentInstance", () => {
               formsDataChanged: vi.fn(),
             })
           }
-        />
+        />,
+        {
+          componentRegistry: getComponentRegistry(),
+        }
       )
       const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
       // SET COMPONENT_VALUE
@@ -705,6 +813,7 @@ describe("ComponentInstance", () => {
           source: iframe.contentWindow,
         })
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
       const widgetMgr = (WidgetStateManager as any).mock.instances[0]
       expect(widgetMgr.setJsonValue).not.toHaveBeenCalled()
 
@@ -716,12 +825,10 @@ describe("ComponentInstance", () => {
     describe("SET_FRAME_HEIGHT handler", () => {
       it("updates the frameHeight without re-rendering", () => {
         const jsonValue = {}
-        const componentRegistry = getComponentRegistry()
         const element = createElementProp(jsonValue)
-        render(
+        renderWithContexts(
           <ComponentInstance
             element={element}
-            registry={componentRegistry}
             disabled={false}
             widgetMgr={
               new WidgetStateManager({
@@ -729,7 +836,10 @@ describe("ComponentInstance", () => {
                 formsDataChanged: vi.fn(),
               })
             }
-          />
+          />,
+          {
+            componentRegistry: getComponentRegistry(),
+          }
         )
         const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
         // SET COMPONENT_READY
@@ -773,12 +883,10 @@ describe("ComponentInstance", () => {
           list: [1, "foo", false],
         }
 
-        const componentRegistry = getComponentRegistry()
         const element = createElementProp(jsonValue)
-        render(
+        renderWithContexts(
           <ComponentInstance
             element={element}
-            registry={componentRegistry}
             disabled={false}
             widgetMgr={
               new WidgetStateManager({
@@ -786,7 +894,10 @@ describe("ComponentInstance", () => {
                 formsDataChanged: vi.fn(),
               })
             }
-          />
+          />,
+          {
+            componentRegistry: getComponentRegistry(),
+          }
         )
         const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
         // SET IFRAME_HEIGHT
@@ -803,6 +914,7 @@ describe("ComponentInstance", () => {
             source: iframe.contentWindow,
           })
         )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
         const widgetMgr = (WidgetStateManager as any).mock.instances[0]
         expect(widgetMgr.setJsonValue).not.toHaveBeenCalled()
 
@@ -814,13 +926,18 @@ describe("ComponentInstance", () => {
   })
 
   function renderMsg(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
     args: { [name: string]: any },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
     dataframes: any[],
     disabled = false,
     theme = {
       ...toExportedTheme(mockTheme.emotion),
+      // Fills in the deprecated font property for backwards compatibility
+      font: mockTheme.emotion.genericFonts.bodyFont,
       base: bgColorToBaseString(mockTheme.emotion.colors.bgColor),
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   ): any {
     return forwardMsg(StreamlitMessageType.RENDER, {
       args,
@@ -830,12 +947,14 @@ describe("ComponentInstance", () => {
     })
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   function forwardMsg(type: StreamlitMessageType, data: any): any {
     return { type, ...data }
   }
 
   /** Create a ComponentInstance.props.element prop with the given args. */
   function createElementProp(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
     jsonArgs: { [name: string]: any } = {},
     specialArgs: SpecialArg[] = []
   ): ComponentInstanceProto {

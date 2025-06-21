@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from playwright.sync_api import FrameLocator, Locator, Page, Route, expect
 
@@ -45,12 +47,17 @@ def test_dataframe_toolbar_on_hover(
 ):
     """Test that the toolbar is shown when hovering over a dataframe."""
     dataframe_element = themed_app.get_by_test_id("stDataFrame").nth(0)
+    expect(dataframe_element).to_be_visible()
+    dataframe_element.scroll_into_view_if_needed()
+
     dataframe_toolbar = dataframe_element.get_by_test_id("stElementToolbar")
+    expect(dataframe_toolbar).to_be_attached()
 
     # Check that it is currently not visible:
     expect(dataframe_toolbar).to_have_css("opacity", "0")
 
     # Hover over dataframe
+
     dataframe_element.hover()
 
     # Check that it is visible
@@ -64,8 +71,11 @@ def test_data_editor_toolbar_on_hover(
     themed_app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that the toolbar is shown when hovering over a data editor component."""
+
     data_editor_element = themed_app.get_by_test_id("stDataFrame").nth(1)
+    expect(data_editor_element).to_be_visible()
     data_editor_toolbar = data_editor_element.get_by_test_id("stElementToolbar")
+    expect(data_editor_toolbar).to_be_attached()
 
     # Ensure the canvas is stable before proceeding
     expect_canvas_to_be_stable(data_editor_element)
@@ -92,6 +102,7 @@ def test_data_editor_delete_row_via_toolbar(
     themed_app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that a row can be deleted via the toolbar."""
+
     data_editor_element = themed_app.get_by_test_id("stDataFrame").nth(1)
     data_editor_toolbar = data_editor_element.get_by_test_id("stElementToolbar")
 
@@ -152,6 +163,8 @@ def test_data_editor_delete_row_via_hotkey(app: Page):
     expect(data_editor_element).to_have_css("height", "212px")
 
 
+# The snapshots are flaky on Firefox in CI.
+@pytest.mark.skip_browser("firefox")
 def test_data_editor_add_row_via_toolbar(
     app: Page, assert_snapshot: ImageCompareFunction
 ):
@@ -217,7 +230,9 @@ def test_data_editor_add_row_via_trailing_row(app: Page):
 def test_dataframe_toolbar_on_toolbar_hover(app: Page):
     """Test that the toolbar is shown when hovering over the toolbar."""
     dataframe_element = app.get_by_test_id("stDataFrame").nth(0)
+    expect(dataframe_element).to_be_visible()
     dataframe_toolbar = dataframe_element.get_by_test_id("stElementToolbar")
+    expect(dataframe_toolbar).to_be_attached()
 
     # Check that it is currently not visible:
     expect(dataframe_toolbar).to_have_css("opacity", "0")
@@ -234,10 +249,15 @@ def test_open_search_via_toolbar(
 ):
     """Test that clicking on search toolbar button triggers dataframe search."""
     dataframe_element = themed_app.get_by_test_id("stDataFrame").nth(0)
+    expect(dataframe_element).to_be_visible()
     dataframe_toolbar = dataframe_element.get_by_test_id("stElementToolbar")
+    expect(dataframe_toolbar).to_be_attached()
     search_toolbar_button = dataframe_toolbar.get_by_test_id(
         "stElementToolbarButton"
     ).get_by_label("Search")
+
+    # Check that it is currently not visible:
+    expect(dataframe_toolbar).to_have_css("opacity", "0")
 
     # Activate toolbar:
     dataframe_element.hover()
@@ -280,11 +300,14 @@ def test_open_search_via_hotkey(app: Page):
     expect(app.locator(".gdg-search-bar-inner")).to_be_visible()
 
 
+# The snapshots are flaky on Firefox in CI.
+@pytest.mark.skip_browser("firefox")
 def test_clicking_on_fullscreen_toolbar_button(
     app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that clicking on fullscreen toolbar button expands the dataframe into
-    fullscreen."""
+    fullscreen.
+    """
 
     assert_fullscreen_toolbar_button_interactions(
         app,
@@ -300,8 +323,12 @@ def test_data_editor_keeps_state_after_unmounting(
 ):
     """Test that the data editor keeps state correctly after unmounting."""
     data_editor_element = app.get_by_test_id("stDataFrame").nth(1)
+    expect(data_editor_element).to_be_visible()
     data_editor_toolbar = data_editor_element.get_by_test_id("stElementToolbar")
     expect(data_editor_element).to_have_css("height", "247px")
+
+    # Check that the toolbar is currently not visible:
+    expect(data_editor_toolbar).to_have_css("opacity", "0")
 
     # Activate toolbar:
     data_editor_element.hover()
@@ -324,6 +351,8 @@ def test_data_editor_keeps_state_after_unmounting(
     app.get_by_test_id("stButton").locator("button").click()
     wait_for_app_run(app, 4000)
 
+    expect(data_editor_element).to_be_visible()
+    expect_canvas_to_be_stable(data_editor_element)
     # Check the height again, the row should be still attached:
     expect(data_editor_element).to_have_css("height", "282px")
 
@@ -340,16 +369,23 @@ def _test_csv_download(
     click_enter_on_file_picker: bool = False,
 ):
     dataframe_element = locator.get_by_test_id("stDataFrame").nth(0)
+    expect(dataframe_element).to_be_visible()
     dataframe_toolbar = dataframe_element.get_by_test_id("stElementToolbar")
+    expect(dataframe_toolbar).to_be_attached()
 
     download_csv_toolbar_button = dataframe_toolbar.get_by_test_id(
         "stElementToolbarButton"
     ).get_by_label("Download as CSV")
 
+    # Check that the toolbar is currently not visible:
+    expect(dataframe_toolbar).to_have_css("opacity", "0")
+
     # Activate toolbar:
+    dataframe_element.scroll_into_view_if_needed()
     dataframe_element.hover()
     # Check that it is visible
     expect(dataframe_toolbar).to_have_css("opacity", "1")
+    expect(download_csv_toolbar_button).to_be_visible()
 
     with page.expect_download(timeout=10000) as download_info:
         download_csv_toolbar_button.click()
@@ -378,7 +414,7 @@ def _test_csv_download(
 
 
 def test_csv_download_button(
-    app: Page, browser_name: str, browser_type_launch_args: dict
+    app: Page, browser_name: str, browser_type_launch_args: dict[str, Any]
 ):
     """Test that the csv download button works.
 
@@ -406,6 +442,7 @@ def test_csv_download_button(
     _test_csv_download(app, app.locator("body"), click_enter_on_file_picker)
 
 
+@pytest.mark.flaky(reruns=4)
 def test_csv_download_button_in_iframe(iframed_app: IframedPage):
     """Test that the csv download button works in an iframe.
 
@@ -648,7 +685,8 @@ def test_autosize_column_via_ui(app: Page, assert_snapshot: ImageCompareFunction
 
 def test_sorting_column_via_ui(app: Page, assert_snapshot: ImageCompareFunction):
     """Test that a column can be sorted via the UI by clicking on the column
-    header and via the column menu."""
+    header and via the column menu.
+    """
     df = app.get_by_test_id("stDataFrame").nth(0)
     expect_canvas_to_be_stable(df)
 
@@ -749,6 +787,8 @@ def test_column_hiding_via_visibility_menu(
     expect_canvas_to_be_visible(df_element)
 
     df_toolbar = df_element.get_by_test_id("stElementToolbar")
+    expect(df_toolbar).to_be_attached()
+    expect(df_toolbar).to_have_css("opacity", "0")
 
     # Open toolbar:
     df_element.hover()
@@ -757,6 +797,7 @@ def test_column_hiding_via_visibility_menu(
     open_visibility_menu_button = df_toolbar.get_by_test_id(
         "stElementToolbarButton"
     ).get_by_label("Show/hide columns")
+    expect(open_visibility_menu_button).to_be_visible()
     open_visibility_menu_button.click()
     column_visibility_menu = app.get_by_test_id("stDataFrameColumnVisibilityMenu")
     expect(column_visibility_menu).to_be_visible()

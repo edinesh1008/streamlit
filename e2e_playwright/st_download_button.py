@@ -98,6 +98,12 @@ st.download_button(
     disabled=True,
 )
 
+st.download_button(
+    "Download button with help",
+    data="Hello world!",
+    help="help text",
+)
+
 random_str = str(random())
 clicked = st.download_button(label="Download random text", data=random_str)
 
@@ -115,7 +121,7 @@ st.write("Ignore rerun download button value:", download_button_ignore_rerun)
 # st.session_state can only be used in streamlit
 if runtime.exists():
 
-    def on_click(x, y):
+    def on_click(x: int, y: int) -> None:
         if "click_count" not in st.session_state:
             st.session_state.click_count = 0
 

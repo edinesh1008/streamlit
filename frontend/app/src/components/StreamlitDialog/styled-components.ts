@@ -18,12 +18,6 @@ import styled from "@emotion/styled"
 import { darken } from "color2k"
 import { ChevronLeft } from "react-feather"
 
-export const StyledShortcutLabel = styled.span({
-  "&::first-letter": {
-    textDecoration: "underline",
-  },
-})
-
 export const StyledBackButton = styled(ChevronLeft)(({ theme }) => ({
   cursor: "pointer",
   marginRight: theme.spacing.lg,
@@ -115,7 +109,7 @@ export const StyledCheckbox = styled.input(({ theme }) => ({
   },
 
   "&:disabled": {
-    backgroundColor: theme.colors.secondaryBg,
+    backgroundColor: theme.colors.darkenedBgMix15,
   },
 }))
 
@@ -132,6 +126,7 @@ export const StyledAboutInfo = styled.div(({ theme }) => ({
 
 export const StyledAboutLink = styled.a(({ theme }) => ({
   color: `${theme.colors.link} !important`,
+  textDecoration: theme.linkUnderline ? "underline" : "none",
 
   "&:hover": {
     color: `${darken(theme.colors.link, 0.15)} !important`,

@@ -96,7 +96,7 @@ def test_mapping_demo_page(app: Page) -> None:
 
     # The snapshot test here is flaky, the map doesn't seem to always result
     # in the same image.
-    # assert_snapshot(app, name="hello_app-mapping_demo_page")
+    # assert_snapshot(app, name="hello_app-mapping_demo_page")  # noqa: ERA001
 
 
 def _load_dataframe_demo_page(app: Page):
@@ -147,7 +147,8 @@ def test_app_print_mode_portrait_with_sidebar_open(
     themed_app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that the dataframe demo page looks correctly in print-mode with
-    sidebar open."""
+    sidebar open.
+    """
     app = themed_app
 
     _load_dataframe_demo_page(app)
@@ -165,7 +166,8 @@ def test_app_print_mode_portrait_with_sidebar_closed(
     themed_app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that the dataframe demo page looks correctly in print-mode with
-    sidebar closed."""
+    sidebar closed.
+    """
     app = themed_app
 
     _load_dataframe_demo_page(app)
@@ -173,7 +175,7 @@ def test_app_print_mode_portrait_with_sidebar_closed(
     # when printing
     app.get_by_test_id("stSidebar").hover()
     sidebar_element = app.get_by_test_id("stSidebarContent")
-    sidebar_element.get_by_test_id("stBaseButton-headerNoPadding").click()
+    app.get_by_test_id("stSidebarCollapseButton").click()
     expect(sidebar_element).not_to_be_visible()
 
     app.emulate_media(media="print", forced_colors="active")
@@ -187,7 +189,8 @@ def test_app_print_mode_landscape_with_sidebar_open(
     themed_app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that the dataframe demo page looks correctly in print-mode
-    (orientation: landscape) with sidebar open."""
+    (orientation: landscape) with sidebar open.
+    """
     app = themed_app
 
     _load_dataframe_demo_page(app)
@@ -204,7 +207,8 @@ def test_app_print_mode_landscape_with_sidebar_closed(
     themed_app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that the dataframe demo page looks correctly in print-mode
-    (orientation: landscape) with sidebar closed."""
+    (orientation: landscape) with sidebar closed.
+    """
     app = themed_app
 
     _load_dataframe_demo_page(app)
@@ -212,7 +216,7 @@ def test_app_print_mode_landscape_with_sidebar_closed(
     # when printing
     app.get_by_test_id("stSidebar").hover()
     sidebar_element = app.get_by_test_id("stSidebarContent")
-    sidebar_element.get_by_test_id("stBaseButton-headerNoPadding").click()
+    app.get_by_test_id("stSidebarCollapseButton").click()
     expect(sidebar_element).not_to_be_visible()
 
     app.emulate_media(media="print", forced_colors="active")
