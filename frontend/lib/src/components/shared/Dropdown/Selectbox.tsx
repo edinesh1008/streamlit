@@ -179,8 +179,7 @@ const Selectbox: React.FC<Props> = ({
         return options
       }
 
-      const filterFunction =
-        filterFunctions[filterMode] || filterFunctions.fuzzy
+      const filterFunction = filterFunctions[filterMode]
       return filterFunction(options as SelectOption[], filterValue)
     },
     [filterMode]
