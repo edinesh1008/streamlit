@@ -56,8 +56,7 @@ export interface Props {
   placeholder?: string
   clearable?: boolean
   acceptNewOptions?: boolean | null
-  // TODO: Should probably only accept "fuzzy" or "exact" here but need to change the proto accordingly for that.
-  filterMode?: string
+  filterMode?: keyof typeof filterFunctions | null
 }
 
 interface SelectOption {
@@ -68,7 +67,6 @@ interface SelectOption {
 // Add a custom filterOptions method to filter options only based on labels.
 // The baseweb default method filters based on labels or indices
 // More details: https://github.com/streamlit/streamlit/issues/1010
-// Also filters using fuzzy search.
 export function fuzzyFilterSelectOptions(
   options: SelectOption[],
   pattern: string
@@ -87,39 +85,34 @@ export function fuzzyFilterSelectOptions(
   )
 }
 
-function strictFilterSelectOptions(
-  options: SelectOption[],
-  pattern: string
-): readonly SelectOption[] {
-  if (!pattern) {
-    return options
-  }
-  return options.filter((opt: SelectOption) =>
-    opt.label.toLowerCase().includes(pattern.toLowerCase())
-  )
-}
-
-function startFilterSelectOptions(
-  options: SelectOption[],
-  pattern: string
-): readonly SelectOption[] {
-  if (!pattern) {
-    return options
-  }
-  return options.filter((opt: SelectOption) =>
-    opt.label.toLowerCase().startsWith(pattern.toLowerCase())
-  )
-}
-
-function caseSensitiveFilterSelectOptions(
-  options: SelectOption[],
-  pattern: string
-): readonly SelectOption[] {
-  if (!pattern) {
-    return options
-  }
-  return options.filter((opt: SelectOption) => opt.label.includes(pattern))
-}
+const filterFunctions = {
+  fuzzy: (options: SelectOption[], pattern: string) => {
+    if (!pattern) return options
+    const filteredOptions = options.filter((opt: SelectOption) =>
+      hasMatch(pattern, opt.label)
+    )
+    return sortBy(
+      filteredOptions,
+      (opt: SelectOption) => -score(pattern, opt.label, true)
+    )
+  },
+  exact: (options: SelectOption[], pattern: string) => {
+    if (!pattern) return options
+    return options.filter((opt: SelectOption) =>
+      opt.label.toLowerCase().includes(pattern.toLowerCase())
+    )
+  },
+  prefix: (options: SelectOption[], pattern: string) => {
+    if (!pattern) return options
+    return options.filter((opt: SelectOption) =>
+      opt.label.toLowerCase().startsWith(pattern.toLowerCase())
+    )
+  },
+  case_sensitive: (options: SelectOption[], pattern: string) => {
+    if (!pattern) return options
+    return options.filter((opt: SelectOption) => opt.label.includes(pattern))
+  },
+} as const
 
 const Selectbox: React.FC<Props> = ({
   disabled,
@@ -186,33 +179,9 @@ const Selectbox: React.FC<Props> = ({
         return options
       }
 
-      switch (filterMode) {
-        case "fuzzy":
-          return fuzzyFilterSelectOptions(
-            options as SelectOption[],
-            filterValue
-          )
-        case "exact":
-          return strictFilterSelectOptions(
-            options as SelectOption[],
-            filterValue
-          )
-        case "prefix":
-          return startFilterSelectOptions(
-            options as SelectOption[],
-            filterValue
-          )
-        case "case_sensitive":
-          return caseSensitiveFilterSelectOptions(
-            options as SelectOption[],
-            filterValue
-          )
-        default:
-          return fuzzyFilterSelectOptions(
-            options as SelectOption[],
-            filterValue
-          )
-      }
+      const filterFunction =
+        filterFunctions[filterMode] || filterFunctions.fuzzy
+      return filterFunction(options as SelectOption[], filterValue)
     },
     [filterMode]
   )
