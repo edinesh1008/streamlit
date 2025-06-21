@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-from collections.abc import Sequence
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, cast, overload
 
