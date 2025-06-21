@@ -155,7 +155,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[False] = False,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
     ) -> None: ...  # Returns None if options is empty and accept_new_options is False
 
@@ -176,7 +177,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[False] = False,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
     ) -> T: ...
 
@@ -197,7 +199,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[True] = True,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
     ) -> T | str: ...
 
@@ -218,7 +221,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[False] = False,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
     ) -> T | None: ...
 
@@ -239,7 +243,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[True] = True,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
     ) -> T | str | None: ...
 
@@ -260,7 +265,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: bool = False,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
     ) -> T | str | None: ...
 
@@ -281,7 +287,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: bool = False,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
     ) -> T | str | None:
         r"""Display a select widget.
@@ -381,12 +388,12 @@ class SelectboxMixin:
             Streamlit will use a case-insensitive match from ``options`` before
             adding a new item.
 
-        filter : "fuzzy", "strict", "start", "case", or None
-            The filtering method to use:
+        filter_mode : "fuzzy", "exact", "prefix", "case_sensitive", or None
+            The filtering method to use when typing in the selectbox:
             - "fuzzy": Uses fuzzy matching (default)
-            - "strict": Case-insensitive substring matching
-            - "start": Case-insensitive prefix matching
-            - "case": Case-sensitive substring matching
+            - "exact": Case-insensitive substring matching
+            - "prefix": Case-insensitive prefix matching
+            - "case_sensitive": Case-sensitive substring matching
             - None: No filtering, i.e. the user cannot type into the selectbox
 
         width : "stretch" or int
@@ -481,7 +488,7 @@ class SelectboxMixin:
             disabled=disabled,
             label_visibility=label_visibility,
             accept_new_options=accept_new_options,
-            filter=filter,
+            filter_mode=filter_mode,
             width=width,
             ctx=ctx,
         )
@@ -502,7 +509,8 @@ class SelectboxMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: bool = False,
-        filter: Literal["fuzzy", "strict", "start", "case"] | None = "fuzzy",
+        filter_mode: Literal["fuzzy", "exact", "prefix", "case_sensitive"]
+        | None = "fuzzy",
         width: WidthWithoutContent = "stretch",
         ctx: ScriptRunContext | None = None,
     ) -> T | str | None:
@@ -552,7 +560,7 @@ class SelectboxMixin:
             help=help,
             placeholder=placeholder,
             accept_new_options=accept_new_options,
-            filter=filter,
+            filter_mode=filter_mode,
             width=width,
         )
 
@@ -573,8 +581,8 @@ class SelectboxMixin:
             label_visibility
         )
         selectbox_proto.accept_new_options = accept_new_options
-        if filter is not None:
-            selectbox_proto.filter = filter
+        if filter_mode is not None:
+            selectbox_proto.filter_mode = filter_mode
 
         if help is not None:
             selectbox_proto.help = dedent(help)

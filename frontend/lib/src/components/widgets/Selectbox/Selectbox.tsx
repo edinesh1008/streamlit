@@ -87,7 +87,7 @@ const Selectbox: FC<Props> = ({
     labelVisibility,
     placeholder,
     acceptNewOptions,
-    filter,
+    filterMode,
   } = element
   const [value, setValueWithSource] = useBasicWidgetState<
     SelectboxValue,
@@ -123,7 +123,7 @@ const Selectbox: FC<Props> = ({
       placeholder={placeholder}
       clearable={clearable}
       acceptNewOptions={acceptNewOptions}
-      filter={filter ?? undefined}
+      filterMode={filterMode ?? undefined}
     />
   )
 }

@@ -56,8 +56,8 @@ export interface Props {
   placeholder?: string
   clearable?: boolean
   acceptNewOptions?: boolean | null
-  // TODO: Should probably only accept "fuzzy" or "strict" here but need to change the proto accordingly for that.
-  filter?: string
+  // TODO: Should probably only accept "fuzzy" or "exact" here but need to change the proto accordingly for that.
+  filterMode?: string
 }
 
 interface SelectOption {
@@ -132,7 +132,7 @@ const Selectbox: React.FC<Props> = ({
   placeholder,
   clearable,
   acceptNewOptions,
-  filter,
+  filterMode,
 }) => {
   const theme = useEmotionTheme()
   const isInSidebar = useContext(IsSidebarContext)
@@ -181,28 +181,28 @@ const Selectbox: React.FC<Props> = ({
 
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] => {
-      // If filter is None/null, return all options without filtering
-      if (filter === null || filter === undefined) {
+      // If filterMode is None/null, return all options without filtering
+      if (filterMode === null || filterMode === undefined) {
         return options
       }
 
-      switch (filter) {
+      switch (filterMode) {
         case "fuzzy":
           return fuzzyFilterSelectOptions(
             options as SelectOption[],
             filterValue
           )
-        case "strict":
+        case "exact":
           return strictFilterSelectOptions(
             options as SelectOption[],
             filterValue
           )
-        case "start":
+        case "prefix":
           return startFilterSelectOptions(
             options as SelectOption[],
             filterValue
           )
-        case "case":
+        case "case_sensitive":
           return caseSensitiveFilterSelectOptions(
             options as SelectOption[],
             filterValue
@@ -214,7 +214,7 @@ const Selectbox: React.FC<Props> = ({
           )
       }
     },
-    [filter]
+    [filterMode]
   )
 
   let selectDisabled = disabled
@@ -336,12 +336,12 @@ const Selectbox: React.FC<Props> = ({
           },
           Input: {
             props: {
-              // Make input readonly when filter is None/null or when on mobile with <10
+              // Make input readonly when filterMode is None/null or when on mobile with <10
               // options (on mobile this is especially annoying because it opens the
               // keyboard as soon as you click on the selectbox).
               readOnly:
-                filter === null ||
-                filter === undefined ||
+                filterMode === null ||
+                filterMode === undefined ||
                 (isMobile() && !showKeyboardOnMobile)
                   ? "readonly"
                   : null,
