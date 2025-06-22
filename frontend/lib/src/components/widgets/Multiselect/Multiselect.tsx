@@ -191,8 +191,13 @@ const Multiselect: FC<Props> = props => {
         option => !value.includes(option.value)
       )
 
-      // If filterMode is not set, return all unselected options without filtering
+      // If filterMode is not set but acceptNewOptions is true and user is typing,
+      // return empty array so only "Add: [typed text]" option shows
       if (!element.filterMode) {
+        if (element.acceptNewOptions && filterValue) {
+          return []
+        }
+        // If not typing or acceptNewOptions is false, return all unselected options
         return unselectedOptions
       }
 
@@ -432,9 +437,14 @@ const Multiselect: FC<Props> = props => {
             },
             Input: {
               props: {
-                // Change the 'readonly' prop to hide the mobile keyboard if options < 10
+                // Allow typing when:
+                // 1. acceptNewOptions is true (for adding new options), OR
+                // 2. filterMode is set (for filtering), OR
+                // 3. on mobile with many options (for better UX)
                 readOnly:
-                  isMobile() && showKeyboardOnMobile === false
+                  !element.acceptNewOptions &&
+                  !element.filterMode &&
+                  (!isMobile() || !showKeyboardOnMobile)
                     ? "readonly"
                     : null,
               },
