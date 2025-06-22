@@ -30,7 +30,7 @@ import { MultiSelect as MultiSelectProto } from "@streamlit/protobuf"
 import { isMobile } from "~lib/util/isMobile"
 import IsSidebarContext from "~lib/components/core/IsSidebarContext"
 import { VirtualDropdown } from "~lib/components/shared/Dropdown"
-import { fuzzyFilterSelectOptions } from "~lib/components/shared/Dropdown/Selectbox"
+import { filterFunctions } from "~lib/components/shared/Dropdown/Selectbox"
 import { Placement } from "~lib/components/shared/Tooltip"
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import {
@@ -191,12 +191,23 @@ const Multiselect: FC<Props> = props => {
         option => !value.includes(option.value)
       )
 
-      return fuzzyFilterSelectOptions(
+      // If filterMode is not set, return all unselected options without filtering
+      if (!element.filterMode) {
+        return unselectedOptions
+      }
+
+      // Use the filterMode from the protobuf element, defaulting to fuzzy
+      const filterMode =
+        (element.filterMode as keyof typeof filterFunctions) || "fuzzy"
+      const filterFunction =
+        filterFunctions[filterMode] || filterFunctions.fuzzy
+
+      return filterFunction(
         unselectedOptions as MultiselectOption[],
         filterValue
       )
     },
-    [overMaxSelections, value]
+    [overMaxSelections, value, element.filterMode]
   )
 
   const { options } = element

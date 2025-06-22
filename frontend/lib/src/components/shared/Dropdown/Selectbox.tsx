@@ -85,7 +85,7 @@ export function fuzzyFilterSelectOptions(
   )
 }
 
-const filterFunctions = {
+export const filterFunctions = {
   fuzzy: (options: SelectOption[], pattern: string) => {
     if (!pattern) return options
     const filteredOptions = options.filter((opt: SelectOption) =>
