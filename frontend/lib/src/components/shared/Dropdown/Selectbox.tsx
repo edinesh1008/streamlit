@@ -174,15 +174,20 @@ const Selectbox: React.FC<Props> = ({
 
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] => {
-      // If filterMode is None/null, return all options without filtering
+      // If filterMode is None/null but acceptNewOptions is true and user is typing,
+      // return empty array so only "Add: [typed text]" option shows
       if (filterMode === null || filterMode === undefined) {
+        if (acceptNewOptions && filterValue) {
+          return []
+        }
+        // If not typing or acceptNewOptions is false, return all options
         return options
       }
 
       const filterFunction = filterFunctions[filterMode]
       return filterFunction(options as SelectOption[], filterValue)
     },
-    [filterMode]
+    [filterMode, acceptNewOptions]
   )
 
   let selectDisabled = disabled
@@ -304,12 +309,13 @@ const Selectbox: React.FC<Props> = ({
           },
           Input: {
             props: {
-              // Make input readonly when filterMode is None/null or when on mobile with <10
-              // options (on mobile this is especially annoying because it opens the
-              // keyboard as soon as you click on the selectbox).
+              // Make input readonly when:
+              // 1. filterMode is None/null AND acceptNewOptions is false (can't type at all)
+              // 2. On mobile with <10 options (to prevent keyboard from opening)
+              // If acceptNewOptions is true and filterMode is null, allow typing for new options
               readOnly:
-                filterMode === null ||
-                filterMode === undefined ||
+                ((filterMode === null || filterMode === undefined) &&
+                  !acceptNewOptions) ||
                 (isMobile() && !showKeyboardOnMobile)
                   ? "readonly"
                   : null,
