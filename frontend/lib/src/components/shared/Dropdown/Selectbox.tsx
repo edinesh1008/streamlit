@@ -309,14 +309,14 @@ const Selectbox: React.FC<Props> = ({
           },
           Input: {
             props: {
-              // Make input readonly when:
-              // 1. filterMode is None/null AND acceptNewOptions is false (can't type at all)
-              // 2. On mobile with <10 options (to prevent keyboard from opening)
-              // If acceptNewOptions is true and filterMode is null, allow typing for new options
+              // Allow typing when:
+              // 1. acceptNewOptions is true (for adding new options), OR
+              // 2. filterMode is set (for filtering), OR
+              // 3. on mobile with many options (for better UX)
               readOnly:
-                ((filterMode === null || filterMode === undefined) &&
-                  !acceptNewOptions) ||
-                (isMobile() && !showKeyboardOnMobile)
+                !acceptNewOptions &&
+                !filterMode &&
+                (!isMobile() || !showKeyboardOnMobile)
                   ? "readonly"
                   : null,
             },
