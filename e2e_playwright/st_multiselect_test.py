@@ -404,32 +404,33 @@ def test_multiselect_filter_mode_fuzzy_default_behavior(app: Page):
     # Use multiselect 18 (default filter_mode - fuzzy)
     multiselect_input = app.get_by_test_id("stMultiSelect").nth(17).locator("input")
 
-    # Type "ale" - should match both "Apple" and "apple pie" with fuzzy search
+    # Type "Apl" - fuzzy should match "Apple", "APPLE", and "Application" (scattered chars)
     multiselect_input.click()
-    multiselect_input.type("ale")
+    multiselect_input.type("Apl")
 
     # Check that dropdown shows options
     dropdown = app.locator('[data-baseweb="popover"]').first
     expect(dropdown).to_be_visible()
 
-    # Should show both "Apple" and "apple pie" options
+    # Should show multiple options with fuzzy matching (Apple, APPLE, Application)
     options = dropdown.locator("li")
-    expect(options).to_have_count(2)
+    expect(options).to_have_count(3)
 
 
-def test_multiselect_filter_mode_exact_behavior(app: Page):
-    """Test that filter_mode=exact uses exact matching."""
-    # Use multiselect 19 (filter_mode=exact)
+def test_multiselect_filter_mode_case_sensitive_behavior(app: Page):
+    """Test that filter_mode=case_sensitive uses case-sensitive matching."""
+    # Use multiselect 19 (filter_mode=case_sensitive)
     multiselect_input = app.get_by_test_id("stMultiSelect").nth(18).locator("input")
 
-    # Type "Cherry" - should match exactly
+    # Type "Apple" - case_sensitive should match only "Apple" (exact case)
     multiselect_input.click()
-    multiselect_input.type("Cherry")
+    multiselect_input.type("Apple")
 
     # Check that dropdown shows options
     dropdown = app.locator('[data-baseweb="popover"]').first
     expect(dropdown).to_be_visible()
 
-    # Should show only "Cherry" option
+    # Should show only "Apple" option (case-sensitive match, not "APPLE")
     options = dropdown.locator("li")
     expect(options).to_have_count(1)
+    expect(options.first).to_contain_text("Apple")

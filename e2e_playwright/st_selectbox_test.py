@@ -341,32 +341,33 @@ def test_filter_mode_fuzzy_default_behavior(app: Page):
     # Use selectbox 20 (default filter_mode - fuzzy)
     selectbox_input = app.get_by_test_id("stSelectbox").nth(19).locator("input")
 
-    # Type "ale" - should match both "Apple" and "apple pie" with fuzzy search
+    # Type "Apl" - fuzzy should match "Apple", "APPLE", and "Application" (scattered chars)
     selectbox_input.click()
-    selectbox_input.type("ale")
+    selectbox_input.type("Apl")
 
     # Check that dropdown shows options
     dropdown = app.locator('[data-baseweb="popover"]').first
     expect(dropdown).to_be_visible()
 
-    # Should show both "Apple" and "apple pie" options
+    # Should show multiple options with fuzzy matching (Apple, APPLE, Application)
     options = dropdown.locator("li")
-    expect(options).to_have_count(2)
+    expect(options).to_have_count(3)
 
 
-def test_filter_mode_exact_behavior(app: Page):
-    """Test that filter_mode=exact uses exact matching."""
-    # Use selectbox 21 (filter_mode=exact)
+def test_filter_mode_case_sensitive_behavior(app: Page):
+    """Test that filter_mode=case_sensitive uses case-sensitive matching."""
+    # Use selectbox 21 (filter_mode=case_sensitive)
     selectbox_input = app.get_by_test_id("stSelectbox").nth(20).locator("input")
 
-    # Type "Cherry" - should match exactly
+    # Type "Apple" - case_sensitive should match only "Apple" (exact case)
     selectbox_input.click()
-    selectbox_input.type("Cherry")
+    selectbox_input.type("Apple")
 
     # Check that dropdown shows options
     dropdown = app.locator('[data-baseweb="popover"]').first
     expect(dropdown).to_be_visible()
 
-    # Should show only "Cherry" option
+    # Should show only "Apple" option (case-sensitive match, not "APPLE")
     options = dropdown.locator("li")
     expect(options).to_have_count(1)
+    expect(options.first).to_contain_text("Apple")
