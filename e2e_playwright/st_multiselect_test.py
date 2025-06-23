@@ -23,7 +23,7 @@ from e2e_playwright.shared.app_utils import (
     get_element_by_key,
 )
 
-MULTISELECT_COUNT = 17
+MULTISELECT_COUNT = 19
 
 
 def select_for_kth_multiselect(
@@ -97,8 +97,8 @@ def test_help_tooltip_works(app: Page):
 def test_multiselect_initial_value(app: Page):
     """Should show the correct initial values."""
     text_elements = app.get_by_test_id("stText")
-    # -1 because the last multiselect does not have accompanying text element
-    expect(text_elements).to_have_count(MULTISELECT_COUNT - 1)
+    # -3 because the last 3 multiselects do not have accompanying text elements
+    expect(text_elements).to_have_count(MULTISELECT_COUNT - 3)
 
     expected = [
         "value 1: []",
@@ -397,3 +397,39 @@ def test_multiselect_empty_options_with_accept_new_options(app: Page):
 
     # Verify one option was removed
     expect(app.get_by_test_id("stText").nth(15)).to_have_text("value 16: ['blueberry']")
+
+
+def test_multiselect_filter_mode_fuzzy_default_behavior(app: Page):
+    """Test that default filter_mode uses fuzzy filtering."""
+    # Use multiselect 18 (default filter_mode - fuzzy)
+    multiselect_input = app.get_by_test_id("stMultiSelect").nth(17).locator("input")
+
+    # Type "ale" - should match both "Apple" and "apple pie" with fuzzy search
+    multiselect_input.click()
+    multiselect_input.type("ale")
+
+    # Check that dropdown shows options
+    dropdown = app.locator('[data-baseweb="popover"]').first
+    expect(dropdown).to_be_visible()
+
+    # Should show both "Apple" and "apple pie" options
+    options = dropdown.locator("li")
+    expect(options).to_have_count(2)
+
+
+def test_multiselect_filter_mode_exact_behavior(app: Page):
+    """Test that filter_mode=exact uses exact matching."""
+    # Use multiselect 19 (filter_mode=exact)
+    multiselect_input = app.get_by_test_id("stMultiSelect").nth(18).locator("input")
+
+    # Type "Cherry" - should match exactly
+    multiselect_input.click()
+    multiselect_input.type("Cherry")
+
+    # Check that dropdown shows options
+    dropdown = app.locator('[data-baseweb="popover"]').first
+    expect(dropdown).to_be_visible()
+
+    # Should show only "Cherry" option
+    options = dropdown.locator("li")
+    expect(options).to_have_count(1)

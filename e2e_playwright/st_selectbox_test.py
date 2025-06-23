@@ -23,7 +23,7 @@ def test_selectbox_widget_rendering(
 ):
     """Test that the selectbox widgets are correctly rendered via screenshot matching."""
     selectbox_widgets = themed_app.get_by_test_id("stSelectbox")
-    expect(selectbox_widgets).to_have_count(19)
+    expect(selectbox_widgets).to_have_count(21)
 
     assert_snapshot(selectbox_widgets.nth(0), name="st_selectbox-default")
     assert_snapshot(selectbox_widgets.nth(1), name="st_selectbox-formatted_options")
@@ -334,3 +334,39 @@ def test_selectbox_empty_options_with_accept_new_options(app: Page):
         "value 17: another_option"
     )
     expect(selectbox_elem.get_by_text("another_option")).to_be_visible()
+
+
+def test_filter_mode_fuzzy_default_behavior(app: Page):
+    """Test that default filter_mode uses fuzzy filtering."""
+    # Use selectbox 20 (default filter_mode - fuzzy)
+    selectbox_input = app.get_by_test_id("stSelectbox").nth(19).locator("input")
+
+    # Type "ale" - should match both "Apple" and "apple pie" with fuzzy search
+    selectbox_input.click()
+    selectbox_input.type("ale")
+
+    # Check that dropdown shows options
+    dropdown = app.locator('[data-baseweb="popover"]').first
+    expect(dropdown).to_be_visible()
+
+    # Should show both "Apple" and "apple pie" options
+    options = dropdown.locator("li")
+    expect(options).to_have_count(2)
+
+
+def test_filter_mode_exact_behavior(app: Page):
+    """Test that filter_mode=exact uses exact matching."""
+    # Use selectbox 21 (filter_mode=exact)
+    selectbox_input = app.get_by_test_id("stSelectbox").nth(20).locator("input")
+
+    # Type "Cherry" - should match exactly
+    selectbox_input.click()
+    selectbox_input.type("Cherry")
+
+    # Check that dropdown shows options
+    dropdown = app.locator('[data-baseweb="popover"]').first
+    expect(dropdown).to_be_visible()
+
+    # Should show only "Cherry" option
+    options = dropdown.locator("li")
+    expect(options).to_have_count(1)
