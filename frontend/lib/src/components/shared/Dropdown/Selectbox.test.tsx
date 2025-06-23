@@ -35,6 +35,7 @@ const getProps = (props: Partial<Props> = {}): Props => ({
   disabled: false,
   onChange: vi.fn(),
   placeholder: "Select...",
+  filterMode: "fuzzy", // Default to fuzzy to match backend behavior
   ...props,
 })
 
@@ -339,5 +340,132 @@ describe("Selectbox widget with optional props", () => {
     await user.type(selectboxInput, "AA")
 
     expect(screen.getByText("Add: AA")).toBeInTheDocument()
+  })
+})
+
+describe("filter_mode functionality", () => {
+  const testOptions = ["Apple", "Banana", "Cherry", "Date", "apple pie"]
+
+  it("uses fuzzy filtering by default", async () => {
+    const user = userEvent.setup()
+    const props = getProps({
+      options: testOptions,
+      filterMode: "fuzzy",
+    })
+    render(<Selectbox {...props} />)
+    const selectboxInput = screen.getByRole("combobox")
+
+    await user.type(selectboxInput, "ale")
+    const options = screen.getAllByRole("option")
+    expect(options).toHaveLength(2)
+    // Fuzzy search returns results based on score, so order may vary
+    const optionTexts = options.map(option => option.textContent)
+    expect(optionTexts).toContain("Apple")
+    expect(optionTexts).toContain("apple pie")
+  })
+
+  it("uses exact filtering when filter_mode is 'exact'", async () => {
+    const user = userEvent.setup()
+    const props = getProps({
+      options: testOptions,
+      filterMode: "exact",
+    })
+    render(<Selectbox {...props} />)
+    const selectboxInput = screen.getByRole("combobox")
+
+    await user.type(selectboxInput, "Cherry")
+    const options = screen.getAllByRole("option")
+    expect(options).toHaveLength(1)
+    expect(options[0]).toHaveTextContent("Cherry")
+
+    await user.clear(selectboxInput)
+    await user.type(selectboxInput, "pie")
+    const optionsLower = screen.getAllByRole("option")
+    expect(optionsLower).toHaveLength(1)
+    expect(optionsLower[0]).toHaveTextContent("apple pie")
+  })
+
+  it("uses prefix filtering when filter_mode is 'prefix'", async () => {
+    const user = userEvent.setup()
+    const props = getProps({
+      options: testOptions,
+      filterMode: "prefix",
+    })
+    render(<Selectbox {...props} />)
+    const selectboxInput = screen.getByRole("combobox")
+
+    await user.type(selectboxInput, "apple p")
+    const options = screen.getAllByRole("option")
+    expect(options).toHaveLength(1)
+    expect(options[0]).toHaveTextContent("apple pie")
+
+    await user.clear(selectboxInput)
+    await user.type(selectboxInput, "Ch")
+    const optionsCapital = screen.getAllByRole("option")
+    expect(optionsCapital).toHaveLength(1)
+    expect(optionsCapital[0]).toHaveTextContent("Cherry")
+  })
+
+  it("uses case-sensitive filtering when filter_mode is 'case_sensitive'", async () => {
+    const user = userEvent.setup()
+    const props = getProps({
+      options: testOptions,
+      filterMode: "case_sensitive",
+    })
+    render(<Selectbox {...props} />)
+    const selectboxInput = screen.getByRole("combobox")
+
+    await user.type(selectboxInput, "Apple")
+    const options = screen.getAllByRole("option")
+    expect(options).toHaveLength(1)
+    expect(options[0]).toHaveTextContent("Apple")
+
+    await user.clear(selectboxInput)
+    await user.type(selectboxInput, "apple")
+    const optionsLower = screen.getAllByRole("option")
+    expect(optionsLower).toHaveLength(1)
+    expect(optionsLower[0]).toHaveTextContent("apple pie")
+
+    await user.clear(selectboxInput)
+    await user.type(selectboxInput, "APPLE")
+    expect(screen.getByText("No results")).toBeInTheDocument()
+  })
+
+  it("disables filtering when filter_mode is null", async () => {
+    const user = userEvent.setup()
+    const props = getProps({
+      options: testOptions,
+      filterMode: null,
+      acceptNewOptions: false, // Explicitly set to false
+    })
+    render(<Selectbox {...props} />)
+    const selectboxInput = screen.getByRole("combobox")
+
+    // Input should be readonly when filter_mode is null and acceptNewOptions is false
+    expect(selectboxInput).toHaveAttribute("readonly")
+
+    // Click to open dropdown should show all options
+    await user.click(selectboxInput)
+    const options = screen.getAllByRole("option")
+    expect(options).toHaveLength(testOptions.length)
+  })
+
+  it("allows typing when filter_mode is null and acceptNewOptions is true", async () => {
+    const user = userEvent.setup()
+    const props = getProps({
+      options: testOptions,
+      filterMode: null,
+      acceptNewOptions: true,
+    })
+    render(<Selectbox {...props} />)
+    const selectboxInput = screen.getByRole("combobox")
+
+    // Input should not be readonly when acceptNewOptions is true
+    expect(selectboxInput).not.toHaveAttribute("readonly")
+
+    await user.type(selectboxInput, "New Option")
+    expect(screen.getByText("Add: New Option")).toBeInTheDocument()
+    // Should not show existing options when typing
+    expect(screen.queryByText("Apple")).not.toBeInTheDocument()
   })
 })
