@@ -149,13 +149,5 @@ st.selectbox("selectbox 19 (width='stretch')", options, index=0, width="stretch"
 # Note that we're only testing the default value and one other value here. All possible
 # filter modes are tested in frontend tests in `Selectbox.test.tsx`.
 filter_options = ["Apple", "Banana", "Cherry", "Date", "apple pie"]
-st.selectbox(
-    "selectbox 20 (default filter_mode - fuzzy)",
-    filter_options,
-)
-
-st.selectbox(
-    "selectbox 21 (filter_mode=exact)",
-    filter_options,
-    filter_mode="exact",
-)
+st.selectbox("selectbox 20 (default filter_mode - fuzzy)", filter_options)
+st.selectbox("selectbox 21 (filter_mode=exact)", filter_options, filter_mode="exact")
