@@ -56,7 +56,7 @@ export interface Props {
   placeholder?: string
   clearable?: boolean
   acceptNewOptions?: boolean | null
-  filterMode?: keyof typeof filterFunctions | null
+  filterMode?: string | null
 }
 
 interface SelectOption {
@@ -184,7 +184,8 @@ const Selectbox: React.FC<Props> = ({
         return options
       }
 
-      const filterFunction = filterFunctions[filterMode]
+      const filterFunction =
+        filterFunctions[filterMode as keyof typeof filterFunctions]
       return filterFunction(options as SelectOption[], filterValue)
     },
     [filterMode, acceptNewOptions]
