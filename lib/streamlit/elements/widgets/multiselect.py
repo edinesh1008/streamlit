@@ -39,6 +39,7 @@ from streamlit.elements.lib.utils import (
     to_key,
 )
 from streamlit.errors import (
+    StreamlitAPIException,
     StreamlitSelectionCountExceedsMaxError,
 )
 from streamlit.proto.MultiSelect_pb2 import MultiSelect as MultiSelectProto
@@ -448,6 +449,17 @@ class MultiSelectMixin:
             default_value=default,
         )
         maybe_raise_label_warnings(label, label_visibility)
+
+        if filter_mode is not None and filter_mode not in (
+            "fuzzy",
+            "exact",
+            "prefix",
+            "case_sensitive",
+        ):
+            raise StreamlitAPIException(
+                f"Unsupported filter_mode option '{filter_mode}'. "
+                f"Valid values are 'fuzzy', 'exact', 'prefix', 'case_sensitive', or None."
+            )
 
         indexable_options = convert_to_sequence_and_check_comparable(options)
         formatted_options, formatted_option_to_option_index = create_mappings(

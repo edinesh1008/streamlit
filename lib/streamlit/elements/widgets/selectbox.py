@@ -537,6 +537,17 @@ class SelectboxMixin:
                 "and less than the length of options."
             )
 
+        if filter_mode is not None and filter_mode not in (
+            "fuzzy",
+            "exact",
+            "prefix",
+            "case_sensitive",
+        ):
+            raise StreamlitAPIException(
+                f"Unsupported filter_mode option '{filter_mode}'. "
+                f"Valid values are 'fuzzy', 'exact', 'prefix', 'case_sensitive', or None."
+            )
+
         if placeholder is None:
             placeholder = (
                 "Choose an option"

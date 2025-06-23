@@ -163,6 +163,17 @@ class SelectboxTest(DeltaGeneratorTestCase):
         else:
             assert c.filter_mode == expected_proto_value
 
+    def test_invalid_filter_mode(self):
+        """Test that invalid filter_mode values raise StreamlitAPIException."""
+        with pytest.raises(StreamlitAPIException) as ex:
+            st.selectbox("the label", ("m", "f"), filter_mode="invalid")
+
+        assert "Unsupported filter_mode option 'invalid'" in str(ex.value)
+        assert (
+            "Valid values are 'fuzzy', 'exact', 'prefix', 'case_sensitive', or None"
+            in str(ex.value)
+        )
+
     def test_invalid_value(self):
         """Test that value must be an int."""
         with pytest.raises(StreamlitAPIException):
