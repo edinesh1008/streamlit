@@ -24,7 +24,7 @@ import { LabelVisibilityOptions } from "~lib/util/utils"
 import * as Utils from "~lib/theme/utils"
 import { mockConvertRemToPx } from "~lib/mocks/mocks"
 
-import Selectbox, { fuzzyFilterSelectOptions, Props } from "./Selectbox"
+import Selectbox, { Props } from "./Selectbox"
 
 vi.mock("~lib/WidgetStateManager")
 
@@ -178,57 +178,6 @@ describe("Selectbox widget", () => {
     options = screen.getAllByRole("option")
     expect(options).toHaveLength(1)
     expect(options[0]).toHaveTextContent("b")
-  })
-
-  it("fuzzy filters options correctly", () => {
-    // This test just makes sure the filter algorithm works correctly. The e2e
-    // test actually types something in the selectbox and makes sure that it
-    // shows the right options.
-
-    const options = [
-      { label: "e2e/scripts/components_iframe.py", value: "" },
-      { label: "e2e/scripts/st_warning.py", value: "" },
-      { label: "e2e/scripts/st_container.py", value: "" },
-      { label: "e2e/scripts/st_dataframe_sort_column.py", value: "" },
-      { label: "e2e/scripts/app_hotkeys.py", value: "" },
-      { label: "e2e/scripts/st_info.py", value: "" },
-      { label: "e2e/scripts/st_echo.py", value: "" },
-      { label: "e2e/scripts/st_json.py", value: "" },
-      { label: "e2e/scripts/st_experimental_get_query_params.py", value: "" },
-      { label: "e2e/scripts/st_markdown.py", value: "" },
-      { label: "e2e/scripts/st_color_picker.py", value: "" },
-      { label: "e2e/scripts/st_expander.py", value: "" },
-    ]
-
-    const results1 = fuzzyFilterSelectOptions(options, "esstm")
-    expect(results1.map(it => it.label)).toEqual([
-      "e2e/scripts/st_markdown.py",
-      "e2e/scripts/st_dataframe_sort_column.py",
-      "e2e/scripts/st_experimental_get_query_params.py",
-      "e2e/scripts/components_iframe.py",
-    ])
-
-    const results2 = fuzzyFilterSelectOptions(options, "eseg")
-    expect(results2.map(it => it.label)).toEqual([
-      "e2e/scripts/st_experimental_get_query_params.py",
-    ])
-  })
-
-  it("predictably produces case sensitive matches", async () => {
-    const user = userEvent.setup()
-    const currProps = getProps({
-      options: ["aa", "Aa", "aA"],
-    })
-    render(<Selectbox {...currProps} />)
-    const selectboxInput = screen.getByRole("combobox")
-
-    await user.type(selectboxInput, "aa")
-
-    const options = screen.queryAllByRole("option")
-    expect(options).toHaveLength(3)
-    expect(options[0]).toHaveTextContent("aa")
-    expect(options[1]).toHaveTextContent("Aa")
-    expect(options[2]).toHaveTextContent("aA")
   })
 
   it("updates value if new value provided from parent", () => {

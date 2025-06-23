@@ -64,27 +64,6 @@ interface SelectOption {
   value: string
 }
 
-// Add a custom filterOptions method to filter options only based on labels.
-// The baseweb default method filters based on labels or indices
-// More details: https://github.com/streamlit/streamlit/issues/1010
-export function fuzzyFilterSelectOptions(
-  options: SelectOption[],
-  pattern: string
-): readonly SelectOption[] {
-  if (!pattern) {
-    return options
-  }
-  const filteredOptions = options.filter((opt: SelectOption) =>
-    hasMatch(pattern, opt.label)
-  )
-  return sortBy(
-    filteredOptions,
-    // Use the negative score to sort the list in a stable manner
-    // This ensures highest score is first
-    (opt: SelectOption) => -score(pattern, opt.label, true)
-  )
-}
-
 export const filterFunctions = {
   fuzzy: (options: SelectOption[], pattern: string) => {
     if (!pattern) return options
