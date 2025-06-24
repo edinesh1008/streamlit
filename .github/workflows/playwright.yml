@@ -81,8 +81,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shardId: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-        numShards: [16]
+        # shardId: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+        # numShards: [16]
+        # This is just for debugging purposes
+        shardId: [0]
+        numShards: [600]
 
     defaults:
       run:
@@ -96,15 +99,12 @@ jobs:
           persist-credentials: false
           submodules: "recursive"
           fetch-depth: 2
-
       - name: Set Python version vars
         uses: ./.github/actions/build_info
-
       - name: Set up Python ${{ env.PYTHON_MAX_VERSION }}
         uses: actions/setup-python@v5
         with:
           python-version: "${{ env.PYTHON_MAX_VERSION }}"
-
       - name: Download prepared environment
         uses: actions/download-artifact@v4
         with:
@@ -118,8 +118,6 @@ jobs:
           # Restore Playwright browsers cache
           mkdir -p ~/.cache
           mv playwright-browsers/ms-playwright ~/.cache/ms-playwright
-
-          # Frontend build artefacts are already at frontend/app/{build,dist}
 
       - name: Activate virtual env
         run: |
