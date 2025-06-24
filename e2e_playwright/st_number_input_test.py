@@ -95,6 +95,7 @@ def test_number_input_shows_instructions_when_dirty(
 ):
     """Test that st.number_input shows the instructions correctly when dirty."""
     first_number_input = app.get_by_test_id("stNumberInput").first
+    expect(first_number_input.locator("input")).to_be_visible()
     first_number_input.locator("input").fill("10")
 
     assert_snapshot(first_number_input, name="st_number_input-input_instructions")
@@ -145,6 +146,7 @@ def test_number_input_has_correct_value_on_arrow_up(app: Page):
     first_number_input_field = (
         app.get_by_test_id("stNumberInput").nth(0).locator("input")
     )
+    expect(first_number_input_field).to_be_visible()
     first_number_input_field.press("ArrowUp")
 
     expect(app.get_by_test_id("stMarkdown").nth(0)).to_have_text(
@@ -158,6 +160,7 @@ def test_number_input_has_correct_value_on_blur(app: Page):
     first_number_input_field = (
         app.get_by_test_id("stNumberInput").nth(0).locator("input")
     )
+    expect(first_number_input_field).to_be_visible()
     first_number_input_field.focus()
     first_number_input_field.fill("10")
     first_number_input_field.blur()
@@ -174,6 +177,7 @@ def test_empty_number_input_behaves_correctly(
     # Enter 10 in the first empty input:
     empty_number_input = app.get_by_test_id("stNumberInput").nth(10)
     empty_number_input_field = empty_number_input.locator("input").first
+    expect(empty_number_input_field).to_be_visible()
     empty_number_input_field.fill("10")
     empty_number_input_field.press("Enter")
 
@@ -209,6 +213,7 @@ def test_empty_number_input_behaves_correctly(
 def test_number_input_does_not_allow_wheel_events(app: Page):
     """Test that st.number_input does not allow wheel events."""
     number_input = app.locator(".stNumberInput input[type='number']").nth(1)
+    expect(number_input).to_be_visible()
 
     # Click/focus needed to bring mouse to center of input
     number_input.click()
