@@ -50,21 +50,27 @@ jobs:
 
       #---------------------------------------------------------------------
       # Package the prepared environment so that the shards can reuse it.
+      # We archive everything into a single tarball to avoid file-count
+      # limits and hidden-file issues with the upload-artifact action.
       #---------------------------------------------------------------------
       - name: Copy Playwright browsers into workspace for packaging
         run: |
           mkdir -p playwright-browsers
           cp -r ~/.cache/ms-playwright playwright-browsers/
 
+      - name: Create environment archive
+        run: |
+          tar -czf prepared-env.tar.gz \
+            .venv \
+            playwright-browsers \
+            frontend/app/build \
+            frontend/app/dist || true
+
       - name: Upload prepared environment
         uses: actions/upload-artifact@v4
         with:
           name: playwright_prepared_env
-          path: |
-            .venv
-            playwright-browsers
-            frontend/app/build
-            frontend/app/dist
+          path: prepared-env.tar.gz
           retention-days: 1
 
   playwright-e2e-tests:
@@ -105,23 +111,18 @@ jobs:
           name: playwright_prepared_env
           path: ./env_artifacts
 
-      - name: Restore environment
+      - name: Extract environment archive
         run: |
-          # Restore virtualenv
-          mv env_artifacts/.venv ./
+          tar -xzf env_artifacts/prepared-env.tar.gz
 
           # Restore Playwright browsers cache
           mkdir -p ~/.cache
-          mv env_artifacts/playwright-browsers/ms-playwright ~/.cache/ms-playwright
+          mv playwright-browsers/ms-playwright ~/.cache/ms-playwright
 
-          # Restore frontend build artefacts
+          # Ensure frontend build artefacts are in place (they were extracted)
           mkdir -p frontend/app
-          if [ -d "env_artifacts/frontend/app/build" ]; then
-            mv env_artifacts/frontend/app/build frontend/app/
-          fi
-          if [ -d "env_artifacts/frontend/app/dist" ]; then
-            mv env_artifacts/frontend/app/dist frontend/app/
-          fi
+          mv -n frontend/app/build frontend/app/ || true
+          mv -n frontend/app/dist frontend/app/ || true
 
       - name: Activate virtual env
         run: |
