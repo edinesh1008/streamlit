@@ -61,7 +61,7 @@ jobs:
       - name: Create environment archive
         run: |
           tar -czf prepared-env.tar.gz \
-            .venv \
+            venv \
             playwright-browsers \
             frontend/app/build \
             frontend/app/dist || true
@@ -119,15 +119,12 @@ jobs:
           mkdir -p ~/.cache
           mv playwright-browsers/ms-playwright ~/.cache/ms-playwright
 
-          # Ensure frontend build artefacts are in place (they were extracted)
-          mkdir -p frontend/app
-          mv -n frontend/app/build frontend/app/ || true
-          mv -n frontend/app/dist frontend/app/ || true
+          # Frontend build artefacts are already at frontend/app/{build,dist}
 
       - name: Activate virtual env
         run: |
-          echo "VIRTUAL_ENV=${{ github.workspace }}/.venv" >> $GITHUB_ENV
-          echo "${{ github.workspace }}/.venv/bin" >> $GITHUB_PATH
+          echo "VIRTUAL_ENV=${{ github.workspace }}/venv" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/venv/bin" >> $GITHUB_PATH
 
       - name: Run playwright tests
         run: |
