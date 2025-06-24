@@ -130,7 +130,14 @@ jobs:
         run: |
           cd e2e_playwright
           rm -rf ./test-results
-          pytest --ignore ./custom_components --browser webkit --browser chromium --browser firefox -n auto --reruns 1 -m "not performance" --shard-id=${{ matrix.shardId }} --num-shards=${{ matrix.numShards }}
+          pytest -vv -s \
+            -o log_cli=true \
+            --log-cli-level=INFO \
+            --ignore ./custom_components \
+            --browser webkit --browser chromium --browser firefox \
+            -n auto --reruns 1 \
+            -m "not performance" \
+            --shard-id=${{ matrix.shardId }} --num-shards=${{ matrix.numShards }}
 
       - name: Upload failed test results
         uses: actions/upload-artifact@v4
