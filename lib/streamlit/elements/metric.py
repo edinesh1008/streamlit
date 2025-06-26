@@ -20,7 +20,13 @@ from typing import TYPE_CHECKING, Any, Literal, Union, cast
 
 from typing_extensions import TypeAlias
 
-from streamlit.elements.lib.layout_utils import LayoutConfig, Width, validate_width
+from streamlit.elements.lib.layout_utils import (
+    Height,
+    LayoutConfig,
+    Width,
+    validate_height,
+    validate_width,
+)
 from streamlit.elements.lib.policies import maybe_raise_label_warnings
 from streamlit.elements.lib.utils import (
     LabelVisibility,
@@ -60,6 +66,7 @@ class MetricMixin:
         label_visibility: LabelVisibility = "visible",
         border: bool = False,
         width: Width = "stretch",
+        height: Height = "content",
     ) -> DeltaGenerator:
         r"""Display a metric in big bold font, with an optional indicator of how the metric changed.
 
@@ -218,8 +225,9 @@ class MetricMixin:
             label_visibility
         )
 
+        validate_height(height, allow_content=True)
         validate_width(width, allow_content=True)
-        layout_config = LayoutConfig(width=width)
+        layout_config = LayoutConfig(width=width, height=height)
 
         return self.dg._enqueue("metric", metric_proto, layout_config=layout_config)
 

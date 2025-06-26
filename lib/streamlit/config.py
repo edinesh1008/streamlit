@@ -748,6 +748,17 @@ def _server_headless() -> bool:
 
 
 _create_option(
+    "server.showEmailPrompt",
+    description="""
+        Whether to show a terminal prompt for the user to enter their email
+        address when they run Streamlit for the first time. If you set
+        `server.headless=True`, Streamlit will not show this prompt.
+    """,
+    default_val=True,
+    type_=bool,
+)
+
+_create_option(
     "server.runOnSave",
     description="""
         Automatically rerun script when the file is modified on disk.
@@ -812,6 +823,19 @@ _create_option(
     """,
     default_val="",
     type_=str,
+)
+
+_create_option(
+    "server.customComponentBaseUrlPath",
+    description="""
+        The base path for the URL where Streamlit should serve custom
+        components. If this config var is set and a call to ``declare_component``
+        does not specify a URL, the component's URL will be set to
+        ``f"{server.customComponentBaseUrlPath}/{component_name}/"``.
+    """,
+    default_val="",
+    type_=str,
+    visibility="hidden",
 )
 
 # TODO: Rename to server.enableCorsProtection.
@@ -1134,6 +1158,15 @@ _create_theme_options(
 )
 
 _create_theme_options(
+    "linkUnderline",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Whether or not links should be displayed with an underline.
+    """,
+    type_=bool,
+)
+
+_create_theme_options(
     "codeBackgroundColor",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
@@ -1308,6 +1341,16 @@ _create_theme_options(
 )
 
 _create_theme_options(
+    "showSidebarBorder",
+    categories=["theme"],
+    description="""
+        Whether to show a vertical separator between the sidebar and the main
+        content area.
+    """,
+    type_=bool,
+)
+
+_create_theme_options(
     "baseFontSize",
     categories=["theme"],
     description="""
@@ -1321,13 +1364,17 @@ _create_theme_options(
 )
 
 _create_theme_options(
-    "showSidebarBorder",
+    "baseFontWeight",
     categories=["theme"],
     description="""
-        Whether to show a vertical separator between the sidebar and the main
-        content area.
+        Sets the root font weight for the app.
+
+        This determines the overall weight of text and UI elements.
+        Valid values are 100-600, in increments of 100.
+
+        When unset, the font weight will be set to normal 400.
     """,
-    type_=bool,
+    type_=int,
 )
 
 # Config Section: Secrets #

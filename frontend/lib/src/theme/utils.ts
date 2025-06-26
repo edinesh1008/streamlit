@@ -22,8 +22,8 @@ import once from "lodash/once"
 import { getLogger } from "loglevel"
 
 import { CustomThemeConfig, ICustomThemeConfig } from "@streamlit/protobuf"
-import { localStorageAvailable } from "@streamlit/utils"
 import type { StreamlitWindowObject } from "@streamlit/utils"
+import { localStorageAvailable } from "@streamlit/utils"
 
 import { CircularBuffer } from "~lib/components/shared/Profiler/CircularBuffer"
 import {
@@ -225,6 +225,7 @@ export const createEmotionTheme = (
   const { colors, genericFonts, inSidebar } = baseThemeConfig.emotion
   const {
     baseFontSize,
+    baseFontWeight,
     baseRadius,
     buttonRadius,
     codeFontSize,
@@ -233,6 +234,7 @@ export const createEmotionTheme = (
     bodyFont,
     codeFont,
     showSidebarBorder,
+    linkUnderline,
     ...customColors
   } = themeInput
 
@@ -275,6 +277,7 @@ export const createEmotionTheme = (
     primaryColor: primary,
     textColor: bodyText,
     dataframeBorderColor,
+    dataframeHeaderBackgroundColor,
     widgetBorderColor,
     borderColor,
     linkColor,
@@ -315,6 +318,11 @@ export const createEmotionTheme = (
   if (notNullOrUndefined(dataframeBorderColor)) {
     // If dataframeBorderColor explicitly set, override borderColorLight fallback
     conditionalOverrides.colors.dataframeBorderColor = dataframeBorderColor
+  }
+
+  if (notNullOrUndefined(dataframeHeaderBackgroundColor)) {
+    conditionalOverrides.colors.dataframeHeaderBackgroundColor =
+      dataframeHeaderBackgroundColor
   }
 
   if (showWidgetBorder || widgetBorderColor) {
@@ -413,6 +421,10 @@ export const createEmotionTheme = (
 
   if (notNullOrUndefined(showSidebarBorder)) {
     conditionalOverrides.showSidebarBorder = showSidebarBorder
+  }
+
+  if (notNullOrUndefined(linkUnderline)) {
+    conditionalOverrides.linkUnderline = linkUnderline
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.

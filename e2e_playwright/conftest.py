@@ -46,6 +46,7 @@ from playwright.sync_api import (
     Page,
     Response,
     Route,
+    expect,
 )
 from typing_extensions import Self
 
@@ -669,7 +670,11 @@ def assert_snapshot(
     """Fixture that compares a screenshot with screenshot from a past run."""
 
     # Check if reruns are enabled for this test run
-    configured_reruns = pytestconfig.getoption("reruns", 0)
+    flaky_marker = request.node.get_closest_marker("flaky")
+    if flaky_marker and "reruns" in flaky_marker.kwargs:
+        configured_reruns = flaky_marker.kwargs["reruns"]
+    else:
+        configured_reruns = pytestconfig.getoption("reruns", 0)
     # Get the current execution count:
     execution_count = getattr(request.node, "execution_count", 1)
     # True if this is the last rerun (or the only test run)
@@ -926,6 +931,10 @@ def wait_for_app_run(
         timeout=25000,
         state="attached",
     )
+
+    # Wait for all element skeletons to be removed.
+    # This is useful to make sure that all elements have been rendered.
+    expect(page_or_locator.get_by_test_id("stSkeleton")).to_have_count(0, timeout=25000)
 
     if wait_delay > 0:
         # Give the app a little more time to render everything
