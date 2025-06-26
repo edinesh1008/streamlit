@@ -1224,6 +1224,20 @@ _create_theme_options(
 )
 
 _create_theme_options(
+    "codeFontWeight",
+    categories=["theme"],
+    description="""
+        The font weight for code blocks and code text.
+
+        This applies to inline code, code blocks (ex: `st.code`), and font in `st.json` and `st.help`.
+        Valid values are 100-900, in increments of 100.
+
+        When unset, the default code font weight will be 400.
+    """,
+    type_=int,
+)
+
+_create_theme_options(
     "headingFont",
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
@@ -1328,6 +1342,17 @@ _create_theme_options(
 
         If no dataframe border color is set, Streamlit uses `theme.borderColor`
         instead.
+    """,
+)
+
+_create_theme_options(
+    "dataframeHeaderBackgroundColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        The background color of the dataframe's header.
+
+        If no dataframe header background color is set, Streamlit uses a mix of
+        `theme.bgColor` and `theme.secondaryBg`.
     """,
 )
 
