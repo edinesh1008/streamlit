@@ -21,7 +21,7 @@ from typing import (
     Any,
     Callable,
     Final,
-    Generic,    
+    Generic,
     Literal,
     TypeVar,
     cast,
