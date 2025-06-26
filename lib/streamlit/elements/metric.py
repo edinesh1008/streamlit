@@ -131,16 +131,6 @@ class MetricMixin:
             ``False`` (default), no border is shown. If this is ``True``, a
             border is shown.
 
-        height : "content", "stretch", or int
-            The height of the metric element. This can be one of the following:
-
-            - ``"content"`` (default): The height of the element matches the
-              height of its content, but doesn't exceed the height of the
-              parent container.
-            - ``"stretch"``: The height of the element matches the height of the
-              parent container.
-            - An integer specifying the height in pixels.
-
         width : "stretch", "content", or int
             The width of the metric element. This can be one of the following:
 
