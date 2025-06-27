@@ -893,9 +893,6 @@ class ButtonGroupMixin:
             indexable_options, default_values, selection_mode
         )
 
-        # Determine the appropriate display name for error messages
-        display_name = "segmented_control" if style == "segmented_control" else "pills"
-
         res = self._button_group(
             indexable_options,
             default=default_values,
@@ -912,7 +909,6 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             label=label,
             label_visibility=label_visibility,
-            display_name=display_name,
         )
 
         if selection_mode == "multi":
@@ -943,7 +939,6 @@ class ButtonGroupMixin:
         label: str | None = None,
         label_visibility: LabelVisibility = "visible",
         help: str | None = None,
-        display_name: str = "button_group",
     ) -> RegisterWidgetResult[T]:
         _maybe_raise_selection_mode_warning(selection_mode)
 
@@ -981,7 +976,6 @@ class ButtonGroupMixin:
 
         check_widget_policies(self.dg, key, on_change, default_value=_default)
 
-        # Keep widget_name as "button_group" for protobuf compatibility
         widget_name = "button_group"
         ctx = get_script_run_ctx()
         form_id = current_form_id(self.dg)
@@ -994,7 +988,7 @@ class ButtonGroupMixin:
             ]
         )
         element_id = compute_and_register_element_id(
-            display_name,  # Use display_name for error messages
+            widget_name,
             user_key=key,
             form_id=form_id,
             options=formatted_options,
