@@ -26,11 +26,13 @@ from tests.delta_generator_test_case import DeltaGeneratorTestCase
 class TestButtonGroupErrorMessages(DeltaGeneratorTestCase):
     """Test that button group widgets show correct command names in error messages."""
 
-    def test_segmented_control_error_message_shows_correct_name(self):
+
+    def test_segmented_control_error_message_shows_correct_name(self) -> None:
         """Test that segmented_control style shows 'segmented_control' in error messages."""
         # Create element IDs with segmented_control style (no key to force element ID duplication)
         _ = compute_and_register_element_id(
             "button_group",
+
             user_key=None,
             form_id=None,
             style="segmented_control",
