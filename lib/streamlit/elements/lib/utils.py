@@ -232,7 +232,7 @@ def compute_and_register_element_id(
     kwargs_to_use = {"form_id": form_id, **kwargs} if form_id else kwargs
 
     # If style is provided, use it for the error message, to provide more context to the user
-    style = kwargs.get("style", None)
+    style = kwargs.get("style")
     if style == "borderless":
         # The borderless style is used by st.feedback, but users expect to see "feedback" in errors
         element_type_for_error = "feedback"
