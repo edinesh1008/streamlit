@@ -22,7 +22,6 @@ import React, {
   useState,
 } from "react"
 
-import { Theme, useTheme } from "@emotion/react"
 import { ALIGN, RadioGroup, Radio as UIRadio } from "baseui/radio"
 
 import {
@@ -33,21 +32,25 @@ import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import { LabelVisibilityOptions } from "~lib/util/utils"
 import { Placement } from "~lib/components/shared/Tooltip"
 import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown/StreamlitMarkdown"
-import { addCssUnit, convertRemToPx } from "~lib/theme"
+import { addCssUnit, convertRemToPx, EmotionTheme } from "~lib/theme"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 
 export interface Props {
   disabled: boolean
   horizontal: boolean
   value: number | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   onChange: (selectedIndex: number) => any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   options: any[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   captions: any[]
   label?: string
   labelVisibility?: LabelVisibilityOptions
   help?: string
 }
 
-function getRadioInnerSizes(theme: Theme): [string, string] {
+function getRadioInnerSizes(theme: EmotionTheme): [string, string] {
   // If checked, the radio inner circle should fill 37.5% of the total radio size.
   // If not checked, it should show a border of spacing.threeXS.
 
@@ -93,7 +96,7 @@ function Radio({
 
     // Exclude value from the dependency list on purpose to avoid a loop.
     // TODO: Update to match React best practices
-    // eslint-disable-next-line react-compiler/react-compiler
+    // eslint-disable-next-line react-hooks/react-compiler
     /* eslint-disable react-hooks/exhaustive-deps */
   }, [defaultValue])
 
@@ -106,7 +109,7 @@ function Radio({
     [onChange]
   )
 
-  const theme = useTheme()
+  const theme = useEmotionTheme()
   const hasCaptions = captions.length > 0
   const hasOptions = options.length > 0
   const cleanedOptions = hasOptions ? options : ["No options to select."]

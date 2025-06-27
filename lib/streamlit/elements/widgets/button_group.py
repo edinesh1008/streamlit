@@ -31,6 +31,11 @@ from typing import (
 from typing_extensions import TypeAlias
 
 from streamlit.elements.lib.form_utils import current_form_id
+from streamlit.elements.lib.layout_utils import (
+    LayoutConfig,
+    Width,
+    validate_width,
+)
 from streamlit.elements.lib.options_selector_utils import (
     check_and_convert_to_indices,
     convert_to_sequence_and_check_comparable,
@@ -107,11 +112,7 @@ class _MultiSelectSerde(Generic[T]):
         indices = check_and_convert_to_indices(self.options, value)
         return indices if indices is not None else []
 
-    def deserialize(
-        self,
-        ui_value: list[int] | None,
-        widget_id: str = "",
-    ) -> list[T]:
+    def deserialize(self, ui_value: list[int] | None) -> list[T]:
         current_value: list[int] = (
             ui_value if ui_value is not None else self.default_value
         )
@@ -145,8 +146,8 @@ class _SingleSelectSerde(Generic[T]):
         _value = [value] if value is not None else []
         return self.multiselect_serde.serialize(_value)
 
-    def deserialize(self, ui_value: list[int] | None, widget_id: str = "") -> T | None:
-        deserialized = self.multiselect_serde.deserialize(ui_value, widget_id)
+    def deserialize(self, ui_value: list[int] | None) -> T | None:
+        deserialized = self.multiselect_serde.deserialize(ui_value)
 
         if len(deserialized) == 0:
             return None
@@ -169,7 +170,7 @@ class ButtonGroupSerde(Generic[T]):
         options: Sequence[T],
         default_values: list[int],
         type: Literal["single", "multi"],
-    ):
+    ) -> None:
         self.options = options
         self.default_values = default_values
         self.type = type
@@ -182,10 +183,8 @@ class ButtonGroupSerde(Generic[T]):
     def serialize(self, value: T | list[T] | None) -> list[int]:
         return self.serde.serialize(cast("Any", value))
 
-    def deserialize(
-        self, ui_value: list[int] | None, widget_id: str = ""
-    ) -> list[T] | T | None:
-        return self.serde.deserialize(ui_value, widget_id)
+    def deserialize(self, ui_value: list[int] | None) -> list[T] | T | None:
+        return self.serde.deserialize(ui_value)
 
 
 def get_mapped_options(
@@ -256,7 +255,7 @@ def _build_proto(
     return proto
 
 
-def _maybe_raise_selection_mode_warning(selection_mode: SelectionMode):
+def _maybe_raise_selection_mode_warning(selection_mode: SelectionMode) -> None:
     """Check if the selection_mode value is valid or raise exception otherwise."""
     if selection_mode not in ["single", "multi"]:
         raise StreamlitAPIException(
@@ -282,6 +281,7 @@ class ButtonGroupMixin:
         on_change: WidgetCallback | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
+        width: Width = "content",
     ) -> Literal[0, 1] | None: ...
     @overload
     def feedback(
@@ -293,6 +293,7 @@ class ButtonGroupMixin:
         on_change: WidgetCallback | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
+        width: Width = "content",
     ) -> Literal[0, 1, 2, 3, 4] | None: ...
     @gather_metrics("feedback")
     def feedback(
@@ -304,6 +305,7 @@ class ButtonGroupMixin:
         on_change: WidgetCallback | None = None,
         args: WidgetArgs | None = None,
         kwargs: WidgetKwargs | None = None,
+        width: Width = "content",
     ) -> int | None:
         """Display a feedback widget.
 
@@ -343,6 +345,11 @@ class ButtonGroupMixin:
 
         kwargs : dict
             An optional dict of kwargs to pass to the callback.
+
+        width : int or "stretch" or "content"
+            The width of the feedback widget. Can be an integer (pixels),
+            "stretch" to use the full width of the container, or "content"
+            (default) to size based on the content.
 
         Returns
         -------
@@ -414,7 +421,7 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             selection_visualization=selection_visualization,
             style="borderless",
-            display_name="feedback",
+            width=width,
         )
         return sentiment.value
 
@@ -434,6 +441,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Width = "content",
     ) -> V | None: ...
     @overload
     def pills(
@@ -451,6 +459,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Width = "content",
     ) -> list[V]: ...
     @gather_metrics("pills")
     def pills(
@@ -468,6 +477,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Width = "content",
     ) -> list[V] | V | None:
         r"""Display a pills widget.
 
@@ -557,8 +567,13 @@ class ButtonGroupMixin:
         label_visibility: "visible", "hidden", or "collapsed"
             The visibility of the label. The default is ``"visible"``. If this
             is ``"hidden"``, Streamlit displays an empty spacer instead of the
-            label, which can help keep the widget alligned with other widgets.
+            label, which can help keep the widget aligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
+
+        width: int or "stretch" or "content"
+            The width of the widget. Can be an integer (pixels), "stretch" to use
+            the full width of the container, or "content" (default) to size based
+            on the content.
 
         Returns
         -------
@@ -625,6 +640,7 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             disabled=disabled,
             label_visibility=label_visibility,
+            width=width,
         )
 
     @overload
@@ -643,6 +659,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Width = "content",
     ) -> V | None: ...
     @overload
     def segmented_control(
@@ -660,6 +677,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Width = "content",
     ) -> list[V]: ...
 
     @gather_metrics("segmented_control")
@@ -678,6 +696,7 @@ class ButtonGroupMixin:
         kwargs: WidgetKwargs | None = None,
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
+        width: Width = "content",
     ) -> list[V] | V | None:
         r"""Display a segmented control widget.
 
@@ -766,8 +785,13 @@ class ButtonGroupMixin:
         label_visibility: "visible", "hidden", or "collapsed"
             The visibility of the label. The default is ``"visible"``. If this
             is ``"hidden"``, Streamlit displays an empty spacer instead of the
-            label, which can help keep the widget alligned with other widgets.
+            label, which can help keep the widget aligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
+
+        width: int or "stretch" or "content"
+            The width of the widget. Can be an integer (pixels), "stretch" to
+            use the full width of the container, or "content" (default) to size
+            based on the content.
 
         Returns
         -------
@@ -837,6 +861,7 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             disabled=disabled,
             label_visibility=label_visibility,
+            width=width,
         )
 
     @gather_metrics("_internal_button_group")
@@ -856,6 +881,7 @@ class ButtonGroupMixin:
         label: str | None = None,
         label_visibility: LabelVisibility = "visible",
         help: str | None = None,
+        width: Width = "content",
     ) -> list[V] | V | None:
         maybe_raise_label_warnings(label, label_visibility)
 
@@ -909,6 +935,7 @@ class ButtonGroupMixin:
             kwargs=kwargs,
             label=label,
             label_visibility=label_visibility,
+            width=width,
         )
 
         if selection_mode == "multi":
@@ -939,6 +966,7 @@ class ButtonGroupMixin:
         label: str | None = None,
         label_visibility: LabelVisibility = "visible",
         help: str | None = None,
+        width: Width = "content",
     ) -> RegisterWidgetResult[T]:
         _maybe_raise_selection_mode_warning(selection_mode)
 
@@ -974,6 +1002,9 @@ class ButtonGroupMixin:
         if default is not None and len(default) == 0:
             _default = None
 
+        validate_width(width, allow_content=True)
+        layout_config = LayoutConfig(width=width)
+
         check_widget_policies(self.dg, key, on_change, default_value=_default)
 
         widget_name = "button_group"
@@ -991,10 +1022,12 @@ class ButtonGroupMixin:
             widget_name,
             user_key=key,
             form_id=form_id,
+            dg=self.dg,
             options=formatted_options,
             default=default,
             click_mode=parsed_selection_mode,
             style=style,
+            width=width,
         )
 
         proto = _build_proto(
@@ -1029,7 +1062,7 @@ class ButtonGroupMixin:
         if ctx:
             save_for_app_testing(ctx, element_id, format_func)
 
-        self.dg._enqueue(widget_name, proto)
+        self.dg._enqueue(widget_name, proto, layout_config=layout_config)
 
         return widget_state
 

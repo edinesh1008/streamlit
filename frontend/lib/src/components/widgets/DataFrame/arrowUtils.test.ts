@@ -250,7 +250,7 @@ describe("applyPandasStylerCss", () => {
     })
 
     styledCell = applyPandasStylerCss(MOCK_CELL, "invalid_key", CSS_STYLES)
-    expect(styledCell.themeOverride).toEqual({})
+    expect(styledCell.themeOverride).toEqual(undefined)
   })
 
   it("should use a grey color when background is yellow", () => {
@@ -706,6 +706,7 @@ describe("getCellFromArrow", () => {
       styledCell,
       undefined
     )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
     expect((cell as any).data.displayDate).toEqual("FOOO")
   })
 
@@ -766,6 +767,7 @@ describe("getCellFromArrow", () => {
     const cell = getCellFromArrow(MOCK_TIME_COLUMN, arrowCell, styledCell)
     // Should use the formatted value from the cell and not the displayContent
     // from pandas styler
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
     expect((cell as any).data.displayDate).toEqual("2021")
   })
 

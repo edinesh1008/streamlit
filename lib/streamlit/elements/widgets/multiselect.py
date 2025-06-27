@@ -20,6 +20,11 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, Literal, cast, overloa
 
 from streamlit.dataframe_util import OptionSequence, convert_anything_to_list
 from streamlit.elements.lib.form_utils import current_form_id
+from streamlit.elements.lib.layout_utils import (
+    LayoutConfig,
+    WidthWithoutContent,
+    validate_width,
+)
 from streamlit.elements.lib.options_selector_utils import (
     convert_to_sequence_and_check_comparable,
     create_mappings,
@@ -75,7 +80,7 @@ class MultiSelectSerde(Generic[T]):
         formatted_options: list[str],
         formatted_option_to_option_index: dict[str, int],
         default_options_indices: list[int] | None = None,
-    ):
+    ) -> None:
         """Initialize the MultiSelectSerde.
 
         We do not store an option_to_formatted_option mapping because the generic
@@ -110,17 +115,13 @@ class MultiSelectSerde(Generic[T]):
             try:
                 option_index = self.options.index(v)
                 values.append(self.formatted_options[option_index])
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 # at this point we know that v is a string, otherwise
                 # it would have been found in the options
                 values.append(cast("str", v))
         return values
 
-    def deserialize(
-        self,
-        ui_value: list[str] | None,
-        widget_id: str = "",
-    ) -> list[T | str] | list[T]:
+    def deserialize(self, ui_value: list[str] | None) -> list[T | str] | list[T]:
         if ui_value is None:
             return [self.options[i] for i in self.default_options_indices]
 
@@ -129,7 +130,7 @@ class MultiSelectSerde(Generic[T]):
             try:
                 option_index = self.formatted_options.index(v)
                 values.append(self.options[option_index])
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 values.append(v)
         return values
 
@@ -144,7 +145,7 @@ def _get_default_count(default: Sequence[Any] | Any | None) -> int:
 
 def _check_max_selections(
     selections: Sequence[Any] | Any | None, max_selections: int | None
-):
+) -> None:
     if max_selections is None:
         return
 
@@ -174,6 +175,7 @@ class MultiSelectMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[False] = False,
+        width: WidthWithoutContent = "stretch",
     ) -> list[T]: ...
 
     @overload
@@ -194,6 +196,7 @@ class MultiSelectMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[True] = True,
+        width: WidthWithoutContent = "stretch",
     ) -> list[T | str]: ...
 
     @overload
@@ -214,6 +217,7 @@ class MultiSelectMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: bool = False,
+        width: WidthWithoutContent = "stretch",
     ) -> list[T] | list[T | str]: ...
 
     @gather_metrics("multiselect")
@@ -234,6 +238,7 @@ class MultiSelectMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: Literal[False, True] | bool = False,
+        width: WidthWithoutContent = "stretch",
     ) -> list[T] | list[T | str]:
         r"""Display a multiselect widget.
         The multiselect widget starts as empty.
@@ -303,10 +308,15 @@ class MultiSelectMixin:
         max_selections: int
             The max selections that can be selected at a time.
 
-        placeholder: str | None
+        placeholder: str or  None
             A string to display when no options are selected.
-            Defaults to "Choose an option." or, if
-            ``accept_new_options`` is set to ``True``, to "Choose or add an option".
+            If this is ``None`` (default), the widget displays one of the two
+            following placeholder strings:
+
+            - "Choose an option" is displayed if you set
+              ``accept_new_options=False``.
+            - "Choose or add an option" is displayed if you set
+              ``accept_new_options=True``.
 
         disabled: bool
             An optional boolean that disables the multiselect widget if set
@@ -315,34 +325,80 @@ class MultiSelectMixin:
         label_visibility: "visible", "hidden", or "collapsed"
             The visibility of the label. The default is ``"visible"``. If this
             is ``"hidden"``, Streamlit displays an empty spacer instead of the
-            label, which can help keep the widget alligned with other widgets.
+            label, which can help keep the widget aligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
         accept_new_options: bool
-            If ``True``, the user can enter new options that don't exist in the
-            original options. The ``max_options`` argument is still enforced.
-            The default is ``False``.
+            Whether the user can add selections that aren't included in ``options``.
+            If this is ``False`` (default), the user can only select from the
+            items in ``options``. If this is ``True``, the user can enter new
+            items that don't exist in ``options``.
+
+            When a user enters and selects a new item, it is included in the
+            widget's returned list as a string. The new item is not added to
+            the widget's drop-down menu. Streamlit will use a case-insensitive
+            match from ``options`` before adding a new item, and a new item
+            can't be added if a case-insensitive match is already selected. The
+            ``max_selections`` argument is still enforced.
+
+        width : "stretch" or int
+            The width of the multiselect widget. This can be one of the
+            following:
+
+            - ``"stretch"`` (default): The width of the widget matches the
+              width of the parent container.
+            - An integer specifying the width in pixels: The widget has a
+              fixed width. If the specified width is greater than the width of
+              the parent container, the width of the widget matches the width
+              of the parent container.
 
         Returns
         -------
         list
             A list with the selected options
 
-        Example
-        -------
+        Examples
+        --------
+        **Example 1: Use a basic multiselect widget**
+
+        You can declare one or more initial selections with the ``default``
+        parameter.
+
         >>> import streamlit as st
         >>>
         >>> options = st.multiselect(
-        ...     "What are your favorite colors",
+        ...     "What are your favorite colors?",
         ...     ["Green", "Yellow", "Red", "Blue"],
-        ...     ["Yellow", "Red"],
+        ...     default=["Yellow", "Red"],
         ... )
         >>>
         >>> st.write("You selected:", options)
 
         .. output::
            https://doc-multiselect.streamlit.app/
-           height: 420px
+           height: 350px
+
+        **Example 2: Let users to add new options**
+
+        To allow users to enter and select new options that aren't included in
+        the ``options`` list, use the ``accept_new_options`` parameter. To
+        prevent users from adding an unbounded number of new options, use the
+        ``max_selections`` parameter.
+
+        >>> import streamlit as st
+        >>>
+        >>> options = st.multiselect(
+        ...     "What are your favorite cat names?",
+        ...     ["Jellybeans", "Fish Biscuit", "Madam President"],
+        ...     max_selections=5,
+        ...     accept_new_options=True,
+        ... )
+        >>>
+        >>> st.write("You selected:", options)
+
+        .. output::
+           https://doc-multiselect-accept-new-options.streamlit.app/
+           height: 350px
 
         """
         ctx = get_script_run_ctx()
@@ -361,6 +417,7 @@ class MultiSelectMixin:
             disabled=disabled,
             label_visibility=label_visibility,
             accept_new_options=accept_new_options,
+            width=width,
             ctx=ctx,
         )
 
@@ -381,6 +438,7 @@ class MultiSelectMixin:
         disabled: bool = False,
         label_visibility: LabelVisibility = "visible",
         accept_new_options: bool = False,
+        width: WidthWithoutContent = "stretch",
         ctx: ScriptRunContext | None = None,
     ) -> list[T] | list[T | str]:
         key = to_key(key)
@@ -413,6 +471,7 @@ class MultiSelectMixin:
             widget_name,
             user_key=key,
             form_id=form_id,
+            dg=self.dg,
             label=label,
             options=formatted_options,
             default=default_values,
@@ -420,6 +479,7 @@ class MultiSelectMixin:
             max_selections=max_selections,
             placeholder=placeholder,
             accept_new_options=accept_new_options,
+            width=width,
         )
 
         proto = MultiSelectProto()
@@ -466,10 +526,13 @@ class MultiSelectMixin:
             proto.raw_values[:] = serde.serialize(widget_state.value)
             proto.set_value = True
 
+        validate_width(width)
+        layout_config = LayoutConfig(width=width)
+
         if ctx:
             save_for_app_testing(ctx, element_id, format_func)
 
-        self.dg._enqueue(widget_name, proto)
+        self.dg._enqueue(widget_name, proto, layout_config=layout_config)
 
         return widget_state.value
 

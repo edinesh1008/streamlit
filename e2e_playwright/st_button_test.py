@@ -60,6 +60,7 @@ def test_buttons_in_columns(themed_app: Page, assert_snapshot: ImageCompareFunct
     """Test that the button widgets are correctly rendered in columns via screenshot matching."""
     columns_container = themed_app.get_by_test_id("stHorizontalBlock")
     expect(columns_container).to_have_count(1)
+    expect(columns_container.get_by_test_id("stButton")).to_have_count(8)
 
     assert_snapshot(columns_container, name="st_button-in_columns")
 
@@ -145,7 +146,9 @@ def test_colored_text_hover(app: Page):
     """Test that the colored text is correctly rendered and changes color on hover."""
     # Check hover behavior for colored text in primary button
     primary_button_element = app.get_by_test_id("stButton").nth(22)
-    expect(primary_button_element.locator("span")).to_have_class("colored-text")
+    expect(primary_button_element.locator("span")).to_have_class(
+        "stMarkdownColoredText"
+    )
     expect(primary_button_element.locator("span")).to_have_css(
         "color", "rgb(0, 104, 201)"
     )
@@ -157,7 +160,9 @@ def test_colored_text_hover(app: Page):
 
     # Check hover behavior for colored text in secondary button
     secondary_button_element = app.get_by_test_id("stButton").nth(23)
-    expect(secondary_button_element.locator("span")).to_have_class("colored-text")
+    expect(secondary_button_element.locator("span")).to_have_class(
+        "stMarkdownColoredText"
+    )
     expect(secondary_button_element.locator("span")).to_have_css(
         "color", "rgb(0, 104, 201)"
     )
@@ -169,7 +174,9 @@ def test_colored_text_hover(app: Page):
 
     # Check hover behavior for colored text in tertiary button
     tertiary_button_element = app.get_by_test_id("stButton").nth(24)
-    expect(tertiary_button_element.locator("span")).to_have_class("colored-text")
+    expect(tertiary_button_element.locator("span")).to_have_class(
+        "stMarkdownColoredText"
+    )
     expect(tertiary_button_element.locator("span")).to_have_css(
         "color", "rgb(0, 104, 201)"
     )

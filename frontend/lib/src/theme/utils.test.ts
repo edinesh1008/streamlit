@@ -16,6 +16,7 @@
 
 import { getLogger } from "loglevel"
 import { MockInstance } from "vitest"
+import { transparentize } from "color2k"
 
 import { CustomThemeConfig } from "@streamlit/protobuf"
 
@@ -59,13 +60,16 @@ const matchMediaFillers = {
 
 const LOG = getLogger("theme:utils")
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
 const windowLocationSearch = (search: string): any => ({
   location: {
     search,
   },
 })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
 const windowMatchMedia = (theme: "light" | "dark"): any => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   matchMedia: (query: any) => ({
     matches: query === `(prefers-color-scheme: ${theme})`,
     media: query,
@@ -89,7 +93,7 @@ const mockWindow = (...overrides: object[]): MockInstance => {
 
 describe("Styling utils", () => {
   describe("computeSpacingStyle", () => {
-    test("pulls correct theme values", async () => {
+    test("pulls correct theme values", () => {
       expect(computeSpacingStyle("sm md lg none", lightTheme.emotion)).toEqual(
         "0.5rem 0.75rem 1rem 0"
       )
@@ -177,7 +181,7 @@ describe("Cached theme helpers", () => {
         backgroundColor: "orange",
         secondaryBackgroundColor: "yellow",
         textColor: "green",
-        bodyFont: '"Source Sans Pro", sans-serif',
+        bodyFont: '"Source Sans", sans-serif',
       }
 
       const customTheme = createTheme(CUSTOM_THEME_NAME, themeInput)
@@ -222,7 +226,7 @@ describe("Cached theme helpers", () => {
       backgroundColor: "orange",
       secondaryBackgroundColor: "yellow",
       textColor: "green",
-      bodyFont: '"Source Sans Pro", sans-serif',
+      bodyFont: '"Source Sans", sans-serif',
     }
     const customTheme = createTheme(CUSTOM_THEME_NAME, themeInput)
 
@@ -572,6 +576,10 @@ describe("isColor", () => {
 })
 
 describe("createEmotionTheme", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
   it("sets to light when matchMedia does not match dark", () => {
     const themeInput: Partial<CustomThemeConfig> = {
       headingFont: "serif",
@@ -628,6 +636,58 @@ describe("createEmotionTheme", () => {
     expect(theme.genericFonts.headingFont).toBe(theme.fonts.monospace)
   })
 
+  it.each([
+    // Test valid codeFontSize values
+    // Inline code font size unaffected, set to 0.75em
+    ["0.875rem", "0.875rem", "0.75em"],
+    ["0.875REM", "0.875rem", "0.75em"],
+    ["14px", "14px", "0.75em"],
+    ["14PX", "14px", "0.75em"],
+    ["15", "15px", "0.75em"],
+  ])(
+    "correctly applies codeFontSize and inlineCodeFontSize '%s'",
+    (codeFontSize, expectedCodeFontSize, expectedInlineCodeFontSize) => {
+      const themeInput: Partial<CustomThemeConfig> = {
+        codeFontSize,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      expect(theme.fontSizes.codeFontSize).toBe(expectedCodeFontSize)
+      expect(theme.fontSizes.inlineCodeFontSize).toBe(
+        expectedInlineCodeFontSize
+      )
+    }
+  )
+
+  it.each([
+    // Test invalid codeFontSize values
+    ["invalid", "0.875rem", "0.75em"],
+    ["rem", "0.875rem", "0.75em"],
+    ["px", "0.875rem", "0.75em"],
+    [" ", "0.875rem", "0.75em"],
+  ])(
+    "logs a warning and falls back to default for any invalid codeFontSize '%s'",
+    (codeFontSize, expectedCodeFontSize, expectedInlineCodeFontSize) => {
+      const logWarningSpy = vi.spyOn(LOG, "warn")
+      const themeInput: Partial<CustomThemeConfig> = {
+        codeFontSize,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      // Should log an error with the actual codeFontSize value
+      expect(logWarningSpy).toHaveBeenCalledWith(
+        `Invalid size passed for codeFontSize in theme: ${codeFontSize}. Falling back to default codeFontSize.`
+      )
+
+      expect(theme.fontSizes.codeFontSize).toBe(expectedCodeFontSize)
+      expect(theme.fontSizes.inlineCodeFontSize).toBe(
+        expectedInlineCodeFontSize
+      )
+    }
+  )
+
   it("adapts the radii theme props if baseRadius is provided", () => {
     const themeInput: Partial<CustomThemeConfig> = {
       baseRadius: "1.2rem",
@@ -681,9 +741,8 @@ describe("createEmotionTheme", () => {
     "invalid",
     "rem", // Missing number
     "px", // Missing number
-    "", // Empty string
   ])(
-    "logs an warning and falls back to default for invalid baseRadius '%s'",
+    "logs a warning and falls back to default for invalid baseRadius '%s'",
     invalidBaseRadius => {
       const logWarningSpy = vi.spyOn(LOG, "warn")
       const themeInput: Partial<CustomThemeConfig> = {
@@ -704,6 +763,383 @@ describe("createEmotionTheme", () => {
       expect(theme.radii.xxl).toBe(baseTheme.emotion.radii.xxl)
     }
   )
+
+  it.each([
+    // Test keyword values
+    ["full", "1.4rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["none", "0rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["small", "0.35rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["medium", "0.5rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["large", "1rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    // Test rem values
+    ["0.8rem", "0.8rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["2rem", "2rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    // Test px values
+    ["10px", "10px", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["24px", "24px", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    // Test with whitespace and uppercase
+    [" FULL ", "1.4rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["  medium  ", "0.5rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["2 rem ", "2rem", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    // Test only numbers:
+    ["10", "10px", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+    ["24foo", "24px", "0.5rem", "0.25rem", "0.75rem", "1rem"],
+  ])(
+    "correctly handles buttonRadius config '%s' (does not impact other radii values)",
+    (
+      buttonRadius,
+      expectedButtonRadius,
+      expectedDefault,
+      expectedMd,
+      expectedXl,
+      expectedXxl
+    ) => {
+      const themeInput: Partial<CustomThemeConfig> = {
+        buttonRadius,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      expect(theme.radii.button).toBe(expectedButtonRadius)
+      expect(theme.radii.default).toBe(expectedDefault)
+      expect(theme.radii.md).toBe(expectedMd)
+      expect(theme.radii.xl).toBe(expectedXl)
+      expect(theme.radii.xxl).toBe(expectedXxl)
+    }
+  )
+
+  it.each([
+    "invalid",
+    "rem", // Missing number
+    "px", // Missing number
+    "", // Empty string
+  ])(
+    "logs a warning and falls back to default for invalid buttonRadius '%s'",
+    invalidButtonRadius => {
+      const logWarningSpy = vi.spyOn(LOG, "warn")
+      const themeInput: Partial<CustomThemeConfig> = {
+        buttonRadius: invalidButtonRadius,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      // Should log an error
+      expect(logWarningSpy).toHaveBeenCalledWith(
+        `Invalid button radius: ${invalidButtonRadius}. Falling back to default button radius.`
+      )
+
+      // Should fall back to default values
+      expect(theme.radii.button).toBe(baseTheme.emotion.radii.button)
+      expect(theme.radii.default).toBe(baseTheme.emotion.radii.default)
+      expect(theme.radii.md).toBe(baseTheme.emotion.radii.md)
+      expect(theme.radii.xl).toBe(baseTheme.emotion.radii.xl)
+      expect(theme.radii.xxl).toBe(baseTheme.emotion.radii.xxl)
+    }
+  )
+
+  it("sets buttonRadius based on baseRadius if buttonRadius not configured", () => {
+    const themeInput: Partial<CustomThemeConfig> = {
+      baseRadius: "0.77rem",
+    }
+
+    const theme = createEmotionTheme(themeInput)
+
+    expect(theme.radii.button).toBe("0.77rem")
+    expect(theme.radii.default).toBe("0.77rem")
+    expect(theme.radii.md).toBe("0.39rem")
+    expect(theme.radii.xl).toBe("1.16rem")
+    expect(theme.radii.xxl).toBe("1.54rem")
+  })
+
+  it.each([
+    // Test valid color values
+    ["red", "orange", "blue", "pink", "purple"],
+    ["#ff0000", "#ffa500", "#0000ff", "#ffc0cb", "#800080"],
+    [
+      "rgb(255, 0, 0)",
+      "rgb(255, 165, 0)",
+      "rgb(0, 0, 255)",
+      "rgb(255, 192, 192)",
+      "rgb(128, 0, 128)",
+    ],
+  ])(
+    "correctly handles setting of basic color configs '%s'",
+    (primary, bodyText, secondaryBg, bgColor, linkColor) => {
+      const themeInput: Partial<CustomThemeConfig> = {
+        primaryColor: primary,
+        textColor: bodyText,
+        secondaryBackgroundColor: secondaryBg,
+        backgroundColor: bgColor,
+        linkColor,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      expect(theme.colors.primary).toBe(primary)
+      expect(theme.colors.bodyText).toBe(bodyText)
+      expect(theme.colors.secondaryBg).toBe(secondaryBg)
+      expect(theme.colors.bgColor).toBe(bgColor)
+      expect(theme.colors.link).toBe(linkColor)
+    }
+  )
+
+  it.each([
+    // Test invalid color values passed to each color config
+    ["primaryColor", "invalid", "orange", "blue", "pink", "purple", "green"],
+    ["textColor", "red", "invalid", "blue", "pink", "purple", "green"],
+    [
+      "secondaryBackgroundColor",
+      "red",
+      "orange",
+      "invalid",
+      "pink",
+      "purple",
+      "green",
+    ],
+    ["backgroundColor", "red", "orange", "blue", "invalid", "purple", "green"],
+    ["linkColor", "red", "orange", "blue", "pink", "invalid", "green"],
+    ["borderColor", "red", "orange", "blue", "pink", "purple", "invalid"],
+  ])(
+    "logs a warning and falls back to default for any invalid color configs '%s'",
+    (
+      invalidColorConfig,
+      primary,
+      bodyText,
+      secondaryBg,
+      bgColor,
+      linkColor,
+      borderColor
+    ) => {
+      const logWarningSpy = vi.spyOn(LOG, "warn")
+      const themeInput: Partial<CustomThemeConfig> = {
+        primaryColor: primary,
+        textColor: bodyText,
+        secondaryBackgroundColor: secondaryBg,
+        backgroundColor: bgColor,
+        linkColor,
+        borderColor,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      // Should log an error
+      expect(logWarningSpy).toHaveBeenCalledWith(
+        `Invalid color passed for ${invalidColorConfig} in theme: "invalid"`
+      )
+
+      // Check that valid colors are set correctly
+      if (invalidColorConfig !== "primaryColor")
+        expect(theme.colors.primary).toBe(primary)
+      if (invalidColorConfig !== "textColor")
+        expect(theme.colors.bodyText).toBe(bodyText)
+      if (invalidColorConfig !== "secondaryBackgroundColor")
+        expect(theme.colors.secondaryBg).toBe(secondaryBg)
+      if (invalidColorConfig !== "backgroundColor")
+        expect(theme.colors.bgColor).toBe(bgColor)
+      if (invalidColorConfig !== "linkColor")
+        expect(theme.colors.link).toBe(linkColor)
+      if (invalidColorConfig !== "borderColor")
+        expect(theme.colors.borderColor).toBe(borderColor)
+
+      // Check that invalid color falls back to default value
+      if (invalidColorConfig === "primaryColor")
+        expect(theme.colors.primary).toBe(baseTheme.emotion.colors.primary)
+      if (invalidColorConfig === "textColor")
+        expect(theme.colors.bodyText).toBe(baseTheme.emotion.colors.bodyText)
+      if (invalidColorConfig === "secondaryBackgroundColor")
+        expect(theme.colors.secondaryBg).toBe(
+          baseTheme.emotion.colors.secondaryBg
+        )
+      if (invalidColorConfig === "backgroundColor")
+        expect(theme.colors.bgColor).toBe(baseTheme.emotion.colors.bgColor)
+      if (invalidColorConfig === "linkColor")
+        expect(theme.colors.link).toBe(baseTheme.emotion.colors.link)
+      if (invalidColorConfig === "borderColor")
+        expect(theme.colors.borderColor).toBe(theme.colors.fadedText10)
+    }
+  )
+
+  it("sets the borderColor properties based on borderColor config", () => {
+    const themeInput: Partial<CustomThemeConfig> = {
+      borderColor: "blue",
+      // Note no specified dataframeBorderColor
+    }
+
+    const theme = createEmotionTheme(themeInput)
+
+    expect(theme.colors.borderColor).toBe("blue")
+    expect(theme.colors.borderColorLight).toBe(transparentize("blue", 0.55))
+    // Sets the dataframeBorderColor based on borderColor if dataframeBorderColor
+    // not configured
+    expect(theme.colors.dataframeBorderColor).toBe(
+      theme.colors.borderColorLight
+    )
+  })
+
+  it("showSidebarBorder config is set to false by default", () => {
+    const theme = createEmotionTheme({})
+    expect(theme.showSidebarBorder).toBe(false)
+  })
+
+  it("sets the showSidebarBorder config to true if showSidebarBorder=true", () => {
+    const theme = createEmotionTheme({ showSidebarBorder: true })
+    expect(theme.showSidebarBorder).toBe(true)
+  })
+
+  it("sets the dataframeBorderColor if configured", () => {
+    const themeInput: Partial<CustomThemeConfig> = {
+      borderColor: "red",
+      dataframeBorderColor: "green",
+    }
+
+    const theme = createEmotionTheme(themeInput)
+    expect(theme.colors.borderColor).toBe("red")
+    expect(theme.colors.dataframeBorderColor).toBe("green")
+  })
+
+  it("sets the dataframeHeaderBackgroundColor if configured", () => {
+    const themeInput: Partial<CustomThemeConfig> = {
+      dataframeHeaderBackgroundColor: "green",
+    }
+    const theme = createEmotionTheme(themeInput)
+    expect(theme.colors.dataframeHeaderBackgroundColor).toBe("green")
+  })
+
+  it("uses default dataframeHeaderBackgroundColor if not configured", () => {
+    const theme = createEmotionTheme({})
+    expect(theme.colors.dataframeHeaderBackgroundColor).toBe(
+      theme.colors.bgMix
+    )
+  })
+
+  it.each([
+    // Test valid font weights
+    [100, 100, 300, 400],
+    [200, 200, 400, 500],
+    [300, 300, 500, 600],
+    [400, 400, 600, 700],
+    [500, 500, 700, 800],
+    [600, 600, 800, 900],
+  ])(
+    "sets the font weights based on the baseFontWeight config '%s'",
+    (baseFontWeight, expectedNormal, expectedBold, expectedExtrabold) => {
+      const logWarningSpy = vi.spyOn(LOG, "warn")
+      const themeInput: Partial<CustomThemeConfig> = {
+        baseFontWeight,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      expect(logWarningSpy).not.toHaveBeenCalled()
+      expect(theme.fontWeights.normal).toBe(expectedNormal)
+      expect(theme.fontWeights.bold).toBe(expectedBold)
+      expect(theme.fontWeights.extrabold).toBe(expectedExtrabold)
+    }
+  )
+
+  it.each([
+    // Test invalid font weights
+    [150, 400, 600, 700], // Not an increment of 100
+    [700, 400, 600, 700], // Not between 100 and 600
+    [400.5, 400, 600, 700], // Not an integer
+  ])(
+    "logs a warning and falls back to default font weights if baseFontWeight is invalid '%s'",
+    (baseFontWeight, expectedNormal, expectedBold, expectedExtrabold) => {
+      const logWarningSpy = vi.spyOn(LOG, "warn")
+      const themeInput: Partial<CustomThemeConfig> = {
+        baseFontWeight,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      expect(logWarningSpy).toHaveBeenCalledWith(
+        `Invalid base font weight: ${baseFontWeight}. The baseFontWeight must be an integer 100-600, and an increment of 100. Falling back to default font weights.`
+      )
+
+      expect(theme.fontWeights.normal).toBe(expectedNormal)
+      expect(theme.fontWeights.bold).toBe(expectedBold)
+      expect(theme.fontWeights.extrabold).toBe(expectedExtrabold)
+    }
+  )
+
+  it.each([
+    // Test valid font weights
+    [100, 400, 600, 700, 100],
+    [200, 400, 600, 700, 200],
+    [300, 400, 600, 700, 300],
+    [400, 400, 600, 700, 400],
+    [500, 400, 600, 700, 500],
+    [600, 400, 600, 700, 600],
+    [700, 400, 600, 700, 700],
+    [800, 400, 600, 700, 800],
+    [900, 400, 600, 700, 900],
+  ])(
+    "sets the font weights based on the codeFontWeight config '%s'",
+    (
+      codeFontWeight,
+      expectedNormal,
+      expectedBold,
+      expectedExtrabold,
+      expectedCode
+    ) => {
+      const logWarningSpy = vi.spyOn(LOG, "warn")
+      const themeInput: Partial<CustomThemeConfig> = {
+        codeFontWeight,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      expect(logWarningSpy).not.toHaveBeenCalled()
+      // baseFontWeight is not set, so the default font weights are used
+      expect(theme.fontWeights.normal).toBe(expectedNormal)
+      expect(theme.fontWeights.bold).toBe(expectedBold)
+      expect(theme.fontWeights.extrabold).toBe(expectedExtrabold)
+      // codeFontWeight is set, so it overrides the default code font weight
+      expect(theme.fontWeights.code).toBe(expectedCode)
+    }
+  )
+
+  it.each([
+    // Test invalid font weights
+    [150, 400, 600, 700, 400], // Not an increment of 100
+    [1000, 400, 600, 700, 400], // Not between 100 and 900
+    [400.5, 400, 600, 700, 400], // Not an integer
+  ])(
+    "logs a warning and falls back to default font weights if codeFontWeight is invalid '%s'",
+    (
+      codeFontWeight,
+      expectedNormal,
+      expectedBold,
+      expectedExtrabold,
+      expectedCode
+    ) => {
+      const logWarningSpy = vi.spyOn(LOG, "warn")
+      const themeInput: Partial<CustomThemeConfig> = {
+        codeFontWeight,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      expect(logWarningSpy).toHaveBeenCalledWith(
+        `Invalid code font weight: ${codeFontWeight}. The codeFontWeight must be an integer 100-900, and an increment of 100. Falling back to default font weights.`
+      )
+
+      expect(theme.fontWeights.normal).toBe(expectedNormal)
+      expect(theme.fontWeights.bold).toBe(expectedBold)
+      expect(theme.fontWeights.extrabold).toBe(expectedExtrabold)
+      expect(theme.fontWeights.code).toBe(expectedCode)
+    }
+  )
+
+  it("linkUnderline config is set to true by default", () => {
+    const theme = createEmotionTheme({})
+    expect(theme.linkUnderline).toBe(true)
+  })
+
+  it("sets the linkUnderline config to false if linkUnderline=false", () => {
+    const theme = createEmotionTheme({ linkUnderline: false })
+    expect(theme.linkUnderline).toBe(false)
+  })
 })
 
 describe("toThemeInput", () => {
@@ -711,7 +1147,7 @@ describe("toThemeInput", () => {
     const { colors } = lightTheme.emotion
     expect(toThemeInput(lightTheme.emotion)).toEqual({
       primaryColor: colors.primary,
-      bodyFont: `"Source Sans Pro", sans-serif`,
+      bodyFont: `"Source Sans", sans-serif`,
       backgroundColor: colors.bgColor,
       secondaryBackgroundColor: colors.secondaryBg,
       textColor: colors.bodyText,
@@ -771,7 +1207,7 @@ describe("hasLightBackgroundColor", () => {
 })
 
 describe("theme overrides", () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.resetModules()
     window.__streamlit = undefined
   })
@@ -814,11 +1250,11 @@ describe("theme overrides", () => {
 describe("parseFont", () => {
   it.each([
     // Test standard font mappings
-    ["sans-serif", '"Source Sans Pro", sans-serif'],
-    ["Sans-Serif", '"Source Sans Pro", sans-serif'], // Case insensitive
-    ["SANS-SERIF", '"Source Sans Pro", sans-serif'], // All caps
-    ["sans serif", '"Source Sans Pro", sans-serif'], // With space
-    ["serif", '"Source Serif Pro", serif'],
+    ["sans-serif", '"Source Sans", sans-serif'],
+    ["Sans-Serif", '"Source Sans", sans-serif'], // Case insensitive
+    ["SANS-SERIF", '"Source Sans", sans-serif'], // All caps
+    ["sans serif", '"Source Sans", sans-serif'], // With space
+    ["serif", '"Source Serif", serif'],
     ["monospace", '"Source Code Pro", monospace'],
 
     // Test fonts that aren't in the map (should return as-is)

@@ -14,13 +14,19 @@
 
 import re
 
-from playwright.sync_api import Page, expect
+import pytest
+from playwright.sync_api import Locator, Page, expect
 
-from e2e_playwright.conftest import ImageCompareFunction, wait_until
+from e2e_playwright.conftest import (
+    ImageCompareFunction,
+    wait_until,
+)
 from e2e_playwright.shared.app_utils import (
     check_top_level_class,
+    expect_no_skeletons,
     get_element_by_key,
     get_image,
+    goto_app,
 )
 
 IMAGE_ELEMENTS_USING_MEDIA_ENDPOINT = 37
@@ -95,20 +101,33 @@ def test_image_formats(app: Page):
 
 
 def test_use_column_width_parameter(app: Page, assert_snapshot: ImageCompareFunction):
-    columns_container = app.get_by_test_id("stHorizontalBlock").first
+    columns_container = (
+        get_element_by_key(app, "use_column_width")
+        .get_by_test_id("stHorizontalBlock")
+        .first
+    )
+    expect(columns_container).to_be_visible()
     columns_container.scroll_into_view_if_needed()
+    expect_no_skeletons(columns_container)
     assert_snapshot(columns_container, name="st_image-use_column_width")
 
     expect(app.get_by_test_id("stMainBlockContainer")).to_contain_text(
-        "The use_column_width parameter has been deprecated and will be removed in a future release. Please utilize the use_container_width parameter instead."
+        "The use_column_width parameter has been deprecated and will be removed in a "
+        "future release. Please utilize the use_container_width parameter instead."
     )
 
 
 def test_st_image_use_container_width_parameter(
     app: Page, assert_snapshot: ImageCompareFunction
 ):
-    columns_container = app.get_by_test_id("stHorizontalBlock").nth(1)
+    columns_container = (
+        get_element_by_key(app, "use_container_width")
+        .get_by_test_id("stHorizontalBlock")
+        .first
+    )
+    expect(columns_container).to_be_visible()
     columns_container.scroll_into_view_if_needed()
+    expect_no_skeletons(columns_container)
     assert_snapshot(columns_container, name="st_image-use_container_width")
 
 
@@ -145,12 +164,6 @@ def test_svg_images(app: Page, assert_snapshot: ImageCompareFunction):
     meta_tag_svg = get_image(app, "Text SVG with meta tags.").locator("img")
     expect(meta_tag_svg).to_have_css("max-width", "100%")
     assert_snapshot(meta_tag_svg, name="st_image-svg_with_meta_tags")
-
-    # TODO(lukasmasuch): This svg does not correctly work in Safari and Firefox
-    # Test "Red Circle"
-    # red_circle = get_image(app, "Red Circle.").locator("img")
-    # expect(red_circle).to_have_css("max-width", "100%")
-    # assert_snapshot(red_circle, name="st_image-svg_red_circle")
 
     # Test "Red Circle with internal dimensions"
     red_circle_internal_dim = get_image(
@@ -197,6 +210,37 @@ def test_svg_images(app: Page, assert_snapshot: ImageCompareFunction):
     ).locator("img")
     expect(ygr_100_300).to_have_css("width", "300px")
     assert_snapshot(ygr_100_300, name="st_image-svg_yellow_green_rectangle_100_300")
+
+
+def set_fullscreen(app: Page, image_wrapper: Locator, open: bool):
+    fullscreen_button = image_wrapper.get_by_role(
+        "button", name="Fullscreen" if open else "Close fullscreen"
+    )
+    expect(fullscreen_button).to_be_visible()
+    fullscreen_button.click()
+    # Wait for the animation to finish
+    app.wait_for_timeout(1000)
+
+
+# SVGs without width or height are not rendered correctly in Firefox
+@pytest.mark.skip_browser("firefox")
+def test_svg_viewbox_only(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that SVGs with only viewBox are rendered correctly."""
+    all_images = app.locator("div[data-testid='stImage']")
+    start_index = 17
+    end_index = start_index + 2
+
+    for i in range(start_index, end_index):
+        image = all_images.nth(i).get_by_test_id("stImageContainer")
+        assert_snapshot(image, name=f"st_image-svg_viewbox_only_{i - start_index}")
+
+        set_fullscreen(app, all_images.nth(i).locator(".."), True)
+        image = all_images.nth(i).get_by_test_id("stImageContainer").locator("img")
+        assert_snapshot(
+            image, name=f"st_image-svg_viewbox_only_fullscreen_{i - start_index}"
+        )
+
+        set_fullscreen(app, all_images.nth(i).locator(".."), False)
 
 
 def test_channels_parameter(app: Page, assert_snapshot: ImageCompareFunction):
@@ -248,7 +292,7 @@ def test_image_source_error(app: Page, app_port: int):
     app.on("console", lambda msg: messages.append(msg.text))
 
     # Navigate to the app
-    app.goto(f"http://localhost:{app_port}")
+    goto_app(app, f"http://localhost:{app_port}")
 
     # Wait until the expected error is logged, indicating CLIENT_ERROR was sent
     wait_until(
@@ -256,4 +300,5 @@ def test_image_source_error(app: Page, app_port: int):
         lambda: check_image_source_error_count(
             messages, IMAGE_ELEMENTS_USING_MEDIA_ENDPOINT
         ),
+        timeout=10000,
     )
