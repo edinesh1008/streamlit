@@ -350,7 +350,8 @@ export const createEmotionTheme = (
     codeFont,
     showSidebarBorder,
     linkUnderline,
-    // Since sequential colors passed as array, handle separate from parsedColors
+    // Since chart color configs passed as array, handle separate from parsedColors
+    chartCategoricalColors,
     chartSequentialColors,
     ...customColors
   } = themeInput
@@ -431,6 +432,22 @@ export const createEmotionTheme = (
     // consider full removing it at some point.
     conditionalOverrides.colors.widgetBorderColor =
       widgetBorderColor || conditionalOverrides.colors.borderColor
+  }
+
+  if (
+    notNullOrUndefined(chartCategoricalColors) &&
+    chartCategoricalColors.length > 0
+  ) {
+    // Validate the categorical colors config
+    const validatedCategoricalColors = validateChartColors(
+      "chartCategoricalColors",
+      chartCategoricalColors
+    )
+    // Set the validated colors if non-empty array
+    if (validatedCategoricalColors.length > 0) {
+      conditionalOverrides.colors.chartCategoricalColors =
+        validatedCategoricalColors
+    }
   }
 
   if (

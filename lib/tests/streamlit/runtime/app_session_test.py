@@ -762,7 +762,7 @@ def _mock_get_options_for_section(
         "textColor": "black",
         "codeBackgroundColor": "blue",
         "dataframeHeaderBackgroundColor": "purple",
-        "chartSequentialColors": [
+        "chartCategoricalColors": [
             "#7fc97f",
             "#beaed4",
             "#fdc086",
@@ -771,6 +771,15 @@ def _mock_get_options_for_section(
             "#f0027f",
             "#bf5b17",
             "#666666",
+        ],
+        "chartSequentialColors": [
+            "#e4f5ff",
+            "#c7ebff",
+            "#a6dcff",
+            "#83c9ff",
+            "#60b4ff",
+            "#3d9df3",
+            "#1c83e1",
         ],
     }
 
@@ -1234,6 +1243,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "sidebar": None,
                     "codeBackgroundColor": None,
                     "dataframeHeaderBackgroundColor": None,
+                    "chartCategoricalColors": None,
                     "chartSequentialColors": None,
                 }
             )
@@ -1274,6 +1284,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "sidebar": None,
                     "codeBackgroundColor": None,
                     "dataframeHeaderBackgroundColor": None,
+                    "chartCategoricalColors": None,
                     "chartSequentialColors": None,
                 }
             )
@@ -1314,6 +1325,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "textColor": None,
                     "codeBackgroundColor": None,
                     "dataframeHeaderBackgroundColor": None,
+                    "chartCategoricalColors": None,
                     "chartSequentialColors": None,
                     "sidebar": {
                         # primaryColor not set to None
@@ -1354,6 +1366,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         # font field uses a deprecated enum:
         assert new_session_msg.custom_theme.body_font == ""
         assert not new_session_msg.custom_theme.font_faces
+        assert not new_session_msg.custom_theme.chart_categorical_colors
         assert not new_session_msg.custom_theme.chart_sequential_colors
 
         # Fields that are marked as optional in proto:
@@ -1429,6 +1442,15 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         assert new_session_msg.custom_theme.body_font == "Inter"
         assert new_session_msg.custom_theme.code_font == "Monaspace Argon"
         assert list(new_session_msg.custom_theme.chart_sequential_colors) == [
+            "#e4f5ff",
+            "#c7ebff",
+            "#a6dcff",
+            "#83c9ff",
+            "#60b4ff",
+            "#3d9df3",
+            "#1c83e1",
+        ]
+        assert list(new_session_msg.custom_theme.chart_categorical_colors) == [
             "#7fc97f",
             "#beaed4",
             "#fdc086",

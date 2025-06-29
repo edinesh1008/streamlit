@@ -1403,6 +1403,43 @@ _create_theme_options(
 )
 
 _create_theme_options(
+    "chartCategoricalColors",
+    categories=["theme"],
+    description="""
+        An array of colors to use for categorical charts.
+
+        If no chart categorical colors are set, Streamlit uses a default set of
+        colors.
+        For light themes the default colors are:
+        [
+            "#0068c9", # blue80
+            "#83c9ff", # blue40
+            "#ff2b2b", # red80
+            "#ffabab", # red40
+            "#29b09d", # blueGreen80
+            "#7defa1", # green40
+            "#ff8700", # orange80
+            "#ffd16a", # orange50
+            "#6d3fc0", # purple80
+            "#d5dae5", # gray40
+        ]
+        For dark themes the default colors are:
+        [
+            "#83c9ff", # blue40
+            "#0068c9", # blue80
+            "#ffabab", # red40
+            "#ff2b2b", # red80
+            "#7defa1", # green40
+            "#29b09d", # blueGreen80
+            "#ffd16a", # orange50
+            "#ff8700", # orange80
+            "#6d3fc0", # purple80
+            "#d5dae5", # gray40
+        ]
+    """,
+)
+
+_create_theme_options(
     "chartSequentialColors",
     categories=["theme"],
     description="""
@@ -1412,29 +1449,29 @@ _create_theme_options(
         colors.
         For light themes the default colors are:
         [
-            blue10 ("#e4f5ff"),
-            blue20 ("#c7ebff"),
-            blue30 ("#a6dcff"),
-            blue40 ("#83c9ff"),
-            blue50 ("#60b4ff"),
-            blue60 ("#3d9df3"),
-            blue70 ("#1c83e1"),
-            blue80 ("#0068c9"),
-            blue90 ("#0054a3"),
-            blue100 ("#004280"),
+            "#e4f5ff", #blue10
+            "#c7ebff", #blue20
+            "#a6dcff", #blue30
+            "#83c9ff", #blue40
+            "#60b4ff", #blue50
+            "#3d9df3", #blue60
+            "#1c83e1", #blue70
+            "#0068c9", #blue80
+            "#0054a3", #blue90
+            "#004280", #blue100
         ]
         For dark themes the default colors are:
         [
-            blue100 ("#004280"),
-            blue90 ("#0054a3"),
-            blue80 ("#0068c9"),
-            blue70 ("#1c83e1"),
-            blue60 ("#3d9df3"),
-            blue50 ("#60b4ff"),
-            blue40 ("#83c9ff"),
-            blue30 ("#a6dcff"),
-            blue20 ("#c7ebff"),
-            blue10 ("#e4f5ff"),
+            "#004280", #blue100
+            "#0054a3", #blue90
+            "#0068c9", #blue80
+            "#1c83e1", #blue70
+            "#3d9df3", #blue60
+            "#60b4ff", #blue50
+            "#83c9ff", #blue40
+            "#a6dcff", #blue30
+            "#c7ebff", #blue20
+            "#e4f5ff", #blue10
         ]
     """,
 )
