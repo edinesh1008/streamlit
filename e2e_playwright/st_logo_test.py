@@ -37,16 +37,20 @@ def test_small_logo_w_sidebar(
     select_subtest(themed_app, "small_logo_w_sidebar_subtest")
 
     expect(themed_app.get_by_test_id("stSidebar")).to_be_visible()
+    expect(themed_app.get_by_test_id("stSidebarHeader")).to_be_visible()
     expect(themed_app.get_by_test_id("stSidebarLogo")).to_be_visible()
-    assert_snapshot(themed_app, name="logo-small_w_sidebar_expanded")
+    assert_snapshot(
+        themed_app.get_by_test_id("stSidebarHeader"),
+        name="logo-small_w_sidebar_expanded",
+    )
 
     themed_app.get_by_test_id("stSidebar").hover()
     themed_app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
 
-    expect(themed_app.get_by_test_id("stSidebarHeader")).to_be_visible()
     expect(themed_app.get_by_test_id("stHeaderLogo")).to_be_visible()
+    expect(themed_app.get_by_test_id("stHeader")).to_be_visible()
     assert_snapshot(
-        themed_app.get_by_test_id("stSidebarHeader"),
+        themed_app.get_by_test_id("stHeader"),
         name="logo-small_w_sidebar_collapsed",
     )
 
@@ -58,15 +62,19 @@ def test_medium_logo_w_sidebar(
 
     expect(themed_app.get_by_test_id("stSidebar")).to_be_visible()
     expect(themed_app.get_by_test_id("stSidebarLogo")).to_be_visible()
-    assert_snapshot(themed_app, name="logo-medium_w_sidebar_expanded")
+    expect(themed_app.get_by_test_id("stSidebarHeader")).to_be_visible()
+    assert_snapshot(
+        themed_app.get_by_test_id("stSidebarHeader"),
+        name="logo-medium_w_sidebar_expanded",
+    )
 
     themed_app.get_by_test_id("stSidebar").hover()
     themed_app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
 
-    expect(themed_app.get_by_test_id("stSidebarHeader")).to_be_visible()
+    expect(themed_app.get_by_test_id("stHeader")).to_be_visible()
     expect(themed_app.get_by_test_id("stHeaderLogo")).to_be_visible()
     assert_snapshot(
-        themed_app.get_by_test_id("stSidebarHeader"),
+        themed_app.get_by_test_id("stHeader"),
         name="logo-medium_w_sidebar_collapsed",
     )
 
@@ -79,15 +87,18 @@ def test_large_logo_w_sidebar(
     expect(themed_app.get_by_test_id("stSidebar")).to_be_visible()
     expect(themed_app.get_by_test_id("stSidebarHeader")).to_be_visible()
     expect(themed_app.get_by_test_id("stSidebarLogo")).to_be_visible()
-    assert_snapshot(themed_app, name="logo-large_w_sidebar_expanded")
+    assert_snapshot(
+        themed_app.get_by_test_id("stSidebarHeader"),
+        name="logo-large_w_sidebar_expanded",
+    )
 
     themed_app.get_by_test_id("stSidebar").hover()
     themed_app.get_by_test_id("stSidebarCollapseButton").locator("button").click()
-
+    expect(themed_app.get_by_test_id("stHeader")).to_be_visible()
     expect(themed_app.get_by_test_id("stSidebarHeader")).to_be_visible()
     expect(themed_app.get_by_test_id("stHeaderLogo")).to_be_visible()
     assert_snapshot(
-        themed_app.get_by_test_id("stSidebarHeader"),
+        themed_app.get_by_test_id("stHeader"),
         name="logo-large_w_sidebar_collapsed",
     )
 
