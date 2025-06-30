@@ -948,6 +948,7 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
                 "fontFaces",
                 "chartCategoricalColors",
                 "chartSequentialColors",
+                "chartDivergingColors",
             }
             and option_val is not None
         ):
@@ -1056,6 +1057,32 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
             except Exception as e:  # noqa: PERF203
                 _LOGGER.warning(
                     "Failed to parse the theme.chartSequentialColors config option: %s.",
+                    color,
+                    exc_info=e,
+                )
+
+    chart_diverging_colors = theme_opts.get("chartDivergingColors", None)
+    # If chartDivergingColors was configured via config.toml, it's already a list of
+    # strings. However, if it was provided via env variable or via CLI arg,
+    # it's a json string that needs to be parsed.
+    if isinstance(chart_diverging_colors, str):
+        try:
+            chart_diverging_colors = json.loads(chart_diverging_colors)
+        except json.JSONDecodeError as e:
+            _LOGGER.warning(
+                "Failed to parse the theme.chartDivergingColors config option: %s.",
+                chart_diverging_colors,
+                exc_info=e,
+            )
+            chart_diverging_colors = None
+
+    if chart_diverging_colors is not None:
+        for color in chart_diverging_colors:
+            try:
+                msg.chart_diverging_colors.append(color)
+            except Exception as e:  # noqa: PERF203
+                _LOGGER.warning(
+                    "Failed to parse the theme.chartDivergingColors config option: %s.",
                     color,
                     exc_info=e,
                 )

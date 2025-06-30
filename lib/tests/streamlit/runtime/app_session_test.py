@@ -773,13 +773,28 @@ def _mock_get_options_for_section(
             "#666666",
         ],
         "chartSequentialColors": [
-            "#e4f5ff",
-            "#c7ebff",
-            "#a6dcff",
-            "#83c9ff",
-            "#60b4ff",
-            "#3d9df3",
-            "#1c83e1",
+            "#dffde9",
+            "#c0fcd3",
+            "#9ef6bb",
+            "#7defa1",
+            "#5ce488",
+            "#3dd56d",
+            "#21c354",
+            "#09ab3b",
+            "#158237",
+            "#177233",
+        ],
+        "chartDivergingColors": [
+            "#fffae8",
+            "#fff6d0",
+            "#ffecb0",
+            "#ffe08e",
+            "#ffd16a",
+            "#ffbd45",
+            "#ffa421",
+            "#ff8700",
+            "#ed6f13",
+            "#d95a00",
         ],
     }
 
@@ -1245,6 +1260,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "dataframeHeaderBackgroundColor": None,
                     "chartCategoricalColors": None,
                     "chartSequentialColors": None,
+                    "chartDivergingColors": None,
                 }
             )
         )
@@ -1286,6 +1302,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "dataframeHeaderBackgroundColor": None,
                     "chartCategoricalColors": None,
                     "chartSequentialColors": None,
+                    "chartDivergingColors": None,
                 }
             )
         )
@@ -1327,6 +1344,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
                     "dataframeHeaderBackgroundColor": None,
                     "chartCategoricalColors": None,
                     "chartSequentialColors": None,
+                    "chartDivergingColors": None,
                     "sidebar": {
                         # primaryColor not set to None
                         "backgroundColor": None,
@@ -1368,6 +1386,7 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         assert not new_session_msg.custom_theme.font_faces
         assert not new_session_msg.custom_theme.chart_categorical_colors
         assert not new_session_msg.custom_theme.chart_sequential_colors
+        assert not new_session_msg.custom_theme.chart_diverging_colors
 
         # Fields that are marked as optional in proto:
         assert not new_session_msg.custom_theme.HasField("base_radius")
@@ -1441,15 +1460,6 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
         assert new_session_msg.custom_theme.heading_font == "Inter Bold"
         assert new_session_msg.custom_theme.body_font == "Inter"
         assert new_session_msg.custom_theme.code_font == "Monaspace Argon"
-        assert list(new_session_msg.custom_theme.chart_sequential_colors) == [
-            "#e4f5ff",
-            "#c7ebff",
-            "#a6dcff",
-            "#83c9ff",
-            "#60b4ff",
-            "#3d9df3",
-            "#1c83e1",
-        ]
         assert list(new_session_msg.custom_theme.chart_categorical_colors) == [
             "#7fc97f",
             "#beaed4",
@@ -1459,6 +1469,30 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
             "#f0027f",
             "#bf5b17",
             "#666666",
+        ]
+        assert list(new_session_msg.custom_theme.chart_sequential_colors) == [
+            "#dffde9",
+            "#c0fcd3",
+            "#9ef6bb",
+            "#7defa1",
+            "#5ce488",
+            "#3dd56d",
+            "#21c354",
+            "#09ab3b",
+            "#158237",
+            "#177233",
+        ]
+        assert list(new_session_msg.custom_theme.chart_diverging_colors) == [
+            "#fffae8",
+            "#fff6d0",
+            "#ffecb0",
+            "#ffe08e",
+            "#ffd16a",
+            "#ffbd45",
+            "#ffa421",
+            "#ff8700",
+            "#ed6f13",
+            "#d95a00",
         ]
         assert list(new_session_msg.custom_theme.font_faces) == [
             FontFace(

@@ -185,6 +185,7 @@ message CustomThemeConfig {
   repeated string chart_categorical_colors = 33;
 
   repeated string chart_sequential_colors = 100;
+  repeated string chart_diverging_colors = 101;
 
   // Next ID: <TODO FILL IN HERE>
 }
