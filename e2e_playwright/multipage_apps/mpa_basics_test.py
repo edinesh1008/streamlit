@@ -271,8 +271,7 @@ def test_removes_non_embed_query_params_when_swapping_pages(page: Page, app_port
     )
 
 
-# The snapshot in this test is very flaky on webkit:
-@pytest.mark.skip_browser("webkit")
+@pytest.mark.skip_browser("webkit")  # The snapshot in this test is very flaky on webkit
 def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
     """Test that logos display properly in sidebar and main sections."""
 
@@ -337,8 +336,7 @@ def test_renders_small_logos(app: Page, assert_snapshot: ImageCompareFunction):
     assert_snapshot(app.get_by_test_id("stSidebar"), name="small-sidebar-logo")
 
 
-# The snapshot in this test is very flaky on webkit:
-@pytest.mark.skip_browser("webkit")
+@pytest.mark.skip_browser("webkit")  # The snapshot in this test is very flaky on webkit
 def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
     """Test that large logos display properly in sidebar and main sections."""
 
