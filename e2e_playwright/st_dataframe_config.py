@@ -589,7 +589,7 @@ st.dataframe(
 )
 
 df = pd.DataFrame(
-    np.random.randn(5, 25),
+    np.random.randn(15, 25),
     columns=(f"col_{i}" for i in range(25)),
 )
 st.header("Pinned columns:")
