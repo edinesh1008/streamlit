@@ -22,8 +22,8 @@ import once from "lodash/once"
 import { getLogger } from "loglevel"
 
 import { CustomThemeConfig, ICustomThemeConfig } from "@streamlit/protobuf"
-import { localStorageAvailable } from "@streamlit/utils"
 import type { StreamlitWindowObject } from "@streamlit/utils"
+import { localStorageAvailable } from "@streamlit/utils"
 
 import { CircularBuffer } from "~lib/components/shared/Profiler/CircularBuffer"
 import {
@@ -487,6 +487,7 @@ export const createEmotionTheme = (
     // Since chart color configs passed as array, handle separate from parsedColors
     chartCategoricalColors,
     chartSequentialColors,
+    chartDivergingColors,
     ...customColors
   } = themeInput
 
@@ -601,6 +602,26 @@ export const createEmotionTheme = (
     } else {
       LOG.warn(
         `Invalid chartSequentialColors: ${chartSequentialColors.toString()}. Falling back to default chartSequentialColors.`
+      )
+    }
+  }
+
+  if (
+    notNullOrUndefined(chartDivergingColors) &&
+    chartDivergingColors.length > 0
+  ) {
+    // Validate the diverging colors config
+    const validatedDivergingColors = validateChartColors(
+      "chartDivergingColors",
+      chartDivergingColors
+    )
+    // Set the validated colors, diverging colors should be an array of length 10
+    if (validatedDivergingColors.length === 10) {
+      conditionalOverrides.colors.chartDivergingColors =
+        validatedDivergingColors
+    } else {
+      LOG.warn(
+        `Invalid chartDivergingColors: ${chartDivergingColors.toString()}. Falling back to default chartDivergingColors.`
       )
     }
   }

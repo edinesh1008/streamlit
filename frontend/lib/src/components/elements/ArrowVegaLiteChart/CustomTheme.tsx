@@ -21,7 +21,6 @@ import {
   convertRemToPx,
   EmotionTheme,
   getBlue80,
-  getDivergingColorsArray,
   getGray30,
   getGray70,
 } from "~lib/theme"
@@ -102,7 +101,7 @@ export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
     },
     range: {
       category: theme.colors.chartCategoricalColors,
-      diverging: getDivergingColorsArray(theme),
+      diverging: theme.colors.chartDivergingColors,
       ramp: theme.colors.chartSequentialColors,
       heatmap: theme.colors.chartSequentialColors,
     },
