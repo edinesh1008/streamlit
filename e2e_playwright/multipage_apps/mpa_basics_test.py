@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 from playwright.sync_api import Page, expect
 
 from e2e_playwright.conftest import (
@@ -25,6 +24,7 @@ from e2e_playwright.shared.app_utils import (
     get_button_group,
     get_segment_button,
     goto_app,
+    wait_for_all_images_to_be_loaded,
 )
 from e2e_playwright.shared.react18_utils import take_stable_snapshot
 
@@ -270,8 +270,6 @@ def test_removes_non_embed_query_params_when_swapping_pages(page: Page, app_port
     )
 
 
-# The snapshot in this test is very flaky on webkit:
-@pytest.mark.skip_browser("webkit")
 def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
     """Test that logos display properly in sidebar and main sections."""
 
@@ -285,6 +283,7 @@ def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
     expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
         "href", "https://www.example.com"
     )
+    wait_for_all_images_to_be_loaded(app)
     take_stable_snapshot(
         app,
         app.get_by_test_id("stSidebar"),
@@ -307,6 +306,7 @@ def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
 
     collapsed_logo_image = logo_link_element.get_by_test_id("stHeaderLogo")
     expect(collapsed_logo_image).to_be_visible()
+    wait_for_all_images_to_be_loaded(app)
     take_stable_snapshot(
         app,
         collapsed_logo_image,
@@ -331,8 +331,6 @@ def test_renders_small_logos(app: Page, assert_snapshot: ImageCompareFunction):
     assert_snapshot(app.get_by_test_id("stSidebar"), name="small-sidebar-logo")
 
 
-# The snapshot in this test is very flaky on webkit:
-@pytest.mark.skip_browser("webkit")
 def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
     """Test that large logos display properly in sidebar and main sections."""
 
@@ -346,6 +344,7 @@ def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
     expect(app.get_by_test_id("stSidebarHeader").locator("a")).to_have_attribute(
         "href", "https://www.example.com"
     )
+    wait_for_all_images_to_be_loaded(app)
     take_stable_snapshot(
         app,
         app.get_by_test_id("stSidebar"),
@@ -371,6 +370,7 @@ def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
 
     collapsed_logo_image = logo_link_element.get_by_test_id("stHeaderLogo")
     expect(collapsed_logo_image).to_be_visible()
+    wait_for_all_images_to_be_loaded(app)
     take_stable_snapshot(
         app,
         collapsed_logo_image,
