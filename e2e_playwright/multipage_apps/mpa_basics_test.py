@@ -297,7 +297,7 @@ def test_renders_logos(app: Page, assert_snapshot: ImageCompareFunction):
     expect(collapse_button).to_be_visible()
     collapse_button.click()
 
-    app.wait_for_timeout(1)
+    app.wait_for_timeout(1000)
     # Wait for sidebar to be collapsed, the expand button should now be visible in the header
     expect(app.get_by_test_id("stExpandSidebarButton")).to_be_visible()
 
@@ -361,7 +361,7 @@ def test_renders_large_logos(app: Page, assert_snapshot: ImageCompareFunction):
     expect(collapse_button).to_be_visible()
     collapse_button.click()
 
-    app.wait_for_timeout(1)
+    app.wait_for_timeout(1000)
 
     # Wait for sidebar to be collapsed, the expand button should now be visible in the header
     expect(app.get_by_test_id("stExpandSidebarButton")).to_be_visible()
