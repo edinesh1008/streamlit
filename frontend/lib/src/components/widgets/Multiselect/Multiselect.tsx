@@ -193,12 +193,16 @@ const handleSelectAll = useCallback(
     // from opening.
     event.stopPropagation()
     const allOptions = element.options
-    
+
     if (element.maxSelections) {
+      // Make sure we keep any existing selections. If `maxSelections` is set,
+      // we are not really selecting all options, but just up to `maxSelections`
+      // options. So if we'd simply take the first `maxSelections` options, we might
+      // replace some of the existing selections.
       const unselectedOptions = allOptions.filter(option => !value.includes(option))
       const additionalSelections = Math.max(0, element.maxSelections - value.length)
       const newValue = [...value, ...unselectedOptions.slice(0, additionalSelections)]
-      
+
       setValueWithSource({
         value: newValue,
         fromUi: true,
