@@ -132,6 +132,44 @@ def test_multiselect_clear_all(app: Page):
     expect(app.get_by_test_id("stText").nth(1)).to_have_text("value 2: []")
 
 
+def test_multiselect_select_all(app: Page):
+    """Should select all options when clicking select all button."""
+    # Start with no selections on the first multiselect
+    multiselect_elem = app.get_by_test_id("stMultiSelect").nth(0)
+    select_all_button = multiselect_elem.get_by_test_id("stMultiSelectSelectAllButton")
+    expect(select_all_button).to_be_visible()
+
+    # Click select all
+    select_all_button.click()
+    wait_for_app_run(app)
+
+    # Should have all options selected
+    expect(app.get_by_test_id("stText").first).to_have_text(
+        "value 1: ['male', 'female']"
+    )
+
+    # Select all button should no longer be visible since all options are selected
+    expect(select_all_button).not_to_be_visible()
+
+
+def test_multiselect_select_all_with_max_selections(app: Page):
+    """Should respect max_selections when clicking select all button."""
+    # Use multiselect which has max_selections=1
+    multiselect_elem = app.get_by_test_id("stMultiSelect").nth(8)
+    select_all_button = multiselect_elem.get_by_test_id("stMultiSelectSelectAllButton")
+    expect(select_all_button).to_be_visible()
+
+    # Click select all
+    select_all_button.click()
+    wait_for_app_run(app)
+
+    # Should have max_selections (1) option selected
+    expect(app.get_by_test_id("stText").nth(8)).to_have_text("value 9: ['male']")
+
+    # Select all button should no longer be visible since max selections reached
+    expect(select_all_button).not_to_be_visible()
+
+
 def test_multiselect_show_values_in_dropdown(
     app: Page, assert_snapshot: ImageCompareFunction
 ):
