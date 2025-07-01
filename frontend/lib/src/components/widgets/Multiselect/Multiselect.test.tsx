@@ -384,7 +384,6 @@ describe("Multiselect widget", () => {
         undefined
       )
     })
-
   })
 
   it("resets its value when form is cleared", async () => {
