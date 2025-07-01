@@ -186,37 +186,43 @@ const Multiselect: FC<Props> = props => {
     [element.maxSelections, generateNewState, setValueWithSource, value.length]
   )
 
+  const handleSelectAll = useCallback(
+    (event: React.MouseEvent) => {
+      // Prevent the event from bubbling up to the parent, which prevents the dropdown
+      // from opening.
+      event.stopPropagation()
+      const allOptions = element.options
 
-const handleSelectAll = useCallback(
-  (event: React.MouseEvent) => {
-    // Prevent the event from bubbling up to the parent, which prevents the dropdown
-    // from opening.
-    event.stopPropagation()
-    const allOptions = element.options
+      if (element.maxSelections) {
+        // Make sure we keep any existing selections. If `maxSelections` is set,
+        // we are not really selecting all options, but just up to `maxSelections`
+        // options. So if we'd simply take the first `maxSelections` options, we might
+        // replace some of the existing selections.
+        const unselectedOptions = allOptions.filter(
+          option => !value.includes(option)
+        )
+        const additionalSelections = Math.max(
+          0,
+          element.maxSelections - value.length
+        )
+        const newValue = [
+          ...value,
+          ...unselectedOptions.slice(0, additionalSelections),
+        ]
 
-    if (element.maxSelections) {
-      // Make sure we keep any existing selections. If `maxSelections` is set,
-      // we are not really selecting all options, but just up to `maxSelections`
-      // options. So if we'd simply take the first `maxSelections` options, we might
-      // replace some of the existing selections.
-      const unselectedOptions = allOptions.filter(option => !value.includes(option))
-      const additionalSelections = Math.max(0, element.maxSelections - value.length)
-      const newValue = [...value, ...unselectedOptions.slice(0, additionalSelections)]
-
-      setValueWithSource({
-        value: newValue,
-        fromUi: true,
-      })
-    } else {
-      setValueWithSource({
-        value: allOptions,
-        fromUi: true,
-      })
-    }
-  },
-  [element.options, element.maxSelections, setValueWithSource, value]
-)
-
+        setValueWithSource({
+          value: newValue,
+          fromUi: true,
+        })
+      } else {
+        setValueWithSource({
+          value: allOptions,
+          fromUi: true,
+        })
+      }
+    },
+    [element.options, element.maxSelections, setValueWithSource, value]
+  )
 
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] => {
