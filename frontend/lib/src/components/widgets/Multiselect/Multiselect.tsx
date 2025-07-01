@@ -17,6 +17,7 @@
 import React, { FC, memo, useCallback, useContext, useMemo } from "react"
 
 import { ChevronDown } from "baseui/icon"
+import { CheckCircle, Cancel } from "@emotion-icons/material-rounded"
 import {
   type OnChangeParams,
   type Option,
@@ -33,14 +34,13 @@ import { VirtualDropdown } from "~lib/components/shared/Dropdown"
 import { fuzzyFilterSelectOptions } from "~lib/components/shared/Dropdown/Selectbox"
 import { Placement } from "~lib/components/shared/Tooltip"
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
-import MaterialFontIcon from "~lib/components/shared/Icon/Material/MaterialFontIcon"
 import {
   StyledWidgetLabelHelp,
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
 import {
   StyledUISelect,
-  StyledSelectAllButton,
+  StyledIconButton,
 } from "~lib/components/widgets/Multiselect/styled-components"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { labelVisibilityProtoValueToEnum } from "~lib/util/utils"
@@ -202,6 +202,17 @@ const Multiselect: FC<Props> = props => {
     [element.options, element.maxSelections, setValueWithSource]
   )
 
+  const handleClear = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation()
+      setValueWithSource({
+        value: [],
+        fromUi: true,
+      })
+    },
+    [setValueWithSource]
+  )
+
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] => {
       if (overMaxSelections) {
@@ -289,22 +300,26 @@ const Multiselect: FC<Props> = props => {
           }}
         >
           {shouldShowSelectAll && (
-            <StyledSelectAllButton
+            <StyledIconButton
               onClick={handleSelectAll}
               data-testid="stMultiSelectSelectAllButton"
             >
-              <MaterialFontIcon
-                iconName="check_circle"
-                pack="material"
-                size="md"
-              />
-            </StyledSelectAllButton>
+              <CheckCircle size={theme.iconSizes.md} />
+            </StyledIconButton>
+          )}
+          {value.length > 0 && (
+            <StyledIconButton
+              onClick={handleClear}
+              data-testid="stMultiSelectClearButton"
+            >
+              <Cancel size={theme.iconSizes.md} />
+            </StyledIconButton>
           )}
           {children}
         </div>
       )
     },
-    [shouldShowSelectAll, handleSelectAll, theme]
+    [shouldShowSelectAll, handleSelectAll, handleClear, value.length, theme]
   )
 
   return (
@@ -411,23 +426,7 @@ const Multiselect: FC<Props> = props => {
               }),
             },
             ClearIcon: {
-              props: {
-                overrides: {
-                  Svg: {
-                    style: {
-                      color: theme.colors.darkGray,
-                      // setting this width and height makes the clear-icon align with dropdown arrows of other input fields
-                      padding: theme.spacing.threeXS,
-                      height: theme.sizes.clearIconSize,
-                      width: theme.sizes.clearIconSize,
-                      cursor: "pointer",
-                      ":hover": {
-                        fill: theme.colors.bodyText,
-                      },
-                    },
-                  },
-                },
-              },
+              component: () => null,
             },
             SearchIcon: {
               style: {
