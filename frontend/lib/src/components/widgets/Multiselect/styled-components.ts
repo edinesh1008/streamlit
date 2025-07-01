@@ -25,9 +25,12 @@ export const StyledUISelect = styled.div(({ theme }) => ({
 export const StyledSelectAllButton = styled.div(({ theme }) => ({
   cursor: "pointer",
   padding: theme.spacing.threeXS,
-  height: theme.sizes.clearIconSize,
-  width: theme.sizes.clearIconSize,
   color: theme.colors.darkGray,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: theme.sizes.clearIconSize,
+  height: theme.sizes.clearIconSize,
   ":hover": {
     color: theme.colors.bodyText,
   },
