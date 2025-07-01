@@ -21,3 +21,14 @@ export const StyledUISelect = styled.div(({ theme }) => ({
     background: theme.colors.fadedText05,
   },
 }))
+
+export const StyledSelectAllButton = styled.div(({ theme }) => ({
+  cursor: "pointer",
+  padding: theme.spacing.threeXS,
+  height: theme.sizes.clearIconSize,
+  width: theme.sizes.clearIconSize,
+  color: theme.colors.darkGray,
+  ":hover": {
+    color: theme.colors.bodyText,
+  },
+}))

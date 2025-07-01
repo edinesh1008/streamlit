@@ -33,11 +33,15 @@ import { VirtualDropdown } from "~lib/components/shared/Dropdown"
 import { fuzzyFilterSelectOptions } from "~lib/components/shared/Dropdown/Selectbox"
 import { Placement } from "~lib/components/shared/Tooltip"
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
+import MaterialFontIcon from "~lib/components/shared/Icon/Material/MaterialFontIcon"
 import {
   StyledWidgetLabelHelp,
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
-import { StyledUISelect } from "~lib/components/widgets/Multiselect/styled-components"
+import {
+  StyledUISelect,
+  StyledSelectAllButton,
+} from "~lib/components/widgets/Multiselect/styled-components"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { labelVisibilityProtoValueToEnum } from "~lib/util/utils"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
@@ -181,6 +185,23 @@ const Multiselect: FC<Props> = props => {
     [element.maxSelections, generateNewState, setValueWithSource, value.length]
   )
 
+  const handleSelectAll = useCallback(
+    (event: React.MouseEvent) => {
+      // Prevent the event from bubbling up to the parent, which prevents the dropdown
+      // from opening.
+      event.stopPropagation()
+      const allOptions = element.options
+      const newValue = element.maxSelections
+        ? allOptions.slice(0, element.maxSelections)
+        : allOptions
+      setValueWithSource({
+        value: newValue,
+        fromUi: true,
+      })
+    },
+    [element.options, element.maxSelections, setValueWithSource]
+  )
+
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] => {
       if (overMaxSelections) {
@@ -238,6 +259,53 @@ const Multiselect: FC<Props> = props => {
     // Return value in px
     return `${pxMaxHeight}px`
   }, [theme.fontSizes.baseFontSize])
+
+  // Determine if we should show the select all button
+  const shouldShowSelectAll = useMemo(() => {
+    if (options.length === 0) return false
+    const maxSelectableOptions = element.maxSelections
+      ? Math.min(element.maxSelections, options.length)
+      : options.length
+    return value.length < maxSelectableOptions
+  }, [options.length, element.maxSelections, value.length])
+
+  // Custom IconsContainer component that includes both select all and clear icons
+  const CustomIconsContainer = useCallback(
+    ({
+      children,
+      ...props
+    }: {
+      children: React.ReactNode
+      [key: string]: any
+    }) => {
+      return (
+        <div
+          {...props}
+          style={{
+            ...props.style,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          {shouldShowSelectAll && (
+            <StyledSelectAllButton
+              onClick={handleSelectAll}
+              data-testid="stMultiSelectSelectAllButton"
+            >
+              <MaterialFontIcon
+                iconName="check_circle"
+                pack="material"
+                size="md"
+              />
+            </StyledSelectAllButton>
+          )}
+          {children}
+        </div>
+      )
+    },
+    [shouldShowSelectAll, handleSelectAll, theme]
+  )
 
   return (
     <div className="stMultiSelect" data-testid="stMultiSelect">
@@ -306,8 +374,12 @@ const Multiselect: FC<Props> = props => {
             },
 
             IconsContainer: {
+              component: CustomIconsContainer,
               style: () => ({
                 paddingRight: theme.spacing.sm,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
               }),
             },
             ControlContainer: {
