@@ -41,6 +41,7 @@ import {
 import {
   StyledUISelect,
   StyledIconButton,
+  StyledIconsContainer,
 } from "~lib/components/widgets/Multiselect/styled-components"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { labelVisibilityProtoValueToEnum } from "~lib/util/utils"
@@ -290,15 +291,7 @@ const Multiselect: FC<Props> = props => {
       [key: string]: any
     }) => {
       return (
-        <div
-          {...props}
-          style={{
-            ...props.style,
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-        >
+        <StyledIconsContainer {...props}>
           {shouldShowSelectAll && (
             <StyledIconButton
               onClick={handleSelectAll}
@@ -316,7 +309,7 @@ const Multiselect: FC<Props> = props => {
             </StyledIconButton>
           )}
           {children}
-        </div>
+        </StyledIconsContainer>
       )
     },
     [shouldShowSelectAll, handleSelectAll, handleClear, value.length, theme]
@@ -390,12 +383,6 @@ const Multiselect: FC<Props> = props => {
 
             IconsContainer: {
               component: CustomIconsContainer,
-              style: () => ({
-                paddingRight: theme.spacing.sm,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-              }),
             },
             ControlContainer: {
               style: {
@@ -426,6 +413,9 @@ const Multiselect: FC<Props> = props => {
               }),
             },
             ClearIcon: {
+              // Disable the built-in clear icon. We're handling it ourselves above in
+              // the `CustomIconsContainer` component, so that we can use our own icon
+              // that's coherent with the select all icon.
               component: () => null,
             },
             SearchIcon: {

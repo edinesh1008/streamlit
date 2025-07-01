@@ -35,3 +35,10 @@ export const StyledIconButton = styled.div(({ theme }) => ({
     color: theme.colors.bodyText,
   },
 }))
+
+export const StyledIconsContainer = styled.div(({ theme }) => ({
+  display: "flex",
+  flexDirection: "row" as const,
+  alignItems: "center",
+  paddingRight: theme.spacing.sm,
+}))
