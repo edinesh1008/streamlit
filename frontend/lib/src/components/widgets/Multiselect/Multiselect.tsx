@@ -17,7 +17,7 @@
 import React, { FC, memo, useCallback, useContext, useMemo } from "react"
 
 import { ChevronDown } from "baseui/icon"
-import { CheckCircle, Cancel } from "@emotion-icons/material-rounded"
+import { CheckCircle } from "@emotion-icons/material-rounded"
 import {
   type OnChangeParams,
   type Option,
@@ -203,17 +203,6 @@ const Multiselect: FC<Props> = props => {
     [element.options, element.maxSelections, setValueWithSource]
   )
 
-  const handleClear = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation()
-      setValueWithSource({
-        value: [],
-        fromUi: true,
-      })
-    },
-    [setValueWithSource]
-  )
-
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] => {
       if (overMaxSelections) {
@@ -297,22 +286,14 @@ const Multiselect: FC<Props> = props => {
               onClick={handleSelectAll}
               data-testid="stMultiSelectSelectAllButton"
             >
-              <CheckCircle size={theme.iconSizes.md} />
-            </StyledIconButton>
-          )}
-          {value.length > 0 && (
-            <StyledIconButton
-              onClick={handleClear}
-              data-testid="stMultiSelectClearButton"
-            >
-              <Cancel size={theme.iconSizes.md} />
+              <CheckCircle size={theme.iconSizes.base} />
             </StyledIconButton>
           )}
           {children}
         </StyledIconsContainer>
       )
     },
-    [shouldShowSelectAll, handleSelectAll, handleClear, value.length, theme]
+    [shouldShowSelectAll, handleSelectAll, theme]
   )
 
   return (
@@ -413,10 +394,23 @@ const Multiselect: FC<Props> = props => {
               }),
             },
             ClearIcon: {
-              // Disable the built-in clear icon. We're handling it ourselves above in
-              // the `CustomIconsContainer` component, so that we can use our own icon
-              // that's coherent with the select all icon.
-              component: () => null,
+              props: {
+                overrides: {
+                  Svg: {
+                    style: {
+                      color: theme.colors.darkGray,
+                      // setting this width and height makes the clear-icon align with dropdown arrows of other input fields
+                      padding: theme.spacing.threeXS,
+                      height: theme.sizes.clearIconSize,
+                      width: theme.sizes.clearIconSize,
+                      cursor: "pointer",
+                      ":hover": {
+                        fill: theme.colors.bodyText,
+                      },
+                    },
+                  },
+                },
+              },
             },
             SearchIcon: {
               style: {
