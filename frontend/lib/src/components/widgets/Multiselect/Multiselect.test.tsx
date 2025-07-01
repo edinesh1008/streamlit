@@ -276,6 +276,117 @@ describe("Multiselect widget", () => {
     })
   })
 
+  describe("select all functionality", () => {
+    it("shows select all button when not all options are selected", () => {
+      const props = getProps({
+        options: ["a", "b", "c"],
+        default: [0], // Only "a" is selected
+      })
+      render(<Multiselect {...props} />)
+
+      const selectAllButton = screen.getByTestId(
+        "stMultiSelectSelectAllButton"
+      )
+      expect(selectAllButton).toBeInTheDocument()
+    })
+
+    it("hides select all button when all options are selected", () => {
+      const props = getProps({
+        options: ["a", "b", "c"],
+        default: [0, 1, 2], // All options selected
+      })
+      render(<Multiselect {...props} />)
+
+      const selectAllButton = screen.queryByTestId(
+        "stMultiSelectSelectAllButton"
+      )
+      expect(selectAllButton).not.toBeInTheDocument()
+    })
+
+    it("hides select all button when max_selections is reached", () => {
+      const props = getProps({
+        options: ["a", "b", "c", "d"],
+        default: [0, 1], // "a" and "b" selected
+        maxSelections: 2,
+      })
+      render(<Multiselect {...props} />)
+
+      const selectAllButton = screen.queryByTestId(
+        "stMultiSelectSelectAllButton"
+      )
+      expect(selectAllButton).not.toBeInTheDocument()
+    })
+
+    it("selects all options when select all button is clicked", async () => {
+      const user = userEvent.setup()
+      const props = getProps({
+        options: ["a", "b", "c"],
+        default: [], // No options selected
+      })
+      vi.spyOn(props.widgetMgr, "setStringArrayValue")
+      render(<Multiselect {...props} />)
+
+      const selectAllButton = screen.getByTestId(
+        "stMultiSelectSelectAllButton"
+      )
+      await user.click(selectAllButton)
+
+      expect(props.widgetMgr.setStringArrayValue).toHaveBeenCalledWith(
+        props.element,
+        ["a", "b", "c"],
+        { fromUi: true },
+        undefined
+      )
+    })
+
+    it("respects max_selections when select all button is clicked", async () => {
+      const user = userEvent.setup()
+      const props = getProps({
+        options: ["a", "b", "c", "d"],
+        default: [],
+        maxSelections: 2,
+      })
+      vi.spyOn(props.widgetMgr, "setStringArrayValue")
+      render(<Multiselect {...props} />)
+
+      const selectAllButton = screen.getByTestId(
+        "stMultiSelectSelectAllButton"
+      )
+      await user.click(selectAllButton)
+
+      expect(props.widgetMgr.setStringArrayValue).toHaveBeenCalledWith(
+        props.element,
+        ["a", "b"], // Only first 2 options due to maxSelections
+        { fromUi: true },
+        undefined
+      )
+    })
+
+    it("keeps selected options when max_selections is set and select all button is clicked", async () => {
+      const user = userEvent.setup()
+      const props = getProps({
+        options: ["a", "b", "c", "d"],
+        default: [1], // "b" is already selected
+        maxSelections: 3,
+      })
+      vi.spyOn(props.widgetMgr, "setStringArrayValue")
+      render(<Multiselect {...props} />)
+
+      const selectAllButton = screen.getByTestId(
+        "stMultiSelectSelectAllButton"
+      )
+      await user.click(selectAllButton)
+
+      expect(props.widgetMgr.setStringArrayValue).toHaveBeenCalledWith(
+        props.element,
+        ["b", "a", "c"], // Current + 2 more to reach maxSelections
+        { fromUi: true },
+        undefined
+      )
+    })
+
+  })
+
   it("resets its value when form is cleared", async () => {
     // Create a widget in a clearOnSubmit form
     const user = userEvent.setup()
