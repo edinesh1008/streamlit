@@ -186,22 +186,33 @@ const Multiselect: FC<Props> = props => {
     [element.maxSelections, generateNewState, setValueWithSource, value.length]
   )
 
-  const handleSelectAll = useCallback(
-    (event: React.MouseEvent) => {
-      // Prevent the event from bubbling up to the parent, which prevents the dropdown
-      // from opening.
-      event.stopPropagation()
-      const allOptions = element.options
-      const newValue = element.maxSelections
-        ? allOptions.slice(0, element.maxSelections)
-        : allOptions
+
+const handleSelectAll = useCallback(
+  (event: React.MouseEvent) => {
+    // Prevent the event from bubbling up to the parent, which prevents the dropdown
+    // from opening.
+    event.stopPropagation()
+    const allOptions = element.options
+    
+    if (element.maxSelections) {
+      const unselectedOptions = allOptions.filter(option => !value.includes(option))
+      const additionalSelections = Math.max(0, element.maxSelections - value.length)
+      const newValue = [...value, ...unselectedOptions.slice(0, additionalSelections)]
+      
       setValueWithSource({
         value: newValue,
         fromUi: true,
       })
-    },
-    [element.options, element.maxSelections, setValueWithSource]
-  )
+    } else {
+      setValueWithSource({
+        value: allOptions,
+        fromUi: true,
+      })
+    }
+  },
+  [element.options, element.maxSelections, setValueWithSource, value]
+)
+
 
   const filterOptions = useCallback(
     (options: readonly Option[], filterValue: string): readonly Option[] => {
