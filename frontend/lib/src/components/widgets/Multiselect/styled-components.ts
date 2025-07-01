@@ -22,7 +22,7 @@ export const StyledUISelect = styled.div(({ theme }) => ({
   },
 }))
 
-export const StyledIconButton = styled.div(({ theme }) => ({
+export const StyledSelectAllButton = styled.div(({ theme }) => ({
   cursor: "pointer",
   padding: theme.spacing.threeXS,
   width: theme.sizes.clearIconSize,

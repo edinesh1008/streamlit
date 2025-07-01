@@ -40,7 +40,7 @@ import {
 } from "~lib/components/widgets/BaseWidget"
 import {
   StyledUISelect,
-  StyledIconButton,
+  StyledSelectAllButton,
   StyledIconsContainer,
 } from "~lib/components/widgets/Multiselect/styled-components"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
@@ -282,12 +282,12 @@ const Multiselect: FC<Props> = props => {
       return (
         <StyledIconsContainer {...props}>
           {shouldShowSelectAll && (
-            <StyledIconButton
+            <StyledSelectAllButton
               onClick={handleSelectAll}
               data-testid="stMultiSelectSelectAllButton"
             >
               <CheckCircle size={theme.iconSizes.base} />
-            </StyledIconButton>
+            </StyledSelectAllButton>
           )}
           {children}
         </StyledIconsContainer>
