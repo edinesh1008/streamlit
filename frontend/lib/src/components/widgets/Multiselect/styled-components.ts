@@ -38,7 +38,7 @@ export const StyledSelectAllButton = styled.div(({ theme }) => ({
 
 export const StyledIconsContainer = styled.div(({ theme }) => ({
   display: "flex",
-  flexDirection: "row" as const,
+  flexDirection: "row",
   alignItems: "center",
   paddingRight: theme.spacing.sm,
 }))
