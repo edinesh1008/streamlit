@@ -204,4 +204,12 @@ describe("DataFrame ColumnVisibilityMenu", () => {
     expect(defaultProps.showColumn).toHaveBeenCalledWith("_column-2")
     expect(defaultProps.setColumnOrder).not.toHaveBeenCalled()
   })
+
+  test("calls onClose when clicking the trigger button while menu is open", async () => {
+    render(<ColumnVisibilityMenu {...defaultProps} />)
+
+    // Click the trigger button (children)
+    await userEvent.click(screen.getByText("Toggle Visibility"))
+    expect(defaultProps.onClose).toHaveBeenCalled()
+  })
 })
