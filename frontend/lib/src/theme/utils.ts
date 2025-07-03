@@ -50,6 +50,15 @@ import {
 } from "./getColors"
 import { fonts } from "./primitives/typography"
 
+// Extended theme config type to include properties not in the protobuf definition
+export type ExtendedCustomThemeConfig = Partial<ICustomThemeConfig> & {
+  baseFontWeight?: number | null
+  codeFontSize?: string | number | null
+  codeFontWeight?: number | null
+  linkUnderline?: boolean | null
+  chartCategoricalColors?: string[] | null
+}
+
 export const AUTO_THEME_NAME = "Use system setting"
 export const CUSTOM_THEME_NAME = "Custom Theme"
 
@@ -147,6 +156,40 @@ export const parseFont = (font: string): string => {
 }
 
 /**
+ * Helper function to parse/validate a config color value
+ * @param color: a string - the color value passed in as a given config
+ * @param configKey: a string - the config that the color value was passed for
+ * @param inSidebar: boolean - whether this is for sidebar theming (for error messages)
+ * @returns the validated color value or undefined if the color is invalid
+ */
+const parseColor = (
+  color: string,
+  configKey: string,
+  inSidebar: boolean = false
+): string | undefined => {
+  // First try the color as-is
+  if (isColor(color)) {
+    return color
+  }
+
+  // If that fails, try adding a # prefix
+  if (isColor(`#${color}`)) {
+    return `#${color}`
+  }
+
+  // If both fail and this is a color config, log a warning
+  const isAColorConfig = configKey.toLowerCase().includes("color")
+  if (isAColorConfig) {
+    const themeSection = inSidebar ? "theme.sidebar" : "theme"
+    LOG.warn(
+      `Invalid color passed for ${configKey} in ${themeSection}: "${color}"`
+    )
+  }
+
+  return undefined
+}
+
+/**
  * Helper function to parse the baseRadius & buttonRadius options which allow the same possible values
  * @param radius: a string - "none", "small", "medium", "large", "full", a number in pixels or rem
  * @returns radius value and css unit
@@ -182,46 +225,191 @@ export const parseRadius = (
   return [radiusValue, cssUnit]
 }
 
+/**
+ * Helper function to parse fontSize options which allow the same possible values
+ * @param fontSize a string number in pixels or rem; handles number values as pixels
+ * (e.g. "15px", "0.875rem", "15")
+ * @returns font size in em (e.g. "0.875em")
+ */
+export const parseFontSize = (
+  configName: string,
+  fontSize: string | number,
+  inSidebar: boolean
+): string | undefined => {
+  const themeSection = inSidebar ? "theme.sidebar" : "theme"
+
+  if (typeof fontSize === "string") {
+    // If string, check its valid (ends with "rem" or "px")
+    // and can be parsed as a number
+    const processedFontSize = fontSize.trim().toLowerCase()
+    const parsedFontSize = parseFloat(processedFontSize)
+    if (
+      parsedFontSize &&
+      (processedFontSize.endsWith("rem") || processedFontSize.endsWith("px"))
+    ) {
+      return processedFontSize
+    }
+
+    // Fallback: if the value can be parsed as a number, treat it as pixels
+    if (parsedFontSize.toString() === processedFontSize) {
+      return `${processedFontSize}px`
+    }
+  }
+  // If invalid, log warning and return undefined
+  LOG.warn(
+    `Invalid size passed for ${configName} in ${themeSection}: ${fontSize}. Falling back to default ${configName}.`
+  )
+}
+
+/**
+ * Validate a font weight config
+ */
+const isValidFontWeight = (
+  weightConfigName: string,
+  fontWeight: number | null | undefined,
+  minWeight: number,
+  maxWeight: number,
+  inSidebar?: boolean
+): boolean => {
+  const themeSection = inSidebar ? "theme.sidebar" : "theme"
+
+  // If the font weight config is set, validate it (log warning if invalid)
+  if (notNullOrUndefined(fontWeight)) {
+    const isInteger = Number.isInteger(fontWeight)
+    const isIncrementOf100 = fontWeight % 100 === 0
+    const isInRange = fontWeight >= minWeight && fontWeight <= maxWeight
+
+    if (!isInteger || !isIncrementOf100 || !isInRange) {
+      LOG.warn(
+        `Invalid ${weightConfigName}: ${fontWeight} in ${themeSection}. The ${weightConfigName} must be an integer ${minWeight}-${maxWeight}, and an increment of 100. Falling back to default font weight.`
+      )
+      return false
+    }
+
+    return true
+  }
+
+  // If the font weight config is not set, return false
+  return false
+}
+
+/**
+ * Helper function to set the normal, bold, and extrabold font weights based
+ * on the baseFontWeight option
+ * @param defaultFontWeights: the default theme font weights
+ * @param inSidebar: whether the theme is in the sidebar
+ * @param baseFontWeight: the base font weight provided via theme config
+ * @param codeFontWeight: the code font weight provided via theme config
+ * @param headingFontWeights: the h1-h6 heading font weights provided via theme config
+ * @returns an updated emotion theme font weights object
+ */
+const setFontWeights = (
+  defaultFontWeights: EmotionTheme["fontWeights"],
+  inSidebar: boolean,
+  baseFontWeight: number | null | undefined,
+  codeFontWeight: number | null | undefined,
+  headingFontWeights: number[] | null | undefined
+): EmotionTheme["fontWeights"] => {
+  const fontWeightOverrides = {
+    ...defaultFontWeights,
+    // Override default h1FontWeight for sidebar to 600
+    // Default for main theme set in typography (700)
+    h1FontWeight: inSidebar ? 600 : defaultFontWeights.h1FontWeight,
+  }
+
+  // Validate the baseFontWeight provided is an integer between 100 and 600
+  if (
+    baseFontWeight &&
+    isValidFontWeight("baseFontWeight", baseFontWeight, 100, 600)
+  ) {
+    // Set each of the font weights based on the base weight provided
+    // The provided baseFontWeight sets the normal weight
+    fontWeightOverrides.normal = baseFontWeight
+    // The semiBold weight is set to the baseFontWeight + 100
+    fontWeightOverrides.semiBold = baseFontWeight + 100
+    // The bold weight is set to the baseFontWeight + 200
+    fontWeightOverrides.bold = baseFontWeight + 200
+    // The extrabold weight is set to the baseFontWeight + 300
+    fontWeightOverrides.extrabold = baseFontWeight + 300
+
+    // Set fallback for code's font weight based on configured baseFontWeight
+    fontWeightOverrides.code = baseFontWeight
+  }
+
+  if (
+    codeFontWeight &&
+    isValidFontWeight("codeFontWeight", codeFontWeight, 100, 900)
+  ) {
+    fontWeightOverrides.code = codeFontWeight
+  }
+
+  if (headingFontWeights) {
+    // Filling out the heading font weights array is handled in app_session.py
+    headingFontWeights.forEach((weight, index) => {
+      const headingFontWeightKey = `h${index + 1}FontWeight`
+      if (
+        isValidFontWeight(
+          `${headingFontWeightKey} in headingFontWeights`,
+          weight,
+          100,
+          900,
+          inSidebar
+        )
+      ) {
+        // @ts-expect-error
+        fontWeightOverrides[headingFontWeightKey] = weight
+      }
+    })
+  }
+
+  return fontWeightOverrides
+}
+
+/**
+ * Helper function to validate each of the colors passed in the categorical colors config
+ * @param colors: the categorical colors config passed in (array of strings)
+ * @returns the valid colors from the config
+ */
+const validateCategoricalColors = (colors: string[]): string[] => {
+  return (
+    colors
+      // parseColor returns undefined for invalid colors
+      .map(color => parseColor(color, "chartCategoricalColors"))
+      // Filter any invalid colors
+      .filter((color): color is string => color !== undefined)
+  )
+}
+
 export const createEmotionTheme = (
-  themeInput: Partial<ICustomThemeConfig>,
+  themeInput: ExtendedCustomThemeConfig,
   baseThemeConfig = baseTheme
 ): EmotionTheme => {
   const { colors, genericFonts, inSidebar } = baseThemeConfig.emotion
   const {
     baseFontSize,
+    baseFontWeight,
     baseRadius,
     buttonRadius,
+    codeFontSize,
+    codeFontWeight,
     showWidgetBorder,
     headingFont,
+    headingFontWeights,
     bodyFont,
     codeFont,
     showSidebarBorder,
+    linkUnderline,
+    // Since categorical colors passed as array, handle separate from parsedColors
+    chartCategoricalColors,
     ...customColors
   } = themeInput
 
   const parsedColors = Object.entries(customColors).reduce(
     (colorsArg: Record<string, string>, [key, color]) => {
-      let isInvalidColor = true
       // @ts-expect-error
-      if (isColor(color)) {
-        isInvalidColor = false
-        // @ts-expect-error
-        colorsArg[key] = color
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string
-      } else if (isColor(`#${color}`)) {
-        isInvalidColor = false
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string
-        colorsArg[key] = `#${color}`
-      }
-
-      const isAColorConfig = key.toLowerCase().includes("color")
-      if (isAColorConfig && isInvalidColor) {
-        const themeSection = inSidebar ? "theme.sidebar" : "theme"
-        // Provide warning logging for invalid colors passed to theme color configs
-        LOG.warn(
-          // eslint-disable-next-line @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-base-to-string
-          `Invalid color passed for ${key} in ${themeSection}: "${color}"`
-        )
+      const validatedColor = parseColor(color, key, inSidebar)
+      if (validatedColor) {
+        colorsArg[key] = validatedColor
       }
 
       return colorsArg
@@ -238,6 +426,7 @@ export const createEmotionTheme = (
     primaryColor: primary,
     textColor: bodyText,
     dataframeBorderColor,
+    dataframeHeaderBackgroundColor,
     widgetBorderColor,
     borderColor,
     linkColor,
@@ -280,12 +469,32 @@ export const createEmotionTheme = (
     conditionalOverrides.colors.dataframeBorderColor = dataframeBorderColor
   }
 
+  if (notNullOrUndefined(dataframeHeaderBackgroundColor)) {
+    conditionalOverrides.colors.dataframeHeaderBackgroundColor =
+      dataframeHeaderBackgroundColor
+  }
+
   if (showWidgetBorder || widgetBorderColor) {
     // widgetBorderColor from the themeInput is deprecated. For compatibility
     // with older SiS theming, we still apply it here if provided, but we should
     // consider full removing it at some point.
     conditionalOverrides.colors.widgetBorderColor =
       widgetBorderColor || conditionalOverrides.colors.borderColor
+  }
+
+  if (
+    notNullOrUndefined(chartCategoricalColors) &&
+    chartCategoricalColors.length > 0
+  ) {
+    // Validate the categorical colors config
+    const validatedCategoricalColors = validateCategoricalColors(
+      chartCategoricalColors
+    )
+    // Set the validated colors if non-empty array
+    if (validatedCategoricalColors.length > 0) {
+      conditionalOverrides.colors.chartCategoricalColors =
+        validatedCategoricalColors
+    }
   }
 
   if (notNullOrUndefined(baseRadius)) {
@@ -353,8 +562,42 @@ export const createEmotionTheme = (
     conditionalOverrides.fontSizes.baseFontSize = baseFontSize
   }
 
+  if (codeFontSize) {
+    // Handles case where codeFontSize is set, but not baseFontSize
+    if (!conditionalOverrides.fontSizes) {
+      conditionalOverrides.fontSizes = {
+        ...baseThemeConfig.emotion.fontSizes,
+      }
+    }
+
+    // Returns font size as a string, or undefined if invalid
+    const parsedCodeFontSize = parseFontSize(
+      "codeFontSize",
+      codeFontSize,
+      inSidebar
+    )
+    if (parsedCodeFontSize) {
+      conditionalOverrides.fontSizes.codeFontSize = parsedCodeFontSize
+    }
+    // codeFontSize default (fallback) set in typography primitives (0.875rem)
+    // inlineCodeFontSize set in typography primitives (0.75em)
+  }
+
+  // Set the font weights based on the font weight configs provided
+  conditionalOverrides.fontWeights = setFontWeights(
+    baseThemeConfig.emotion.fontWeights,
+    inSidebar,
+    baseFontWeight,
+    codeFontWeight,
+    headingFontWeights
+  )
+
   if (notNullOrUndefined(showSidebarBorder)) {
     conditionalOverrides.showSidebarBorder = showSidebarBorder
+  }
+
+  if (notNullOrUndefined(linkUnderline)) {
+    conditionalOverrides.linkUnderline = linkUnderline
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
