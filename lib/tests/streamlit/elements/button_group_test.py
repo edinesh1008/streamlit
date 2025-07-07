@@ -929,28 +929,35 @@ class TestButtonGroupDuplicateElementIdErrorMessages(DeltaGeneratorTestCase):
             ),
         ]
     )
-    def test_duplicate_element_id_error_message(
-        self, name, kwargs, expected_in, must_include, must_not_include
-    ):
-        # Create element ID (no key to force element ID duplication)
-        _ = compute_and_register_element_id(
+
+def test_duplicate_element_id_error_message(
+    self, 
+    name: str, 
+    kwargs: dict, 
+    expected_in: str, 
+    must_include: list[str], 
+    must_not_include: list[str]
+) -> None:
+    # Create element ID (no key to force element ID duplication)
+    _ = compute_and_register_element_id(
+        "button_group",
+        user_key=None,
+        form_id=None,
+        **kwargs,
+    )
+    # Try to create another element with the same parameters - should raise error
+    with pytest.raises(StreamlitDuplicateElementId) as exc_info:
+        compute_and_register_element_id(
             "button_group",
             user_key=None,
             form_id=None,
             **kwargs,
         )
-        # Try to create another element with the same parameters - should raise error
-        with pytest.raises(StreamlitDuplicateElementId) as exc_info:
-            compute_and_register_element_id(
-                "button_group",
-                user_key=None,
-                form_id=None,
-                **kwargs,
-            )
-        msg = str(exc_info.value)
-        for must in must_include:
-            assert must in msg, f"Expected '{must}' in error message for {name}"
-        for must_not in must_not_include:
-            assert must_not not in msg, (
-                f"Did not expect '{must_not}' in error message for {name}"
-            )
+    msg = str(exc_info.value)
+    for must in must_include:
+        assert must in msg, f"Expected '{must}' in error message for {name}"
+    for must_not in must_not_include:
+        assert must_not not in msg, (
+            f"Did not expect '{must_not}' in error message for {name}"
+        )
+
