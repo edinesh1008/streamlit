@@ -592,7 +592,7 @@ class ComputeElementIdTests(DeltaGeneratorTestCase):
         with pytest.raises(errors.DuplicateWidgetID):
             st.data_editor(data=[], disabled=True)
 
-    def test_duplicate_id_error_uses_element_type(self):
+def test_duplicate_id_error_uses_element_type(self) -> None:
         """Test that duplicate ID error uses element_type when style is None."""
         with pytest.raises(
             errors.StreamlitDuplicateElementId,
