@@ -592,6 +592,57 @@ class ComputeElementIdTests(DeltaGeneratorTestCase):
         with pytest.raises(errors.DuplicateWidgetID):
             st.data_editor(data=[], disabled=True)
 
+    def test_duplicate_id_error_uses_element_type(self):
+        """Test that duplicate ID error uses element_type when style is None."""
+        with pytest.raises(
+            errors.StreamlitDuplicateElementId,
+            match="There are multiple `button` elements with the same",
+        ):
+            compute_and_register_element_id(
+                element_type="button", user_key=None, form_id="form_id"
+            )
+            compute_and_register_element_id(
+                element_type="button", user_key=None, form_id="form_id"
+            )
+
+    def test_duplicate_id_error_uses_style(self):
+        """Test that duplicate ID error uses style when provided."""
+        with pytest.raises(
+            errors.StreamlitDuplicateElementId,
+            match="There are multiple `my_style` elements with the same",
+        ):
+            compute_and_register_element_id(
+                element_type="some_element_type",
+                user_key=None,
+                form_id="form_id",
+                style="my_style",
+            )
+            compute_and_register_element_id(
+                element_type="some_element_type",
+                user_key=None,
+                form_id="form_id",
+                style="my_style",
+            )
+
+    def test_duplicate_id_error_uses_feedback_for_borderless_style(self):
+        """Test that duplicate ID error uses 'feedback' when style is 'borderless'."""
+        with pytest.raises(
+            errors.StreamlitDuplicateElementId,
+            match="There are multiple `feedback` elements with the same",
+        ):
+            compute_and_register_element_id(
+                element_type="some_element_type",
+                user_key=None,
+                form_id="form_id",
+                style="borderless",
+            )
+            compute_and_register_element_id(
+                element_type="some_element_type",
+                user_key=None,
+                form_id="form_id",
+                style="borderless",
+            )
+
 
 class RegisterWidgetsTest(DeltaGeneratorTestCase):
     @parameterized.expand(WIDGET_ELEMENTS)
