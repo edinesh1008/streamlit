@@ -930,6 +930,7 @@ class TestButtonGroupDuplicateElementIdErrorMessages(DeltaGeneratorTestCase):
         ]
     )
 
+
 def test_duplicate_element_id_error_message(
     self, 
     name: str, 
@@ -938,6 +939,7 @@ def test_duplicate_element_id_error_message(
     must_include: list[str], 
     must_not_include: list[str]
 ) -> None:
+
     # Create element ID (no key to force element ID duplication)
     _ = compute_and_register_element_id(
         "button_group",
