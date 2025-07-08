@@ -27,6 +27,7 @@ import { getElementId, notNullOrUndefined } from "~lib/util/utils"
 import { ScriptRunState } from "~lib/ScriptRunState"
 import {
   Direction,
+  getAncestorContainerDirection,
   getDirectionOfBlock,
 } from "~lib/components/core/Layout/utils"
 import Form from "~lib/components/widgets/Form"
@@ -39,6 +40,10 @@ import { useRequiredContext } from "~lib/hooks/useRequiredContext"
 import { useScrollToBottom } from "~lib/hooks/useScrollToBottom"
 import { useLayoutStyles } from "~lib/components/core/Layout/useLayoutStyles"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
+import {
+  FlexContext,
+  FlexContextProvider,
+} from "src/components/core/Layout/FlexContext"
 
 import {
   assignDividerColor,
@@ -166,6 +171,8 @@ interface FlexBoxContainerProps extends BaseBlockProps {
 export const FlexBoxContainer = (
   props: FlexBoxContainerProps
 ): ReactElement => {
+  const flexContext = useContext(FlexContext)
+  const ancestorContainerDirection = getAncestorContainerDirection(flexContext)
   const direction = getDirectionOfBlock(props.node.deltaBlock)
 
   const activateScrollToBottom = getActivateScrollToBottomBackwardsCompatible(
@@ -174,11 +181,12 @@ export const FlexBoxContainer = (
   const scrollContainerRef = useScrollToBottom(activateScrollToBottom)
 
   const height = getHeightBackwardsCompatible(props.node.deltaBlock)
-  const flex = height ? `0 0 ${height}px` : undefined
+  // Currently st.container only supports height, not width.
+  const flex =
+    height && ancestorContainerDirection === Direction.VERTICAL
+      ? `0 0 ${height}px`
+      : undefined
 
-  // TODO(lawilby): as advanced layouts is rolled out, we will add useLayoutStyles
-  // here to get the correct styles for the flexbox container based on user
-  // settings.
   const styles = {
     gap:
       // This is backwards compatible with old proto messages since previously
@@ -192,25 +200,29 @@ export const FlexBoxContainer = (
     height,
     flex,
     border: getBorderBackwardsCompatible(props.node.deltaBlock),
+    align: props.node.deltaBlock.flexContainer?.align,
+    justify: props.node.deltaBlock.flexContainer?.justify,
   }
 
   const userKey = getKeyFromId(props.node.deltaBlock.id)
 
   return (
-    <StyledFlexContainerBlock
-      {...styles}
-      className={classNames(
-        getClassnamePrefix(direction),
-        convertKeyToClassName(userKey)
-      )}
-      data-testid={getClassnamePrefix(direction)}
-      ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
-      data-test-scroll-behavior={
-        activateScrollToBottom ? "scroll-to-bottom" : "normal"
-      }
-    >
-      <ChildRenderer {...props} />
-    </StyledFlexContainerBlock>
+    <FlexContextProvider direction={direction}>
+      <StyledFlexContainerBlock
+        {...styles}
+        className={classNames(
+          getClassnamePrefix(direction),
+          convertKeyToClassName(userKey)
+        )}
+        data-testid={getClassnamePrefix(direction)}
+        ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
+        data-test-scroll-behavior={
+          activateScrollToBottom ? "scroll-to-bottom" : "normal"
+        }
+      >
+        <ChildRenderer {...props} />
+      </StyledFlexContainerBlock>
+    </FlexContextProvider>
   )
 }
 
@@ -229,6 +241,7 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
     subElement:
       (node.deltaBlock.type && node.deltaBlock[node.deltaBlock.type]) ||
       undefined,
+    isFlexContainer: checkFlexContainerBackwardsCompatibile(node.deltaBlock),
   })
 
   if (node.isEmpty && !node.deltaBlock.allowEmpty) {

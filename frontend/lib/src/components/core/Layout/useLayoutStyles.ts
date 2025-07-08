@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-import { useMemo } from "react"
+import { useContext, useMemo } from "react"
 
 import { Block as BlockProto, Element, streamlit } from "@streamlit/protobuf"
+
+import { FlexContext, IFlexContext } from "./FlexContext"
+import { Direction } from "./utils"
 
 type SubElement = {
   useContainerWidth?: boolean | null
@@ -140,6 +143,31 @@ const getHeight = (
   return { pixels, type }
 }
 
+const getFlex = (
+  widthType: DimensionType | undefined,
+  widthPixels: number | undefined,
+  heightType: DimensionType | undefined,
+  heightPixels: number | undefined,
+  direction: Direction | undefined
+) => {
+  if (
+    widthType === DimensionType.PIXEL &&
+    direction === Direction.HORIZONTAL
+  ) {
+    return `0 0 ${widthPixels}px`
+  } else if (
+    heightType === DimensionType.PIXEL &&
+    direction === Direction.VERTICAL
+  ) {
+    return `0 0 ${heightPixels}px`
+  }
+  return undefined
+}
+
+const getDirection = (flexContext: IFlexContext | null) => {
+  return flexContext?.direction
+}
+
 export type UseLayoutStylesShape = {
   width: React.CSSProperties["width"]
   height: React.CSSProperties["height"]
@@ -155,8 +183,7 @@ export const useLayoutStyles = ({
   subElement,
   styleOverrides,
 }: UseLayoutStylesArgs): UseLayoutStylesShape => {
-  // Note: Consider rounding the width to the nearest pixel so we don't have
-  // subpixel widths, which leads to blurriness on screen
+  const flexContext = useContext(FlexContext)
   const layoutStyles = useMemo((): UseLayoutStylesShape => {
     if (!element) {
       return {
@@ -165,7 +192,6 @@ export const useLayoutStyles = ({
         overflow: "visible",
       }
     }
-    let flex: React.CSSProperties["flex"] = undefined
 
     const { pixels: commandWidth, type: widthType } = getWidth(
       element,
@@ -194,10 +220,15 @@ export const useLayoutStyles = ({
     } else if (heightType === DimensionType.PIXEL) {
       height = `${commandHeight}px`
       overflow = "auto"
-      // TODO (lawilby): We only have vertical containers currently, but this will be
-      // modified to handle horizontal containers when direction on containers is implemented.
-      flex = `0 0 ${commandHeight}px`
     }
+
+    const flex = getFlex(
+      widthType,
+      commandWidth,
+      heightType,
+      commandHeight,
+      getDirection(flexContext)
+    )
 
     const calculatedStyles = {
       width,

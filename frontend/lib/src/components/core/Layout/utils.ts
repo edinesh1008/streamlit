@@ -36,3 +36,13 @@ export function getDirectionOfBlock(block: BlockProto): Direction {
   }
   return Direction.VERTICAL
 }
+
+/**
+ * Returns the direction from FlexContext, defaulting to VERTICAL if not set.
+ * This will be the direction of the nearest ancestor container.
+ */
+export function getAncestorContainerDirection(
+  flexContext: { direction?: Direction | undefined } | null | undefined
+): Direction {
+  return flexContext?.direction ?? Direction.VERTICAL
+}
