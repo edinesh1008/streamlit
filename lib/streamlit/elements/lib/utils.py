@@ -186,6 +186,7 @@ def compute_and_register_element_id(
     user_key: str | None,
     form_id: str | None,
     dg: DeltaGenerator | None = None,
+    key_as_main_identity: bool = False,
     **kwargs: SAFE_VALUES | Iterable[SAFE_VALUES],
 ) -> str:
     """Compute and register the ID for the given element.
@@ -247,7 +248,7 @@ def compute_and_register_element_id(
     element_id = _compute_element_id(
         element_type,
         user_key,
-        **kwargs_to_use,
+        **kwargs_to_use if not key_as_main_identity else {},
     )
 
     if ctx:

@@ -540,6 +540,7 @@ class SelectboxMixin:
             placeholder=placeholder,
             accept_new_options=accept_new_options,
             width=width,
+            key_as_main_identity=True,
         )
 
         session_state = get_session_state().filtered_state
