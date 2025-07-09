@@ -15,6 +15,7 @@
  */
 
 import { Block as BlockProto } from "@streamlit/protobuf"
+import { IFlexContext } from "~lib/components/core/Layout/FlexContext"
 
 export enum Direction {
   HORIZONTAL = "row",
@@ -42,7 +43,7 @@ export function getDirectionOfBlock(block: BlockProto): Direction {
  * This will be the direction of the nearest ancestor container.
  */
 export function getAncestorContainerDirection(
-  flexContext: { direction?: Direction | undefined } | null | undefined
+  flexContext: IFlexContext | null | undefined
 ): Direction {
   return flexContext?.direction ?? Direction.VERTICAL
 }

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import React from "react"
+import React, { CSSProperties } from "react"
 
 import { isInteger } from "lodash"
 import styled from "@emotion/styled"
-import { CSSProperties } from "react-resizable-panels/dist/declarations/src/vendor/react"
 
 import { Block as BlockProto, streamlit } from "@streamlit/protobuf"
 
