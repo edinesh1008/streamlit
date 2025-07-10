@@ -48,7 +48,7 @@ interface UseVegaEmbedOutput {
     data: Quiver | null,
     datasets: WrappedNamedDataset[]
   ) => Promise<VegaView | null>
-  finalizeView: () => void
+  finalizeView: () => Promise<void>
 }
 
 /**
@@ -69,6 +69,8 @@ export function useVegaEmbed(
   const defaultDataName = useRef<string>(DEFAULT_DATA_NAME)
   const dataRef = useRef<Quiver | null>(null)
   const datasetsRef = useRef<WrappedNamedDataset[]>([])
+  const pendingViewOperations = useRef<Promise<unknown> | null>(null)
+  const isViewFinalized = useRef<boolean>(false)
 
   // Setup interactivity for the chart if it supports selections
   const { maybeConfigureSelections, onFormCleared } = useVegaLiteSelections(
@@ -91,13 +93,28 @@ export function useVegaEmbed(
     }
   }, [data, datasets])
 
-  const finalizeView = useCallback(() => {
+  const finalizeView = useCallback(async () => {
+    // Mark the view as finalized to prevent further operations
+    isViewFinalized.current = true
+
+    // Wait for any pending async operations to complete
+    if (pendingViewOperations.current) {
+      try {
+        await pendingViewOperations.current
+      } catch (error) {
+        // Ignore errors from cancelled operations
+        LOG.info("Pending view operation cancelled or failed during finalization:", error)
+      }
+    }
+
     if (vegaFinalizer.current) {
       vegaFinalizer.current()
     }
 
     vegaFinalizer.current = null
     vegaView.current = null
+    pendingViewOperations.current = null
+    isViewFinalized.current = false
   }, [])
 
   const createView = useCallback(
@@ -110,8 +127,8 @@ export function useVegaEmbed(
         throw new Error("Element missing.")
       }
 
-      // Finalize the previous view so it can be garbage collected.
-      finalizeView()
+      // Finalize the previous view and wait for cleanup to complete
+      await finalizeView()
 
       const options = {
         // Adds interpreter support for Vega expressions that is compliant with CSP
@@ -158,11 +175,34 @@ export function useVegaEmbed(
         }
       }
 
-      await vegaView.current.runAsync()
+      // Wrap the async operations and track them to prevent race conditions
+      const runOperations = async (): Promise<void> => {
+        if (isViewFinalized.current) {
+          return // Exit early if view has been finalized
+        }
+        
+        await vegaView.current?.runAsync()
 
-      // Fix bug where the "..." menu button overlaps with charts where width is
-      // set to -1 on first load.
-      await vegaView.current.resize().runAsync()
+        if (isViewFinalized.current) {
+          return // Exit early if view has been finalized
+        }
+
+        // Fix bug where the "..." menu button overlaps with charts where width is
+        // set to -1 on first load.
+        await vegaView.current?.resize().runAsync()
+      }
+
+      // Track the pending operations
+      pendingViewOperations.current = runOperations()
+      
+      try {
+        await pendingViewOperations.current
+      } catch (error) {
+        if (!isViewFinalized.current) {
+          // Only re-throw if the view hasn't been finalized (not a cancellation)
+          throw error
+        }
+      }
 
       return vegaView.current
     },
@@ -248,7 +288,25 @@ export function useVegaEmbed(
         }
       }
 
-      await vegaView.current?.resize().runAsync()
+      // Wrap the async resize operation and track it to prevent race conditions
+      const resizeOperation = async (): Promise<void> => {
+        if (isViewFinalized.current) {
+          return // Exit early if view has been finalized
+        }
+        await vegaView.current?.resize().runAsync()
+      }
+
+      // Track the pending operation
+      pendingViewOperations.current = resizeOperation()
+      
+      try {
+        await pendingViewOperations.current
+      } catch (error) {
+        if (!isViewFinalized.current) {
+          // Only re-throw if the view hasn't been finalized (not a cancellation)
+          throw error
+        }
+      }
 
       dataRef.current = inputData
       datasetsRef.current = inputDatasets

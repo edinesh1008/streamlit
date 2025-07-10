@@ -113,7 +113,11 @@ const ArrowVegaLiteChart: FC<Props> = ({
       createView(containerRef, spec)
     }
 
-    return finalizeView
+    return () => {
+      // Handle async cleanup properly
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- TODO: Fix this
+      finalizeView()
+    }
     // We can't use width in this dependency array because it causes facet charts to enter a loop.
     // TODO(lawilby): Do we need width/height in this dependency array? It seems any changes
     // Are the changes in the spec enough?
