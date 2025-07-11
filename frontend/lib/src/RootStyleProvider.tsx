@@ -57,7 +57,7 @@ const useScrollbarWidth = (): void => {
         height: window.innerHeight,
       })
 
-      // Alternative detection methods for cloud environments
+      // DOM-based detection methods with 5-second delay for race condition testing
       const alternatives = [
         // Method 1: Use document.body as container
         () => {
@@ -427,64 +427,86 @@ const useScrollbarWidth = (): void => {
       })
 
       console.log("🔍 [SCROLLBAR DEBUG] Scrollbar width detection completed")
+      return calculatedWidth
     }
 
-    // Deterministic approach: wait for proper window state
+    // Test for race conditions with 5-second delay
     const runDetection = () => {
-      // Check if window has proper dimensions
-      if (window.innerWidth === 0 || window.innerHeight === 0) {
-        console.log(
-          "🔍 [SCROLLBAR DEBUG] Window dimensions are 0, waiting for proper sizing..."
-        )
+      console.log("🔍 [SCROLLBAR DEBUG] Starting detection process...")
 
-        // Wait for window load event (most reliable)
-        if (document.readyState !== "complete") {
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Document not complete, waiting for window load..."
-          )
-          window.addEventListener(
-            "load",
-            () => {
-              console.log(
-                "🔍 [SCROLLBAR DEBUG] Window load event fired, retrying detection"
-              )
-              // Use requestAnimationFrame to ensure layout is complete
-              requestAnimationFrame(() => {
-                detectScrollbarWidth()
-              })
-            },
-            { once: true }
-          )
-          return
-        }
+      // Immediate attempt
+      console.log("🔍 [SCROLLBAR DEBUG] Attempting immediate detection...")
+      const immediateResult = detectScrollbarWidth()
+      console.log(
+        "🔍 [SCROLLBAR DEBUG] Immediate detection result:",
+        immediateResult
+      )
 
-        // If document is complete but dimensions are still 0, wait for resize
+      // Also schedule a delayed attempt to test race conditions
+      console.log(
+        "🔍 [SCROLLBAR DEBUG] Scheduling 5-second delayed detection to test race conditions..."
+      )
+      setTimeout(() => {
         console.log(
-          "🔍 [SCROLLBAR DEBUG] Document complete but dimensions 0, waiting for resize..."
+          "🔍 [SCROLLBAR DEBUG] === 5-SECOND DELAY DETECTION STARTING ==="
         )
-        const resizeHandler = () => {
-          if (window.innerWidth > 0 && window.innerHeight > 0) {
-            console.log(
-              "🔍 [SCROLLBAR DEBUG] Window resized with proper dimensions, running detection"
-            )
-            window.removeEventListener("resize", resizeHandler)
-            detectScrollbarWidth()
+        console.log(
+          "🔍 [SCROLLBAR DEBUG] Window dimensions after 5 seconds:",
+          {
+            width: window.innerWidth,
+            height: window.innerHeight,
           }
-        }
-        window.addEventListener("resize", resizeHandler)
+        )
+        console.log(
+          "🔍 [SCROLLBAR DEBUG] Document body dimensions after 5 seconds:",
+          {
+            offsetWidth: document.body.offsetWidth,
+            offsetHeight: document.body.offsetHeight,
+            clientWidth: document.body.clientWidth,
+            clientHeight: document.body.clientHeight,
+          }
+        )
 
-        // Fallback timeout in case resize never fires
-        setTimeout(() => {
+        // Try all methods again after 5 seconds
+        console.log("🔍 [SCROLLBAR DEBUG] Running delayed detection...")
+        const delayedResult = detectScrollbarWidth()
+        console.log(
+          "🔍 [SCROLLBAR DEBUG] Delayed detection result:",
+          delayedResult
+        )
+
+        if (delayedResult > 0 && delayedResult !== immediateResult) {
+          console.log("🔍 [SCROLLBAR DEBUG] === RACE CONDITION DETECTED! ===")
           console.log(
-            "🔍 [SCROLLBAR DEBUG] Fallback timeout reached, forcing detection"
+            "🔍 [SCROLLBAR DEBUG] Immediate result:",
+            immediateResult
           )
-          window.removeEventListener("resize", resizeHandler)
-          detectScrollbarWidth()
-        }, 2000)
-      } else {
-        // Window has proper dimensions, run detection immediately
-        detectScrollbarWidth()
-      }
+          console.log("🔍 [SCROLLBAR DEBUG] Delayed result:", delayedResult)
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Delayed detection succeeded, updating CSS property"
+          )
+          document.documentElement.style.setProperty(
+            "--scrollbar-width",
+            `${delayedResult}px`
+          )
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Updated --scrollbar-width to:",
+            `${delayedResult}px`
+          )
+        } else if (delayedResult === immediateResult) {
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Delayed result matches immediate result - no race condition"
+          )
+        } else {
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Delayed detection also failed - not a race condition"
+          )
+        }
+
+        console.log(
+          "🔍 [SCROLLBAR DEBUG] === 5-SECOND DELAY DETECTION COMPLETED ==="
+        )
+      }, 5000)
     }
 
     // Start the detection process
