@@ -46,13 +46,6 @@ const cache = createCache({
 const useScrollbarWidth = (): void => {
   useEffect(() => {
     const detectScrollbarWidth = () => {
-      console.log("🔍 [SCROLLBAR DEBUG] Starting scrollbar width detection")
-      console.log("🔍 [SCROLLBAR DEBUG] Window dimensions:", {
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-      console.log("🔍 [SCROLLBAR DEBUG] User agent:", navigator.userAgent)
-
       // Create a temporary div to measure scrollbar width
       const outer = document.createElement("div")
 
@@ -76,13 +69,6 @@ const useScrollbarWidth = (): void => {
       // Force reflow
       outer.offsetHeight
 
-      console.log("🔍 [SCROLLBAR DEBUG] Element dimensions:", {
-        outerOffsetWidth: outer.offsetWidth,
-        outerClientWidth: outer.clientWidth,
-        innerOffsetWidth: inner.offsetWidth,
-        hasScrollbar: outer.scrollHeight > outer.clientHeight,
-      })
-
       // Calculate the scrollbar width
       // eslint-disable-next-line streamlit-custom/no-force-reflow-access -- Existing usage
       const calculatedWidth = outer.offsetWidth - inner.offsetWidth
@@ -90,22 +76,11 @@ const useScrollbarWidth = (): void => {
       // Remove the temporary divs
       document.body.removeChild(outer)
 
-      console.log(
-        "🔍 [SCROLLBAR DEBUG] Calculated scrollbar width:",
-        calculatedWidth
-      )
-
       // Store the scrollbar width in a CSS custom property
       document.documentElement.style.setProperty(
         "--scrollbar-width",
         `${calculatedWidth}px`
       )
-
-      console.log(
-        "🔍 [SCROLLBAR DEBUG] Set CSS custom property --scrollbar-width to:",
-        `${calculatedWidth}px`
-      )
-      console.log("🔍 [SCROLLBAR DEBUG] Scrollbar width detection completed")
 
       return calculatedWidth
     }
@@ -121,35 +96,14 @@ const useScrollbarWidth = (): void => {
 
     // Wait for layout to be ready before detecting scrollbar width
     const runDetection = () => {
-      console.log("🔍 [SCROLLBAR DEBUG] Starting detection process...")
-
       if (isLayoutReady()) {
-        console.log(
-          "🔍 [SCROLLBAR DEBUG] Layout is ready immediately, running detection..."
-        )
         detectScrollbarWidth()
       } else {
-        console.log(
-          "🔍 [SCROLLBAR DEBUG] Layout not ready, waiting for proper sizing..."
-        )
-
         const waitForLayout = () => {
           const checkLayout = () => {
-            console.log("🔍 [SCROLLBAR DEBUG] Checking layout readiness:", {
-              windowWidth: window.innerWidth,
-              windowHeight: window.innerHeight,
-              bodyWidth: document.body.offsetWidth,
-            })
-
             if (isLayoutReady()) {
-              console.log(
-                "🔍 [SCROLLBAR DEBUG] Layout is now ready! Running detection..."
-              )
               detectScrollbarWidth()
             } else {
-              console.log(
-                "🔍 [SCROLLBAR DEBUG] Layout still not ready, scheduling next check..."
-              )
               setTimeout(checkLayout, 100) // Check every 100ms
             }
           }
@@ -158,14 +112,8 @@ const useScrollbarWidth = (): void => {
 
         // Wait for window load first
         if (document.readyState !== "complete") {
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Document not complete, waiting for window load..."
-          )
           window.addEventListener("load", waitForLayout, { once: true })
         } else {
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Document complete, starting layout checks..."
-          )
           waitForLayout()
         }
       }
@@ -193,16 +141,6 @@ const useScrollbarWidth = (): void => {
         Math.abs(currentInnerHeight - lastInnerHeight) > 50
 
       if (devicePixelRatioChanged || dimensionsChanged) {
-        console.log("🔍 [SCROLLBAR DEBUG] Zoom change detected:", {
-          oldDevicePixelRatio: lastDevicePixelRatio,
-          newDevicePixelRatio: currentDevicePixelRatio,
-          oldDimensions: { width: lastInnerWidth, height: lastInnerHeight },
-          newDimensions: {
-            width: currentInnerWidth,
-            height: currentInnerHeight,
-          },
-        })
-
         // Update tracking variables
         lastDevicePixelRatio = currentDevicePixelRatio
         lastInnerWidth = currentInnerWidth
@@ -210,9 +148,6 @@ const useScrollbarWidth = (): void => {
 
         // Re-run detection after a short delay to let the zoom settle
         setTimeout(() => {
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Re-running scrollbar detection due to zoom change..."
-          )
           if (isLayoutReady()) {
             detectScrollbarWidth()
           }
