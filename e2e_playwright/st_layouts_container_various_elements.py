@@ -72,6 +72,16 @@ with st.container(
         {
             "x": list(range(5)),
             "y": [i * i for i in range(5)],
+            "z": [i * i * i for i in range(5)],
+            "w": [i * i * i * i for i in range(5)],
+            "v": [i * i * i * i * i for i in range(5)],
+            "u": [i * i * i * i * i * i for i in range(5)],
+            "t": [i * i * i * i * i * i * i for i in range(5)],
+            "s": [i * i * i * i * i * i * i * i for i in range(5)],
+            "r": [i * i * i * i * i * i * i * i * i for i in range(5)],
+            "q": [i * i * i * i * i * i * i * i * i * i for i in range(5)],
+            "p": [i * i * i * i * i * i * i * i * i * i * i for i in range(5)],
+            "o": [i * i * i * i * i * i * i * i * i * i * i * i for i in range(5)],
         }
     )
     with st.expander("Expand me"):
@@ -79,6 +89,60 @@ with st.container(
         st.bar_chart(df.set_index("x"))
 
     st.dataframe(df)
+
+with st.container(
+    border=True,
+    direction="horizontal",
+    wrap=False,
+    key="layout-horizontal-content-width-wide-dataframe",
+):
+    df = pd.DataFrame(
+        {
+            "x": list(range(5)),
+            "y": [i * i for i in range(5)],
+            "z": [i * i * i for i in range(5)],
+            "w": [i * i * i * i for i in range(5)],
+            "v": [i * i * i * i * i for i in range(5)],
+            "u": [i * i * i * i * i * i for i in range(5)],
+            "t": [i * i * i * i * i * i * i for i in range(5)],
+            "s": [i * i * i * i * i * i * i * i for i in range(5)],
+            "r": [i * i * i * i * i * i * i * i * i for i in range(5)],
+            "q": [i * i * i * i * i * i * i * i * i * i for i in range(5)],
+            "p": [i * i * i * i * i * i * i * i * i * i * i for i in range(5)],
+            "o": [i * i * i * i * i * i * i * i * i * i * i * i for i in range(5)],
+        }
+    )
+    with st.expander("Expand me"):
+        st.title("Hidden Chart")
+        st.bar_chart(df.set_index("x"), use_container_width=False)
+
+    st.dataframe(df, use_container_width=False)
+
+with st.container(
+    border=True,
+    direction="horizontal",
+    wrap=False,
+    key="layout-horizontal-content-width-narrow-dataframe",
+):
+    df = pd.DataFrame(
+        {
+            "x": list(range(5)),
+            "y": [i * i for i in range(5)],
+        }
+    )
+    with st.expander("Expand me"):
+        st.title("Hidden Chart")
+        st.bar_chart(df.set_index("x"), use_container_width=False)
+
+    st.dataframe(df, use_container_width=False)
+
+with st.container(
+    border=True,
+    direction="horizontal",
+    wrap=False,
+    key="layout-horizontal-content-width-map",
+):
+    st.dataframe(df, use_container_width=False)
 
 with st.container(
     border=True,
@@ -158,7 +222,10 @@ with st.container(
     wrap=False,
     key="layout-horizontal-map",
 ):
-    st.map(pd.DataFrame({"lat": [37.76, 37.77], "lon": [-122.4, -122.41]}))
+    st.map(
+        pd.DataFrame({"lat": [37.76, 37.77], "lon": [-122.4, -122.41]}),
+        use_container_width=False,
+    )
     st.markdown(
         """
     # Hello

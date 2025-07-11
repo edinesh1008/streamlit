@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import React, { lazy, ReactElement, Suspense, useContext } from "react"
+import React, {
+  lazy,
+  ReactElement,
+  Suspense,
+  useContext,
+  useState,
+} from "react"
 
 import debounceRender from "react-debounce-render"
 import classNames from "classnames"
@@ -167,6 +173,7 @@ export interface ElementNodeRendererProps extends BaseBlockProps {
 
 interface RawElementNodeRendererProps extends ElementNodeRendererProps {
   isStale: boolean
+  onIdealWidthChange?: (width: number | undefined) => void
 }
 
 function hideIfStale(isStale: boolean, component: ReactElement): ReactElement {
@@ -177,7 +184,7 @@ function hideIfStale(isStale: boolean, component: ReactElement): ReactElement {
 const RawElementNodeRenderer = (
   props: RawElementNodeRendererProps
 ): ReactElement => {
-  const { node } = props
+  const { node, onIdealWidthChange } = props
 
   if (!node) {
     throw new Error("ElementNode not found.")
@@ -417,6 +424,7 @@ const RawElementNodeRenderer = (
           element={arrowProto}
           data={node.quiverElement}
           {...widgetProps}
+          onIdealWidthChange={onIdealWidthChange}
         />
       )
     }
@@ -703,10 +711,14 @@ const ElementNodeRenderer = (
   const elementId = getElementId(node.element)
   const userKey = getKeyFromId(elementId)
 
+  // For DataFrame ideal width measurement
+  const [measuredWidth, setMeasuredWidth] = useState<number | undefined>(
+    undefined
+  )
+
   // TODO: It would be great if we could return an empty fragment if isHidden is true, to keep the
   // DOM clean. But this would require the keys passed to ElementNodeRenderer at Block.tsx to be a
   // stable hash of some sort.
-
   return (
     <Maybe enable={enable}>
       <StyledElementContainerLayoutWrapper
@@ -722,6 +734,9 @@ const ElementNodeRenderer = (
         isStale={isStale && !isFullScreen}
         elementType={elementType}
         node={node}
+        measuredWidth={
+          node.element.type === "arrowDataFrame" ? measuredWidth : undefined
+        }
       >
         <ErrorBoundary>
           <Suspense
@@ -733,7 +748,11 @@ const ElementNodeRenderer = (
               />
             }
           >
-            <RawElementNodeRenderer {...props} isStale={isStale} />
+            <RawElementNodeRenderer
+              {...props}
+              isStale={isStale}
+              onIdealWidthChange={setMeasuredWidth}
+            />
           </Suspense>
         </ErrorBoundary>
       </StyledElementContainerLayoutWrapper>

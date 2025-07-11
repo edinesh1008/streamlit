@@ -162,7 +162,7 @@ const getFlex = (
   ) {
     return `0 0 ${heightPixels}px`
   }
-  return undefined
+  return "1 1 5%"
 }
 
 const getDirection = (

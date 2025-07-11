@@ -20,6 +20,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -119,6 +120,7 @@ export interface DataFrameProps {
   disableFullscreenMode?: boolean
   fragmentId?: string
   height?: number
+  onIdealWidthChange?: (width: number | undefined) => void // <-- new prop
 }
 
 /**
@@ -136,6 +138,7 @@ function DataFrame({
   widgetMgr,
   disableFullscreenMode,
   fragmentId,
+  onIdealWidthChange,
 }: Readonly<DataFrameProps>): ReactElement {
   const {
     expanded: isFullScreen,
@@ -148,6 +151,9 @@ function DataFrame({
   const resizableRef = useRef<Resizable>(null)
   const dataEditorRef = useRef<DataEditorRef>(null)
   const resizableContainerRef = useRef<HTMLDivElement>(null)
+
+  // Ideal width state for auto-width mode
+  const [idealWidth, setIdealWidth] = useState<number | undefined>(undefined)
 
   const gridTheme = useCustomTheme()
 
@@ -700,6 +706,40 @@ function DataFrame({
       setShowColumnVisibilityMenu(false)
     }
   }, [allColumns.length, columns.length])
+
+  useLayoutEffect(() => {
+    if (element.useContainerWidth || element.width) {
+      if (idealWidth !== undefined) setIdealWidth(undefined)
+      if (onIdealWidthChange) onIdealWidthChange(undefined)
+      return
+    }
+
+    function tryMeasure() {
+      if (!resizableContainerRef.current) return
+      const stack = resizableContainerRef.current.querySelector(
+        ".dvn-stack"
+      ) as HTMLElement | null
+      if (stack) {
+        const measured = stack.scrollWidth
+        if (measured && Math.abs(measured - (idealWidth ?? 0)) > 2) {
+          setIdealWidth(measured)
+          if (onIdealWidthChange) onIdealWidthChange(measured)
+        }
+      } else {
+        // Try again on next frame if .dvn-stack is not present yet
+        requestAnimationFrame(tryMeasure)
+      }
+    }
+    tryMeasure()
+  }, [
+    glideColumns,
+    numRows,
+    showColumnVisibilityMenu,
+    element.useContainerWidth,
+    element.width,
+    idealWidth,
+    onIdealWidthChange,
+  ])
 
   return (
     <StyledResizableContainer

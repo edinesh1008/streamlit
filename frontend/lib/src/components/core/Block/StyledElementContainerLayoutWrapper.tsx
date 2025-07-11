@@ -27,8 +27,9 @@ export const StyledElementContainerLayoutWrapper: FC<
     "width" | "height" | "overflow"
   > & {
     node: ElementNode
+    measuredWidth?: number
   }
-> = ({ node, ...rest }) => {
+> = ({ node, measuredWidth, ...rest }) => {
   const styleOverrides = useMemo(() => {
     if (node.element.type === "imgs") {
       // The st.image element is potentially a list of images, so we always want
@@ -54,21 +55,27 @@ export const StyledElementContainerLayoutWrapper: FC<
         height: "auto",
         flex: "",
       }
-    } else if (
-      node.element.type === "iframe" ||
-      node.element.type === "deckGlJsonChart" ||
-      node.element.type === "arrowDataFrame"
-    ) {
+    } else if (node.element.type === "iframe") {
       // TODO(lwilby): Some elements need overflow to be visible in webkit. Will investigate
       // if we can remove this custom handling in future layouts work.
       return {
         overflow: "visible",
       }
     } else if (node.element.type === "componentInstance") {
-      // Because of how width is handled for custom components, we need the
-      // element wrapper to be full width.
+      // These elements depend on having a container with width for their initial
+      // sizing.
       return {
         width: "100%",
+      }
+    } else if (node.element.type === "deckGlJsonChart") {
+      return {
+        width: "100%",
+        overflow: "visible",
+      }
+    } else if (node.element.type === "arrowDataFrame") {
+      return {
+        overflow: "visible",
+        //flex: undefined,
       }
     }
 
@@ -82,5 +89,9 @@ export const StyledElementContainerLayoutWrapper: FC<
     styleOverrides,
   })
 
-  return <StyledElementContainer {...rest} {...styles} />
+  if (node.element.type === "arrowDataFrame") {
+    styles.width = measuredWidth ? `${measuredWidth + 2}px` : styles.width
+  }
+
+  return <StyledElementContainer {...rest} {...styles} skipMinWidth={false} />
 }
