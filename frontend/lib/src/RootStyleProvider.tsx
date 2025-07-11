@@ -25,6 +25,7 @@ import {
 } from "@emotion/react"
 
 import { globalStyles, ThemeConfig } from "./theme"
+import { debounce } from "./util/utils"
 
 export interface RootStyleProviderProps {
   theme: ThemeConfig
@@ -136,7 +137,7 @@ const useScrollbarWidth = (): void => {
     // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access -- Necessary for zoom detection
     let lastInnerHeight = window.innerHeight
 
-    const handleZoomChange = (): void => {
+    const handleZoomChange = debounce(150, (): void => {
       const currentDevicePixelRatio = window.devicePixelRatio
       // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access -- Necessary for zoom detection
       const currentInnerWidth = window.innerWidth
@@ -164,7 +165,7 @@ const useScrollbarWidth = (): void => {
           }
         }, 100)
       }
-    }
+    })
 
     // Add resize listener for zoom detection
     window.addEventListener("resize", handleZoomChange)
