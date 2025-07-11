@@ -65,6 +65,16 @@ const useScrollbarWidth = (): void => {
             "🔍 [SCROLLBAR DEBUG] Trying Method 1: document.body container"
           )
           const container = document.body
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Method 1 - Container dimensions:",
+            {
+              offsetWidth: container.offsetWidth,
+              offsetHeight: container.offsetHeight,
+              clientWidth: container.clientWidth,
+              clientHeight: container.clientHeight,
+            }
+          )
+
           const outer = document.createElement("div")
 
           outer.style.position = "absolute"
@@ -78,6 +88,16 @@ const useScrollbarWidth = (): void => {
           outer.style.padding = "0"
 
           container.appendChild(outer)
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Method 1 - After appending outer:",
+            {
+              inDOM: container.contains(outer),
+              offsetWidth: outer.offsetWidth,
+              offsetHeight: outer.offsetHeight,
+              clientWidth: outer.clientWidth,
+              clientHeight: outer.clientHeight,
+            }
+          )
 
           const inner = document.createElement("div")
           inner.style.width = "100%"
@@ -86,6 +106,18 @@ const useScrollbarWidth = (): void => {
 
           // Force reflow
           outer.offsetHeight
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Method 1 - After adding inner and reflow:",
+            {
+              outerOffsetWidth: outer.offsetWidth,
+              outerClientWidth: outer.clientWidth,
+              outerScrollWidth: outer.scrollWidth,
+              innerOffsetWidth: inner.offsetWidth,
+              innerClientWidth: inner.clientWidth,
+              innerScrollWidth: inner.scrollWidth,
+              hasScrollbar: outer.scrollHeight > outer.clientHeight,
+            }
+          )
 
           const scrollbarWidth = outer.offsetWidth - inner.offsetWidth
           console.log("🔍 [SCROLLBAR DEBUG] Method 1 result:", scrollbarWidth)
@@ -111,6 +143,18 @@ const useScrollbarWidth = (): void => {
           outer.style.pointerEvents = "none"
 
           document.body.appendChild(outer)
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Method 2 - After appending outer:",
+            {
+              inDOM: document.body.contains(outer),
+              offsetWidth: outer.offsetWidth,
+              offsetHeight: outer.offsetHeight,
+              clientWidth: outer.clientWidth,
+              clientHeight: outer.clientHeight,
+              scrollWidth: outer.scrollWidth,
+              scrollHeight: outer.scrollHeight,
+            }
+          )
 
           const inner = document.createElement("div")
           inner.style.width = "100%"
@@ -118,6 +162,20 @@ const useScrollbarWidth = (): void => {
           outer.appendChild(inner)
 
           outer.offsetHeight // Force reflow
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Method 2 - After adding inner and reflow:",
+            {
+              outerOffsetWidth: outer.offsetWidth,
+              outerClientWidth: outer.clientWidth,
+              outerScrollWidth: outer.scrollWidth,
+              outerScrollHeight: outer.scrollHeight,
+              innerOffsetWidth: inner.offsetWidth,
+              innerClientWidth: inner.clientWidth,
+              innerScrollWidth: inner.scrollWidth,
+              hasVerticalScrollbar: outer.scrollHeight > outer.clientHeight,
+              hasHorizontalScrollbar: outer.scrollWidth > outer.clientWidth,
+            }
+          )
 
           const scrollbarWidth = outer.offsetWidth - inner.offsetWidth
           console.log("🔍 [SCROLLBAR DEBUG] Method 2 result:", scrollbarWidth)
@@ -126,23 +184,81 @@ const useScrollbarWidth = (): void => {
           return scrollbarWidth
         },
 
-        // Method 3: Detect using system defaults
+        // Method 3: Try different positioning strategies
         () => {
-          console.log("🔍 [SCROLLBAR DEBUG] Trying Method 3: System detection")
-          const userAgent = navigator.userAgent
-          let defaultWidth = 17 // Default for most systems
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Trying Method 3: Alternative positioning"
+          )
+          const outer = document.createElement("div")
 
-          if (userAgent.includes("Mac")) {
-            defaultWidth = 15 // macOS typically has thinner scrollbars
-          } else if (
-            userAgent.includes("WebKit") &&
-            !userAgent.includes("Chrome")
-          ) {
-            defaultWidth = 16 // Safari
-          }
+          outer.style.position = "fixed"
+          outer.style.top = "-1000px"
+          outer.style.left = "-1000px"
+          outer.style.width = "200px"
+          outer.style.height = "200px"
+          outer.style.overflow = "auto" // Try auto instead of scroll
+          outer.style.visibility = "visible" // Try visible instead of hidden
+          outer.style.opacity = "0" // Make invisible but still rendered
 
-          console.log("🔍 [SCROLLBAR DEBUG] Method 3 result:", defaultWidth)
-          return defaultWidth
+          document.body.appendChild(outer)
+
+          const inner = document.createElement("div")
+          inner.style.width = "100%"
+          inner.style.height = "300px" // Force scrollbar
+          outer.appendChild(inner)
+
+          outer.offsetHeight // Force reflow
+          console.log("🔍 [SCROLLBAR DEBUG] Method 3 - Dimensions:", {
+            outerOffsetWidth: outer.offsetWidth,
+            outerClientWidth: outer.clientWidth,
+            innerOffsetWidth: inner.offsetWidth,
+            hasScrollbar: outer.scrollHeight > outer.clientHeight,
+          })
+
+          const scrollbarWidth = outer.offsetWidth - inner.offsetWidth
+          console.log("🔍 [SCROLLBAR DEBUG] Method 3 result:", scrollbarWidth)
+
+          document.body.removeChild(outer)
+          return scrollbarWidth
+        },
+
+        // Method 4: Use a visible element with specific styling
+        () => {
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Trying Method 4: Visible element with opacity"
+          )
+          const outer = document.createElement("div")
+
+          outer.style.position = "absolute"
+          outer.style.top = "0"
+          outer.style.left = "0"
+          outer.style.width = "100px"
+          outer.style.height = "100px"
+          outer.style.overflow = "scroll"
+          outer.style.opacity = "0.01" // Almost invisible but still rendered
+          outer.style.pointerEvents = "none"
+          outer.style.zIndex = "-1"
+
+          document.body.appendChild(outer)
+
+          const inner = document.createElement("div")
+          inner.style.width = "100%"
+          inner.style.height = "150px" // Force scrollbar
+          outer.appendChild(inner)
+
+          outer.offsetHeight // Force reflow
+          console.log("🔍 [SCROLLBAR DEBUG] Method 4 - Dimensions:", {
+            outerOffsetWidth: outer.offsetWidth,
+            outerClientWidth: outer.clientWidth,
+            innerOffsetWidth: inner.offsetWidth,
+            hasScrollbar: outer.scrollHeight > outer.clientHeight,
+          })
+
+          const scrollbarWidth = outer.offsetWidth - inner.offsetWidth
+          console.log("🔍 [SCROLLBAR DEBUG] Method 4 result:", scrollbarWidth)
+
+          document.body.removeChild(outer)
+          return scrollbarWidth
         },
       ]
 
