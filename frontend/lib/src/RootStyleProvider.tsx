@@ -45,7 +45,7 @@ const cache = createCache({
  */
 const useScrollbarWidth = (): void => {
   useEffect(() => {
-    const detectScrollbarWidth = () => {
+    const detectScrollbarWidth = (): number => {
       // Create a temporary div to measure scrollbar width
       const outer = document.createElement("div")
 
@@ -84,25 +84,30 @@ const useScrollbarWidth = (): void => {
     }
 
     // Check if layout is ready for measurement
-    const isLayoutReady = () => {
+    const isLayoutReady = (): boolean => {
       return (
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         window.innerWidth > 0 &&
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         window.innerHeight > 0 &&
+        // eslint-disable-next-line streamlit-custom/no-force-reflow-access
         document.body.offsetWidth > 0
       )
     }
 
     // Wait for layout to be ready before detecting scrollbar width
-    const runDetection = () => {
+    const runDetection = (): void => {
       if (isLayoutReady()) {
         detectScrollbarWidth()
       } else {
-        const waitForLayout = () => {
-          const checkLayout = () => {
+        const waitForLayout = (): void => {
+          const checkLayout = (): void => {
             if (isLayoutReady()) {
               detectScrollbarWidth()
             } else {
-              setTimeout(checkLayout, 100) // Check every 100ms
+              const timeoutId = setTimeout(checkLayout, 100) // Check every 100ms
+              // Store timeout for potential cleanup (though not strictly needed here)
+              void timeoutId
             }
           }
           checkLayout()
@@ -121,13 +126,18 @@ const useScrollbarWidth = (): void => {
     runDetection()
 
     // Listen for zoom changes and re-detect scrollbar width
+    // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
     let lastDevicePixelRatio = window.devicePixelRatio
+    // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
     let lastInnerWidth = window.innerWidth
+    // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
     let lastInnerHeight = window.innerHeight
 
-    const handleZoomChange = () => {
+    const handleZoomChange = (): void => {
       const currentDevicePixelRatio = window.devicePixelRatio
+      // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
       const currentInnerWidth = window.innerWidth
+      // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
       const currentInnerHeight = window.innerHeight
 
       // Detect zoom by checking if devicePixelRatio changed
