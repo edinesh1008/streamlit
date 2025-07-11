@@ -45,32 +45,145 @@ const cache = createCache({
  */
 const useScrollbarWidth = (): void => {
   useEffect(() => {
+    console.log("🔍 [SCROLLBAR DEBUG] Starting scrollbar width detection")
+    console.log(
+      "🔍 [SCROLLBAR DEBUG] Document ready state:",
+      document.readyState
+    )
+    console.log("🔍 [SCROLLBAR DEBUG] User agent:", navigator.userAgent)
+    console.log("🔍 [SCROLLBAR DEBUG] Window dimensions:", {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    })
+
     // Create a temporary div to measure scrollbar width
     const outer = document.createElement("div")
+    console.log("🔍 [SCROLLBAR DEBUG] Created outer div element")
+
     outer.style.position = "absolute"
     outer.style.visibility = "hidden"
     outer.style.overflow = "scroll" // Triggers scrollbar
     outer.style.width = "50px" // Give it a fixed size to ensure overflow
     outer.style.height = "50px" // Give it a fixed size to ensure overflow
+    console.log("🔍 [SCROLLBAR DEBUG] Applied styles to outer div:", {
+      position: outer.style.position,
+      visibility: outer.style.visibility,
+      overflow: outer.style.overflow,
+      width: outer.style.width,
+      height: outer.style.height,
+    })
+
     document.body.appendChild(outer)
+    console.log("🔍 [SCROLLBAR DEBUG] Appended outer div to document body")
+    console.log(
+      "🔍 [SCROLLBAR DEBUG] Outer div in DOM:",
+      document.body.contains(outer)
+    )
 
     // Create an inner div to measure content width
     const inner = document.createElement("div")
     inner.style.width = "100%" // Inner div takes full width of outer's content area
+    console.log(
+      "🔍 [SCROLLBAR DEBUG] Created inner div with width:",
+      inner.style.width
+    )
+
     outer.appendChild(inner)
+    console.log("🔍 [SCROLLBAR DEBUG] Appended inner div to outer div")
+
+    // Force a reflow to ensure styles are applied
+    outer.offsetHeight // Force reflow
+    console.log("🔍 [SCROLLBAR DEBUG] Forced reflow on outer div")
+
+    // Log dimensions before calculation
+    console.log("🔍 [SCROLLBAR DEBUG] Outer div dimensions:", {
+      offsetWidth: outer.offsetWidth,
+      clientWidth: outer.clientWidth,
+      scrollWidth: outer.scrollWidth,
+      offsetHeight: outer.offsetHeight,
+      clientHeight: outer.clientHeight,
+      scrollHeight: outer.scrollHeight,
+    })
+
+    console.log("🔍 [SCROLLBAR DEBUG] Inner div dimensions:", {
+      offsetWidth: inner.offsetWidth,
+      clientWidth: inner.clientWidth,
+      scrollWidth: inner.scrollWidth,
+      offsetHeight: inner.offsetHeight,
+      clientHeight: inner.clientHeight,
+      scrollHeight: inner.scrollHeight,
+    })
 
     // Calculate the scrollbar width
     // eslint-disable-next-line streamlit-custom/no-force-reflow-access -- Existing usage
     const calculatedWidth = outer.offsetWidth - inner.offsetWidth
+    console.log(
+      "🔍 [SCROLLBAR DEBUG] Calculated scrollbar width:",
+      calculatedWidth
+    )
+    console.log("🔍 [SCROLLBAR DEBUG] Calculation breakdown:", {
+      outerOffsetWidth: outer.offsetWidth,
+      innerOffsetWidth: inner.offsetWidth,
+      difference: calculatedWidth,
+    })
+
+    // Check if scrollbars are actually visible
+    const hasVerticalScrollbar = outer.scrollHeight > outer.clientHeight
+    const hasHorizontalScrollbar = outer.scrollWidth > outer.clientWidth
+    console.log("🔍 [SCROLLBAR DEBUG] Scrollbar visibility:", {
+      hasVerticalScrollbar,
+      hasHorizontalScrollbar,
+      scrollHeight: outer.scrollHeight,
+      clientHeight: outer.clientHeight,
+      scrollWidth: outer.scrollWidth,
+      clientWidth: outer.clientWidth,
+    })
 
     // Remove the temporary divs
     outer.parentNode?.removeChild(outer)
+    console.log("🔍 [SCROLLBAR DEBUG] Removed temporary divs from DOM")
 
     // Store the scrollbar width in a CSS custom property(variable)
     document.documentElement.style.setProperty(
       "--scrollbar-width",
       `${calculatedWidth}px`
     )
+    console.log(
+      "🔍 [SCROLLBAR DEBUG] Set CSS custom property --scrollbar-width to:",
+      `${calculatedWidth}px`
+    )
+
+    // Verify the CSS property was set
+    const setProperty =
+      document.documentElement.style.getPropertyValue("--scrollbar-width")
+    console.log(
+      "🔍 [SCROLLBAR DEBUG] Verified CSS property value:",
+      setProperty
+    )
+
+    // Additional environment checks
+    console.log("🔍 [SCROLLBAR DEBUG] Environment checks:", {
+      isCloudEnvironment: window.location.hostname !== "localhost",
+      hostname: window.location.hostname,
+      protocol: window.location.protocol,
+      documentElement: !!document.documentElement,
+      bodyElement: !!document.body,
+      computedStyle:
+        typeof window.getComputedStyle === "function"
+          ? "available"
+          : "not available",
+    })
+
+    // Check system scrollbar preferences
+    const mediaQueryList = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    )
+    console.log("🔍 [SCROLLBAR DEBUG] System preferences:", {
+      prefersReducedMotion: mediaQueryList.matches,
+      devicePixelRatio: window.devicePixelRatio,
+    })
+
+    console.log("🔍 [SCROLLBAR DEBUG] Scrollbar width detection completed")
   }, []) // Run this only once.
 }
 
