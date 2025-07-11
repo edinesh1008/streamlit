@@ -110,17 +110,18 @@ const useScrollbarWidth = (): void => {
       return calculatedWidth
     }
 
+    // Check if layout is ready for measurement
+    const isLayoutReady = () => {
+      return (
+        window.innerWidth > 0 &&
+        window.innerHeight > 0 &&
+        document.body.offsetWidth > 0
+      )
+    }
+
     // Wait for layout to be ready before detecting scrollbar width
     const runDetection = () => {
       console.log("🔍 [SCROLLBAR DEBUG] Starting detection process...")
-
-      const isLayoutReady = () => {
-        return (
-          window.innerWidth > 0 &&
-          window.innerHeight > 0 &&
-          document.body.offsetWidth > 0
-        )
-      }
 
       if (isLayoutReady()) {
         console.log(
