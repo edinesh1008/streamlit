@@ -52,6 +52,7 @@ const useScrollbarWidth = (): void => {
       outer.style.position = "absolute"
       outer.style.top = "-9999px"
       outer.style.left = "-9999px"
+      outer.style.visibility = "hidden"
       outer.style.overflow = "scroll"
       outer.style.width = "100px"
       outer.style.height = "100px"
