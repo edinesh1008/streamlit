@@ -172,6 +172,60 @@ const useScrollbarWidth = (): void => {
 
     // Start the detection process
     runDetection()
+
+    // Listen for zoom changes and re-detect scrollbar width
+    let lastDevicePixelRatio = window.devicePixelRatio
+    let lastInnerWidth = window.innerWidth
+    let lastInnerHeight = window.innerHeight
+
+    const handleZoomChange = () => {
+      const currentDevicePixelRatio = window.devicePixelRatio
+      const currentInnerWidth = window.innerWidth
+      const currentInnerHeight = window.innerHeight
+
+      // Detect zoom by checking if devicePixelRatio changed
+      // or if window dimensions changed significantly without corresponding outer window changes
+      const devicePixelRatioChanged =
+        Math.abs(currentDevicePixelRatio - lastDevicePixelRatio) > 0.1
+      const dimensionsChanged =
+        Math.abs(currentInnerWidth - lastInnerWidth) > 50 ||
+        Math.abs(currentInnerHeight - lastInnerHeight) > 50
+
+      if (devicePixelRatioChanged || dimensionsChanged) {
+        console.log("🔍 [SCROLLBAR DEBUG] Zoom change detected:", {
+          oldDevicePixelRatio: lastDevicePixelRatio,
+          newDevicePixelRatio: currentDevicePixelRatio,
+          oldDimensions: { width: lastInnerWidth, height: lastInnerHeight },
+          newDimensions: {
+            width: currentInnerWidth,
+            height: currentInnerHeight,
+          },
+        })
+
+        // Update tracking variables
+        lastDevicePixelRatio = currentDevicePixelRatio
+        lastInnerWidth = currentInnerWidth
+        lastInnerHeight = currentInnerHeight
+
+        // Re-run detection after a short delay to let the zoom settle
+        setTimeout(() => {
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Re-running scrollbar detection due to zoom change..."
+          )
+          if (isLayoutReady()) {
+            detectScrollbarWidth()
+          }
+        }, 100)
+      }
+    }
+
+    // Add resize listener for zoom detection
+    window.addEventListener("resize", handleZoomChange)
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener("resize", handleZoomChange)
+    }
   }, []) // Run this only once.
 }
 
