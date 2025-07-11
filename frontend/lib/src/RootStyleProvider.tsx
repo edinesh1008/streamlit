@@ -430,83 +430,67 @@ const useScrollbarWidth = (): void => {
       return calculatedWidth
     }
 
-    // Test for race conditions with 5-second delay
+    // Wait for layout to be ready before detecting scrollbar width
     const runDetection = () => {
       console.log("🔍 [SCROLLBAR DEBUG] Starting detection process...")
 
-      // Immediate attempt
-      console.log("🔍 [SCROLLBAR DEBUG] Attempting immediate detection...")
-      const immediateResult = detectScrollbarWidth()
-      console.log(
-        "🔍 [SCROLLBAR DEBUG] Immediate detection result:",
-        immediateResult
-      )
-
-      // Also schedule a delayed attempt to test race conditions
-      console.log(
-        "🔍 [SCROLLBAR DEBUG] Scheduling 5-second delayed detection to test race conditions..."
-      )
-      setTimeout(() => {
-        console.log(
-          "🔍 [SCROLLBAR DEBUG] === 5-SECOND DELAY DETECTION STARTING ==="
+      const isLayoutReady = () => {
+        return (
+          window.innerWidth > 0 &&
+          window.innerHeight > 0 &&
+          document.body.offsetWidth > 0
         )
+      }
+
+      if (isLayoutReady()) {
         console.log(
-          "🔍 [SCROLLBAR DEBUG] Window dimensions after 5 seconds:",
-          {
-            width: window.innerWidth,
-            height: window.innerHeight,
+          "🔍 [SCROLLBAR DEBUG] Layout is ready immediately, running detection..."
+        )
+        detectScrollbarWidth()
+      } else {
+        console.log(
+          "🔍 [SCROLLBAR DEBUG] Layout not ready, waiting for proper sizing..."
+        )
+
+        const waitForLayout = () => {
+          const checkLayout = () => {
+            console.log("🔍 [SCROLLBAR DEBUG] Checking layout readiness:", {
+              windowWidth: window.innerWidth,
+              windowHeight: window.innerHeight,
+              bodyWidth: document.body.offsetWidth,
+              bodyHeight: document.body.offsetHeight,
+            })
+
+            if (isLayoutReady()) {
+              console.log(
+                "🔍 [SCROLLBAR DEBUG] Layout is now ready! Running detection..."
+              )
+              detectScrollbarWidth()
+            } else {
+              console.log(
+                "🔍 [SCROLLBAR DEBUG] Layout still not ready, scheduling next check..."
+              )
+              setTimeout(checkLayout, 100) // Check every 100ms
+            }
           }
-        )
-        console.log(
-          "🔍 [SCROLLBAR DEBUG] Document body dimensions after 5 seconds:",
-          {
-            offsetWidth: document.body.offsetWidth,
-            offsetHeight: document.body.offsetHeight,
-            clientWidth: document.body.clientWidth,
-            clientHeight: document.body.clientHeight,
-          }
-        )
 
-        // Try all methods again after 5 seconds
-        console.log("🔍 [SCROLLBAR DEBUG] Running delayed detection...")
-        const delayedResult = detectScrollbarWidth()
-        console.log(
-          "🔍 [SCROLLBAR DEBUG] Delayed detection result:",
-          delayedResult
-        )
-
-        if (delayedResult > 0 && delayedResult !== immediateResult) {
-          console.log("🔍 [SCROLLBAR DEBUG] === RACE CONDITION DETECTED! ===")
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Immediate result:",
-            immediateResult
-          )
-          console.log("🔍 [SCROLLBAR DEBUG] Delayed result:", delayedResult)
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Delayed detection succeeded, updating CSS property"
-          )
-          document.documentElement.style.setProperty(
-            "--scrollbar-width",
-            `${delayedResult}px`
-          )
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Updated --scrollbar-width to:",
-            `${delayedResult}px`
-          )
-        } else if (delayedResult === immediateResult) {
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Delayed result matches immediate result - no race condition"
-          )
-        } else {
-          console.log(
-            "🔍 [SCROLLBAR DEBUG] Delayed detection also failed - not a race condition"
-          )
+          // Start checking
+          checkLayout()
         }
 
-        console.log(
-          "🔍 [SCROLLBAR DEBUG] === 5-SECOND DELAY DETECTION COMPLETED ==="
-        )
-      }, 5000)
+        // Wait for window load first
+        if (document.readyState !== "complete") {
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Document not complete, waiting for window load..."
+          )
+          window.addEventListener("load", waitForLayout, { once: true })
+        } else {
+          console.log(
+            "🔍 [SCROLLBAR DEBUG] Document complete, starting layout checks..."
+          )
+          waitForLayout()
+        }
+      }
     }
 
     // Start the detection process
