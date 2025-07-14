@@ -1270,7 +1270,6 @@ export class App extends PureComponent<Props, State> {
       this.widgetMgr.hydrateWidgetsFromQueryParams(
         initialize.initialQueryString
       )
-    } else {
     }
   }
 

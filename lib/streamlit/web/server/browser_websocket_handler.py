@@ -182,10 +182,11 @@ class BrowserWebSocketHandler(WebSocketHandler, SessionClient):
 
         # Extract query string from the HTTP request
         query_string = self.request.query if self.request.query else ""
+        # Use repr() for safe logging to prevent log injection
         _LOGGER.info(
-            "WebSocket connection - query string from request: %s", query_string
+            "WebSocket connection - query string from request: %s", repr(query_string)
         )
-        _LOGGER.info("Full request URI: %s", self.request.uri)
+        _LOGGER.info("Full request URI: %s", repr(self.request.uri))
 
         self._session_id = self._runtime.connect_session(
             client=self,
