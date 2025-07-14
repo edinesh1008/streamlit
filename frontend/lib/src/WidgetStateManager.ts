@@ -695,7 +695,7 @@ export class WidgetStateManager {
             queryParams.set(paramName, this.serializeValueForQueryParam(value))
           }
         } catch (error) {
-          console.error(`Failed to serialize widget ${widgetId} value:`, error)
+          // Silently skip widgets that fail to serialize
         }
       }
     })
@@ -744,7 +744,7 @@ export class WidgetStateManager {
   /**
    * Extract the value from a WidgetState proto for query parameter serialization.
    */
-  private getWidgetValueForQueryParam(widgetState: WidgetState): any {
+  private getWidgetValueForQueryParam(widgetState: WidgetState): unknown {
     // The protobuf 'oneof' field sets the 'value' property to the name of the actual field
     switch (widgetState.value) {
       case "boolValue":
@@ -772,7 +772,7 @@ export class WidgetStateManager {
   /**
    * Serialize a value for inclusion in a URL query parameter.
    */
-  private serializeValueForQueryParam(value: any): string {
+  private serializeValueForQueryParam(value: unknown): string {
     if (typeof value === "boolean") {
       return value ? "true" : "false"
     }
@@ -832,7 +832,7 @@ export class WidgetStateManager {
       // Use replaceState to update URL without navigation
       window.history.replaceState(null, "", newUrl.toString())
     } catch (error) {
-      console.error("Failed to update URL with query parameters:", error)
+      // Silently ignore URL update failures
     }
   }
 
@@ -850,7 +850,7 @@ export class WidgetStateManager {
     // Store the query parameters for later hydration
     this.initialQueryParams = new Map<string, string>()
     queryParams.forEach((value, key) => {
-      this.initialQueryParams!.set(key, value)
+      this.initialQueryParams.set(key, value)
     })
 
     // Try to hydrate any widgets that have already been tracked
@@ -867,7 +867,10 @@ export class WidgetStateManager {
       return
     }
 
-    const paramValue = this.initialQueryParams.get(paramName)!
+    const paramValue = this.initialQueryParams.get(paramName)
+    if (!paramValue) {
+      return
+    }
 
     // Create the widget info object
     const widgetInfo: WidgetInfo = {
