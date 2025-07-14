@@ -782,7 +782,7 @@ class SessionState:
         self,
         query_param_name: str,
         deserializer: Callable[[Any], Any],
-        metadata: WidgetMetadata,
+        metadata: WidgetMetadata[Any],
         default_value: Any,
     ) -> Any:
         """Hydrate a single query parameter widget from URL parameters.
@@ -851,7 +851,7 @@ class SessionState:
             return default_value
 
     def _infer_widget_type(
-        self, deserializer: Callable[[Any], Any], metadata: WidgetMetadata
+        self, deserializer: Callable[[Any], Any], metadata: WidgetMetadata[Any]
     ) -> type:
         """Infer the Python type for a widget from its deserializer and metadata.
 
@@ -911,6 +911,7 @@ class SessionState:
                     try:
                         # Infer the type from the deserializer
                         # For now, we'll use a simple heuristic based on value_type
+                        target_type: type
                         if metadata.value_type == "bool_value":
                             target_type = bool
                         elif metadata.value_type == "int_value":
@@ -927,22 +928,9 @@ class SessionState:
                         self._new_session_state[param_name] = deserialized_value
 
                         # Also set the widget value directly
-                        if target_type is bool:
-                            self._new_widget_state.set_bool_value(
-                                widget_id, deserialized_value
-                            )
-                        elif target_type is int:
-                            self._new_widget_state.set_int_value(
-                                widget_id, deserialized_value
-                            )
-                        elif target_type is float:
-                            self._new_widget_state.set_double_value(
-                                widget_id, deserialized_value
-                            )
-                        else:
-                            self._new_widget_state.set_string_value(
-                                widget_id, str(deserialized_value)
-                            )
+                        self._new_widget_state.set_from_value(
+                            widget_id, deserialized_value
+                        )
 
                     except NotImplementedError as e:
                         # Show error in the app UI
