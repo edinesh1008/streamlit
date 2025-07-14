@@ -22,6 +22,7 @@ from dataclasses import dataclass, field, replace
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Final,
     Union,
     cast,
@@ -719,14 +720,6 @@ class SessionState:
             # If the widget has a user_key, update its user_key:widget_id mapping
             self._set_key_widget_mapping(widget_id, user_key)
 
-        # Check if this is the first time the widget is registered
-        widget_already_exists = widget_id in self._new_widget_state.widget_metadata
-
-        # Import logger at the top level to avoid UnboundLocalError
-        import streamlit.logger
-
-        logger = streamlit.logger.get_logger(__name__)
-
         # Check if we already have a hydrated value from query params
         hydrated_value = None
         if (
@@ -736,11 +729,6 @@ class SessionState:
             and user_key in self._new_session_state
         ):
             hydrated_value = self._new_session_state[user_key]
-            logger.info(
-                "[SessionState] Found existing hydrated value for %s: %s",
-                user_key,
-                hydrated_value,
-            )
 
         if widget_id not in self and (user_key is None or user_key not in self):
             # This is the first time the widget is registered, so we save its
@@ -750,118 +738,14 @@ class SessionState:
 
             # If this is a query param widget, check if we have a value from URL
             if is_query_param_widget and query_param_name:
-                from streamlit.runtime.state.auto_qs import (
-                    deserialize_value,
-                    parse_query_string,
+                initial_widget_value = self._hydrate_query_param_widget(
+                    query_param_name, deserializer, metadata, initial_widget_value
                 )
-
-                logger.info(
-                    "[SessionState] Query param widget: %s, widget_already_exists: %s",
-                    query_param_name,
-                    widget_already_exists,
-                )
-                logger.info("[SessionState] Widget metadata: %s", metadata)
-                logger.info("[SessionState] Widget value_type: %s", metadata.value_type)
-
-                if not hasattr(self, "_initial_query_params"):
-                    self._initial_query_params = None
-
-                if self._initial_query_params is None and hasattr(
-                    self, "_initial_query_string"
-                ):
-                    # Parse the initial query string if not already done
-                    logger.info(
-                        "[SessionState] Parsing initial query string: %s",
-                        self._initial_query_string,
-                    )
-                    logger.info(
-                        "[SessionState] hasattr _initial_query_string: %s",
-                        hasattr(self, "_initial_query_string"),
-                    )
-                    logger.info(
-                        "[SessionState] _initial_query_string value: %s",
-                        getattr(self, "_initial_query_string", "NOT_SET"),
-                    )
-                    self._initial_query_params = parse_query_string(
-                        self._initial_query_string or ""
-                    )
-                    logger.info(
-                        "[SessionState] Parsed query params: %s",
-                        self._initial_query_params,
-                    )
-
-                if (
-                    self._initial_query_params
-                    and query_param_name in self._initial_query_params
-                ):
-                    param_value = self._initial_query_params[query_param_name]
-                    logger.info(
-                        "[SessionState] Found query param %s = %s",
-                        query_param_name,
-                        param_value,
-                    )
-                    try:
-                        # First try to infer the type from the deserializer
-                        default_value = deserializer(None)
-                        target_type = type(default_value)
-
-                        # If default value is None, fall back to value_type
-                        if default_value is None:
-                            if metadata.value_type == "bool_value":
-                                target_type = bool
-                            elif metadata.value_type == "int_value":
-                                target_type = int
-                            elif metadata.value_type == "double_value":
-                                target_type = float
-                            else:
-                                target_type = str
-
-                        logger.info(
-                            "[SessionState] Inferred target_type: %s for widget %s",
-                            target_type,
-                            widget_id,
-                        )
-
-                        # Deserialize the value from the URL
-                        deserialized_value = deserialize_value(param_value, target_type)
-                        initial_widget_value = deepcopy(deserialized_value)
-
-                        # Also set it in session state - this ensures query param value beats default
-                        self._new_session_state[query_param_name] = deserialized_value
-
-                        logger.info(
-                            "[SessionState] Successfully hydrated widget %s with value %s",
-                            widget_id,
-                            deserialized_value,
-                        )
-
-                    except Exception as e:
-                        # If deserialization fails, use the default value
-                        logger.warning(
-                            "[SessionState] Failed to deserialize query param %s=%s: %s",
-                            query_param_name,
-                            param_value,
-                            e,
-                        )
-                        pass
-                elif self._initial_query_params:
-                    logger.info(
-                        "[SessionState] Query param %s not found in %s",
-                        query_param_name,
-                        list(self._initial_query_params.keys()),
-                    )
-                else:
-                    logger.info("[SessionState] No initial query params available")
 
             self._new_widget_state.set_from_value(widget_id, initial_widget_value)
 
         # If we have a hydrated value, always use it (this beats the default value)
         elif hydrated_value is not None:
-            logger.info(
-                "[SessionState] Using hydrated value %s for widget %s",
-                hydrated_value,
-                widget_id,
-            )
             self._new_widget_state.set_from_value(widget_id, hydrated_value)
 
         # Get the current value of the widget for use as its return value.
@@ -878,26 +762,128 @@ class SessionState:
 
         # For query param widgets that were hydrated during registration,
         # ensure they are marked as changed so the frontend applies the hydrated value
-        if is_query_param_widget and not widget_value_changed:
-            # Check if this widget was hydrated from query params
-            if (
-                hasattr(self, "_initial_query_params")
-                and self._initial_query_params
-                and query_param_name in self._initial_query_params
-            ):
-                widget_value_changed = True
-                logger.info(
-                    "[SessionState] Forcing widget_value_changed=True for hydrated query param widget %s",
-                    widget_id,
+        if (
+            is_query_param_widget
+            and not widget_value_changed
+            and (
+                (
+                    hasattr(self, "_initial_query_params")
+                    and self._initial_query_params
+                    and query_param_name in self._initial_query_params
                 )
-            elif user_key is not None and user_key in self._new_session_state:
-                widget_value_changed = True
-                logger.info(
-                    "[SessionState] Forcing widget_value_changed=True for query param widget %s",
-                    widget_id,
-                )
+                or (user_key is not None and user_key in self._new_session_state)
+            )
+        ):
+            widget_value_changed = True
 
         return RegisterWidgetResult(widget_value, widget_value_changed)
+
+    def _hydrate_query_param_widget(
+        self,
+        query_param_name: str,
+        deserializer: Callable[[Any], Any],
+        metadata: WidgetMetadata,
+        default_value: Any,
+    ) -> Any:
+        """Hydrate a single query parameter widget from URL parameters.
+
+        Args:
+            query_param_name: The name of the query parameter
+            deserializer: The widget's deserializer function
+            metadata: The widget's metadata
+            default_value: The default value to use if hydration fails
+
+        Returns
+        -------
+            The hydrated value or the default value if hydration fails
+        """
+        from streamlit.logger import get_logger
+        from streamlit.runtime.state.auto_qs import (
+            deserialize_value,
+            parse_query_string,
+        )
+
+        logger = get_logger(__name__)
+
+        # Parse initial query string if not already done
+        if not hasattr(self, "_initial_query_params"):
+            self._initial_query_params = None
+
+        if self._initial_query_params is None and hasattr(
+            self, "_initial_query_string"
+        ):
+            try:
+                self._initial_query_params = parse_query_string(
+                    self._initial_query_string or ""
+                )
+            except ValueError as e:
+                logger.warning("Failed to parse initial query string: %s", e)
+                self._initial_query_params = {}
+
+        # Check if we have a value for this parameter
+        if (
+            not self._initial_query_params
+            or query_param_name not in self._initial_query_params
+        ):
+            return default_value
+
+        param_value = self._initial_query_params[query_param_name]
+
+        try:
+            # Infer the target type from the deserializer or metadata
+            target_type = self._infer_widget_type(deserializer, metadata)
+
+            # Deserialize the value from the URL
+            deserialized_value = deserialize_value(param_value, target_type)
+
+            # Set it in session state - this ensures query param value beats default
+            self._new_session_state[query_param_name] = deserialized_value
+
+            return deepcopy(deserialized_value)
+
+        except (ValueError, TypeError) as e:
+            logger.warning(
+                "Failed to deserialize query param %s=%s: %s",
+                query_param_name,
+                param_value,
+                e,
+            )
+            return default_value
+
+    def _infer_widget_type(
+        self, deserializer: Callable[[Any], Any], metadata: WidgetMetadata
+    ) -> type:
+        """Infer the Python type for a widget from its deserializer and metadata.
+
+        Args:
+            deserializer: The widget's deserializer function
+            metadata: The widget's metadata
+
+        Returns
+        -------
+            The inferred Python type
+        """
+        # Try to infer from deserializer first
+        try:
+            default_value = deserializer(None)
+            if default_value is not None:
+                return type(default_value)
+        except Exception as e:
+            from streamlit.logger import get_logger
+
+            logger = get_logger(__name__)
+            logger.debug("Failed to infer type from deserializer: %s", e)
+
+        # Fall back to value_type mapping
+        type_mapping = {
+            "bool_value": bool,
+            "int_value": int,
+            "double_value": float,
+            "string_value": str,
+            "string_array_value": str,  # Use first value for arrays
+        }
+
+        return type_mapping.get(metadata.value_type, str)
 
     def hydrate_widgets_from_query_params(self, query_params: dict[str, str]) -> None:
         """Initialize widget values from URL query parameters.

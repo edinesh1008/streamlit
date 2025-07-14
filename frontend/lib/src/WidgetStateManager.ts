@@ -31,7 +31,7 @@ import {
   WidgetStates,
 } from "@streamlit/protobuf"
 
-import { isValidFormId, notNullOrUndefined } from "~lib/util/utils"
+import { debounce, isValidFormId, notNullOrUndefined } from "~lib/util/utils"
 export interface Source {
   fromUi: boolean
 }
@@ -198,6 +198,11 @@ export class WidgetStateManager {
 
   // Store initial query parameters to hydrate widgets when they are created
   private initialQueryParams: Map<string, string> | null = null
+
+  // Debounced URL update function
+  private readonly debouncedUpdateUrl = debounce(500, () => {
+    this.updateUrlWithQueryParams()
+  })
 
   constructor(props: Props) {
     this.props = props
@@ -591,10 +596,6 @@ export class WidgetStateManager {
     source: Source,
     fragmentId: string | undefined
   ): void {
-    console.log(
-      `[WidgetStateManager] onWidgetValueChanged - formId: ${formId}, source.fromUi: ${source.fromUi}`
-    )
-
     if (isValidFormId(formId)) {
       this.syncFormsWithPendingChanges()
     } else if (source.fromUi) {
@@ -603,10 +604,7 @@ export class WidgetStateManager {
 
     // Update URL with query parameter widget values if this change came from UI
     if (source.fromUi) {
-      console.log(
-        `[WidgetStateManager] Calling updateUrlWithQueryParams because source.fromUi is true`
-      )
-      this.updateUrlWithQueryParams()
+      this.scheduleUrlUpdate()
     }
   }
 
@@ -671,20 +669,8 @@ export class WidgetStateManager {
   public buildQueryStringFromWidgetState(): URLSearchParams {
     const queryParams = new URLSearchParams()
 
-    console.log(
-      `[WidgetStateManager] buildQueryStringFromWidgetState - tracked widgets: ${this.queryParamWidgets.size}`
-    )
-    console.log(
-      `[WidgetStateManager] queryParamWidgets map:`,
-      this.queryParamWidgets
-    )
-
     // Iterate through all query parameter widgets and add their values
     this.queryParamWidgets.forEach((paramName, widgetId) => {
-      console.log(
-        `[WidgetStateManager] Processing widget ${widgetId} -> param ${paramName}`
-      )
-
       // Check both form states and main widget states
       let widgetState: WidgetState | undefined = undefined
 
@@ -693,7 +679,6 @@ export class WidgetStateManager {
         const formWidgetState = formState.widgetStates.getState(widgetId)
         if (formWidgetState) {
           widgetState = formWidgetState
-          console.log(`[WidgetStateManager] Found widget state in form`)
           break
         }
       }
@@ -701,30 +686,20 @@ export class WidgetStateManager {
       // If not found in forms, check main widget states
       if (!widgetState) {
         widgetState = this.widgetStates.getState(widgetId)
-        if (widgetState) {
-          console.log(`[WidgetStateManager] Found widget state in main states`)
-        }
       }
 
       if (widgetState) {
-        const value = this.getWidgetValueForQueryParam(widgetState)
-        console.log(
-          `[WidgetStateManager] Widget ${widgetId} value: ${value}, type: ${typeof value}`
-        )
-        if (value !== undefined && value !== null) {
-          queryParams.set(paramName, this.serializeValueForQueryParam(value))
+        try {
+          const value = this.getWidgetValueForQueryParam(widgetState)
+          if (value !== undefined && value !== null) {
+            queryParams.set(paramName, this.serializeValueForQueryParam(value))
+          }
+        } catch (error) {
+          console.error(`Failed to serialize widget ${widgetId} value:`, error)
         }
-      } else {
-        console.log(
-          `[WidgetStateManager] No widget state found for ${widgetId}`
-        )
       }
     })
 
-    console.log(
-      `[WidgetStateManager] Final query params:`,
-      queryParams.toString()
-    )
     return queryParams
   }
 
@@ -739,19 +714,11 @@ export class WidgetStateManager {
       ? this.getOrCreateFormState(widget.formId as string).widgetStates
       : this.widgetStates
 
-    console.log(
-      `[WidgetStateManager] createWidgetState called for widget ${widget.id}, source.fromUi: ${source.fromUi}`
-    )
-
     // Always track query parameter widgets regardless of source
     // We need to track them so future UI changes can update the URL
     this.trackQueryParamWidget(widget.id)
 
     const widgetState = widgetStateDict.createState(widget.id)
-    console.log(
-      `[WidgetStateManager] Created widget state for ${widget.id}:`,
-      widgetState
-    )
     return widgetState
   }
 
@@ -759,20 +726,13 @@ export class WidgetStateManager {
    * Track a widget as being bound to a query parameter if its ID indicates so.
    */
   private trackQueryParamWidget(widgetId: string): void {
-    console.log(
-      `[WidgetStateManager] trackQueryParamWidget called for widget: ${widgetId}`
-    )
     // Extract the user_key from the widget ID
     // Widget IDs have format: "$$GENERATED_ELEMENT_ID_PREFIX-{hash}-{user_key}"
     const parts = widgetId.split("-")
     if (parts.length >= 3) {
       const userKey = parts.slice(2).join("-") // Join in case user_key has dashes
-      console.log(`[WidgetStateManager] Extracted user_key: ${userKey}`)
       if (userKey && userKey.startsWith("?")) {
         const paramName = userKey.substring(1) // Remove the '?' prefix
-        console.log(
-          `[WidgetStateManager] Widget ${widgetId} bound to query param: ${paramName}`
-        )
         this.queryParamWidgets.set(widgetId, paramName)
 
         // Don't hydrate here - it causes circular dependencies
@@ -782,24 +742,9 @@ export class WidgetStateManager {
   }
 
   /**
-   * Check if a widget is bound to a query parameter.
-   */
-  private isQueryParamWidget(widgetId: string): boolean {
-    return this.queryParamWidgets.has(widgetId)
-  }
-
-  /**
    * Extract the value from a WidgetState proto for query parameter serialization.
    */
   private getWidgetValueForQueryParam(widgetState: WidgetState): any {
-    console.log(
-      `[WidgetStateManager] getWidgetValueForQueryParam - widgetState:`,
-      widgetState
-    )
-    console.log(
-      `[WidgetStateManager] widgetState.value (type): ${widgetState.value}`
-    )
-
     // The protobuf 'oneof' field sets the 'value' property to the name of the actual field
     switch (widgetState.value) {
       case "boolValue":
@@ -820,9 +765,6 @@ export class WidgetStateManager {
         }
         return undefined
       default:
-        console.log(
-          `[WidgetStateManager] Unknown widget state value type: ${widgetState.value}`
-        )
         return undefined
     }
   }
@@ -845,49 +787,53 @@ export class WidgetStateManager {
   }
 
   /**
+   * Schedule a debounced URL update to prevent excessive updates.
+   */
+  private scheduleUrlUpdate(): void {
+    this.debouncedUpdateUrl()
+  }
+
+  /**
    * Update the browser URL with current query parameter widget values.
    * Uses history.replaceState to avoid creating new browser history entries.
    */
   private updateUrlWithQueryParams(): void {
-    console.log(`[WidgetStateManager] updateUrlWithQueryParams called`)
-
     // Only update URL if there are query parameter widgets
     if (this.queryParamWidgets.size === 0) {
-      console.log(
-        `[WidgetStateManager] No query param widgets tracked, skipping URL update`
-      )
       return
     }
 
-    const widgetQueryParams = this.buildQueryStringFromWidgetState()
-    const newUrl = new URL(window.location.href)
+    try {
+      const widgetQueryParams = this.buildQueryStringFromWidgetState()
+      const newUrl = new URL(window.location.href)
 
-    // Start with existing query params to preserve non-widget params
-    const existingParams = new URLSearchParams(newUrl.search)
+      // Start with existing query params to preserve non-widget params
+      const existingParams = new URLSearchParams(newUrl.search)
 
-    // Get all widget param names to update/remove
-    const widgetParamNames = new Set<string>()
-    this.queryParamWidgets.forEach(paramName => {
-      widgetParamNames.add(paramName)
-    })
+      // Get all widget param names to update/remove
+      const widgetParamNames = new Set<string>()
+      this.queryParamWidgets.forEach(paramName => {
+        widgetParamNames.add(paramName)
+      })
 
-    // Remove old widget params
-    widgetParamNames.forEach(paramName => {
-      existingParams.delete(paramName)
-    })
+      // Remove old widget params
+      widgetParamNames.forEach(paramName => {
+        existingParams.delete(paramName)
+      })
 
-    // Add current widget params
-    widgetQueryParams.forEach((value, key) => {
-      existingParams.set(key, value)
-    })
+      // Add current widget params
+      widgetQueryParams.forEach((value, key) => {
+        existingParams.set(key, value)
+      })
 
-    // Update the URL
-    newUrl.search = existingParams.toString()
+      // Update the URL
+      newUrl.search = existingParams.toString()
 
-    console.log(`[WidgetStateManager] Updating URL to: ${newUrl.toString()}`)
-
-    // Use replaceState to update URL without navigation
-    window.history.replaceState(null, "", newUrl.toString())
+      // Use replaceState to update URL without navigation
+      window.history.replaceState(null, "", newUrl.toString())
+    } catch (error) {
+      console.error("Failed to update URL with query parameters:", error)
+    }
   }
 
   /**
@@ -895,10 +841,6 @@ export class WidgetStateManager {
    * This should be called when the initial query string is received from the server.
    */
   public hydrateWidgetsFromQueryParams(queryString: string): void {
-    console.log(
-      "[WidgetStateManager] hydrateWidgetsFromQueryParams called with:",
-      queryString
-    )
     if (!queryString) {
       return
     }
@@ -909,14 +851,10 @@ export class WidgetStateManager {
     this.initialQueryParams = new Map<string, string>()
     queryParams.forEach((value, key) => {
       this.initialQueryParams!.set(key, value)
-      console.log(`[WidgetStateManager] Stored query param: ${key} = ${value}`)
     })
 
     // Try to hydrate any widgets that have already been tracked
     this.queryParamWidgets.forEach((paramName, widgetId) => {
-      console.log(
-        `[WidgetStateManager] Attempting to hydrate widget ${widgetId} with param ${paramName}`
-      )
       this.hydrateWidgetIfNeeded(widgetId, paramName)
     })
   }
@@ -925,16 +863,11 @@ export class WidgetStateManager {
    * Hydrate a specific widget if we have a query parameter value for it.
    */
   private hydrateWidgetIfNeeded(widgetId: string, paramName: string): void {
-    console.log(
-      `[WidgetStateManager] hydrateWidgetIfNeeded called for widget ${widgetId}, param ${paramName}`
-    )
     if (!this.initialQueryParams || !this.initialQueryParams.has(paramName)) {
-      console.log(`[WidgetStateManager] No query param value for ${paramName}`)
       return
     }
 
     const paramValue = this.initialQueryParams.get(paramName)!
-    console.log(`[WidgetStateManager] Found param value: ${paramValue}`)
 
     // Create the widget info object
     const widgetInfo: WidgetInfo = {
@@ -945,9 +878,6 @@ export class WidgetStateManager {
     // Try to parse as boolean first
     if (paramValue === "true" || paramValue === "false") {
       const boolValue = paramValue === "true"
-      console.log(
-        `[WidgetStateManager] Setting bool value for widget ${widgetId}: ${boolValue}`
-      )
       this.setBoolValue(widgetInfo, boolValue, { fromUi: false }, undefined)
     }
     // Try to parse as number
@@ -956,14 +886,8 @@ export class WidgetStateManager {
       if (!isNaN(numValue)) {
         // Check if it's an integer or float
         if (Number.isInteger(numValue)) {
-          console.log(
-            `[WidgetStateManager] Setting int value for widget ${widgetId}: ${numValue}`
-          )
           this.setIntValue(widgetInfo, numValue, { fromUi: false }, undefined)
         } else {
-          console.log(
-            `[WidgetStateManager] Setting double value for widget ${widgetId}: ${numValue}`
-          )
           this.setDoubleValue(
             widgetInfo,
             numValue,
@@ -973,9 +897,6 @@ export class WidgetStateManager {
         }
       } else {
         // It's a string
-        console.log(
-          `[WidgetStateManager] Setting string value for widget ${widgetId}: ${paramValue}`
-        )
         this.setStringValue(
           widgetInfo,
           paramValue,
@@ -983,42 +904,6 @@ export class WidgetStateManager {
           undefined
         )
       }
-    }
-  }
-
-  /**
-   * Deserialize a query parameter value from string to its appropriate type.
-   */
-  private deserializeQueryParamValue(value: string): any {
-    // Try to parse as boolean
-    if (value === "true") return true
-    if (value === "false") return false
-
-    // Try to parse as number
-    const numValue = Number(value)
-    if (!isNaN(numValue) && value.trim() !== "") {
-      return numValue
-    }
-
-    // Return as string
-    return value
-  }
-
-  /**
-   * Set the appropriate value field in a WidgetState based on the value type.
-   */
-  private setWidgetStateValue(widgetState: WidgetState, value: any): void {
-    if (typeof value === "boolean") {
-      widgetState.boolValue = value
-    } else if (typeof value === "number") {
-      // Check if it's an integer or float
-      if (Number.isInteger(value)) {
-        widgetState.intValue = value
-      } else {
-        widgetState.doubleValue = value
-      }
-    } else if (typeof value === "string") {
-      widgetState.stringValue = value
     }
   }
 

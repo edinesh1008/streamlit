@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-import React, {
-  memo,
-  ReactElement,
-  useCallback,
-  useState,
-  useEffect,
-} from "react"
+import React, { memo, ReactElement, useCallback, useState } from "react"
 
 import uniqueId from "lodash/uniqueId"
 import { Input as UIInput } from "baseui/input"
@@ -29,6 +23,11 @@ import { TextInput as TextInputProto } from "@streamlit/protobuf"
 
 import useOnInputChange from "~lib/hooks/useOnInputChange"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
+import {
+  useBasicWidgetState,
+  ValueWithSource,
+} from "~lib/hooks/useBasicWidgetState"
+import useUpdateUiValue from "~lib/hooks/useUpdateUiValue"
 import useSubmitFormViaEnterKey from "~lib/hooks/useSubmitFormViaEnterKey"
 import InputInstructions from "~lib/components/shared/InputInstructions/InputInstructions"
 import {
@@ -57,12 +56,13 @@ function TextInput({
   widgetMgr,
   fragmentId,
 }: Props): ReactElement {
-  // Get initial value like NumberInput does - at render time, not in useState
-  const initialValue =
-    widgetMgr.getStringValue(element) ?? element.default ?? null
-
-  const [uiValue, setUiValue] = useState<string | null>(initialValue)
-  const [value, setValue] = useState<string | null>(initialValue)
+  /**
+   * The value specified by the user via the UI. If the user didn't touch this
+   * widget's UI, the default value is used.
+   */
+  const [uiValue, setUiValue] = useState<string | null>(
+    () => getStateFromWidgetMgr(widgetMgr, element) ?? null
+  )
 
   const [width, elementRef] = useCalculatedWidth()
 
@@ -71,29 +71,26 @@ function TextInput({
    */
   const [dirty, setDirty] = useState(false)
 
-  // Handle setValue events from backend
-  useEffect(() => {
-    if (!element.setValue) return
-    element.setValue = false // Clear "event"
-    const newValue = element.value ?? null
-    setValue(newValue)
-    setUiValue(newValue)
-  }, [element])
-
-  // Update widget manager when value changes
-  const updateValue = useCallback(
-    (newValue: string | null, fromUi: boolean) => {
-      widgetMgr.setStringValue(element, newValue, { fromUi }, fragmentId)
-    },
-    [widgetMgr, element, fragmentId]
-  )
-
   const onFormCleared = useCallback(() => {
-    const defaultValue = element.default ?? null
-    setUiValue(defaultValue)
-    setValue(defaultValue)
+    setUiValue(element.default ?? null)
     setDirty(true)
   }, [element.default])
+
+  const [value, setValueWithSource] = useBasicWidgetState<
+    string | null,
+    TextInputProto
+  >({
+    getStateFromWidgetMgr,
+    getDefaultStateFromProto,
+    getCurrStateFromProto,
+    updateWidgetMgrState,
+    element,
+    widgetMgr,
+    fragmentId,
+    onFormCleared,
+  })
+
+  useUpdateUiValue(value, uiValue, setUiValue, dirty)
 
   /**
    * Whether the input is currently focused.
@@ -106,9 +103,8 @@ function TextInput({
 
   const commitWidgetValue = useCallback((): void => {
     setDirty(false)
-    setValue(uiValue)
-    updateValue(uiValue, true)
-  }, [uiValue, updateValue])
+    setValueWithSource({ value: uiValue, fromUi: true })
+  }, [uiValue, setValueWithSource])
 
   // Show "Please enter" instructions if in a form & allowed, or not in form and state is dirty.
   const allowEnterToSubmit = isInForm({ formId })
@@ -135,6 +131,7 @@ function TextInput({
     maxChars,
     setDirty,
     setUiValue,
+    setValueWithSource,
   })
 
   const onKeyPress = useSubmitFormViaEnterKey(

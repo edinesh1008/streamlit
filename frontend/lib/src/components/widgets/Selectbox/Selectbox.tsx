@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { FC, memo, useCallback, useState, useEffect } from "react"
+import React, { FC, memo, useCallback } from "react"
 
 import { Selectbox as SelectboxProto } from "@streamlit/protobuf"
 
@@ -88,37 +88,24 @@ const Selectbox: FC<Props> = ({
     placeholder,
     acceptNewOptions,
   } = element
-
-  // Get initial value like NumberInput does - at render time, not in useState
-  const initialValue =
-    widgetMgr.getStringValue(element) ??
-    (options.length === 0 || isNullOrUndefined(element.default)
-      ? null
-      : options[element.default])
-
-  const [value, setValueWithSource] = useState<SelectboxValue>(initialValue)
-
-  // Handle setValue events from backend
-  useEffect(() => {
-    if (!element.setValue) return
-    element.setValue = false // Clear "event"
-    setValueWithSource(element.rawValue ?? null)
-  }, [element])
-
-  // Update widget manager when value changes
-  const updateValue = useCallback(
-    (newValue: SelectboxValue, fromUi: boolean) => {
-      widgetMgr.setStringValue(element, newValue, { fromUi }, fragmentId)
-    },
-    [widgetMgr, element, fragmentId]
-  )
+  const [value, setValueWithSource] = useBasicWidgetState<
+    SelectboxValue,
+    SelectboxProto
+  >({
+    getStateFromWidgetMgr,
+    getDefaultStateFromProto,
+    getCurrStateFromProto,
+    updateWidgetMgrState,
+    element,
+    widgetMgr,
+    fragmentId,
+  })
 
   const onChange = useCallback(
     (valueArg: SelectboxValue) => {
-      setValueWithSource(valueArg)
-      updateValue(valueArg, true)
+      setValueWithSource({ value: valueArg, fromUi: true })
     },
-    [setValueWithSource, updateValue]
+    [setValueWithSource]
   )
 
   const clearable = isNullOrUndefined(element.default) && !disabled

@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import math
 from typing import Any
 from urllib import parse
 
@@ -34,19 +35,32 @@ def serialize_value(value: Any) -> str:
 
     Raises
     ------
-        NotImplementedError: If the value type is not supported
+        ValueError: If the value type is not supported or serialization fails
     """
+    if value is None:
+        return ""
+
     if isinstance(value, str):
-        return value
+        # URL encode the string to handle special characters
+        return parse.quote(value, safe="")
     if isinstance(value, bool):
         # Handle bool before int since bool is a subclass of int
         return "true" if value else "false"
     if isinstance(value, (int, float)):
+        # Validate numeric values
+        if isinstance(value, float) and math.isnan(value):
+            raise ValueError("Cannot serialize NaN value to query parameter")
         return str(value)
-    raise NotImplementedError(
+
+    raise ValueError(
         f"Query parameter serialization not supported for type {type(value).__name__}. "
         f"Supported types: str, int, float, bool"
     )
+
+
+def _raise_nan_error() -> None:
+    """Raise ValueError for NaN values."""
+    raise ValueError("NaN values are not supported")
 
 
 def deserialize_value(value_str: str, target_type: type[Any]) -> Any:
@@ -62,30 +76,38 @@ def deserialize_value(value_str: str, target_type: type[Any]) -> Any:
 
     Raises
     ------
-        NotImplementedError: If the target type is not supported or deserialization fails
+        ValueError: If the target type is not supported or deserialization fails
     """
+    if not value_str:
+        return None
+
     if target_type is str:
-        return value_str
+        # URL decode the string to handle special characters
+        return parse.unquote(value_str)
     if target_type is bool:
-        if value_str.lower() == "true":
+        lower_value = value_str.lower()
+        if lower_value == "true":
             return True
-        if value_str.lower() == "false":
+        if lower_value == "false":
             return False
-        raise NotImplementedError(
+        raise ValueError(
             f"Cannot deserialize '{value_str}' to bool. Expected 'true' or 'false'."
         )
     if target_type is int:
         try:
             return int(value_str)
-        except ValueError:
-            raise NotImplementedError(f"Cannot deserialize '{value_str}' to int.")
+        except ValueError as e:
+            raise ValueError(f"Cannot deserialize '{value_str}' to int: {e}")
     elif target_type is float:
         try:
-            return float(value_str)
-        except ValueError:
-            raise NotImplementedError(f"Cannot deserialize '{value_str}' to float.")
+            value = float(value_str)
+            if math.isnan(value):
+                _raise_nan_error()
+            return value
+        except ValueError as e:
+            raise ValueError(f"Cannot deserialize '{value_str}' to float: {e}")
     else:
-        raise NotImplementedError(
+        raise ValueError(
             f"Query parameter deserialization not supported for type {target_type.__name__}. "
             f"Supported types: str, int, float, bool"
         )
@@ -100,19 +122,34 @@ def parse_query_string(query_string: str) -> dict[str, str]:
     Returns
     -------
         Dictionary mapping parameter names to their string values
+
+    Raises
+    ------
+        ValueError: If the query string is malformed
     """
+    if not query_string:
+        return {}
+
     # Remove leading '?' if present
     query_string = query_string.removeprefix("?")
 
-    # Parse the query string
-    params = parse.parse_qs(query_string, keep_blank_values=True)
+    try:
+        # Parse the query string
+        params = parse.parse_qs(
+            query_string, keep_blank_values=True, strict_parsing=True
+        )
 
-    # Convert to simple dict (take last value if multiple)
-    result = {}
-    for key, values in params.items():
-        if values:
-            result[key] = values[-1]
-        else:
-            result[key] = ""
+        # Convert to simple dict (take last value if multiple)
+        result = {}
+        for key, values in params.items():
+            # Validate parameter names
+            if not key or len(key) > 100:  # Reasonable limit
+                continue
+            if values:
+                result[key] = values[-1]
+            else:
+                result[key] = ""
 
-    return result
+        return result
+    except ValueError as e:
+        raise ValueError(f"Malformed query string: {e}")
