@@ -384,6 +384,15 @@ class CheckboxMixin:
             checkbox_proto.value = checkbox_state.value
             checkbox_proto.set_value = True
 
+        # Debug logging for query param widgets
+        if key and key.startswith("?"):
+            import streamlit.logger
+
+            _LOGGER = streamlit.logger.get_logger(__name__)
+            _LOGGER.info(
+                f"[Checkbox] Widget {checkbox_proto.id} key={key} value_changed={checkbox_state.value_changed} value={checkbox_state.value} set_value={getattr(checkbox_proto, 'set_value', False)}"
+            )
+
         self.dg._enqueue("checkbox", checkbox_proto, layout_config=layout_config)
         return checkbox_state.value
 

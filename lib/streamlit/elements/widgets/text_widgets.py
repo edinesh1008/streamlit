@@ -401,6 +401,15 @@ class TextWidgetsMixin:
                 text_input_proto.value = widget_state.value
             text_input_proto.set_value = True
 
+        # Debug logging for query param widgets
+        if key and key.startswith("?"):
+            import streamlit.logger
+
+            _LOGGER = streamlit.logger.get_logger(__name__)
+            _LOGGER.info(
+                f"[TextInput] Widget {text_input_proto.id} key={key} value_changed={widget_state.value_changed} value={widget_state.value} set_value={getattr(text_input_proto, 'set_value', False)}"
+            )
+
         validate_width(width)
         layout_config = LayoutConfig(width=width)
 
@@ -694,6 +703,15 @@ class TextWidgetsMixin:
             if widget_state.value is not None:
                 text_area_proto.value = widget_state.value
             text_area_proto.set_value = True
+
+        # Debug logging for query param widgets
+        if key and key.startswith("?"):
+            import streamlit.logger
+
+            _LOGGER = streamlit.logger.get_logger(__name__)
+            _LOGGER.info(
+                f"[TextArea] Widget {element_id} key={key} value_changed={widget_state.value_changed} value={widget_state.value} set_value={getattr(text_area_proto, 'set_value', False)}"
+            )
 
         validate_width(width)
         if height is not None:

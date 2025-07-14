@@ -650,6 +650,15 @@ class NumberInputMixin:
                 number_input_proto.value = widget_state.value
             number_input_proto.set_value = True
 
+        # Debug logging for query param widgets
+        if key and key.startswith("?"):
+            import streamlit.logger
+
+            _LOGGER = streamlit.logger.get_logger(__name__)
+            _LOGGER.info(
+                f"[NumberInput] Widget {number_input_proto.id} key={key} value_changed={widget_state.value_changed} value={widget_state.value} set_value={getattr(number_input_proto, 'set_value', False)}"
+            )
+
         validate_width(width)
         layout_config = LayoutConfig(width=width)
 

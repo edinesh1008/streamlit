@@ -1250,6 +1250,12 @@ export class App extends PureComponent<Props, State> {
     const initialize = newSessionProto.initialize as Initialize
     const config = newSessionProto.config as Config
 
+    console.log("[App] handleInitialization called")
+    console.log("[App] initialize:", initialize)
+    console.log("[App] initial_query_string:", initialize.initialQueryString)
+    console.log("[App] window.location.search:", window.location.search)
+    console.log("[App] window.location.href:", window.location.href)
+
     this.sessionInfo.setCurrent(
       SessionInfo.propsFromNewSessionMessage(newSessionProto)
     )
@@ -1263,6 +1269,20 @@ export class App extends PureComponent<Props, State> {
     // Protobuf typing cannot handle complex types, so we need to cast to what
     // we know it should be
     this.handleSessionStatusChanged(initialize.sessionStatus as SessionStatus)
+
+    // Hydrate widgets from initial query parameters if provided
+    if (initialize.initialQueryString) {
+      console.log(
+        "[App] Hydrating widgets with query string:",
+        initialize.initialQueryString
+      )
+      // Frontend hydration as fallback for widgets that weren't hydrated by backend
+      this.widgetMgr.hydrateWidgetsFromQueryParams(
+        initialize.initialQueryString
+      )
+    } else {
+      console.log("[App] No initial query string provided")
+    }
   }
 
   /**

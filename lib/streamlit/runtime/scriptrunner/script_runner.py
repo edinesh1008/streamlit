@@ -18,6 +18,7 @@ import gc
 import sys
 import threading
 import types
+from collections.abc import Generator
 from contextlib import contextmanager
 from enum import Enum
 from timeit import default_timer as timer
@@ -177,6 +178,7 @@ class ScriptRunner:
         user_info: dict[str, str | bool | None],
         fragment_storage: FragmentStorage,
         pages_manager: PagesManager,
+        hydrate_widgets_callback: Callable[[], None] | None = None,
     ) -> None:
         """Initialize the ScriptRunner.
 
@@ -215,6 +217,9 @@ class ScriptRunner:
 
         fragment_storage
             The AppSession's FragmentStorage instance.
+
+        hydrate_widgets_callback
+            Optional callback to hydrate widgets from query params on first run.
         """
         self._session_id = session_id
         self._main_script_path = main_script_path
@@ -229,6 +234,9 @@ class ScriptRunner:
         self._pages_manager = pages_manager
         self._requests = ScriptRequests()
         self._requests.request_rerun(initial_rerun_data)
+
+        # Track if this is the first run for hydration
+        self._is_first_run = True
 
         self.on_event = Signal(
             doc="""Emitted when a ScriptRunnerEvent occurs.
@@ -620,6 +628,11 @@ class ScriptRunner:
                         )
 
                     ctx.on_script_start()
+
+                    # Hydrate widgets from query params on first run
+                    if self._is_first_run:
+                        self._is_first_run = False
+                        # Hydration is now handled during widget registration
 
                     if rerun_data.fragment_id_queue:
                         for fragment_id in rerun_data.fragment_id_queue:

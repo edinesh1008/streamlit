@@ -587,6 +587,15 @@ class SelectboxMixin:
                 selectbox_proto.raw_value = serialized_value
             selectbox_proto.set_value = True
 
+        # Debug logging for query param widgets
+        if key and key.startswith("?"):
+            import streamlit.logger
+
+            _LOGGER = streamlit.logger.get_logger(__name__)
+            _LOGGER.info(
+                f"[Selectbox] Widget {selectbox_proto.id} key={key} value_changed={widget_state.value_changed} value={widget_state.value} set_value={getattr(selectbox_proto, 'set_value', False)}"
+            )
+
         validate_width(width)
         layout_config = LayoutConfig(width=width)
 

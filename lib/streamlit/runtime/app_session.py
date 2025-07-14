@@ -173,6 +173,9 @@ class AppSession:
 
         _LOGGER.debug("AppSession initialized (id=%s)", self.id)
 
+        # Store the initial query string for hydrating widgets
+        self._initial_query_string: str | None = None
+
     def __del__(self) -> None:
         """Ensure that we call shutdown() when an AppSession is garbage collected."""
         self.shutdown()
@@ -432,6 +435,43 @@ class AppSession:
     def clear_user_info(self) -> None:
         """Clear the user info for this session."""
         self._user_info.clear()
+
+    def set_initial_query_string(self, query_string: str) -> None:
+        """Set the initial query string from the browser.
+
+        This should be called once when the websocket connection is established.
+        """
+        self._initial_query_string = query_string
+        _LOGGER.info("Set initial query string: %s", query_string)
+
+        # Also store it in session state for widget registration
+        self._session_state._initial_query_string = query_string
+        self._session_state._initial_query_params = None
+        _LOGGER.info("Set initial query string in session state: %s", query_string)
+
+    def _hydrate_widgets_from_query_params(self) -> None:
+        """Hydrate widget values from the initial query parameters.
+
+        This should be called on the first script run to initialize widgets
+        that have keys starting with '?' from the URL query parameters.
+        """
+        if not self._initial_query_string:
+            return
+
+        from streamlit.runtime.state.auto_qs import parse_query_string
+
+        try:
+            query_params = parse_query_string(self._initial_query_string)
+            _LOGGER.debug("Hydrating widgets from query params: %s", query_params)
+
+            # Hydrate widgets in session state
+            self._session_state.hydrate_widgets_from_query_params(query_params)
+
+            # Clear the initial query string so we don't hydrate again
+            self._initial_query_string = None
+
+        except Exception as e:
+            _LOGGER.warning("Failed to parse initial query string: %s", e)
 
     def _create_scriptrunner(self, initial_rerun_data: RerunData) -> None:
         """Create and run a new ScriptRunner with the given RerunData."""
@@ -763,6 +803,16 @@ class AppSession:
 
         imsg.is_hello = self._script_data.is_hello
         imsg.session_id = self.id
+
+        # Include initial query string for frontend hydration
+        if self._initial_query_string:
+            imsg.initial_query_string = self._initial_query_string
+            _LOGGER.info(
+                "Including initial_query_string in NewSession: %s",
+                self._initial_query_string,
+            )
+        else:
+            _LOGGER.info("No initial_query_string to include in NewSession")
 
         return msg
 

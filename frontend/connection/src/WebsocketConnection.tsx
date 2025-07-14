@@ -398,13 +398,19 @@ export class WebsocketConnection {
       WEBSOCKET_STREAM_PATH
     )
 
+    // Add the current page's query string to the WebSocket URI
+    const currentQueryString = window.location.search
+    const wsUriWithQuery = currentQueryString
+      ? `${uri}${currentQueryString}`
+      : uri
+
     if (notNullOrUndefined(this.websocket)) {
       // This should never happen. We set the websocket to null in both FSM
       // nodes that lead to this one.
       throw new Error("Websocket already exists")
     }
 
-    LOG.info("creating WebSocket")
+    LOG.info("creating WebSocket", { uri: wsUriWithQuery })
 
     // NOTE: We repurpose the Sec-WebSocket-Protocol header (set via the second
     // parameter to the WebSocket constructor) here in a slightly unfortunate
@@ -419,10 +425,13 @@ export class WebsocketConnection {
     // respond with a selected subprotocol to use. We don't want that reply to
     // contain sensitive data, so we just hard-code it to "streamlit".
     const sessionTokens = await this.getSessionTokens()
-    this.websocket = new WebSocket(uri, ["streamlit", ...sessionTokens])
+    this.websocket = new WebSocket(wsUriWithQuery, [
+      "streamlit",
+      ...sessionTokens,
+    ])
     this.websocket.binaryType = "arraybuffer"
 
-    this.setConnectionTimeout(uri)
+    this.setConnectionTimeout(wsUriWithQuery)
 
     const localWebsocket = this.websocket
     const checkWebsocket = (): boolean => localWebsocket === this.websocket

@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import React, { memo, ReactElement, useCallback } from "react"
+import React, {
+  memo,
+  ReactElement,
+  useCallback,
+  useState,
+  useEffect,
+} from "react"
 
 import {
   LABEL_PLACEMENT,
@@ -53,25 +59,34 @@ function Checkbox({
   widgetMgr,
   fragmentId,
 }: Readonly<Props>): ReactElement {
-  const [value, setValueWithSource] = useBasicWidgetState<
-    boolean,
-    CheckboxProto
-  >({
-    getStateFromWidgetMgr,
-    getDefaultStateFromProto,
-    getCurrStateFromProto,
-    updateWidgetMgrState,
-    element,
-    widgetMgr,
-    fragmentId,
-  })
+  // Get initial value like NumberInput does - at render time, not in useState
+  const initialValue =
+    widgetMgr.getBoolValue(element) ?? element.default ?? false
+
+  const [value, setValueWithSource] = useState<boolean>(initialValue)
+
+  // Handle setValue events from backend
+  useEffect(() => {
+    if (!element.setValue) return
+    element.setValue = false // Clear "event"
+    setValueWithSource(element.value ?? false)
+  }, [element])
+
+  // Update widget manager when value changes
+  const updateValue = useCallback(
+    (newValue: boolean, fromUi: boolean) => {
+      widgetMgr.setBoolValue(element, newValue, { fromUi }, fragmentId)
+    },
+    [widgetMgr, element, fragmentId]
+  )
 
   const onChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>): void => {
-      setValueWithSource({ value: e.target.checked, fromUi: true })
+      const newValue = e.target.checked
+      setValueWithSource(newValue)
+      updateValue(newValue, true)
     },
-    // ESLint complains if we remove this unnecessary dep.
-    [setValueWithSource]
+    [setValueWithSource, updateValue]
   )
 
   const theme = useEmotionTheme()
@@ -240,7 +255,7 @@ function getStateFromWidgetMgr(
 }
 
 function getDefaultStateFromProto(element: CheckboxProto): boolean {
-  return element.default ?? null
+  return element.default ?? false
 }
 
 function getCurrStateFromProto(element: CheckboxProto): boolean {

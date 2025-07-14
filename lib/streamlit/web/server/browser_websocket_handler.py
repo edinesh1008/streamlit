@@ -180,10 +180,18 @@ class BrowserWebSocketHandler(WebSocketHandler, SessionClient):
             # extract it from the Sec-Websocket-Protocol header.
             pass
 
+        # Extract query string from the HTTP request
+        query_string = self.request.query if self.request.query else ""
+        _LOGGER.info(
+            "WebSocket connection - query string from request: %s", query_string
+        )
+        _LOGGER.info("Full request URI: %s", self.request.uri)
+
         self._session_id = self._runtime.connect_session(
             client=self,
             user_info=user_info,
             existing_session_id=existing_session_id,
+            initial_query_string=query_string,
         )
         return None
 

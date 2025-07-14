@@ -93,6 +93,10 @@ message Initialize {
 
   // True if the command used to start this app was `streamlit hello`.
   bool is_hello = 7;
+
+  // The initial query string from the browser URL at connection time.
+  // Used for query param widget binding.
+  string initial_query_string = 8;
 }
 
 // App configuration options, initialized mainly from the

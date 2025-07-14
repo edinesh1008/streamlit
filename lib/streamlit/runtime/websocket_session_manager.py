@@ -66,6 +66,7 @@ class WebsocketSessionManager(SessionManager):
         user_info: dict[str, str | bool | None],
         existing_session_id: str | None = None,
         session_id_override: str | None = None,
+        initial_query_string: str | None = None,
     ) -> str:
         if existing_session_id and session_id_override:
             raise RuntimeError(
@@ -89,6 +90,10 @@ class WebsocketSessionManager(SessionManager):
             existing_session = session_info.session
             existing_session.register_file_watchers()
 
+            # Set the initial query string for hydrating widgets on reconnect
+            if initial_query_string:
+                existing_session.set_initial_query_string(initial_query_string)
+
             self._active_session_info_by_id[existing_session.id] = ActiveSessionInfo(
                 client,
                 existing_session,
@@ -106,6 +111,13 @@ class WebsocketSessionManager(SessionManager):
             user_info=user_info,
             session_id_override=session_id_override,
         )
+
+        # Set the initial query string for hydrating widgets
+        if initial_query_string:
+            _LOGGER.info("Setting initial query string: %s", initial_query_string)
+            session.set_initial_query_string(initial_query_string)
+        else:
+            _LOGGER.info("No initial query string provided to session manager")
 
         _LOGGER.debug(
             "Created new session for client %s. Session ID: %s", id(client), session.id
