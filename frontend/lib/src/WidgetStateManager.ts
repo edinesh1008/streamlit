@@ -849,8 +849,9 @@ export class WidgetStateManager {
 
     // Store the query parameters for later hydration
     this.initialQueryParams = new Map<string, string>()
+    const initialParams = this.initialQueryParams
     queryParams.forEach((value, key) => {
-      this.initialQueryParams.set(key, value)
+      initialParams.set(key, value)
     })
 
     // Try to hydrate any widgets that have already been tracked
