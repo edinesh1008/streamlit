@@ -50,6 +50,7 @@ class BrowserWebSocketHandlerTest(ServerTestCase):
                 client=ANY,
                 user_info=ANY,
                 existing_session_id=None,
+                initial_query_string="",
             )
 
     @tornado.testing.gen_test
@@ -67,6 +68,7 @@ class BrowserWebSocketHandlerTest(ServerTestCase):
                 client=ANY,
                 user_info=ANY,
                 existing_session_id="session_id",
+                initial_query_string="",
             )
 
     @tornado.testing.gen_test

@@ -69,6 +69,7 @@ class MockSessionManager(SessionManager):
         user_info: dict[str, str | None],
         existing_session_id: str | None = None,
         session_id_override: str | None = None,
+        initial_query_string: str | None = None,
     ) -> str:
         with (
             mock.patch(
@@ -86,6 +87,10 @@ class MockSessionManager(SessionManager):
                 user_info=user_info,
                 session_id_override=session_id_override,
             )
+
+        # Set the initial query string for hydrating widgets
+        if initial_query_string:
+            session.set_initial_query_string(initial_query_string)
 
         assert session.id not in self._session_info_by_id, (
             f"session.id '{session.id}' registered multiple times!"

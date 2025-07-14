@@ -239,6 +239,7 @@ class SessionManager(Protocol):
         user_info: dict[str, str | bool | None],
         existing_session_id: str | None = None,
         session_id_override: str | None = None,
+        initial_query_string: str | None = None,
     ) -> str:
         """Create a new session or connect to an existing one.
 
@@ -268,6 +269,9 @@ class SessionManager(Protocol):
             wants to tie the lifecycle of a Streamlit session to some other session-like
             object that it manages. Only one of existing_session_id and
             session_id_override should be set.
+        initial_query_string
+            The initial query string from the browser URL, used for hydrating widgets
+            with query parameter values. Optional.
 
         Returns
         -------

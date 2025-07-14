@@ -128,7 +128,7 @@ class RuntimeTest(RuntimeTestCase):
         await self.runtime.start()
 
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
         assert self.runtime.state == RuntimeState.ONE_OR_MORE_SESSIONS_CONNECTED
 
@@ -148,6 +148,7 @@ class RuntimeTest(RuntimeTestCase):
                 user_info=MagicMock(),
                 existing_session_id="existing_session_id",
                 session_id_override="session_id_override",
+                initial_query_string=None,
             )
 
     async def test_connect_session_existing_session_id_plumbing(self):
@@ -165,6 +166,7 @@ class RuntimeTest(RuntimeTestCase):
                 client=client,
                 user_info=user_info,
                 existing_session_id=existing_session_id,
+                initial_query_string=None,
             )
 
             patched_connect_session.assert_called_with(
@@ -173,6 +175,7 @@ class RuntimeTest(RuntimeTestCase):
                 user_info=user_info,
                 existing_session_id=existing_session_id,
                 session_id_override=None,
+                initial_query_string=None,
             )
 
     async def test_connect_session_session_id_override_plumbing(self):
@@ -190,6 +193,7 @@ class RuntimeTest(RuntimeTestCase):
                 client=client,
                 user_info=user_info,
                 session_id_override=session_id_override,
+                initial_query_string=None,
             )
 
             patched_connect_session.assert_called_with(
@@ -198,6 +202,7 @@ class RuntimeTest(RuntimeTestCase):
                 user_info=user_info,
                 existing_session_id=None,
                 session_id_override=session_id_override,
+                initial_query_string=None,
             )
 
     @patch("streamlit.runtime.runtime._LOGGER")
@@ -218,6 +223,7 @@ class RuntimeTest(RuntimeTestCase):
                 user_info=user_info,
                 existing_session_id=None,
                 session_id_override=None,
+                initial_query_string=None,
             )
             patched_logger.warning.assert_called_with(
                 "create_session is deprecated! Use connect_session instead."
@@ -228,7 +234,7 @@ class RuntimeTest(RuntimeTestCase):
         await self.runtime.start()
 
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
 
         with (
@@ -247,7 +253,7 @@ class RuntimeTest(RuntimeTestCase):
         await self.runtime.start()
 
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
 
         with (
@@ -271,6 +277,7 @@ class RuntimeTest(RuntimeTestCase):
             session_id = self.runtime.connect_session(
                 client=MockSessionClient(),
                 user_info=MagicMock(),
+                initial_query_string=None,
             )
 
             assert self.runtime.state == RuntimeState.ONE_OR_MORE_SESSIONS_CONNECTED
@@ -296,7 +303,7 @@ class RuntimeTest(RuntimeTestCase):
 
         # Close a valid session twice
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
         self.runtime.disconnect_session(session_id)
         self.runtime.disconnect_session(session_id)
@@ -310,7 +317,7 @@ class RuntimeTest(RuntimeTestCase):
 
         # Close a valid session twice
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
         self.runtime.close_session(session_id)
         self.runtime.close_session(session_id)
@@ -319,7 +326,7 @@ class RuntimeTest(RuntimeTestCase):
         """`is_active_session` should work as expected."""
         await self.runtime.start()
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
         assert self.runtime.is_active_session(session_id)
         assert not self.runtime.is_active_session("not_a_session_id")
@@ -334,7 +341,9 @@ class RuntimeTest(RuntimeTestCase):
         # Create a few sessions
         app_sessions = []
         for _ in range(3):
-            session_id = self.runtime.connect_session(MockSessionClient(), MagicMock())
+            session_id = self.runtime.connect_session(
+                MockSessionClient(), MagicMock(), initial_query_string=None
+            )
             session_info = self.runtime._session_mgr.get_active_session_info(session_id)
             assert session_info is not None
             app_session = session_info.session
@@ -357,7 +366,7 @@ class RuntimeTest(RuntimeTestCase):
         """BackMsgs should be delivered to the appropriate AppSession."""
         await self.runtime.start()
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
 
         back_msg = MagicMock()
@@ -383,7 +392,7 @@ class RuntimeTest(RuntimeTestCase):
         """
         await self.runtime.start()
         session_id = self.runtime.connect_session(
-            client=MockSessionClient(), user_info=MagicMock()
+            client=MockSessionClient(), user_info=MagicMock(), initial_query_string=None
         )
 
         exception = MagicMock()
@@ -409,7 +418,9 @@ class RuntimeTest(RuntimeTestCase):
         await self.tick_runtime_loop()
 
         with pytest.raises(RuntimeStoppedError):
-            self.runtime.connect_session(MagicMock(), MagicMock())
+            self.runtime.connect_session(
+                MagicMock(), MagicMock(), initial_query_string=None
+            )
 
     async def test_handle_backmsg_after_stop(self):
         """After Runtime.stop is called, `handle_backmsg` is an error."""
@@ -427,7 +438,9 @@ class RuntimeTest(RuntimeTestCase):
         await self.runtime.start()
 
         client = MagicMock(spec=SessionClient)
-        session_id = self.runtime.connect_session(client, MagicMock())
+        session_id = self.runtime.connect_session(
+            client, MagicMock(), initial_query_string=None
+        )
 
         # Send the client a message. All should be well.
         self.enqueue_forward_msg(session_id, create_dataframe_msg([1, 2, 3]))
@@ -455,7 +468,9 @@ class RuntimeTest(RuntimeTestCase):
         await self.runtime.start()
 
         client = MockSessionClient()
-        session_id = self.runtime.connect_session(client=client, user_info=MagicMock())
+        session_id = self.runtime.connect_session(
+            client=client, user_info=MagicMock(), initial_query_string=None
+        )
 
         for _ in range(100):
             self.enqueue_forward_msg(session_id, create_dataframe_msg([1, 2, 3]))
@@ -469,7 +484,9 @@ class RuntimeTest(RuntimeTestCase):
         await self.runtime.start()
 
         client = MockSessionClient()
-        session_id = self.runtime.connect_session(client=client, user_info=MagicMock())
+        session_id = self.runtime.connect_session(
+            client=client, user_info=MagicMock(), initial_query_string=None
+        )
 
         # Create a message and ensure its hash is unset; we're testing
         # that _send_message adds the hash before it goes out.
