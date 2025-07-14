@@ -178,7 +178,6 @@ class ScriptRunner:
         user_info: dict[str, str | bool | None],
         fragment_storage: FragmentStorage,
         pages_manager: PagesManager,
-        hydrate_widgets_callback: Callable[[], None] | None = None,
     ) -> None:
         """Initialize the ScriptRunner.
 
@@ -217,9 +216,6 @@ class ScriptRunner:
 
         fragment_storage
             The AppSession's FragmentStorage instance.
-
-        hydrate_widgets_callback
-            Optional callback to hydrate widgets from query params on first run.
         """
         self._session_id = session_id
         self._main_script_path = main_script_path
