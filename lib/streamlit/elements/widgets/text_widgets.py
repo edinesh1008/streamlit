@@ -405,9 +405,14 @@ class TextWidgetsMixin:
         if key and key.startswith("?"):
             import streamlit.logger
 
-            _LOGGER = streamlit.logger.get_logger(__name__)
-            _LOGGER.info(
-                f"[TextInput] Widget {text_input_proto.id} key={key} value_changed={widget_state.value_changed} value={widget_state.value} set_value={getattr(text_input_proto, 'set_value', False)}"
+            logger = streamlit.logger.get_logger(__name__)
+            logger.info(
+                "[TextInput] Widget %s key=%s value_changed=%s value=%s set_value=%s",
+                text_input_proto.id,
+                key,
+                widget_state.value_changed,
+                widget_state.value,
+                getattr(text_input_proto, "set_value", False),
             )
 
         validate_width(width)
@@ -708,9 +713,14 @@ class TextWidgetsMixin:
         if key and key.startswith("?"):
             import streamlit.logger
 
-            _LOGGER = streamlit.logger.get_logger(__name__)
-            _LOGGER.info(
-                f"[TextArea] Widget {element_id} key={key} value_changed={widget_state.value_changed} value={widget_state.value} set_value={getattr(text_area_proto, 'set_value', False)}"
+            logger = streamlit.logger.get_logger(__name__)
+            logger.info(
+                "[TextArea] Widget %s key=%s value_changed=%s value=%s set_value=%s",
+                element_id,
+                key,
+                widget_state.value_changed,
+                widget_state.value,
+                getattr(text_area_proto, "set_value", False),
             )
 
         validate_width(width)

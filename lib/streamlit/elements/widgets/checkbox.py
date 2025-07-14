@@ -388,9 +388,14 @@ class CheckboxMixin:
         if key and key.startswith("?"):
             import streamlit.logger
 
-            _LOGGER = streamlit.logger.get_logger(__name__)
-            _LOGGER.info(
-                f"[Checkbox] Widget {checkbox_proto.id} key={key} value_changed={checkbox_state.value_changed} value={checkbox_state.value} set_value={getattr(checkbox_proto, 'set_value', False)}"
+            logger = streamlit.logger.get_logger(__name__)
+            logger.info(
+                "[Checkbox] Widget %s key=%s value_changed=%s value=%s set_value=%s",
+                checkbox_proto.id,
+                key,
+                checkbox_state.value_changed,
+                checkbox_state.value,
+                getattr(checkbox_proto, "set_value", False),
             )
 
         self.dg._enqueue("checkbox", checkbox_proto, layout_config=layout_config)

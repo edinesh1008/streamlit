@@ -41,7 +41,7 @@ def serialize_value(value: Any) -> str:
     if isinstance(value, bool):
         # Handle bool before int since bool is a subclass of int
         return "true" if value else "false"
-    if isinstance(value, int) or isinstance(value, float):
+    if isinstance(value, (int, float)):
         return str(value)
     raise NotImplementedError(
         f"Query parameter serialization not supported for type {type(value).__name__}. "

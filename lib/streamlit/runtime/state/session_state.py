@@ -725,17 +725,22 @@ class SessionState:
         # Import logger at the top level to avoid UnboundLocalError
         import streamlit.logger
 
-        _LOGGER = streamlit.logger.get_logger(__name__)
+        logger = streamlit.logger.get_logger(__name__)
 
         # Check if we already have a hydrated value from query params
         hydrated_value = None
-        if is_query_param_widget and query_param_name and user_key is not None:
-            # Check if there's already a hydrated value in session state
-            if user_key in self._new_session_state:
-                hydrated_value = self._new_session_state[user_key]
-                _LOGGER.info(
-                    f"[SessionState] Found existing hydrated value for {user_key}: {hydrated_value}"
-                )
+        if (
+            is_query_param_widget
+            and query_param_name
+            and user_key is not None
+            and user_key in self._new_session_state
+        ):
+            hydrated_value = self._new_session_state[user_key]
+            logger.info(
+                "[SessionState] Found existing hydrated value for %s: %s",
+                user_key,
+                hydrated_value,
+            )
 
         if widget_id not in self and (user_key is None or user_key not in self):
             # This is the first time the widget is registered, so we save its
@@ -750,11 +755,13 @@ class SessionState:
                     parse_query_string,
                 )
 
-                _LOGGER.info(
-                    f"[SessionState] Query param widget: {query_param_name}, widget_already_exists: {widget_already_exists}"
+                logger.info(
+                    "[SessionState] Query param widget: %s, widget_already_exists: %s",
+                    query_param_name,
+                    widget_already_exists,
                 )
-                _LOGGER.info(f"[SessionState] Widget metadata: {metadata}")
-                _LOGGER.info(f"[SessionState] Widget value_type: {metadata.value_type}")
+                logger.info("[SessionState] Widget metadata: %s", metadata)
+                logger.info("[SessionState] Widget value_type: %s", metadata.value_type)
 
                 if not hasattr(self, "_initial_query_params"):
                     self._initial_query_params = None
@@ -763,20 +770,24 @@ class SessionState:
                     self, "_initial_query_string"
                 ):
                     # Parse the initial query string if not already done
-                    _LOGGER.info(
-                        f"[SessionState] Parsing initial query string: {self._initial_query_string}"
+                    logger.info(
+                        "[SessionState] Parsing initial query string: %s",
+                        self._initial_query_string,
                     )
-                    _LOGGER.info(
-                        f"[SessionState] hasattr _initial_query_string: {hasattr(self, '_initial_query_string')}"
+                    logger.info(
+                        "[SessionState] hasattr _initial_query_string: %s",
+                        hasattr(self, "_initial_query_string"),
                     )
-                    _LOGGER.info(
-                        f"[SessionState] _initial_query_string value: {getattr(self, '_initial_query_string', 'NOT_SET')}"
+                    logger.info(
+                        "[SessionState] _initial_query_string value: %s",
+                        getattr(self, "_initial_query_string", "NOT_SET"),
                     )
                     self._initial_query_params = parse_query_string(
                         self._initial_query_string or ""
                     )
-                    _LOGGER.info(
-                        f"[SessionState] Parsed query params: {self._initial_query_params}"
+                    logger.info(
+                        "[SessionState] Parsed query params: %s",
+                        self._initial_query_params,
                     )
 
                 if (
@@ -784,8 +795,10 @@ class SessionState:
                     and query_param_name in self._initial_query_params
                 ):
                     param_value = self._initial_query_params[query_param_name]
-                    _LOGGER.info(
-                        f"[SessionState] Found query param {query_param_name} = {param_value}"
+                    logger.info(
+                        "[SessionState] Found query param %s = %s",
+                        query_param_name,
+                        param_value,
                     )
                     try:
                         # First try to infer the type from the deserializer
@@ -803,8 +816,10 @@ class SessionState:
                             else:
                                 target_type = str
 
-                        _LOGGER.info(
-                            f"[SessionState] Inferred target_type: {target_type} for widget {widget_id}"
+                        logger.info(
+                            "[SessionState] Inferred target_type: %s for widget %s",
+                            target_type,
+                            widget_id,
                         )
 
                         # Deserialize the value from the URL
@@ -814,29 +829,38 @@ class SessionState:
                         # Also set it in session state - this ensures query param value beats default
                         self._new_session_state[query_param_name] = deserialized_value
 
-                        _LOGGER.info(
-                            f"[SessionState] Successfully hydrated widget {widget_id} with value {deserialized_value}"
+                        logger.info(
+                            "[SessionState] Successfully hydrated widget %s with value %s",
+                            widget_id,
+                            deserialized_value,
                         )
 
                     except Exception as e:
                         # If deserialization fails, use the default value
-                        _LOGGER.warning(
-                            f"[SessionState] Failed to deserialize query param {query_param_name}={param_value}: {e}"
+                        logger.warning(
+                            "[SessionState] Failed to deserialize query param %s=%s: %s",
+                            query_param_name,
+                            param_value,
+                            e,
                         )
                         pass
                 elif self._initial_query_params:
-                    _LOGGER.info(
-                        f"[SessionState] Query param {query_param_name} not found in {list(self._initial_query_params.keys())}"
+                    logger.info(
+                        "[SessionState] Query param %s not found in %s",
+                        query_param_name,
+                        list(self._initial_query_params.keys()),
                     )
                 else:
-                    _LOGGER.info("[SessionState] No initial query params available")
+                    logger.info("[SessionState] No initial query params available")
 
             self._new_widget_state.set_from_value(widget_id, initial_widget_value)
 
         # If we have a hydrated value, always use it (this beats the default value)
         elif hydrated_value is not None:
-            _LOGGER.info(
-                f"[SessionState] Using hydrated value {hydrated_value} for widget {widget_id}"
+            logger.info(
+                "[SessionState] Using hydrated value %s for widget %s",
+                hydrated_value,
+                widget_id,
             )
             self._new_widget_state.set_from_value(widget_id, hydrated_value)
 
@@ -854,7 +878,7 @@ class SessionState:
 
         # For query param widgets that were hydrated during registration,
         # ensure they are marked as changed so the frontend applies the hydrated value
-        if is_query_param_widget and widget_value_changed == False:
+        if is_query_param_widget and not widget_value_changed:
             # Check if this widget was hydrated from query params
             if (
                 hasattr(self, "_initial_query_params")
@@ -862,13 +886,15 @@ class SessionState:
                 and query_param_name in self._initial_query_params
             ):
                 widget_value_changed = True
-                _LOGGER.info(
-                    f"[SessionState] Forcing widget_value_changed=True for hydrated query param widget {widget_id}"
+                logger.info(
+                    "[SessionState] Forcing widget_value_changed=True for hydrated query param widget %s",
+                    widget_id,
                 )
             elif user_key is not None and user_key in self._new_session_state:
                 widget_value_changed = True
-                _LOGGER.info(
-                    f"[SessionState] Forcing widget_value_changed=True for query param widget {widget_id} with session state value"
+                logger.info(
+                    "[SessionState] Forcing widget_value_changed=True for query param widget %s",
+                    widget_id,
                 )
 
         return RegisterWidgetResult(widget_value, widget_value_changed)
@@ -945,14 +971,9 @@ class SessionState:
             Dictionary mapping query param names to their current values
         """
         result = {}
-        for param_name, widget_id in self._query_param_widget_mapping.items():
-            try:
-                # Get the widget value using the param name as key
-                if param_name in self:
-                    result[param_name] = self[param_name]
-            except KeyError:
-                # Widget might not have a value yet
-                pass
+        for param_name in self._query_param_widget_mapping:
+            if param_name in self:
+                result[param_name] = self[param_name]
         return result
 
     def __contains__(self, key: str) -> bool:

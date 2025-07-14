@@ -147,9 +147,6 @@ def test_regular_widgets_no_url_updates(app: Page):
     # Wait for app to load
     expect(app.get_by_test_id("stTextInput").first).to_be_visible()
 
-    # Get initial URL to compare later
-    initial_url = app.url
-
     # Change regular text input value
     text_input = app.get_by_test_id("stTextInput").nth(1).locator("input")
     text_input.clear()
