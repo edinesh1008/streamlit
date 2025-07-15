@@ -694,7 +694,7 @@ export class WidgetStateManager {
           if (value !== undefined && value !== null) {
             queryParams.set(paramName, this.serializeValueForQueryParam(value))
           }
-        } catch (error) {
+        } catch (_error) {
           // Silently skip widgets that fail to serialize
         }
       }
@@ -831,7 +831,7 @@ export class WidgetStateManager {
 
       // Use replaceState to update URL without navigation
       window.history.replaceState(null, "", newUrl.toString())
-    } catch (error) {
+    } catch (_error) {
       // Silently ignore URL update failures
     }
   }
