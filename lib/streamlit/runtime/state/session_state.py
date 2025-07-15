@@ -57,6 +57,15 @@ SCRIPT_RUN_WITHOUT_ERRORS_KEY: Final = (
     f"{STREAMLIT_INTERNAL_KEY_PREFIX}_SCRIPT_RUN_WITHOUT_ERRORS"
 )
 
+# Widget metadata value_type to Python type mapping
+WIDGET_VALUE_TYPE_MAPPING: Final[dict[str, type]] = {
+    "bool_value": bool,
+    "int_value": int,
+    "double_value": float,
+    "string_value": str,
+    "string_array_value": str,  # Use first value for arrays
+}
+
 
 @dataclass(frozen=True)
 class Serialized:
@@ -707,11 +716,10 @@ class SessionState:
         self._set_widget_metadata(metadata)
 
         # Check if this is a query param widget (key starts with '?')
-        is_query_param_widget = False
-        query_param_name = None
-        if user_key is not None and user_key.startswith("?"):
-            is_query_param_widget = True
-            query_param_name = user_key[1:]  # Remove the '?' prefix
+        is_query_param_widget, query_param_name = self._extract_query_param_info(
+            user_key
+        )
+        if is_query_param_widget and query_param_name:
             self._query_param_widget_mapping[query_param_name] = widget_id
             # Use the query param name (without ?) as the actual key
             user_key = query_param_name
@@ -875,15 +883,23 @@ class SessionState:
             logger.debug("Failed to infer type from deserializer: %s", e)
 
         # Fall back to value_type mapping
-        type_mapping = {
-            "bool_value": bool,
-            "int_value": int,
-            "double_value": float,
-            "string_value": str,
-            "string_array_value": str,  # Use first value for arrays
-        }
+        return WIDGET_VALUE_TYPE_MAPPING.get(metadata.value_type, str)
 
-        return type_mapping.get(metadata.value_type, str)
+    def _extract_query_param_info(
+        self, user_key: str | None
+    ) -> tuple[bool, str | None]:
+        """Extract query parameter information from a user key.
+
+        Args:
+            user_key: The user key to check
+
+        Returns
+        -------
+            Tuple of (is_query_param_widget, query_param_name)
+        """
+        if user_key is not None and user_key.startswith("?"):
+            return True, user_key[1:]  # Remove the '?' prefix
+        return False, None
 
     def hydrate_widgets_from_query_params(self, query_params: dict[str, str]) -> None:
         """Initialize widget values from URL query parameters.

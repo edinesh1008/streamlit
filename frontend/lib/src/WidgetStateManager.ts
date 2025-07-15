@@ -726,19 +726,28 @@ export class WidgetStateManager {
    * Track a widget as being bound to a query parameter if its ID indicates so.
    */
   private trackQueryParamWidget(widgetId: string): void {
-    // Extract the user_key from the widget ID
-    // Widget IDs have format: "$$GENERATED_ELEMENT_ID_PREFIX-{hash}-{user_key}"
-    const parts = widgetId.split("-")
-    if (parts.length >= 3) {
-      const userKey = parts.slice(2).join("-") // Join in case user_key has dashes
-      if (userKey && userKey.startsWith("?")) {
-        const paramName = userKey.substring(1) // Remove the '?' prefix
-        this.queryParamWidgets.set(widgetId, paramName)
+    const userKey = this.extractUserKeyFromWidgetId(widgetId)
+    if (userKey && userKey.startsWith("?")) {
+      const paramName = userKey.substring(1) // Remove the '?' prefix
+      this.queryParamWidgets.set(widgetId, paramName)
 
-        // Don't hydrate here - it causes circular dependencies
-        // Hydration should happen separately when initial query params are received
-      }
+      // Don't hydrate here - it causes circular dependencies
+      // Hydration should happen separately when initial query params are received
     }
+  }
+
+  /**
+   * Extract the user_key from a widget ID using a robust parsing method.
+   * Widget IDs have format: "$$ID-{hash}-{user_key}"
+   */
+  private extractUserKeyFromWidgetId(widgetId: string): string | null {
+    // Use regex to match the expected format more robustly
+    const widgetIdRegex = /^\$\$ID-([^-]+)-(.+)$/
+    const match = widgetId.match(widgetIdRegex)
+    if (match) {
+      return match[2] // The user_key part
+    }
+    return null
   }
 
   /**
@@ -831,8 +840,8 @@ export class WidgetStateManager {
 
       // Use replaceState to update URL without navigation
       window.history.replaceState(null, "", newUrl.toString())
-    } catch (_error) {
-      // Silently ignore URL update failures
+    } catch (error) {
+      console.error("Failed to update URL with query parameters:", error)
     }
   }
 
