@@ -131,7 +131,7 @@ def parse_query_string(query_string: str) -> dict[str, str]:
         return {}
 
     # Remove leading '?' if present
-    query_string = query_string.removeprefix("?")
+    query_string = query_string[1:] if query_string.startswith('?') else query_string
 
     try:
         # Parse the query string
