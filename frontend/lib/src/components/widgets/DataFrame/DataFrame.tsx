@@ -707,40 +707,6 @@ function DataFrame({
     }
   }, [allColumns.length, columns.length])
 
-  useLayoutEffect(() => {
-    if (element.useContainerWidth || element.width) {
-      if (idealWidth !== undefined) setIdealWidth(undefined)
-      if (onIdealWidthChange) onIdealWidthChange(undefined)
-      return
-    }
-
-    function tryMeasure() {
-      if (!resizableContainerRef.current) return
-      const stack = resizableContainerRef.current.querySelector(
-        ".dvn-stack"
-      ) as HTMLElement | null
-      if (stack) {
-        const measured = stack.scrollWidth
-        if (measured && Math.abs(measured - (idealWidth ?? 0)) > 2) {
-          setIdealWidth(measured)
-          if (onIdealWidthChange) onIdealWidthChange(measured)
-        }
-      } else {
-        // Try again on next frame if .dvn-stack is not present yet
-        requestAnimationFrame(tryMeasure)
-      }
-    }
-    tryMeasure()
-  }, [
-    glideColumns,
-    numRows,
-    showColumnVisibilityMenu,
-    element.useContainerWidth,
-    element.width,
-    idealWidth,
-    onIdealWidthChange,
-  ])
-
   return (
     <StyledResizableContainer
       className="stDataFrame"
@@ -895,11 +861,14 @@ function DataFrame({
         style={{
           border: `${gridTheme.tableBorderWidth}px solid ${gridTheme.glideTheme.borderColor}`,
           borderRadius: `${gridTheme.tableBorderRadius}`,
+          flex: "0 0 auto",
+          width: "fit-content",
+          minWidth: 0,
         }}
         minHeight={minHeight}
         maxHeight={maxHeight}
         minWidth={minWidth}
-        maxWidth={maxWidth}
+        maxWidth={undefined}
         size={resizableSize}
         enable={{
           top: false,

@@ -16,8 +16,8 @@
 
 import React, { CSSProperties } from "react"
 
-import { isInteger } from "lodash"
 import styled from "@emotion/styled"
+import { isInteger } from "lodash"
 
 import { Block as BlockProto, streamlit } from "@streamlit/protobuf"
 
@@ -247,7 +247,8 @@ export const StyledFlexContainerBlock =
         maxWidth: "100%",
         minWidth: "5%",
         height: height ?? "auto",
-        overflow: isInteger(height) ? "auto" : "visible",
+        overflowY: isInteger(height) ? "auto" : "visible",
+        overflowX: "auto",
         flexDirection: direction,
         flex,
         alignItems: getAlignItems(align),

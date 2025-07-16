@@ -149,7 +149,7 @@ function useTableSizer(
     // If user hasn't specified a width via `width` or `use_container_width`,
     // we configure the table to 100%. Which will cause the data grid to
     // calculate the best size on the content and use that.
-    width: initialWidth || "100%",
+    width: initialWidth || "fit-content",
     height: initialHeight,
   })
 
@@ -168,7 +168,7 @@ function useTableSizer(
   useLayoutEffect(() => {
     setResizableSize(prev => ({
       ...prev,
-      width: initialWidth || "100%",
+      width: initialWidth || "fit-content",
     }))
   }, [initialWidth])
 
@@ -193,7 +193,7 @@ function useTableSizer(
       })
     } else {
       setResizableSize({
-        width: initialWidth || "100%",
+        width: initialWidth || "fit-content",
         height: initialHeight,
       })
     }

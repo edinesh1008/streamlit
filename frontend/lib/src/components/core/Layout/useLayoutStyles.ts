@@ -161,6 +161,8 @@ const getFlex = (
     direction === Direction.VERTICAL
   ) {
     return `0 0 ${heightPixels}px`
+  } else if (widthType === DimensionType.CONTENT) {
+    return "0 0 auto"
   }
   return "1 1 5%"
 }

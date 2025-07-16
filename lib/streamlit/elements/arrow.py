@@ -38,6 +38,7 @@ from streamlit.elements.lib.column_config_utils import (
     update_column_config,
 )
 from streamlit.elements.lib.form_utils import current_form_id
+from streamlit.elements.lib.layout_utils import LayoutConfig, Width, validate_width
 from streamlit.elements.lib.pandas_styler_utils import marshall_styler
 from streamlit.elements.lib.policies import check_widget_policies
 from streamlit.elements.lib.utils import Key, compute_and_register_element_id, to_key
@@ -225,7 +226,7 @@ class ArrowMixin:
     def dataframe(
         self,
         data: Data = None,
-        width: int | None = None,
+        width: Width = "stretch",
         height: int | None = None,
         *,
         use_container_width: bool | None = None,
@@ -242,7 +243,7 @@ class ArrowMixin:
     def dataframe(
         self,
         data: Data = None,
-        width: int | None = None,
+        width: Width = "stretch",
         height: int | None = None,
         *,
         use_container_width: bool | None = None,
@@ -259,7 +260,7 @@ class ArrowMixin:
     def dataframe(
         self,
         data: Data = None,
-        width: int | None = None,
+        width: Width = "stretch",
         height: int | None = None,
         *,
         use_container_width: bool | None = None,
@@ -567,8 +568,8 @@ class ArrowMixin:
 
         proto.use_container_width = use_container_width
 
-        if width:
-            proto.width = width
+        # if width:
+        #     proto.width = width
         if height:
             proto.height = height
 
@@ -612,6 +613,9 @@ class ArrowMixin:
             )
         marshall_column_config(proto, column_config_mapping)
 
+        validate_width(width, allow_content=True)
+        layout_config = LayoutConfig(width=width)
+
         if is_selection_activated:
             # If selection events are activated, we need to register the dataframe
             # element as a widget.
@@ -644,9 +648,9 @@ class ArrowMixin:
                 ctx=ctx,
                 value_type="string_value",
             )
-            self.dg._enqueue("arrow_data_frame", proto)
+            self.dg._enqueue("arrow_data_frame", proto, layout_config=layout_config)
             return widget_state.value
-        return self.dg._enqueue("arrow_data_frame", proto)
+        return self.dg._enqueue("arrow_data_frame", proto, layout_config=layout_config)
 
     @gather_metrics("table")
     def table(self, data: Data = None) -> DeltaGenerator:

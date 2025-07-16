@@ -116,7 +116,7 @@ with st.container(
         st.title("Hidden Chart")
         st.bar_chart(df.set_index("x"), use_container_width=False)
 
-    st.dataframe(df, use_container_width=False)
+    st.dataframe(df, use_container_width=False, width="content")
 
 with st.container(
     border=True,
@@ -134,7 +134,8 @@ with st.container(
         st.title("Hidden Chart")
         st.bar_chart(df.set_index("x"), use_container_width=False)
 
-    st.dataframe(df, use_container_width=False)
+    st.dataframe(df, use_container_width=False, width="content")
+    st.dataframe(df, use_container_width=True, width="stretch")
 
 with st.container(
     border=True,

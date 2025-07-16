@@ -27,7 +27,7 @@ export const StyledResizableContainer =
   styled.div<StyledResizableContainerProps>(
     ({ hasCustomizedScrollbars, theme }) => ({
       position: "relative",
-      display: "inline-block",
+      display: "flex",
 
       "& .stDataFrameGlideDataEditor": {
         height: "100%",
