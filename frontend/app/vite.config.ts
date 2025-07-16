@@ -57,6 +57,9 @@ export default defineConfig({
     PACKAGE_METADATA: {
       version,
     },
+    "process.env.FORCE_STRICT_MODE": JSON.stringify(
+      process.env.FORCE_STRICT_MODE || ""
+    ),
   },
   plugins: [
     react({

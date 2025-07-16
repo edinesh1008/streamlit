@@ -40,10 +40,15 @@ if (!rootDomNode) {
 
 const reactRoot = createRoot(rootDomNode)
 
-reactRoot.render(
-  <StrictMode>
-    <StyletronProvider value={engine}>
-      <ThemedApp streamlitExecutionStartedAt={streamlitExecutionStartedAt} />
-    </StyletronProvider>
-  </StrictMode>
+// Force StrictMode for e2e tests when FORCE_STRICT_MODE is set
+const shouldUseStrictMode =
+  process.env.FORCE_STRICT_MODE === "1" ||
+  process.env.NODE_ENV === "development"
+
+const app = (
+  <StyletronProvider value={engine}>
+    <ThemedApp streamlitExecutionStartedAt={streamlitExecutionStartedAt} />
+  </StyletronProvider>
 )
+
+reactRoot.render(shouldUseStrictMode ? <StrictMode>{app}</StrictMode> : app)
