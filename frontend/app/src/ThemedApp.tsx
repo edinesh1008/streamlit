@@ -25,6 +25,7 @@ import FontFaceDeclaration from "@streamlit/app/src/components/FontFaceDeclarati
 
 import AppWithScreencast from "./App"
 import { useThemeManager } from "./util/useThemeManager"
+import { StrictModeVerifier } from "./StrictModeVerifier"
 
 export interface ThemedAppProps {
   streamlitExecutionStartedAt: number
@@ -38,6 +39,7 @@ const ThemedApp = ({
 
   return (
     <RootStyleProvider theme={activeTheme}>
+      <StrictModeVerifier />
       <WindowDimensionsProvider>
         {/* The data grid requires one root level portal element for rendering cell overlays */}
         <PortalProvider>
