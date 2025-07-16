@@ -1024,6 +1024,7 @@ function DataFrame({
                 ? -WEBKIT_SCROLLBAR_SIZE
                 : undefined,
             }),
+            kineticScrollPerfHack: isTouchDevice,
           }}
           provideEditor={provideEditor}
           // Apply custom rendering (e.g. for missing or required cells):
