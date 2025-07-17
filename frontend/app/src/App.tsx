@@ -1157,9 +1157,27 @@ export class App extends PureComponent<Props, State> {
    * @param newSessionProto a NewSession protobuf
    */
   handleNewSession = (newSessionProto: NewSession): void => {
+    console.log(
+      "[HYDRATION DEBUG] App.tsx handleNewSession: Called with NewSession proto:",
+      newSessionProto
+    )
+
     const initialize = newSessionProto.initialize as Initialize
+    console.log(
+      "[HYDRATION DEBUG] App.tsx handleNewSession: sessionInfo.isSet:",
+      this.sessionInfo.isSet
+    )
+    console.log(
+      "[HYDRATION DEBUG] App.tsx handleNewSession: sessionInfo.current.isConnected:",
+      this.sessionInfo.isSet
+        ? this.sessionInfo.current.isConnected
+        : "SessionInfo not set"
+    )
 
     if (this.hasStreamlitVersionChanged(initialize)) {
+      console.log(
+        "[HYDRATION DEBUG] App.tsx handleNewSession: Streamlit version changed, reloading"
+      )
       window.location.reload()
       return
     }
@@ -1174,7 +1192,14 @@ export class App extends PureComponent<Props, State> {
     // perform some one-time initialization.
     if (!this.sessionInfo.isSet || !this.sessionInfo.current.isConnected) {
       // We're not initialized (this is our first time, or we are reconnected)
+      console.log(
+        "[HYDRATION DEBUG] App.tsx handleNewSession: Calling handleInitialization"
+      )
       this.handleInitialization(newSessionProto)
+    } else {
+      console.log(
+        "[HYDRATION DEBUG] App.tsx handleNewSession: Skipping initialization - already initialized and connected"
+      )
     }
 
     const { appHash, currentPageScriptHash: prevPageScriptHash } = this.state
@@ -1247,8 +1272,22 @@ export class App extends PureComponent<Props, State> {
    * This is called from `handleNewSession`.
    */
   handleInitialization = (newSessionProto: NewSession): void => {
+    console.log(
+      "[HYDRATION DEBUG] App.tsx handleInitialization: Called with NewSession proto:",
+      newSessionProto
+    )
+
     const initialize = newSessionProto.initialize as Initialize
     const config = newSessionProto.config as Config
+
+    console.log(
+      "[HYDRATION DEBUG] App.tsx handleInitialization: Initialize object:",
+      initialize
+    )
+    console.log(
+      "[HYDRATION DEBUG] App.tsx handleInitialization: Initialize.initialQueryString:",
+      initialize.initialQueryString
+    )
 
     this.sessionInfo.setCurrent(
       SessionInfo.propsFromNewSessionMessage(newSessionProto)
@@ -1266,9 +1305,24 @@ export class App extends PureComponent<Props, State> {
 
     // Hydrate widgets from initial query parameters if provided
     if (initialize.initialQueryString) {
+      console.log(
+        "[HYDRATION DEBUG] App.tsx handleInitialization: Initial query string received:",
+        initialize.initialQueryString
+      )
       // Frontend hydration as fallback for widgets that weren't hydrated by backend
       this.widgetMgr.hydrateWidgetsFromQueryParams(
         initialize.initialQueryString
+      )
+      console.log(
+        "[HYDRATION DEBUG] App.tsx handleInitialization: Hydration call completed"
+      )
+    } else {
+      console.log(
+        "[HYDRATION DEBUG] App.tsx handleInitialization: No initial query string provided"
+      )
+      console.log(
+        "[HYDRATION DEBUG] App.tsx handleInitialization: Initialize object keys:",
+        Object.keys(initialize)
       )
     }
   }

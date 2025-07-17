@@ -254,7 +254,14 @@ function getStateFromWidgetMgr(
   widgetMgr: WidgetStateManager,
   element: TextInputProto
 ): string | null {
-  return widgetMgr.getStringValue(element) ?? null
+  const value = widgetMgr.getStringValue(element) ?? null
+  console.log(
+    "[HYDRATION DEBUG] TextInput.getStateFromWidgetMgr: widget id:",
+    element.id,
+    "value:",
+    value
+  )
+  return value
 }
 
 function getDefaultStateFromProto(element: TextInputProto): string | null {

@@ -78,6 +78,34 @@ def test_query_param_widgets_hydration(
     # Wait for app to load
     expect(page.get_by_test_id("stTextInput").first).to_be_visible()
 
+    # Debug: Print actual URL to see what query params are being used
+    print(f"DEBUG: Current URL: {page.url}")
+    print(f"DEBUG: Expected params: {params}")
+
+    # Get actual values from widgets for debugging
+    text_input = page.get_by_test_id("stTextInput").first.locator("input")
+    number_input = page.get_by_test_id("stNumberInput").first.locator("input")
+    checkbox = page.get_by_test_id("stCheckbox").first.locator("input")
+    selectbox = page.get_by_test_id("stSelectbox").first
+
+    actual_text_value = text_input.get_attribute("value")
+    actual_number_value = number_input.get_attribute("value")
+    actual_checkbox_checked = checkbox.is_checked()
+    actual_selectbox_text = selectbox.text_content()
+
+    print(
+        f"DEBUG: Actual text input value: '{actual_text_value}' (expected: '{params['text_param']}')"
+    )
+    print(
+        f"DEBUG: Actual number input value: '{actual_number_value}' (expected: '{params['number_param']}')"
+    )
+    print(
+        f"DEBUG: Actual checkbox checked: {actual_checkbox_checked} (expected: {params['checkbox_param'] == 'true'})"
+    )
+    print(
+        f"DEBUG: Actual selectbox text: '{actual_selectbox_text}' (expected: '{params['selectbox_param']}')"
+    )
+
     # Verify query param widgets are hydrated with URL parameter values
     expect(page.get_by_test_id("stTextInput").first.locator("input")).to_have_value(
         params["text_param"]
@@ -280,3 +308,124 @@ def test_widget_state_displayed_correctly(app: Page):
     json_elements = app.get_by_test_id("stJson")
     expect(json_elements.first).to_contain_text("json_test")
     expect(json_elements.first).to_contain_text("true")  # checkbox value
+
+
+def test_manual_navigation_hydration(app: Page):
+    """Test hydration behavior that mimics manual navigation."""
+    # First, wait for the app to load completely
+    expect(app.get_by_test_id("stTextInput").first).to_be_visible()
+
+    # Navigate to a new URL with query parameters (similar to manual testing)
+    app.goto(
+        app.url
+        + "?text_param=manual_test&number_param=123.45&checkbox_param=true&selectbox_param=option3"
+    )
+
+    # Wait for the app to reload and settle
+    expect(app.get_by_test_id("stTextInput").first).to_be_visible()
+    app.wait_for_timeout(2000)  # Give more time for hydration
+
+    # Debug: Check actual values
+    text_input = app.get_by_test_id("stTextInput").first.locator("input")
+    number_input = app.get_by_test_id("stNumberInput").first.locator("input")
+    checkbox = app.get_by_test_id("stCheckbox").first.locator("input")
+    selectbox = app.get_by_test_id("stSelectbox").first
+
+    actual_text_value = text_input.get_attribute("value")
+    actual_number_value = number_input.get_attribute("value")
+    actual_checkbox_checked = checkbox.is_checked()
+    actual_selectbox_text = selectbox.text_content()
+
+    print(f"DEBUG MANUAL: Current URL: {app.url}")
+    print(
+        f"DEBUG MANUAL: Actual text input value: '{actual_text_value}' (expected: 'manual_test')"
+    )
+    print(
+        f"DEBUG MANUAL: Actual number input value: '{actual_number_value}' (expected: '123.45')"
+    )
+    print(
+        f"DEBUG MANUAL: Actual checkbox checked: {actual_checkbox_checked} (expected: True)"
+    )
+    print(
+        f"DEBUG MANUAL: Actual selectbox text: '{actual_selectbox_text}' (expected: 'option3')"
+    )
+
+    # This should pass if hydration is working for manual navigation
+    expect(text_input).to_have_value("manual_test")
+    expect(number_input).to_have_value("123.45")
+    expect(checkbox).to_be_checked()
+    expect(selectbox).to_contain_text("option3")
+
+
+def test_specific_widget_hydration_issue(app: Page):
+    """Test that specifically checks if only number inputs are hydrating correctly."""
+    # First, wait for the app to load completely
+    expect(app.get_by_test_id("stTextInput").first).to_be_visible()
+
+    # Navigate to a new URL with query parameters that should all hydrate
+    app.goto(
+        app.url
+        + "?text_param=failing_text&number_param=999.99&checkbox_param=false&selectbox_param=option2"
+    )
+
+    # Wait for the app to reload and settle
+    expect(app.get_by_test_id("stTextInput").first).to_be_visible()
+    app.wait_for_timeout(2000)  # Give more time for hydration
+
+    # Debug: Check actual values
+    text_input = app.get_by_test_id("stTextInput").first.locator("input")
+    number_input = app.get_by_test_id("stNumberInput").first.locator("input")
+    checkbox = app.get_by_test_id("stCheckbox").first.locator("input")
+    selectbox = app.get_by_test_id("stSelectbox").first
+
+    actual_text_value = text_input.get_attribute("value")
+    actual_number_value = number_input.get_attribute("value")
+    actual_checkbox_checked = checkbox.is_checked()
+    actual_selectbox_text = selectbox.text_content()
+
+    print(f"DEBUG SPECIFIC: Current URL: {app.url}")
+    print(
+        f"DEBUG SPECIFIC: Actual text input value: '{actual_text_value}' (expected: 'failing_text')"
+    )
+    print(
+        f"DEBUG SPECIFIC: Actual number input value: '{actual_number_value}' (expected: '999.99')"
+    )
+    print(
+        f"DEBUG SPECIFIC: Actual checkbox checked: {actual_checkbox_checked} (expected: False)"
+    )
+    print(
+        f"DEBUG SPECIFIC: Actual selectbox text: '{actual_selectbox_text}' (expected: 'option2')"
+    )
+
+    # Based on the issue described, number input should work but others might not
+    # Let's make this test fail to expose the issue
+
+    # Number input should work (this should pass)
+    expect(number_input).to_have_value("999.99")
+
+    # These might fail if the hydration issue exists
+    # Let's check each one individually to see which ones are failing
+
+    # Text input - this might fail
+    if actual_text_value != "failing_text":
+        print(
+            f"TEXT INPUT HYDRATION FAILED: Expected 'failing_text', got '{actual_text_value}'"
+        )
+
+    # Checkbox - this might fail
+    if actual_checkbox_checked:
+        print(
+            f"CHECKBOX HYDRATION FAILED: Expected False, got {actual_checkbox_checked}"
+        )
+
+    # Selectbox - this might fail
+    if not actual_selectbox_text or "option2" not in actual_selectbox_text:
+        print(
+            f"SELECTBOX HYDRATION FAILED: Expected 'option2', got '{actual_selectbox_text}'"
+        )
+
+    # Let's fail the test if any non-number widgets are not hydrating
+    # This should make the test fail if the issue exists
+    expect(text_input).to_have_value("failing_text")
+    expect(checkbox).not_to_be_checked()
+    expect(selectbox).to_contain_text("option2")
