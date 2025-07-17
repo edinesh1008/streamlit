@@ -26,10 +26,18 @@ const HASH = process.env.OMIT_HASH_FROM_MAIN_FILES ? "" : ".[hash]"
 // This is a convenience for developers for debugging purposes
 const DEV_BUILD = Boolean(process.env.DEV_BUILD)
 const IS_PROFILER_BUILD = Boolean(process.env.IS_PROFILER_BUILD)
+const FORCE_STRICT_MODE = process.env.FORCE_STRICT_MODE === "true"
 // The URL of the backend server to proxy to:
 // Can be changed to run against a remote server or different port:
 const DEV_SERVER_BACKEND_URL =
   process.env.DEV_SERVER_BACKEND_URL || `http://localhost:8501`
+
+// Log when strict mode is being forced
+if (FORCE_STRICT_MODE) {
+  console.log(
+    "⚠️  FORCE_STRICT_MODE is enabled - React Strict Mode will be active in production build"
+  )
+}
 
 /**
  * If this is a profiler build, we need to alias react-dom and scheduler to
@@ -53,6 +61,7 @@ const profilerAliases = IS_PROFILER_BUILD
 // https://vitejs.dev/config/
 export default defineConfig({
   base: BASE,
+  mode: process.env.VITE_MODE || undefined,
   define: {
     PACKAGE_METADATA: {
       version,
@@ -60,6 +69,13 @@ export default defineConfig({
     "process.env.FORCE_STRICT_MODE": JSON.stringify(
       process.env.FORCE_STRICT_MODE || ""
     ),
+    "process.env.NODE_ENV": JSON.stringify(
+      process.env.VITE_MODE === "development"
+        ? "development"
+        : process.env.NODE_ENV
+    ),
+    // Override __DEV__ to be true when FORCE_STRICT_MODE is enabled OR in development
+    __DEV__: process.env.VITE_MODE === "development" || FORCE_STRICT_MODE,
   },
   plugins: [
     react({
@@ -111,6 +127,8 @@ export default defineConfig({
     assetsDir: "static",
     sourcemap: DEV_BUILD,
     manifest: true,
+    // Disable minification when FORCE_STRICT_MODE is enabled
+    minify: FORCE_STRICT_MODE ? false : "esbuild",
     rollupOptions: {
       output: {
         // Customize the chunk file naming pattern to match static/js/[name].[hash].js

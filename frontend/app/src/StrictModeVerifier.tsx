@@ -20,8 +20,11 @@ let renderCount = 0
 
 export function StrictModeVerifier(): null {
   const isFirstRender = useRef(true)
+  const isDevelopment = process.env.NODE_ENV === "development"
+  const forceStrictMode = process.env.FORCE_STRICT_MODE === "true"
 
-  // In StrictMode, this effect will run twice on mount
+  // In StrictMode, this effect will run twice on mount IN DEVELOPMENT ONLY
+  // OR when FORCE_STRICT_MODE is enabled
   useEffect(() => {
     renderCount++
 
@@ -29,20 +32,37 @@ export function StrictModeVerifier(): null {
     if (isFirstRender.current) {
       isFirstRender.current = false
 
+      // StrictMode double-renders in development OR when forced
+      const isStrictModeActive =
+        (isDevelopment || forceStrictMode) && renderCount > 1
+      const productionNote =
+        !isDevelopment && !forceStrictMode
+          ? " (Production build - StrictMode effects disabled)"
+          : forceStrictMode && !isDevelopment
+            ? " (Production build with FORCE_STRICT_MODE enabled)"
+            : ""
+
       // Log with a unique marker that we can grep for in CI logs
       // eslint-disable-next-line no-console
       console.log(
         `🔍 STRICT_MODE_VERIFICATION: Component rendered ${renderCount} time(s). ` +
-          `StrictMode is ${renderCount > 1 ? "ACTIVE ✅" : "NOT ACTIVE ❌"}`
+          `StrictMode is ${isStrictModeActive ? "ACTIVE ✅" : "NOT ACTIVE ❌"}${productionNote}`
       )
 
       // Also add a data attribute to the DOM for e2e tests to check
       const marker = document.createElement("div")
       marker.setAttribute("data-testid", "strict-mode-marker")
-      marker.setAttribute("data-strict-mode-active", String(renderCount > 1))
+      marker.setAttribute(
+        "data-strict-mode-active",
+        String(isStrictModeActive)
+      )
+      marker.setAttribute("data-is-development", String(isDevelopment))
+      marker.setAttribute("data-force-strict-mode", String(forceStrictMode))
+      marker.setAttribute("data-render-count", String(renderCount))
       marker.style.display = "none"
       document.body.appendChild(marker)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return null

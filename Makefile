@@ -216,7 +216,7 @@ frontend-with-profiler:
 	# Build frontend dependent libraries (excluding app and lib):
 	cd frontend/ ; yarn workspaces foreach --all --exclude @streamlit/app --exclude @streamlit/lib --topological run build
 	# Build the app with the profiler enabled:
-	cd frontend/ ; FORCE_STRICT_MODE=1 yarn workspace @streamlit/app buildWithProfiler
+	cd frontend/ ; VITE_MODE=development FORCE_STRICT_MODE=1 yarn workspace @streamlit/app buildWithProfiler
 	rsync -av --delete --delete-excluded --exclude=reports \
 		frontend/app/build/ lib/streamlit/static/
 
