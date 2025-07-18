@@ -894,8 +894,12 @@ class TestDuplicateElementIdHandling(DeltaGeneratorTestCase):
     def test_segmented_control_different_labels_no_duplicate_error(self):
         """Test that segmented_control with same options but different labels don't cause duplicate ID error."""
         # This should not raise an error
-        st.segmented_control("Segmented control", ["cat", "dog", "monkey", "snake", "bird"])
-        st.segmented_control("Segmented control 2", ["cat", "dog", "monkey", "snake", "bird"])
+        st.segmented_control(
+            "Segmented control", ["cat", "dog", "monkey", "snake", "bird"]
+        )
+        st.segmented_control(
+            "Segmented control 2", ["cat", "dog", "monkey", "snake", "bird"]
+        )
 
     def test_pills_same_labels_causes_duplicate_error(self):
         """Test that pills with same options and same labels cause duplicate ID error."""
@@ -906,7 +910,11 @@ class TestDuplicateElementIdHandling(DeltaGeneratorTestCase):
 
     def test_segmented_control_same_labels_causes_duplicate_error(self):
         """Test that segmented_control with same options and same labels cause duplicate ID error."""
-        # This should raise an error  
-        st.segmented_control("Segmented control", ["cat", "dog", "monkey", "snake", "bird"])
+        # This should raise an error
+        st.segmented_control(
+            "Segmented control", ["cat", "dog", "monkey", "snake", "bird"]
+        )
         with pytest.raises(StreamlitDuplicateElementId):
-            st.segmented_control("Segmented control", ["cat", "dog", "monkey", "snake", "bird"])
+            st.segmented_control(
+                "Segmented control", ["cat", "dog", "monkey", "snake", "bird"]
+            )
