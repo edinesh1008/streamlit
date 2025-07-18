@@ -592,7 +592,7 @@ class ComputeElementIdTests(DeltaGeneratorTestCase):
         with pytest.raises(errors.DuplicateWidgetID):
             st.data_editor(data=[], disabled=True)
 
-def test_duplicate_id_error_uses_element_type(self) -> None:
+    def test_duplicate_id_error_uses_element_type(self) -> None:
         """Test that duplicate ID error uses element_type when style is None."""
         with pytest.raises(
             errors.StreamlitDuplicateElementId,
@@ -642,6 +642,21 @@ def test_duplicate_id_error_uses_element_type(self) -> None:
                 form_id="form_id",
                 style="borderless",
             )
+
+    def test_style_is_included_in_element_id(self):
+        """Test that style is included in element ID."""
+        compute_and_register_element_id(
+            element_type="button_group",
+            user_key=None,
+            form_id="form_id",
+            style="borderless",
+        )
+        compute_and_register_element_id(
+            element_type="button_group",
+            user_key=None,
+            form_id="form_id",
+            style="pills",
+        )
 
 
 class RegisterWidgetsTest(DeltaGeneratorTestCase):
