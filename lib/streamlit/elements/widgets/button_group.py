@@ -1053,6 +1053,7 @@ class ButtonGroupMixin:
             click_mode=parsed_selection_mode,
             style=style,
             width=width,
+            label=label,
         )
 
         proto = _build_proto(

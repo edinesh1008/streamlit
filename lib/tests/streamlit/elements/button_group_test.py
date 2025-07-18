@@ -37,7 +37,7 @@ from streamlit.elements.widgets.button_group import (
     _SingleSelectSerde,
     get_mapped_options,
 )
-from streamlit.errors import StreamlitAPIException
+from streamlit.errors import StreamlitAPIException, StreamlitDuplicateElementId
 from streamlit.proto.ButtonGroup_pb2 import ButtonGroup as ButtonGroupProto
 from streamlit.proto.LabelVisibilityMessage_pb2 import LabelVisibilityMessage
 from streamlit.runtime.state.session_state import get_script_run_ctx
@@ -880,3 +880,33 @@ class ButtonGroupCommandTests(DeltaGeneratorTestCase):
             "['borderless', 'pills', 'segmented_control']. "
             "The argument passed was 'foo'."
         )
+
+
+class TestDuplicateElementIdHandling(DeltaGeneratorTestCase):
+    """Test that button group elements handle different labels correctly."""
+
+    def test_pills_different_labels_no_duplicate_error(self):
+        """Test that pills with same options but different labels don't cause duplicate ID error."""
+        # This should not raise an error
+        st.pills("Pills", ["cat", "dog", "monkey", "snake", "bird"])
+        st.pills("Pills 2", ["cat", "dog", "monkey", "snake", "bird"])
+
+    def test_segmented_control_different_labels_no_duplicate_error(self):
+        """Test that segmented_control with same options but different labels don't cause duplicate ID error."""
+        # This should not raise an error
+        st.segmented_control("Segmented control", ["cat", "dog", "monkey", "snake", "bird"])
+        st.segmented_control("Segmented control 2", ["cat", "dog", "monkey", "snake", "bird"])
+
+    def test_pills_same_labels_causes_duplicate_error(self):
+        """Test that pills with same options and same labels cause duplicate ID error."""
+        # This should raise an error
+        st.pills("Pills", ["cat", "dog", "monkey", "snake", "bird"])
+        with pytest.raises(StreamlitDuplicateElementId):
+            st.pills("Pills", ["cat", "dog", "monkey", "snake", "bird"])
+
+    def test_segmented_control_same_labels_causes_duplicate_error(self):
+        """Test that segmented_control with same options and same labels cause duplicate ID error."""
+        # This should raise an error  
+        st.segmented_control("Segmented control", ["cat", "dog", "monkey", "snake", "bird"])
+        with pytest.raises(StreamlitDuplicateElementId):
+            st.segmented_control("Segmented control", ["cat", "dog", "monkey", "snake", "bird"])
