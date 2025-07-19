@@ -378,6 +378,31 @@ describe("Slider widget", () => {
     })
   })
 
+  describe("Datetime slider", () => {
+    withTimezones(() => {
+      it("formats datetime values correctly", () => {
+        const DAYS_IN_MICROS = 24 * 60 * 60 * 1000 * 1000
+        const WEEK_IN_MICROS = 7 * DAYS_IN_MICROS
+
+        const props = getProps({
+          // The default value should be divisible by step.
+          // Otherwise, we get a warning from `react-range`.
+          default: [0],
+          min: 0,
+          max: 4 * WEEK_IN_MICROS,
+          step: DAYS_IN_MICROS,
+          format: "YYYY-MM-DD",
+          dataType: SliderProto.DataType.DATETIME,
+        })
+        render(<Slider {...props} />)
+
+        // Test that the thumb value shows formatted datetime
+        const thumbValue = screen.getByTestId("stSliderThumbValue")
+        expect(thumbValue).toHaveTextContent("1970-01-01")
+      })
+    })
+  })
+
   describe("Options prop", () => {
     it("renders without crashing", () => {
       const props = getProps({
