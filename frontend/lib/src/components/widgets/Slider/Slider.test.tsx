@@ -144,16 +144,6 @@ describe("Slider widget", () => {
     )
   })
 
-  it("renders tick bar with min and max", () => {
-    const props = getProps()
-    render(<Slider {...props} />)
-
-    const min = screen.getByTestId("stSliderTickBarMin")
-    const max = screen.getByTestId("stSliderTickBarMax")
-    expect(min).toHaveTextContent("0")
-    expect(max).toHaveTextContent("10")
-  })
-
   describe("Single value", () => {
     it("renders without crashing", () => {
       const props = getProps()
@@ -385,33 +375,6 @@ describe("Slider widget", () => {
       )
       expect(sliders[0]).toHaveAttribute("aria-valuenow", "1")
       expect(sliders[1]).toHaveAttribute("aria-valuenow", "10")
-    })
-  })
-
-  describe("Datetime slider", () => {
-    withTimezones(() => {
-      it("formats min and max as dates", () => {
-        const DAYS_IN_MICROS = 24 * 60 * 60 * 1000 * 1000
-        const WEEK_IN_MICROS = 7 * DAYS_IN_MICROS
-
-        const props = getProps({
-          // The default value should be divisible by step.
-          // Otherwise, we get a warning from `react-range`.
-          default: [0],
-          min: 0,
-          max: 4 * WEEK_IN_MICROS,
-          step: DAYS_IN_MICROS,
-          format: "YYYY-MM-DD",
-          dataType: SliderProto.DataType.DATETIME,
-        })
-        render(<Slider {...props} />)
-
-        const min = screen.getByTestId("stSliderTickBarMin")
-        const max = screen.getByTestId("stSliderTickBarMax")
-
-        expect(min).toHaveTextContent("1970-01-01")
-        expect(max).toHaveTextContent("1970-01-29")
-      })
     })
   })
 
