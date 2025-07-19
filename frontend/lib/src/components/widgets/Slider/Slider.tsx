@@ -256,6 +256,7 @@ function Slider({
           InnerTrack: {
             style: innerTrackStyle,
           },
+          // Hide min and max tick values
           TickBar: () => <div />,
         }}
       />
