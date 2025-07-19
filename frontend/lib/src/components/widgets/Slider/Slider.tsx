@@ -135,7 +135,16 @@ function Slider({
 
     return element.options.map((_, index) => {
       const markValue = index
-      const isSelected = markValue <= Math.max(...uiValue)
+      let isSelected = false
+
+      if (uiValue.length === 1) {
+        // For single slider: mark is selected if it's less than or equal to the thumb value
+        isSelected = markValue <= uiValue[0]
+      } else if (uiValue.length === 2) {
+        // For range slider: mark is selected if it's between the two thumb values
+        isSelected = markValue >= uiValue[0] && markValue <= uiValue[1]
+      }
+
       const position =
         ((markValue - element.min) / (element.max - element.min)) * 100
 
