@@ -239,30 +239,38 @@ function Slider({
   const innerTrackStyle = useCallback(
     ({ $disabled }: StyleProps) => {
       // Calculate the percentage for the gradient based on the slider value
-      let gradientPercentage = 0
-      if (uiValue.length === 1) {
-        // For single thumb slider
-        const singleValue = uiValue[0]
-        gradientPercentage =
-          ((singleValue - element.min) / (element.max - element.min)) * 100
-      } else if (uiValue.length === 2) {
-        // For range slider, we show the gradient between the two thumbs
-        const firstValue = uiValue[0]
-        const secondValue = uiValue[1]
-        // For range sliders, we might want different behavior
-        // For now, let's just use the first thumb position
-        gradientPercentage =
-          ((firstValue - element.min) / (element.max - element.min)) * 100
+      let gradientStyle = {}
+
+      if (!$disabled) {
+        if (uiValue.length === 1) {
+          // For single thumb slider
+          const singleValue = uiValue[0]
+          const gradientPercentage =
+            ((singleValue - element.min) / (element.max - element.min)) * 100
+          gradientStyle = {
+            background: `linear-gradient(to right, ${theme.colors.primary} 0%, ${theme.colors.primary} ${gradientPercentage}%, ${theme.colors.secondaryBg} ${gradientPercentage}%, ${theme.colors.secondaryBg} 100%)`,
+            backgroundImage: `linear-gradient(to right, ${theme.colors.primary} 0%, ${theme.colors.primary} ${gradientPercentage}%, ${theme.colors.secondaryBg} ${gradientPercentage}%, ${theme.colors.secondaryBg} 100%)`,
+          }
+        } else if (uiValue.length === 2) {
+          // For range slider, show primary color between the two thumbs
+          const firstValue = uiValue[0]
+          const secondValue = uiValue[1]
+          const firstPercentage =
+            ((firstValue - element.min) / (element.max - element.min)) * 100
+          const secondPercentage =
+            ((secondValue - element.min) / (element.max - element.min)) * 100
+          gradientStyle = {
+            background: `linear-gradient(to right, ${theme.colors.secondaryBg} 0%, ${theme.colors.secondaryBg} ${firstPercentage}%, ${theme.colors.primary} ${firstPercentage}%, ${theme.colors.primary} ${secondPercentage}%, ${theme.colors.secondaryBg} ${secondPercentage}%, ${theme.colors.secondaryBg} 100%)`,
+            backgroundImage: `linear-gradient(to right, ${theme.colors.secondaryBg} 0%, ${theme.colors.secondaryBg} ${firstPercentage}%, ${theme.colors.primary} ${firstPercentage}%, ${theme.colors.primary} ${secondPercentage}%, ${theme.colors.secondaryBg} ${secondPercentage}%, ${theme.colors.secondaryBg} 100%)`,
+          }
+        }
       }
 
       return {
         height: theme.spacing.twoXS,
         ...($disabled
           ? { background: theme.colors.darkenedBgMix25 }
-          : {
-              background: `linear-gradient(to right, ${theme.colors.primary} 0%, ${theme.colors.primary} ${gradientPercentage}%, ${theme.colors.secondaryBg} ${gradientPercentage}%, ${theme.colors.secondaryBg} 100%)`,
-              backgroundImage: `linear-gradient(to right, ${theme.colors.primary} 0%, ${theme.colors.primary} ${gradientPercentage}%, ${theme.colors.secondaryBg} ${gradientPercentage}%, ${theme.colors.secondaryBg} 100%)`,
-            }),
+          : gradientStyle),
       }
     },
     [
