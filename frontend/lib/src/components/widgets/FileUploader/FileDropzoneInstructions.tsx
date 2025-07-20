@@ -20,14 +20,13 @@ import { CloudUpload } from "@emotion-icons/material-outlined"
 
 import Icon from "~lib/components/shared/Icon"
 import { FileSize, getSizeDisplay } from "~lib/util/FileHelper"
-import { Small } from "~lib/components/shared/TextElements"
 
 import {
   StyledFileDropzoneInstructions,
   StyledFileDropzoneInstructionsColumn,
   StyledFileDropzoneInstructionsFileUploaderIcon,
-  StyledFileDropzoneInstructionsText,
   StyledFileDropzoneInstructionsSubtext,
+  StyledFileDropzoneInstructionsText,
 } from "./styled-components"
 
 export interface Props {
