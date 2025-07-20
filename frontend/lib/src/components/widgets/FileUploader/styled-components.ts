@@ -38,7 +38,6 @@ export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
     ":focus-visible": {
       boxShadow: `0 0 0 1px ${theme.colors.primary}`,
     },
-    color: isDisabled ? theme.colors.fadedText40 : theme.colors.bodyText,
     cursor: isDisabled ? "not-allowed" : "pointer",
   })
 )
@@ -56,8 +55,11 @@ export const StyledFileDropzoneInstructionsFileUploaderIcon = styled.span(
   })
 )
 
-export const StyledFileDropzoneInstructionsText = styled.span(({ theme }) => ({
+export const StyledFileDropzoneInstructionsText = styled.span<{
+  disabled?: boolean
+}>(({ theme, disabled }) => ({
   marginBottom: theme.spacing.twoXS,
+  color: disabled ? theme.colors.fadedText40 : theme.colors.bodyText,
 }))
 
 export const StyledFileDropzoneInstructionsSubtext = styled.span<{

@@ -48,7 +48,7 @@ const FileDropzoneInstructions = ({
       <Icon content={CloudUpload} size="threeXL" />
     </StyledFileDropzoneInstructionsFileUploaderIcon>
     <StyledFileDropzoneInstructionsColumn>
-      <StyledFileDropzoneInstructionsText>
+      <StyledFileDropzoneInstructionsText disabled={disabled}>
         Drag and drop file{multiple ? "s" : ""} here
       </StyledFileDropzoneInstructionsText>
       <StyledFileDropzoneInstructionsSubtext disabled={disabled}>
