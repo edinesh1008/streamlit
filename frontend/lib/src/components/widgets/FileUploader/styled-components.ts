@@ -56,13 +56,11 @@ export const StyledFileDropzoneInstructionsFileUploaderIcon = styled.span(
   })
 )
 
-export const StyledFileDropzoneInstructionsStyledSpan = styled.span(
-  ({ theme }) => ({
-    marginBottom: theme.spacing.twoXS,
-  })
-)
+export const StyledFileDropzoneInstructionsText = styled.span(({ theme }) => ({
+  marginBottom: theme.spacing.twoXS,
+}))
 
-export const StyledFileDropzoneInstructionsSmall = styled.small<{
+export const StyledFileDropzoneInstructionsSubtext = styled.span<{
   disabled?: boolean
 }>(({ theme, disabled }) => ({
   fontSize: theme.fontSizes.sm,

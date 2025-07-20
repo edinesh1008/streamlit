@@ -26,8 +26,8 @@ import {
   StyledFileDropzoneInstructions,
   StyledFileDropzoneInstructionsColumn,
   StyledFileDropzoneInstructionsFileUploaderIcon,
-  StyledFileDropzoneInstructionsStyledSpan,
-  StyledFileDropzoneInstructionsSmall,
+  StyledFileDropzoneInstructionsText,
+  StyledFileDropzoneInstructionsSubtext,
 } from "./styled-components"
 
 export interface Props {
@@ -48,17 +48,17 @@ const FileDropzoneInstructions = ({
       <Icon content={CloudUpload} size="threeXL" />
     </StyledFileDropzoneInstructionsFileUploaderIcon>
     <StyledFileDropzoneInstructionsColumn>
-      <StyledFileDropzoneInstructionsStyledSpan>
+      <StyledFileDropzoneInstructionsText>
         Drag and drop file{multiple ? "s" : ""} here
-      </StyledFileDropzoneInstructionsStyledSpan>
-      <StyledFileDropzoneInstructionsSmall disabled={disabled}>
+      </StyledFileDropzoneInstructionsText>
+      <StyledFileDropzoneInstructionsSubtext disabled={disabled}>
         {`Limit ${getSizeDisplay(maxSizeBytes, FileSize.Byte, 0)} per file`}
         {acceptedExtensions.length
           ? ` • ${acceptedExtensions
               .map(ext => ext.replace(/^\./, "").toUpperCase())
               .join(", ")}`
           : null}
-      </StyledFileDropzoneInstructionsSmall>
+      </StyledFileDropzoneInstructionsSubtext>
     </StyledFileDropzoneInstructionsColumn>
   </StyledFileDropzoneInstructions>
 )
