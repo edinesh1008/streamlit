@@ -555,6 +555,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
           maxSizeBytes={this.maxUploadSizeInBytes}
           label={element.label}
           disabled={disabled}
+          width={width}
         />
         {newestToOldestFiles.length > 0 && (
           <UploadedFiles

@@ -21,6 +21,7 @@ import Dropzone, { FileRejection } from "react-dropzone"
 import BaseButton, {
   BaseButtonKind,
   BaseButtonSize,
+  DynamicButtonLabel,
 } from "~lib/components/shared/BaseButton"
 
 import { StyledFileDropzoneSection } from "./styled-components"
@@ -34,6 +35,7 @@ export interface Props {
   acceptedExtensions: string[]
   maxSizeBytes: number
   label: string
+  width?: number
 }
 
 const FileDropzone = ({
@@ -43,6 +45,7 @@ const FileDropzone = ({
   maxSizeBytes,
   disabled,
   label,
+  width,
 }: Props): React.ReactElement => (
   <Dropzone
     onDrop={onDrop}
@@ -65,19 +68,23 @@ const FileDropzone = ({
           data-testid="stFileUploaderDropzoneInput"
           {...getInputProps()}
         />
-        <FileDropzoneInstructions
-          multiple={multiple}
-          acceptedExtensions={acceptedExtensions}
-          maxSizeBytes={maxSizeBytes}
-          disabled={disabled}
-        />
         <BaseButton
           kind={BaseButtonKind.SECONDARY}
           disabled={disabled}
           size={BaseButtonSize.SMALL}
         >
-          Browse files
+          <DynamicButtonLabel
+            icon=":material/file_upload:"
+            label="Upload a file"
+          />
         </BaseButton>
+        <FileDropzoneInstructions
+          multiple={multiple}
+          acceptedExtensions={acceptedExtensions}
+          maxSizeBytes={maxSizeBytes}
+          disabled={disabled}
+          width={width}
+        />
       </StyledFileDropzoneSection>
     )}
   </Dropzone>

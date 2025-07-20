@@ -16,17 +16,13 @@
 
 import React, { memo } from "react"
 
-import { CloudUpload } from "@emotion-icons/material-outlined"
-
 import Icon from "~lib/components/shared/Icon"
 import { FileSize, getSizeDisplay } from "~lib/util/FileHelper"
+import { convertRemToPx } from "~lib/theme"
 
 import {
   StyledFileDropzoneInstructions,
-  StyledFileDropzoneInstructionsColumn,
-  StyledFileDropzoneInstructionsFileUploaderIcon,
   StyledFileDropzoneInstructionsSubtext,
-  StyledFileDropzoneInstructionsText,
 } from "./styled-components"
 
 export interface Props {
@@ -34,6 +30,7 @@ export interface Props {
   acceptedExtensions: string[]
   maxSizeBytes: number
   disabled?: boolean
+  width?: number
 }
 
 const FileDropzoneInstructions = ({
@@ -41,25 +38,46 @@ const FileDropzoneInstructions = ({
   acceptedExtensions,
   maxSizeBytes,
   disabled,
-}: Props): React.ReactElement => (
-  <StyledFileDropzoneInstructions data-testid="stFileUploaderDropzoneInstructions">
-    <StyledFileDropzoneInstructionsFileUploaderIcon>
-      <Icon content={CloudUpload} size="threeXL" />
-    </StyledFileDropzoneInstructionsFileUploaderIcon>
-    <StyledFileDropzoneInstructionsColumn>
-      <StyledFileDropzoneInstructionsText disabled={disabled}>
-        Drag and drop file{multiple ? "s" : ""} here
-      </StyledFileDropzoneInstructionsText>
+  width,
+}: Props): React.ReactElement => {
+  // Define width thresholds for showing different parts of text
+  const SHOW_ALL_THRESHOLD = convertRemToPx("34rem")
+  const SHOW_SIZE_AND_EXTENSIONS_THRESHOLD = convertRemToPx("23rem") // ~368px
+  const SHOW_ONLY_EXTENSIONS_THRESHOLD = convertRemToPx("15rem") // ~240px
+
+  const showDragDrop = !width || width >= SHOW_ALL_THRESHOLD
+  const showSizeLimit = !width || width >= SHOW_SIZE_AND_EXTENSIONS_THRESHOLD
+  const showExtensions = !width || width >= SHOW_ONLY_EXTENSIONS_THRESHOLD
+
+  // Build the text dynamically based on what should be shown
+  const parts: string[] = []
+
+  if (showDragDrop) {
+    parts.push("Or drag and drop here")
+  }
+
+  if (showSizeLimit) {
+    parts.push(`${getSizeDisplay(maxSizeBytes, FileSize.Byte, 0)} per file`)
+  }
+
+  if (showExtensions && acceptedExtensions.length > 0) {
+    parts.push(
+      acceptedExtensions
+        .map(ext => ext.replace(/^\./, "").toUpperCase())
+        .join(", ")
+    )
+  }
+
+  // Join with bullet separator
+  const text = parts.join(" • ")
+
+  return (
+    <StyledFileDropzoneInstructions data-testid="stFileUploaderDropzoneInstructions">
       <StyledFileDropzoneInstructionsSubtext disabled={disabled}>
-        {`Limit ${getSizeDisplay(maxSizeBytes, FileSize.Byte, 0)} per file`}
-        {acceptedExtensions.length
-          ? ` • ${acceptedExtensions
-              .map(ext => ext.replace(/^\./, "").toUpperCase())
-              .join(", ")}`
-          : null}
+        {text}
       </StyledFileDropzoneInstructionsSubtext>
-    </StyledFileDropzoneInstructionsColumn>
-  </StyledFileDropzoneInstructions>
-)
+    </StyledFileDropzoneInstructions>
+  )
+}
 
 export default memo(FileDropzoneInstructions)
