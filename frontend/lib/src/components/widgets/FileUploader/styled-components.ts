@@ -39,7 +39,7 @@ export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
       boxShadow: `0 0 0 1px ${theme.colors.primary}`,
     },
     color: isDisabled ? theme.colors.fadedText40 : theme.colors.bodyText,
-    cursor: isDisabled ? "not-allowed" : "auto",
+    cursor: isDisabled ? "not-allowed" : "pointer",
   })
 )
 
