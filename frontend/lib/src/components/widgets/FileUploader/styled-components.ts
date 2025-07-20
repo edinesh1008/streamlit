@@ -38,7 +38,8 @@ export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
     ":focus-visible": {
       boxShadow: `0 0 0 1px ${theme.colors.primary}`,
     },
-    color: isDisabled ? theme.colors.gray : theme.colors.bodyText,
+    color: isDisabled ? theme.colors.fadedText40 : theme.colors.bodyText,
+    cursor: isDisabled ? "not-allowed" : "auto",
   })
 )
 
@@ -60,6 +61,13 @@ export const StyledFileDropzoneInstructionsStyledSpan = styled.span(
     marginBottom: theme.spacing.twoXS,
   })
 )
+
+export const StyledFileDropzoneInstructionsSmall = styled.small<{
+  disabled?: boolean
+}>(({ theme, disabled }) => ({
+  fontSize: theme.fontSizes.sm,
+  color: disabled ? theme.colors.fadedText40 : theme.colors.fadedText60,
+}))
 
 export const StyledFileDropzoneInstructionsColumn = styled.div({
   display: "flex",

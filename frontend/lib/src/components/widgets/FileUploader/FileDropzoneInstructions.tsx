@@ -27,18 +27,21 @@ import {
   StyledFileDropzoneInstructionsColumn,
   StyledFileDropzoneInstructionsFileUploaderIcon,
   StyledFileDropzoneInstructionsStyledSpan,
+  StyledFileDropzoneInstructionsSmall,
 } from "./styled-components"
 
 export interface Props {
   multiple: boolean
   acceptedExtensions: string[]
   maxSizeBytes: number
+  disabled?: boolean
 }
 
 const FileDropzoneInstructions = ({
   multiple,
   acceptedExtensions,
   maxSizeBytes,
+  disabled,
 }: Props): React.ReactElement => (
   <StyledFileDropzoneInstructions data-testid="stFileUploaderDropzoneInstructions">
     <StyledFileDropzoneInstructionsFileUploaderIcon>
@@ -48,14 +51,14 @@ const FileDropzoneInstructions = ({
       <StyledFileDropzoneInstructionsStyledSpan>
         Drag and drop file{multiple ? "s" : ""} here
       </StyledFileDropzoneInstructionsStyledSpan>
-      <Small>
+      <StyledFileDropzoneInstructionsSmall disabled={disabled}>
         {`Limit ${getSizeDisplay(maxSizeBytes, FileSize.Byte, 0)} per file`}
         {acceptedExtensions.length
           ? ` • ${acceptedExtensions
               .map(ext => ext.replace(/^\./, "").toUpperCase())
               .join(", ")}`
           : null}
-      </Small>
+      </StyledFileDropzoneInstructionsSmall>
     </StyledFileDropzoneInstructionsColumn>
   </StyledFileDropzoneInstructions>
 )
