@@ -74,24 +74,26 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
     "&:focus-visible": {
       boxShadow: `0 0 0 0.2rem ${transparentize(theme.colors.primary, 0.5)}`,
     },
-    fontSize: "inherit", // Use normal font size instead of sm
+    fontSize: "inherit",
     paddingLeft: theme.spacing.md,
     paddingRight: theme.spacing.md,
-    paddingTop: theme.spacing.twoXS, // Match button SMALL size padding
-    paddingBottom: theme.spacing.twoXS, // Match button SMALL size padding
-    minHeight: theme.sizes.minElementHeight, // Standard button height
-    alignItems: "center", // Center content vertically
+    paddingTop: theme.spacing.twoXS,
+    paddingBottom: theme.spacing.twoXS,
+    minHeight: theme.sizes.minElementHeight,
+    alignItems: "center",
     cursor: "pointer",
     listStyleType: "none",
     "&::-webkit-details-marker": {
       display: "none",
     },
     backgroundColor: expanded ? theme.colors.darkenedBgMix15 : "transparent",
+    // When expanded, only round the top corners
     borderRadius: expanded
-      ? `${theme.radii.default} ${theme.radii.default} 0 0` // Only top corners when expanded
-      : theme.radii.default, // All corners when collapsed
-    // Animate border-radius changes with delay when closing (expanded -> collapsed)
-    // No delay when opening to feel more responsive
+      ? `${theme.radii.default} ${theme.radii.default} 0 0`
+      : theme.radii.default,
+    // Animate border-radius changes when expanding/collapsing to match the animation of
+    // the expander content. Use a delay when collapsing because the content first needs
+    // to slide up.
     transition: expanded
       ? `border-radius 200ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease`
       : `border-radius 200ms cubic-bezier(0.23, 1, 0.32, 1) 300ms, background-color 150ms ease`,
@@ -110,15 +112,14 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
 )
 
 export const StyledDetailsPanel = styled.div(({ theme }) => ({
-  paddingTop: theme.spacing.lg,
-  paddingBottom: theme.spacing.lg,
-  paddingLeft: theme.spacing.lg,
-  paddingRight: theme.spacing.lg,
+  padding: theme.spacing.lg,
   borderTop: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
 }))
 
 export const StyledStatusSpinner = styled(StyledSpinnerIcon as any)(
   ({ theme }: any) => ({
+    // Make the spinner in `st.status` a bit smaller and grayscale to look
+    // similar to a material icon.
     borderTopColor: theme.colors.bodyText,
     borderWidth: `calc(${theme.sizes.spinnerThickness} * 0.75)`,
   })
@@ -142,7 +143,7 @@ export const StyledStatusLabel = styled.span<StyledStatusLabelProps>(
     position: "relative",
     display: "inline-block",
     ...(isRunning && {
-      // TODO: Setting the color here doesn't seem to work with colored text.
+      // TODO: Seems like this doesn't work with colored text.
       background: `linear-gradient(
         to right,
         ${theme.colors.bodyText} 0%,
