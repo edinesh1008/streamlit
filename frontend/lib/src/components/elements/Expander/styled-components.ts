@@ -73,13 +73,7 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
       outline: "none",
     },
     "&:focus-visible": {
-      backgroundColor: expanded
-        ? theme.colors.darkenedBgMix25
-        : theme.colors.darkenedBgMix15,
       boxShadow: `0 0 0 0.2rem ${transparentize(theme.colors.primary, 0.5)}`,
-      borderRadius: expanded
-        ? `${theme.radii.default} ${theme.radii.default} 0 0` // Only top corners when expanded
-        : theme.radii.default, // All corners when collapsed
     },
     fontSize: "inherit", // Use normal font size instead of sm
     paddingLeft: theme.spacing.md,
@@ -97,7 +91,7 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
     borderRadius: expanded
       ? `${theme.radii.default} ${theme.radii.default} 0 0` // Only top corners when expanded
       : theme.radii.default, // All corners when collapsed
-    "&:hover": {
+    "&:hover, &:focus-visible": {
       backgroundColor: expanded
         ? theme.colors.darkenedBgMix25
         : theme.colors.darkenedBgMix15,
