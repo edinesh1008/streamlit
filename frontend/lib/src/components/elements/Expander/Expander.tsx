@@ -23,15 +23,9 @@ import React, {
   useState,
 } from "react"
 
-import { ExpandLess, ExpandMore } from "@emotion-icons/material-outlined"
-
 import { Block as BlockProto } from "@streamlit/protobuf"
 
-import {
-  DynamicIcon,
-  StyledIcon,
-  StyledSpinnerIcon,
-} from "~lib/components/shared/Icon"
+import { DynamicIcon, StyledSpinnerIcon } from "~lib/components/shared/Icon"
 import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 import { notNullOrUndefined } from "~lib/util/utils"
 import { LibContext } from "~lib/components/core/LibContext"
@@ -64,9 +58,14 @@ export const ExpanderIcon = (props: ExpanderIconProps): ReactElement => {
   const { icon } = props
   const { activeTheme } = useContext(LibContext)
 
+  const isMaterialIcon = icon?.startsWith(":material")
+  // Material icons need to be larger to render similar size of emojis
+  const iconSize = isMaterialIcon ? "lg" : "base"
+  const iconMargin = isMaterialIcon ? "0 sm 0 0" : "0 md 0 0"
+
   const iconProps = {
-    size: "lg" as IconSize,
-    margin: "0",
+    size: iconSize as IconSize,
+    margin: iconMargin,
     padding: "0",
   }
 
@@ -110,6 +109,7 @@ const Expander: React.FC<React.PropsWithChildren<ExpanderProps>> = ({
 }): ReactElement => {
   const { label, expanded: initialExpanded } = element
   const [expanded, setExpanded] = useState<boolean>(initialExpanded || false)
+  const [isHovered, setIsHovered] = useState<boolean>(false)
   const detailsRef = useRef<HTMLDetailsElement>(null)
   const summaryRef = useRef<HTMLElement>(null)
   const animationRef = useRef<Animation | null>(null)
@@ -235,23 +235,52 @@ const Expander: React.FC<React.PropsWithChildren<ExpanderProps>> = ({
     }
   }
 
+  const handleMouseEnter = (): void => {
+    setIsHovered(true)
+  }
+
+  const handleMouseLeave = (): void => {
+    setIsHovered(false)
+  }
+
+  // Determine which icon to show
+  const showChevron = !element.icon || isHovered || expanded
+  const showUserIcon = element.icon && !isHovered && !expanded
+
   return (
     <StyledExpandableContainer className="stExpander" data-testid="stExpander">
       <StyledDetails isStale={isStale} ref={detailsRef}>
-        <StyledSummary onClick={toggle} ref={summaryRef} isStale={isStale}>
+        <StyledSummary
+          onClick={toggle}
+          ref={summaryRef}
+          isStale={isStale}
+          expanded={expanded}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
           <StyledSummaryHeading>
-            {element.icon && <ExpanderIcon icon={element.icon} />}
-            <StreamlitMarkdown source={label} allowHTML={false} isLabel />
+            {showChevron && (
+              <DynamicIcon
+                color="inherit"
+                iconValue={
+                  expanded
+                    ? ":material/keyboard_arrow_down:"
+                    : ":material/keyboard_arrow_right:"
+                }
+                testid="stExpanderToggleIcon"
+                size="lg"
+                margin="0 sm 0 0"
+                padding="0"
+              />
+            )}
+            {showUserIcon && <ExpanderIcon icon={element.icon} />}
+            <StreamlitMarkdown
+              source={label}
+              allowHTML={false}
+              isLabel
+              largerLabel
+            />
           </StyledSummaryHeading>
-          <StyledIcon
-            as={expanded ? ExpandLess : ExpandMore}
-            color={"inherit"}
-            aria-hidden="true"
-            data-testid="stExpanderToggleIcon"
-            size="lg"
-            margin=""
-            padding=""
-          />
         </StyledSummary>
         <StyledDetailsPanel data-testid="stExpanderDetails" ref={contentRef}>
           {children}

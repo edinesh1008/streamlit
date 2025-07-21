@@ -51,17 +51,18 @@ export const StyledDetails = styled.details<StyledDetailsProps>(
 
 export const StyledSummaryHeading = styled.span(({ theme }) => ({
   display: "flex",
-  gap: theme.spacing.sm,
+  gap: theme.spacing.none, // Remove gap between icon and label
   alignItems: "center",
   flexGrow: 1,
 }))
 
 interface StyledSummaryProps {
   isStale: boolean
+  expanded: boolean
 }
 
 export const StyledSummary = styled.summary<StyledSummaryProps>(
-  ({ theme, isStale }) => ({
+  ({ theme, isStale, expanded }) => ({
     position: "relative",
     display: "flex",
     width: "100%",
@@ -70,28 +71,37 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
       outlineOffset: `-${theme.sizes.borderWidth}`,
       borderRadius: theme.radii.default,
     },
-    fontSize: theme.fontSizes.sm,
-    paddingLeft: theme.spacing.lg,
-    paddingRight: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.md,
+    fontSize: "inherit", // Use normal font size instead of sm
+    paddingLeft: theme.spacing.md,
+    paddingRight: theme.spacing.md,
+    paddingTop: theme.spacing.twoXS, // Match button SMALL size padding
+    paddingBottom: theme.spacing.twoXS, // Match button SMALL size padding
+    minHeight: theme.sizes.minElementHeight, // Standard button height
+    alignItems: "center", // Center content vertically
     cursor: "pointer",
     listStyleType: "none",
     "&::-webkit-details-marker": {
       display: "none",
     },
+    backgroundColor: expanded ? theme.colors.darkenedBgMix15 : "transparent",
     "&:hover": {
-      color: theme.colors.primary,
+      backgroundColor: expanded
+        ? theme.colors.darkenedBgMix25
+        : theme.colors.darkenedBgMix15,
     },
-    "&:hover svg": {
-      fill: theme.colors.primary,
+    "&:active": {
+      backgroundColor: expanded
+        ? theme.colors.darkenedBgMix15
+        : theme.colors.darkenedBgMix25,
     },
     ...(isStale && STALE_STYLES),
   })
 )
 
 export const StyledDetailsPanel = styled.div(({ theme }) => ({
+  paddingTop: theme.spacing.lg,
   paddingBottom: theme.spacing.lg,
   paddingLeft: theme.spacing.lg,
   paddingRight: theme.spacing.lg,
+  borderTop: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
 }))
