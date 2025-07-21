@@ -54,7 +54,6 @@ export const StyledDetails = styled.details<StyledDetailsProps>(
 
 export const StyledSummaryHeading = styled.span(({ theme }) => ({
   display: "flex",
-  gap: theme.spacing.none, // Remove gap between icon and label
   alignItems: "center",
   flexGrow: 1,
 }))
