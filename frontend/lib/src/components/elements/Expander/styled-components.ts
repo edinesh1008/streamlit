@@ -16,6 +16,7 @@
 
 import styled from "@emotion/styled"
 import { keyframes } from "@emotion/react"
+import { transparentize } from "color2k"
 
 import { STALE_STYLES, STALE_TRANSITION_PARAMS } from "~lib/theme"
 import { StyledSpinnerIcon } from "~lib/components/shared/Icon"
@@ -68,10 +69,17 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
     position: "relative",
     display: "flex",
     width: "100%",
+    "&:focus": {
+      outline: "none",
+    },
     "&:focus-visible": {
-      outline: `${theme.sizes.borderWidth} solid ${theme.colors.primary}`,
-      outlineOffset: `-${theme.sizes.borderWidth}`,
-      borderRadius: theme.radii.default,
+      backgroundColor: expanded
+        ? theme.colors.darkenedBgMix25
+        : theme.colors.darkenedBgMix15,
+      boxShadow: `0 0 0 0.2rem ${transparentize(theme.colors.primary, 0.5)}`,
+      borderRadius: expanded
+        ? `${theme.radii.default} ${theme.radii.default} 0 0` // Only top corners when expanded
+        : theme.radii.default, // All corners when collapsed
     },
     fontSize: "inherit", // Use normal font size instead of sm
     paddingLeft: theme.spacing.md,
