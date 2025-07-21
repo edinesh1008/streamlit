@@ -15,8 +15,10 @@
  */
 
 import styled from "@emotion/styled"
+import { keyframes } from "@emotion/react"
 
 import { STALE_STYLES, STALE_TRANSITION_PARAMS } from "~lib/theme"
+import { StyledSpinnerIcon } from "~lib/components/shared/Icon"
 
 export interface StyledExpandableContainerProps {
   empty: boolean
@@ -105,3 +107,43 @@ export const StyledDetailsPanel = styled.div(({ theme }) => ({
   paddingRight: theme.spacing.lg,
   borderTop: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
 }))
+
+export const StyledStatusSpinner = styled(StyledSpinnerIcon as any)(
+  ({ theme }: any) => ({
+    borderTopColor: theme.colors.fadedText60, // Override only the color to gray
+  })
+)
+
+const shimmer = keyframes`
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+`
+
+interface StyledStatusLabelProps {
+  isRunning: boolean
+}
+
+export const StyledStatusLabel = styled.span<StyledStatusLabelProps>(
+  ({ isRunning, theme }) => ({
+    position: "relative",
+    display: "inline-block",
+    ...(isRunning && {
+      background: `linear-gradient(
+        to right,
+        ${theme.colors.bodyText} 0%,
+        ${theme.colors.bodyText} 30%,
+        ${theme.colors.fadedText40} 50%,
+        ${theme.colors.bodyText} 70%,
+        ${theme.colors.bodyText} 100%
+      )`,
+      backgroundSize: "200% 100%",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      animation: `${shimmer} 1.1s linear infinite`,
+    }),
+  })
+)

@@ -25,17 +25,19 @@ import React, {
 
 import { Block as BlockProto } from "@streamlit/protobuf"
 
-import { DynamicIcon, StyledSpinnerIcon } from "~lib/components/shared/Icon"
+import { DynamicIcon } from "~lib/components/shared/Icon"
 import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 import { notNullOrUndefined } from "~lib/util/utils"
 import { LibContext } from "~lib/components/core/LibContext"
-import { IconSize, isPresetTheme } from "~lib/theme"
+import { IconSize } from "~lib/theme"
 
 import {
   BORDER_SIZE,
   StyledDetails,
   StyledDetailsPanel,
   StyledExpandableContainer,
+  StyledStatusSpinner,
+  StyledStatusLabel,
   StyledSummary,
   StyledSummaryHeading,
 } from "./styled-components"
@@ -75,10 +77,8 @@ export const ExpanderIcon = (props: ExpanderIconProps): ReactElement => {
   }
 
   if (icon === "spinner") {
-    const usingCustomTheme = !isPresetTheme(activeTheme)
     return (
-      <StyledSpinnerIcon
-        usingCustomTheme={usingCustomTheme}
+      <StyledStatusSpinner
         data-testid="stExpanderIconSpinner"
         {...iconProps}
       />
@@ -247,6 +247,9 @@ const Expander: React.FC<React.PropsWithChildren<ExpanderProps>> = ({
   const showChevron = !element.icon || isHovered || expanded
   const showUserIcon = element.icon && !isHovered && !expanded
 
+  // Check if this is a running status
+  const isRunningStatus = element.icon === "spinner"
+
   return (
     <StyledExpandableContainer className="stExpander" data-testid="stExpander">
       <StyledDetails isStale={isStale} ref={detailsRef}>
@@ -274,12 +277,23 @@ const Expander: React.FC<React.PropsWithChildren<ExpanderProps>> = ({
               />
             )}
             {showUserIcon && <ExpanderIcon icon={element.icon} />}
-            <StreamlitMarkdown
-              source={label}
-              allowHTML={false}
-              isLabel
-              largerLabel
-            />
+            {isRunningStatus ? (
+              <StyledStatusLabel isRunning={true}>
+                <StreamlitMarkdown
+                  source={label}
+                  allowHTML={false}
+                  isLabel
+                  largerLabel
+                />
+              </StyledStatusLabel>
+            ) : (
+              <StreamlitMarkdown
+                source={label}
+                allowHTML={false}
+                isLabel
+                largerLabel
+              />
+            )}
           </StyledSummaryHeading>
         </StyledSummary>
         <StyledDetailsPanel data-testid="stExpanderDetails" ref={contentRef}>
