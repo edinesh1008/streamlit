@@ -132,6 +132,7 @@ export const StyledStatusLabel = styled.span<StyledStatusLabelProps>(
     position: "relative",
     display: "inline-block",
     ...(isRunning && {
+      // TODO: Setting the color here doesn't seem to work with colored text.
       background: `linear-gradient(
         to right,
         ${theme.colors.bodyText} 0%,
