@@ -113,9 +113,8 @@ export const StyledDetailsPanel = styled.div(({ theme }) => ({
 
 export const StyledStatusSpinner = styled(StyledSpinnerIcon as any)(
   ({ theme }: any) => ({
-    // TODO: Should probably use a different color here. The rest of the spinner
-    // uses border color, so maybe a darkened version of that?
-    borderTopColor: theme.colors.fadedText60, // Override only the color to gray
+    borderTopColor: theme.colors.bodyText,
+    borderWidth: `calc(${theme.sizes.spinnerThickness} * 0.75)`,
   })
 )
 
