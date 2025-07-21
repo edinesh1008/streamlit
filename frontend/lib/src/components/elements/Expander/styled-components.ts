@@ -86,6 +86,9 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
       display: "none",
     },
     backgroundColor: expanded ? theme.colors.darkenedBgMix15 : "transparent",
+    borderRadius: expanded
+      ? `${theme.radii.default} ${theme.radii.default} 0 0` // Only top corners when expanded
+      : theme.radii.default, // All corners when collapsed
     "&:hover": {
       backgroundColor: expanded
         ? theme.colors.darkenedBgMix25
