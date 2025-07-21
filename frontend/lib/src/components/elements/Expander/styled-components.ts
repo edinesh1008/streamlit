@@ -91,6 +91,11 @@ export const StyledSummary = styled.summary<StyledSummaryProps>(
     borderRadius: expanded
       ? `${theme.radii.default} ${theme.radii.default} 0 0` // Only top corners when expanded
       : theme.radii.default, // All corners when collapsed
+    // Animate border-radius changes with delay when closing (expanded -> collapsed)
+    // No delay when opening to feel more responsive
+    transition: expanded
+      ? `border-radius 200ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease`
+      : `border-radius 200ms cubic-bezier(0.23, 1, 0.32, 1) 300ms, background-color 150ms ease`,
     "&:hover, &:focus-visible": {
       backgroundColor: expanded
         ? theme.colors.darkenedBgMix25
