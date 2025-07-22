@@ -76,6 +76,7 @@ FD = FieldDescriptor
                 ("session_id", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
                 ("is_hello", FD.LABEL_OPTIONAL, FD.TYPE_BOOL),
                 ("initial_query_string", FD.LABEL_OPTIONAL, FD.TYPE_STRING),
+                ("query_param_widget_types", FD.LABEL_REPEATED, FD.TYPE_MESSAGE),
             },
         ),
         (
