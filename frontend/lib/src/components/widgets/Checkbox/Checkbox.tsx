@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { memo, ReactElement, useCallback } from "react"
+import React, { memo, ReactElement, useCallback, useEffect } from "react"
 
 import {
   LABEL_PLACEMENT,
@@ -72,6 +72,11 @@ function Checkbox({
     },
     [setValueWithSource]
   )
+
+  // Register query param widget on mount
+  useEffect(() => {
+    widgetMgr.registerQueryParamWidget(element.id)
+  }, [element.id, widgetMgr])
 
   const theme = useEmotionTheme()
   const { colors, spacing, sizes } = theme

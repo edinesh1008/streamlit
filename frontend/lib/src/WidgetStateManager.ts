@@ -199,6 +199,12 @@ export class WidgetStateManager {
   // Store initial query parameters to hydrate widgets when they are created
   private initialQueryParams: Map<string, string> | null = null
 
+  // Store widget type information for query param widgets (param name -> value type)
+  private queryParamWidgetTypes: Map<string, string> = new Map()
+
+  // Track whether we've done the initial URL update
+  private hasDoneInitialUrlUpdate = false
+
   // Debounced URL update function
   private readonly debouncedUpdateUrl = debounce(50, () => {
     this.updateUrlWithQueryParams()
@@ -343,9 +349,6 @@ export class WidgetStateManager {
   }
 
   public getBoolValue(widget: WidgetInfo): boolean | undefined {
-    // Track query parameter widgets when they're first accessed
-    this.trackQueryParamWidget(widget.id)
-
     const state = this.getWidgetState(widget)
     if (notNullOrUndefined(state) && state.value === "boolValue") {
       return state.boolValue as boolean
@@ -357,12 +360,6 @@ export class WidgetStateManager {
       const paramName = userKey.substring(1) // Remove the '?' prefix
       if (this.initialQueryParams.has(paramName)) {
         const paramValue = this.initialQueryParams.get(paramName)
-        console.log(
-          "[HYDRATION DEBUG] WidgetStateManager.getBoolValue: widget id:",
-          widget.id,
-          "returning query param value:",
-          paramValue
-        )
         return paramValue === "true"
       }
     }
@@ -381,9 +378,6 @@ export class WidgetStateManager {
   }
 
   public getIntValue(widget: WidgetInfo): number | undefined {
-    // Track query parameter widgets when they're first accessed
-    this.trackQueryParamWidget(widget.id)
-
     const state = this.getWidgetState(widget)
     if (notNullOrUndefined(state) && state.value === "intValue") {
       return requireNumberInt(state.intValue as number)
@@ -419,12 +413,6 @@ export class WidgetStateManager {
         const paramValue = this.initialQueryParams.get(paramName)
         const numValue = Number(paramValue)
         if (!isNaN(numValue)) {
-          console.log(
-            "[HYDRATION DEBUG] WidgetStateManager.getDoubleValue: widget id:",
-            widget.id,
-            "returning query param value:",
-            numValue
-          )
           return numValue
         }
       }
@@ -444,18 +432,9 @@ export class WidgetStateManager {
   }
 
   public getStringValue(widget: WidgetInfo): string | undefined {
-    // Track query parameter widgets when they're first accessed
-    this.trackQueryParamWidget(widget.id)
-
     const state = this.getWidgetState(widget)
     if (notNullOrUndefined(state) && state.value === "stringValue") {
       const value = state.stringValue as string
-      console.log(
-        "[HYDRATION DEBUG] WidgetStateManager.getStringValue: widget id:",
-        widget.id,
-        "returning value:",
-        value
-      )
       return value
     }
 
@@ -465,21 +444,10 @@ export class WidgetStateManager {
       const paramName = userKey.substring(1) // Remove the '?' prefix
       if (this.initialQueryParams.has(paramName)) {
         const paramValue = this.initialQueryParams.get(paramName)
-        console.log(
-          "[HYDRATION DEBUG] WidgetStateManager.getStringValue: widget id:",
-          widget.id,
-          "returning query param value:",
-          paramValue
-        )
         return paramValue
       }
     }
 
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.getStringValue: widget id:",
-      widget.id,
-      "no value found"
-    )
     return undefined
   }
 
@@ -769,7 +737,7 @@ export class WidgetStateManager {
           if (value !== undefined && value !== null) {
             queryParams.set(paramName, this.serializeValueForQueryParam(value))
           }
-        } catch (_error) {
+        } catch {
           // Silently skip widgets that fail to serialize
         }
       }
@@ -798,25 +766,29 @@ export class WidgetStateManager {
   }
 
   /**
+   * Register a widget as being bound to a query parameter.
+   * This should be called once when the widget is mounted.
+   */
+  public registerQueryParamWidget(widgetId: string): void {
+    this.trackQueryParamWidget(widgetId)
+    // Update URL with current widget values after registration
+    this.debouncedUpdateUrl()
+  }
+
+  /**
    * Track a widget as being bound to a query parameter if its ID indicates so.
    */
   private trackQueryParamWidget(widgetId: string): void {
     const userKey = this.extractUserKeyFromWidgetId(widgetId)
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.trackQueryParamWidget: widgetId:",
-      widgetId,
-      "userKey:",
-      userKey
-    )
 
     if (userKey && userKey.startsWith("?")) {
       const paramName = userKey.substring(1) // Remove the '?' prefix
-      console.log(
-        "[HYDRATION DEBUG] WidgetStateManager.trackQueryParamWidget: Tracking query param widget:",
-        widgetId,
-        "with param:",
-        paramName
-      )
+
+      // Already tracked
+      if (this.queryParamWidgets.has(widgetId)) {
+        return
+      }
+
       this.queryParamWidgets.set(widgetId, paramName)
 
       // Don't hydrate here - it causes circular dependencies
@@ -874,12 +846,21 @@ export class WidgetStateManager {
       return value ? "true" : "false"
     }
     if (typeof value === "number") {
+      // Validate number before serializing
+      if (!isFinite(value)) {
+        throw new Error(`Cannot serialize non-finite number: ${value}`)
+      }
       return value.toString()
     }
     if (typeof value === "string") {
+      // Return string as-is; URLSearchParams will handle encoding
       return value
     }
+    if (value === null || value === undefined) {
+      return ""
+    }
     // For other types, convert to string
+    console.warn(`Unexpected value type for query param:`, value)
     return String(value)
   }
 
@@ -926,11 +907,28 @@ export class WidgetStateManager {
       // Update the URL
       newUrl.search = existingParams.toString()
 
+      // Check URL length (browsers typically limit URLs to ~2000 chars)
+      const urlString = newUrl.toString()
+      if (urlString.length > 2000) {
+        console.warn(
+          `URL length (${urlString.length}) exceeds recommended maximum. Some browsers may truncate the URL.`
+        )
+      }
+
       // Use replaceState to update URL without navigation
-      window.history.replaceState(null, "", newUrl.toString())
+      window.history.replaceState(null, "", urlString)
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error("Failed to update URL with query parameters:", error)
     }
+  }
+
+  /**
+   * Set widget type information for query param widgets.
+   * This should be called when receiving the Initialize message.
+   */
+  public setQueryParamWidgetTypes(widgetTypes: Map<string, string>): void {
+    this.queryParamWidgetTypes = widgetTypes
   }
 
   /**
@@ -938,23 +936,11 @@ export class WidgetStateManager {
    * This should be called when the initial query string is received from the server.
    */
   public hydrateWidgetsFromQueryParams(queryString: string): void {
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetsFromQueryParams called with:",
-      queryString
-    )
-
     if (!queryString) {
-      console.log(
-        "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetsFromQueryParams: No query string provided, returning"
-      )
       return
     }
 
     const queryParams = new URLSearchParams(queryString)
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetsFromQueryParams: Parsed query params:",
-      Array.from(queryParams.entries())
-    )
 
     // Store the query parameters for later hydration
     this.initialQueryParams = new Map<string, string>()
@@ -962,132 +948,99 @@ export class WidgetStateManager {
     queryParams.forEach((value, key) => {
       initialParams.set(key, value)
     })
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetsFromQueryParams: Stored initial params:",
-      Array.from(initialParams.entries())
-    )
-
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetsFromQueryParams: Currently tracked query param widgets:",
-      Array.from(this.queryParamWidgets.entries())
-    )
 
     // Try to hydrate any widgets that have already been tracked
     this.queryParamWidgets.forEach((paramName, widgetId) => {
-      console.log(
-        "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetsFromQueryParams: Attempting to hydrate widget:",
-        widgetId,
-        "with param:",
-        paramName
-      )
       this.hydrateWidgetIfNeeded(widgetId, paramName)
     })
+  }
 
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetsFromQueryParams: Hydration process completed"
-    )
+  /**
+   * Signal that initial widget registration is complete.
+   * This should be called after the first successful script run.
+   */
+  public signalInitialWidgetsComplete(): void {
+    if (!this.hasDoneInitialUrlUpdate && this.queryParamWidgets.size > 0) {
+      this.hasDoneInitialUrlUpdate = true
+      this.updateUrlWithQueryParams()
+    }
   }
 
   /**
    * Hydrate a specific widget if we have a query parameter value for it.
    */
   private hydrateWidgetIfNeeded(widgetId: string, paramName: string): void {
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded called for widget:",
-      widgetId,
-      "param:",
-      paramName
-    )
-
     if (!this.initialQueryParams || !this.initialQueryParams.has(paramName)) {
-      console.log(
-        "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: No initial query params or param not found for:",
-        paramName
-      )
       return
     }
 
     const paramValue = this.initialQueryParams.get(paramName)
     if (!paramValue) {
-      console.log(
-        "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: No value for param:",
-        paramName
-      )
       return
     }
-
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: Hydrating widget:",
-      widgetId,
-      "with value:",
-      paramValue
-    )
 
     // Create the widget info object
     const widgetInfo: WidgetInfo = {
       id: widgetId,
     }
 
-    // Determine the value type and set appropriately
-    // Try to parse as boolean first
-    if (paramValue === "true" || paramValue === "false") {
-      const boolValue = paramValue === "true"
-      console.log(
-        "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: Setting bool value:",
-        boolValue,
-        "for widget:",
-        widgetId
-      )
-      this.setBoolValue(widgetInfo, boolValue, { fromUi: false }, undefined)
-    }
-    // Try to parse as number
-    else {
-      const numValue = Number(paramValue)
-      if (!isNaN(numValue)) {
-        // Check if it's an integer or float
-        if (Number.isInteger(numValue)) {
-          console.log(
-            "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: Setting int value:",
-            numValue,
-            "for widget:",
-            widgetId
+    try {
+      // Determine the value type from widget type information
+      const widgetType = this.queryParamWidgetTypes.get(paramName)
+
+      if (widgetType === "bool_value") {
+        // Parse as boolean
+        const lowerValue = paramValue.toLowerCase()
+        if (lowerValue !== "true" && lowerValue !== "false") {
+          console.warn(
+            `Invalid boolean value for query param '${paramName}': ${paramValue}`
           )
-          this.setIntValue(widgetInfo, numValue, { fromUi: false }, undefined)
-        } else {
-          console.log(
-            "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: Setting double value:",
-            numValue,
-            "for widget:",
-            widgetId
-          )
-          this.setDoubleValue(
-            widgetInfo,
-            numValue,
-            { fromUi: false },
-            undefined
-          )
+          return
         }
-      } else {
-        // It's a string
-        console.log(
-          "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: Setting string value:",
-          paramValue,
-          "for widget:",
-          widgetId
+        const boolValue = lowerValue === "true"
+        this.setBoolValue(widgetInfo, boolValue, { fromUi: false }, undefined)
+      } else if (widgetType === "int_value") {
+        // Parse as integer
+        const intValue = parseInt(paramValue, 10)
+        if (isNaN(intValue) || intValue.toString() !== paramValue.trim()) {
+          console.warn(
+            `Invalid integer value for query param '${paramName}': ${paramValue}`
+          )
+          return
+        }
+        this.setIntValue(widgetInfo, intValue, { fromUi: false }, undefined)
+      } else if (widgetType === "double_value") {
+        // Parse as float
+        const floatValue = parseFloat(paramValue)
+        if (isNaN(floatValue) || !isFinite(floatValue)) {
+          console.warn(
+            `Invalid float value for query param '${paramName}': ${paramValue}`
+          )
+          return
+        }
+        this.setDoubleValue(
+          widgetInfo,
+          floatValue,
+          { fromUi: false },
+          undefined
         )
+      } else {
+        // Default to string (including string_value, trigger_value, etc.)
+        // Decode the URL-encoded value
+        const decodedValue = decodeURIComponent(paramValue)
         this.setStringValue(
           widgetInfo,
-          paramValue,
+          decodedValue,
           { fromUi: false },
           undefined
         )
       }
+    } catch (error) {
+      console.warn(
+        `Failed to hydrate widget for query param '${paramName}':`,
+        error
+      )
     }
-
-    console.log(
-      "[HYDRATION DEBUG] WidgetStateManager.hydrateWidgetIfNeeded: Hydration completed for widget:",
-      widgetId
-    )
   }
 
   /**

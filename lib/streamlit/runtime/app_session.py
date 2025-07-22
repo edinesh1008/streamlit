@@ -811,6 +811,22 @@ class AppSession:
                 "Including initial_query_string in NewSession: %s",
                 self._initial_query_string,
             )
+
+            # Include widget type information for query param widgets
+            for (
+                param_name,
+                widget_id,
+            ) in self._session_state._query_param_widget_mapping.items():
+                if widget_id in self._session_state._new_widget_state.widget_metadata:
+                    metadata = self._session_state._new_widget_state.widget_metadata[
+                        widget_id
+                    ]
+                    imsg.query_param_widget_types[param_name] = metadata.value_type
+                    _LOGGER.debug(
+                        "Added query param widget type: %s -> %s",
+                        param_name,
+                        metadata.value_type,
+                    )
         else:
             _LOGGER.info("No initial_query_string to include in NewSession")
 

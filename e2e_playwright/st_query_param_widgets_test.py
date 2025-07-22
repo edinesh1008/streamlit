@@ -51,6 +51,28 @@ def test_query_param_widgets_initial_load_without_params(app: Page):
     expect(app.get_by_test_id("stSelectbox").nth(1)).to_contain_text("choice2")
 
 
+def test_query_param_widgets_populate_url_on_load(app: Page):
+    """Test that query param widgets populate the URL with their values on initial load."""
+    # Wait for app to load
+    expect(app.get_by_test_id("stTextInput").first).to_be_visible()
+
+    # Give time for widgets to mount and register
+    app.wait_for_timeout(1000)
+
+    # Check that URL contains all query param widget values
+    current_url = app.url
+    assert "text_param=default_text" in current_url
+    assert "number_param=42" in current_url
+    assert "checkbox_param=false" in current_url
+    assert "selectbox_param=option1" in current_url
+
+    # Verify regular widget values are NOT in the URL
+    assert "text_regular" not in current_url
+    assert "number_regular" not in current_url
+    assert "checkbox_regular" not in current_url
+    assert "selectbox_regular" not in current_url
+
+
 # Test data for query parameter hydration
 hydration_test_params = [
     {
@@ -211,7 +233,8 @@ def test_regular_widgets_no_url_updates(app: Page):
 def test_mixed_query_params_preserved(app: Page):
     """Test that existing non-widget query parameters are preserved when widget values change."""
     # Navigate to app with some existing query parameters
-    app.goto(app.url + "?existing_param=keep_me&another=value")
+    base_url = app.url.split("?")[0]  # Get base URL without query params
+    app.goto(base_url + "?existing_param=keep_me&another=value")
 
     # Wait for app to load
     expect(app.get_by_test_id("stTextInput").first).to_be_visible()
@@ -316,8 +339,9 @@ def test_manual_navigation_hydration(app: Page):
     expect(app.get_by_test_id("stTextInput").first).to_be_visible()
 
     # Navigate to a new URL with query parameters (similar to manual testing)
+    base_url = app.url.split("?")[0]  # Get base URL without query params
     app.goto(
-        app.url
+        base_url
         + "?text_param=manual_test&number_param=123.45&checkbox_param=true&selectbox_param=option3"
     )
 
@@ -363,8 +387,9 @@ def test_specific_widget_hydration_issue(app: Page):
     expect(app.get_by_test_id("stTextInput").first).to_be_visible()
 
     # Navigate to a new URL with query parameters that should all hydrate
+    base_url = app.url.split("?")[0]  # Get base URL without query params
     app.goto(
-        app.url
+        base_url
         + "?text_param=failing_text&number_param=999.99&checkbox_param=false&selectbox_param=option2"
     )
 

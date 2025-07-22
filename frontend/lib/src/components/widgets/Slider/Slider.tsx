@@ -127,6 +127,11 @@ function Slider({
     [debouncedSetValueWithSource]
   )
 
+  // Register query param widget on mount
+  useEffect(() => {
+    widgetMgr.registerQueryParamWidget(element.id)
+  }, [element.id, widgetMgr])
+
   const renderTickBar = useCallback((): ReactElement => {
     return (
       <StyledTickBar data-testid="stSliderTickBar">

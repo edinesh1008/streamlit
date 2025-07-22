@@ -97,6 +97,10 @@ message Initialize {
   // The initial query string from the browser URL at connection time.
   // Used for query param widget binding.
   string initial_query_string = 8;
+
+  // Widget type information for query param widgets.
+  // Maps query param names to their expected widget types.
+  map<string, string> query_param_widget_types = 9;
 }
 
 // App configuration options, initialized mainly from the

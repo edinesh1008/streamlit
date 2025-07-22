@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { FC, memo, useCallback } from "react"
+import React, { FC, memo, useCallback, useEffect } from "react"
 
 import { Selectbox as SelectboxProto } from "@streamlit/protobuf"
 
@@ -107,6 +107,11 @@ const Selectbox: FC<Props> = ({
     },
     [setValueWithSource]
   )
+
+  // Register query param widget on mount
+  useEffect(() => {
+    widgetMgr.registerQueryParamWidget(element.id)
+  }, [element.id, widgetMgr])
 
   const clearable = isNullOrUndefined(element.default) && !disabled
 

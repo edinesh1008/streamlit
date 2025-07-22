@@ -119,6 +119,11 @@ const NumberInput: React.FC<Props> = ({
     setStep(getStep({ step: element.step, dataType: element.dataType }))
   }, [element.dataType, element.step])
 
+  // Register query param widget on mount
+  useEffect(() => {
+    widgetMgr.registerQueryParamWidget(element.id)
+  }, [element.id, widgetMgr])
+
   const commitValue = useCallback(
     ({
       value: valueArg,

@@ -19,6 +19,7 @@ import React, {
   ReactElement,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react"
@@ -222,6 +223,11 @@ function DateInput({
     setValueWithSource({ value: newValue, fromUi: true })
     setIsEmpty(!newValue)
   }, [isEmpty, element, setValueWithSource])
+
+  // Register query param widget on mount
+  useEffect(() => {
+    widgetMgr.registerQueryParamWidget(element.id)
+  }, [element.id, widgetMgr])
 
   return (
     <div className="stDateInput" data-testid="stDateInput">

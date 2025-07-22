@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import React, { memo, ReactElement, useCallback, useState } from "react"
+import React, {
+  memo,
+  ReactElement,
+  useCallback,
+  useState,
+  useEffect,
+} from "react"
 
 import uniqueId from "lodash/uniqueId"
 import { Input as UIInput } from "baseui/input"
@@ -91,6 +97,11 @@ function TextInput({
   })
 
   useUpdateUiValue(value, uiValue, setUiValue, dirty)
+
+  // Register query param widget on mount
+  useEffect(() => {
+    widgetMgr.registerQueryParamWidget(element.id)
+  }, [element.id, widgetMgr])
 
   /**
    * Whether the input is currently focused.
@@ -255,12 +266,6 @@ function getStateFromWidgetMgr(
   element: TextInputProto
 ): string | null {
   const value = widgetMgr.getStringValue(element) ?? null
-  console.log(
-    "[HYDRATION DEBUG] TextInput.getStateFromWidgetMgr: widget id:",
-    element.id,
-    "value:",
-    value
-  )
   return value
 }
 
