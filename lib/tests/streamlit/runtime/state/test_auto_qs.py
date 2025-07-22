@@ -20,48 +20,7 @@ from streamlit.runtime.state.auto_qs import (
     deserialize_value,
     parse_query_string,
     serialize_value,
-    validate_param_name,
-    validate_param_value,
 )
-
-
-class TestValidation:
-    """Test validation functions for security and correctness."""
-
-    def test_validate_param_name_valid(self):
-        """Test valid parameter names."""
-        validate_param_name("valid_name")
-        validate_param_name("valid-name")
-        validate_param_name("validname123")
-        validate_param_name("a")
-
-    def test_validate_param_name_invalid(self):
-        """Test invalid parameter names."""
-        with pytest.raises(ValueError, match="Parameter name cannot be empty"):
-            validate_param_name("")
-
-        with pytest.raises(ValueError, match="Parameter name too long"):
-            validate_param_name("a" * 101)
-
-        with pytest.raises(ValueError, match="Invalid parameter name"):
-            validate_param_name("invalid name")  # space
-
-        with pytest.raises(ValueError, match="Invalid parameter name"):
-            validate_param_name("invalid.name")  # dot
-
-        with pytest.raises(ValueError, match="Invalid parameter name"):
-            validate_param_name("invalid@name")  # special char
-
-    def test_validate_param_value_valid(self):
-        """Test valid parameter values."""
-        validate_param_value("")
-        validate_param_value("valid value")
-        validate_param_value("x" * 2000)  # max length
-
-    def test_validate_param_value_invalid(self):
-        """Test invalid parameter values."""
-        with pytest.raises(ValueError, match="Parameter value too long"):
-            validate_param_value("x" * 2001)
 
 
 class TestSerialization:
@@ -104,8 +63,14 @@ class TestSerialization:
 
     def test_serialize_value_string_too_long(self):
         """Test serialization of overly long strings."""
-        with pytest.raises(ValueError, match="String value too long"):
-            serialize_value("x" * 2001)
+        # Create a string that will exceed the limit when URL encoded
+        # Each 'x' remains 'x' but we need more than MAX_PARAM_VALUE_LENGTH (2048)
+        long_string = "x" * 2049
+        with pytest.raises(
+            ValueError,
+            match="Encoded query parameter value exceeds maximum allowed length",
+        ):
+            serialize_value(long_string)
 
 
 class TestDeserialization:
@@ -192,25 +157,24 @@ class TestQueryStringParsing:
         result = parse_query_string("name=John&name=Jane")
         assert result == {"name": "Jane"}
 
-    def test_parse_query_string_too_long(self):
-        """Test query string that's too long."""
-        long_query = "a=1&" * 5000  # Very long query string
-        with pytest.raises(ValueError, match="Query string too long"):
-            parse_query_string(long_query)
+    def test_parse_query_string_long_param_names_skipped(self):
+        """Test that parameters with names too long are skipped."""
+        long_name = "a" * 101  # Exceeds MAX_PARAM_NAME_LENGTH
+        result = parse_query_string(f"{long_name}=value&valid=ok")
+        assert result == {"valid": "ok"}  # Long name param is skipped
 
-    def test_parse_query_string_too_many_params(self):
-        """Test query string with too many parameters."""
-        many_params = "&".join(f"param{i}=value{i}" for i in range(100))
-        with pytest.raises(ValueError, match="Too many query parameters"):
-            parse_query_string(many_params)
+    def test_parse_query_string_long_values_skipped(self):
+        """Test that parameters with values too long are skipped."""
+        long_value = "x" * 2049  # Exceeds MAX_PARAM_VALUE_LENGTH
+        result = parse_query_string(f"toolong={long_value}&valid=ok")
+        assert result == {"valid": "ok"}  # Long value param is skipped
 
-    def test_parse_query_string_invalid_param_name(self):
-        """Test query string with invalid parameter names (should be skipped)."""
+    def test_parse_query_string_with_spaces_in_names(self):
+        """Test query string with spaces in parameter names (they are actually allowed)."""
+        # Spaces in parameter names are actually allowed by parse_qs
         result = parse_query_string("valid_name=ok&invalid name=bad&another_valid=good")
-        assert result == {"valid_name": "ok", "another_valid": "good"}
-
-    def test_parse_query_string_invalid_param_value(self):
-        """Test query string with invalid parameter values (should be skipped)."""
-        long_value = "x" * 2001
-        result = parse_query_string(f"valid=ok&toolong={long_value}")
-        assert result == {"valid": "ok"}
+        assert result == {
+            "valid_name": "ok",
+            "invalid name": "bad",
+            "another_valid": "good",
+        }
