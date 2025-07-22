@@ -20,6 +20,11 @@ import math
 from typing import Any
 from urllib import parse
 
+# Constants for URL parameter limits
+MAX_PARAM_NAME_LENGTH = 100
+MAX_PARAM_VALUE_LENGTH = 2048
+URL_SAFE_CHARS = "-_.~"
+
 
 def serialize_value(value: Any) -> str:
     """Serialize a Python value to a URL query parameter string.
@@ -41,8 +46,14 @@ def serialize_value(value: Any) -> str:
         return ""
 
     if isinstance(value, str):
-        # URL encode the string to handle special characters
-        return parse.quote(value, safe="")
+        # URL encode the string to handle special characters, allowing certain safe characters
+        encoded_value = parse.quote(value, safe=URL_SAFE_CHARS)
+        # Validate the length of the encoded string
+        if len(encoded_value) > MAX_PARAM_VALUE_LENGTH:
+            raise ValueError(
+                f"Encoded query parameter value exceeds maximum allowed length of {MAX_PARAM_VALUE_LENGTH} characters"
+            )
+        return encoded_value
     if isinstance(value, bool):
         # Handle bool before int since bool is a subclass of int
         return "true" if value else "false"
@@ -131,7 +142,7 @@ def parse_query_string(query_string: str) -> dict[str, str]:
         return {}
 
     # Remove leading '?' if present
-    query_string = query_string[1:] if query_string.startswith('?') else query_string
+    query_string = query_string.removeprefix("?")
 
     try:
         # Parse the query string
@@ -143,10 +154,14 @@ def parse_query_string(query_string: str) -> dict[str, str]:
         result = {}
         for key, values in params.items():
             # Validate parameter names
-            if not key or len(key) > 100:  # Reasonable limit
+            if not key or len(key) > MAX_PARAM_NAME_LENGTH:
                 continue
             if values:
-                result[key] = values[-1]
+                # Validate value length
+                value = values[-1]
+                if len(value) > MAX_PARAM_VALUE_LENGTH:
+                    continue
+                result[key] = value
             else:
                 result[key] = ""
 

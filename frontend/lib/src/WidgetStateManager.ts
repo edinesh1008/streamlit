@@ -847,7 +847,7 @@ export class WidgetStateManager {
     }
     if (typeof value === "number") {
       // Validate number before serializing
-      if (!isFinite(value)) {
+      if (!Number.isFinite(value)) {
         throw new Error(`Cannot serialize non-finite number: ${value}`)
       }
       return value.toString()
@@ -860,7 +860,13 @@ export class WidgetStateManager {
       return ""
     }
     // For other types, convert to string
+    // eslint-disable-next-line no-console
     console.warn(`Unexpected value type for query param:`, value)
+    // For objects, use JSON.stringify to avoid [object Object]
+    if (typeof value === "object") {
+      return JSON.stringify(value)
+    }
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(value)
   }
 
@@ -910,6 +916,7 @@ export class WidgetStateManager {
       // Check URL length (browsers typically limit URLs to ~2000 chars)
       const urlString = newUrl.toString()
       if (urlString.length > 2000) {
+        // eslint-disable-next-line no-console
         console.warn(
           `URL length (${urlString.length}) exceeds recommended maximum. Some browsers may truncate the URL.`
         )
@@ -992,6 +999,7 @@ export class WidgetStateManager {
         // Parse as boolean
         const lowerValue = paramValue.toLowerCase()
         if (lowerValue !== "true" && lowerValue !== "false") {
+          // eslint-disable-next-line no-console
           console.warn(
             `Invalid boolean value for query param '${paramName}': ${paramValue}`
           )
@@ -1003,6 +1011,7 @@ export class WidgetStateManager {
         // Parse as integer
         const intValue = parseInt(paramValue, 10)
         if (isNaN(intValue) || intValue.toString() !== paramValue.trim()) {
+          // eslint-disable-next-line no-console
           console.warn(
             `Invalid integer value for query param '${paramName}': ${paramValue}`
           )
@@ -1012,7 +1021,8 @@ export class WidgetStateManager {
       } else if (widgetType === "double_value") {
         // Parse as float
         const floatValue = parseFloat(paramValue)
-        if (isNaN(floatValue) || !isFinite(floatValue)) {
+        if (isNaN(floatValue) || !Number.isFinite(floatValue)) {
+          // eslint-disable-next-line no-console
           console.warn(
             `Invalid float value for query param '${paramName}': ${paramValue}`
           )
@@ -1036,6 +1046,7 @@ export class WidgetStateManager {
         )
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn(
         `Failed to hydrate widget for query param '${paramName}':`,
         error

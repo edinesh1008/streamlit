@@ -18,8 +18,8 @@ import React, {
   memo,
   ReactElement,
   useCallback,
-  useState,
   useEffect,
+  useState,
 } from "react"
 
 import uniqueId from "lodash/uniqueId"
