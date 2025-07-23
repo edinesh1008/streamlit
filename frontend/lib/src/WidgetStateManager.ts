@@ -30,6 +30,7 @@ import {
   WidgetState,
   WidgetStates,
 } from "@streamlit/protobuf"
+import { IGuestToHostMessage } from "@streamlit/lib"
 
 import { debounce, isValidFormId, notNullOrUndefined } from "~lib/util/utils"
 export interface Source {
@@ -205,6 +206,9 @@ export class WidgetStateManager {
   // Track whether we've done the initial URL update
   private hasDoneInitialUrlUpdate = false
 
+  // Optional callback to send messages to the host (for cloud environments)
+  private sendMessageToHost?: (message: IGuestToHostMessage) => void
+
   // Debounced URL update function
   private readonly debouncedUpdateUrl = debounce(50, () => {
     this.updateUrlWithQueryParams()
@@ -213,6 +217,16 @@ export class WidgetStateManager {
   constructor(props: Props) {
     this.props = props
     this.formsData = createFormsData()
+  }
+
+  /**
+   * Set the host communication function.
+   * This is called after the HostCommunicationManager is initialized.
+   */
+  public setHostCommunication(
+    sendMessageToHost: (message: IGuestToHostMessage) => void
+  ): void {
+    this.sendMessageToHost = sendMessageToHost
   }
 
   /**
@@ -922,8 +936,17 @@ export class WidgetStateManager {
         )
       }
 
-      // Use replaceState to update URL without navigation
+      // Always update the local URL (following the same pattern as handlePageInfoChanged)
       window.history.replaceState(null, "", urlString)
+
+      // Always send message to host if available (following the same pattern as handlePageInfoChanged)
+      if (this.sendMessageToHost) {
+        const queryString = existingParams.toString()
+        this.sendMessageToHost({
+          type: "SET_QUERY_PARAM",
+          queryParams: queryString ? `?${queryString}` : "",
+        })
+      }
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("Failed to update URL with query parameters:", error)

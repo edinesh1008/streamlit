@@ -72,6 +72,7 @@ import {
   toExportedTheme,
   toThemeInput,
   WidgetStateManager,
+  IGuestToHostMessage,
 } from "@streamlit/lib"
 import {
   AuthRedirect,
@@ -435,6 +436,11 @@ export class App extends PureComponent<Props, State> {
       this.maybeUpdatePageUrl,
       this.onPageNotFound,
       this.onPageIconChanged
+    )
+
+    // Set host communication for widget manager
+    this.widgetMgr.setHostCommunication((message: IGuestToHostMessage) =>
+      this.hostCommunicationMgr.sendMessageToHost(message)
     )
 
     window.streamlitDebug = {
