@@ -211,8 +211,13 @@ repos:
           ^NOTICES$
 
 ci:
+  # Only allow manual auto-fix via the "pre-commit.ci autofix" label:
   autofix_prs: false
+  # Update pre-commit dependencies:
   autoupdate_branch: "develop"
+  autoupdate_schedule: "weekly"
+  autoupdate_commit_msg: "Update pre-commit dependencies"
+  # A couple of hooks are not yet working in pre-commit.ci:
   skip:
     [
       "prettier-app",
