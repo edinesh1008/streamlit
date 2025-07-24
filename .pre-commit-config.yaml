@@ -220,4 +220,5 @@ ci:
       "prettier-connection",
       "prettier-utils",
       "prettier-yaml",
+      "generate-cursor-rules",
     ]
