@@ -213,7 +213,7 @@ repos:
 ci:
   # Only allow manual auto-fix via the "pre-commit.ci autofix" label:
   autofix_prs: false
-  # Update pre-commit dependencies:
+  # Auto-update pre-commit dependencies:
   autoupdate_branch: "develop"
   autoupdate_schedule: "weekly"
   autoupdate_commit_msg: "Update pre-commit dependencies"
