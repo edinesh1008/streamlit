@@ -76,6 +76,10 @@ export interface State {
    * rejected files that will not be updated.
    */
   files: UploadFileInfo[]
+  /**
+   * Whether files are currently being dragged anywhere on the page.
+   */
+  fileDragged: boolean
 }
 
 class FileUploader extends PureComponent<InnerProps, State> {
@@ -105,7 +109,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
   }
 
   get initialValue(): State {
-    const emptyState = { files: [] }
+    const emptyState = { files: [], fileDragged: false }
     const { widgetMgr, element } = this.props
 
     const widgetValue = widgetMgr.getFileUploaderStateValue(element)
@@ -132,11 +136,15 @@ class FileUploader extends PureComponent<InnerProps, State> {
           fileUrls,
         })
       }),
+      fileDragged: false,
     }
   }
 
   public override componentWillUnmount(): void {
     this.formClearHelper.disconnect()
+    window.removeEventListener("dragover", this.handleDragEnter)
+    window.removeEventListener("drop", this.handleDrop)
+    window.removeEventListener("dragleave", this.handleDragLeave)
   }
 
   /**
@@ -205,6 +213,11 @@ class FileUploader extends PureComponent<InnerProps, State> {
         fragmentId
       )
     }
+
+    // Add window-level drag event listeners
+    window.addEventListener("dragover", this.handleDragEnter)
+    window.addEventListener("drop", this.handleDrop)
+    window.addEventListener("dragleave", this.handleDragLeave)
   }
 
   private createWidgetValue(): FileUploaderStateProto {
@@ -222,6 +235,41 @@ class FileUploader extends PureComponent<InnerProps, State> {
       })
 
     return new FileUploaderStateProto({ uploadedFileInfo })
+  }
+
+  private handleDragEnter = (event: DragEvent): void => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (
+      !this.state.fileDragged &&
+      event.dataTransfer?.types.includes("Files")
+    ) {
+      this.setState({ fileDragged: true })
+    }
+  }
+
+  private handleDragLeave = (event: DragEvent): void => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (this.state.fileDragged) {
+      // This check prevents the dropzone from flickering since the dragleave
+      // event could fire when user is dragging within the window
+      if (
+        (event.clientX <= 0 && event.clientY <= 0) ||
+        (event.clientX >= window.innerWidth &&
+          event.clientY >= window.innerHeight)
+      ) {
+        this.setState({ fileDragged: false })
+      }
+    }
+  }
+
+  private handleDrop = (event: DragEvent): void => {
+    event.preventDefault()
+    event.stopPropagation()
+    if (this.state.fileDragged) {
+      this.setState({ fileDragged: false })
+    }
   }
 
   /**
@@ -530,7 +578,6 @@ class FileUploader extends PureComponent<InnerProps, State> {
       <StyledFileUploader
         className="stFileUploader"
         data-testid="stFileUploader"
-        width={width}
       >
         <WidgetLabel
           label={element.label}
@@ -555,6 +602,8 @@ class FileUploader extends PureComponent<InnerProps, State> {
           maxSizeBytes={this.maxUploadSizeInBytes}
           label={element.label}
           disabled={disabled}
+          width={width}
+          fileDragged={this.state.fileDragged}
         />
         {newestToOldestFiles.length > 0 && (
           <UploadedFiles
