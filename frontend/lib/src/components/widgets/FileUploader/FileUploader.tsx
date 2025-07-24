@@ -117,7 +117,9 @@ class FileUploader extends PureComponent<InnerProps, State> {
       files: [],
       fileDragged: false,
       windowDimensions: {
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         width: window.innerWidth,
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         height: window.innerHeight,
       },
     }
@@ -149,7 +151,9 @@ class FileUploader extends PureComponent<InnerProps, State> {
       }),
       fileDragged: false,
       windowDimensions: {
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         width: window.innerWidth,
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         height: window.innerHeight,
       },
     }
@@ -292,7 +296,9 @@ class FileUploader extends PureComponent<InnerProps, State> {
   private handleResize = (): void => {
     this.setState({
       windowDimensions: {
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         width: window.innerWidth,
+        // eslint-disable-next-line no-restricted-properties, streamlit-custom/no-force-reflow-access
         height: window.innerHeight,
       },
     })
