@@ -25,7 +25,6 @@ import {
 } from "./styled-components"
 
 export interface Props {
-  multiple: boolean
   acceptedExtensions: string[]
   maxSizeBytes: number
   disabled?: boolean
@@ -33,7 +32,6 @@ export interface Props {
 }
 
 const FileDropzoneInstructions = ({
-  multiple,
   acceptedExtensions,
   maxSizeBytes,
   disabled,

@@ -25,8 +25,8 @@ import BaseButton, {
 } from "~lib/components/shared/BaseButton"
 
 import {
-  StyledFileDropzoneSection,
   StyledFileDropzoneButtonWrapper,
+  StyledFileDropzoneSection,
 } from "./styled-components"
 import FileDropzoneInstructions from "./FileDropzoneInstructions"
 import { getAccept } from "./utils"
@@ -91,7 +91,6 @@ const FileDropzone = ({
               </BaseButton>
             </StyledFileDropzoneButtonWrapper>
             <FileDropzoneInstructions
-              multiple={multiple}
               acceptedExtensions={acceptedExtensions}
               maxSizeBytes={maxSizeBytes}
               disabled={disabled}

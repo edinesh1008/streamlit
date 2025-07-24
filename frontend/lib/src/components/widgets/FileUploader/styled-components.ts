@@ -16,8 +16,6 @@
 
 import styled from "@emotion/styled"
 
-import { EmotionTheme } from "~lib/theme"
-
 export interface StyledFileDropzone {
   isDisabled: boolean
   isDragActive?: boolean

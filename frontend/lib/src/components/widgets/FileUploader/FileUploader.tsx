@@ -80,6 +80,10 @@ export interface State {
    * Whether files are currently being dragged anywhere on the page.
    */
   fileDragged: boolean
+  /**
+   * Current window dimensions for drag boundary detection.
+   */
+  windowDimensions: { width: number; height: number }
 }
 
 class FileUploader extends PureComponent<InnerProps, State> {
@@ -109,7 +113,14 @@ class FileUploader extends PureComponent<InnerProps, State> {
   }
 
   get initialValue(): State {
-    const emptyState = { files: [], fileDragged: false }
+    const emptyState = {
+      files: [],
+      fileDragged: false,
+      windowDimensions: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+    }
     const { widgetMgr, element } = this.props
 
     const widgetValue = widgetMgr.getFileUploaderStateValue(element)
@@ -137,6 +148,10 @@ class FileUploader extends PureComponent<InnerProps, State> {
         })
       }),
       fileDragged: false,
+      windowDimensions: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
     }
   }
 
@@ -145,6 +160,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
     window.removeEventListener("dragover", this.handleDragEnter)
     window.removeEventListener("drop", this.handleDrop)
     window.removeEventListener("dragleave", this.handleDragLeave)
+    window.removeEventListener("resize", this.handleResize)
   }
 
   /**
@@ -218,6 +234,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
     window.addEventListener("dragover", this.handleDragEnter)
     window.addEventListener("drop", this.handleDrop)
     window.addEventListener("dragleave", this.handleDragLeave)
+    window.addEventListener("resize", this.handleResize)
   }
 
   private createWidgetValue(): FileUploaderStateProto {
@@ -254,10 +271,10 @@ class FileUploader extends PureComponent<InnerProps, State> {
     if (this.state.fileDragged) {
       // This check prevents the dropzone from flickering since the dragleave
       // event could fire when user is dragging within the window
+      const { width, height } = this.state.windowDimensions
       if (
         (event.clientX <= 0 && event.clientY <= 0) ||
-        (event.clientX >= window.innerWidth &&
-          event.clientY >= window.innerHeight)
+        (event.clientX >= width && event.clientY >= height)
       ) {
         this.setState({ fileDragged: false })
       }
@@ -270,6 +287,15 @@ class FileUploader extends PureComponent<InnerProps, State> {
     if (this.state.fileDragged) {
       this.setState({ fileDragged: false })
     }
+  }
+
+  private handleResize = (): void => {
+    this.setState({
+      windowDimensions: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      },
+    })
   }
 
   /**
