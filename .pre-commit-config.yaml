@@ -209,3 +209,15 @@ repos:
         exclude: |
           (?x)
           ^NOTICES$
+
+ci:
+  autofix_prs: false
+  autoupdate_branch: "develop"
+  skip:
+    [
+      "prettier-app",
+      "prettier-lib",
+      "prettier-connection",
+      "prettier-utils",
+      "prettier-yaml",
+    ]
