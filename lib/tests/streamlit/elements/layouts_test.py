@@ -26,6 +26,7 @@ from streamlit.errors import (
 from streamlit.proto.Block_pb2 import Block as BlockProto
 from streamlit.proto.GapSize_pb2 import GapSize
 from tests.delta_generator_test_case import DeltaGeneratorTestCase
+from tests.streamlit.elements.layout_test_utils import WidthConfigFields
 
 
 class ColumnsTest(DeltaGeneratorTestCase):
@@ -286,6 +287,32 @@ class ColumnsTest(DeltaGeneratorTestCase):
         assert columns_blocks[1].add_block.column.show_border
         assert columns_blocks[2].add_block.column.show_border
 
+    def test_width_config_pixel_width(self):
+        """Test that width configuration works correctly"""
+        st.columns(3, width=200)
+        columns_block = self.get_delta_from_queue(0)
+        assert columns_block.add_block.width_config.pixel_width == 200
+
+    def test_width_config_stretch(self):
+        """Test that width configuration works correctly"""
+        st.columns(3, width="stretch")
+        columns_block = self.get_delta_from_queue(0)
+        assert columns_block.add_block.width_config.use_stretch
+
+    @parameterized.expand(
+        [
+            (None,),
+            ("invalid",),
+            (-100,),
+            (0,),
+            ("content",),
+        ]
+    )
+    def test_invalid_width(self, invalid_width):
+        """Test that invalid width values raise an error"""
+        with pytest.raises(StreamlitAPIException):
+            st.columns(3, width=invalid_width)
+
 
 class ExpanderTest(DeltaGeneratorTestCase):
     def test_label_required(self):
@@ -421,6 +448,56 @@ class ContainerTest(DeltaGeneratorTestCase):
         assert container_block.add_block.flex_container.border
         assert container_block.add_block.allow_empty
 
+    def test_width_config(self):
+        """Test that width configuration works correctly"""
+        st.container(width=200)
+        container_block = self.get_delta_from_queue()
+        assert container_block.add_block.width_config.pixel_width == 200
+
+        st.container(width="stretch")
+        container_block = self.get_delta_from_queue()
+        assert container_block.add_block.width_config.use_stretch
+
+    @parameterized.expand(
+        [
+            (None,),
+            ("invalid",),
+            (-100,),
+            (0,),
+        ]
+    )
+    def test_invalid_width(self, invalid_width):
+        """Test that invalid width values raise an error"""
+        with pytest.raises(StreamlitAPIException):
+            st.container(width=invalid_width)
+
+    def test_height_config(self):
+        """Test that height configuration works correctly"""
+        st.container(height=200)
+        container_block = self.get_delta_from_queue()
+        assert container_block.add_block.height_config.pixel_height == 200
+
+        st.container(height="stretch")
+        container_block = self.get_delta_from_queue()
+        assert container_block.add_block.height_config.use_stretch
+
+        st.container(height="content")
+        container_block = self.get_delta_from_queue()
+        assert container_block.add_block.height_config.use_content
+
+    @parameterized.expand(
+        [
+            (None,),
+            ("invalid",),
+            (-100,),
+            (0,),
+        ]
+    )
+    def test_invalid_height(self, invalid_height):
+        """Test that invalid height values raise an error"""
+        with pytest.raises(StreamlitAPIException):
+            st.container(height=invalid_height)
+
 
 class PopoverContainerTest(DeltaGeneratorTestCase):
     def test_label_required(self):
@@ -437,21 +514,47 @@ class PopoverContainerTest(DeltaGeneratorTestCase):
 
         popover_block = self.get_delta_from_queue()
         assert popover_block.add_block.popover.label == "label"
-        assert not popover_block.add_block.popover.use_container_width
         assert not popover_block.add_block.popover.disabled
         assert popover_block.add_block.popover.help == ""
         assert popover_block.add_block.allow_empty
+        # Default width should be "content"
+        assert popover_block.add_block.width_config.use_content
 
-    def test_use_container_width(self):
-        """Test that it correctly applies use_container_width param."""
-        popover = st.popover("label", use_container_width=True)
-        with popover:
-            # Noop
-            pass
+    def test_use_container_width_true(self):
+        """Test use_container_width=True is mapped to width='stretch'."""
+        test_widths = [200, "content", "stretch", None]
 
-        popover_block = self.get_delta_from_queue()
-        assert popover_block.add_block.popover.label == "label"
-        assert popover_block.add_block.popover.use_container_width
+        for width in test_widths:
+            with self.subTest(width=width):
+                if width is None:
+                    st.popover("label", use_container_width=True)
+                else:
+                    st.popover("label", use_container_width=True, width=width)
+
+                popover_block = self.get_delta_from_queue()
+                assert (
+                    popover_block.add_block.width_config.WhichOneof("width_spec")
+                    == WidthConfigFields.USE_STRETCH.value
+                )
+                assert popover_block.add_block.width_config.use_stretch is True
+
+    def test_use_container_width_false(self):
+        """Test use_container_width=False is mapped to width='content'."""
+        test_widths = [200, "stretch", "content", None]
+
+        for width in test_widths:
+            with self.subTest(width=width):
+                if width is None:
+                    st.popover("label", use_container_width=False)
+                else:
+                    st.popover("label", use_container_width=False, width=width)
+
+                popover_block = self.get_delta_from_queue()
+                assert (
+                    popover_block.add_block.width_config.WhichOneof("width_spec")
+                    == WidthConfigFields.USE_CONTENT.value
+                )
+                assert popover_block.add_block.width_config.use_content is True
 
     def test_disabled(self):
         """Test that it correctly applies disabled param."""
@@ -515,6 +618,30 @@ class PopoverContainerTest(DeltaGeneratorTestCase):
         with pytest.raises(StreamlitAPIException) as e:
             st.popover("label", icon=icon)
         assert "is not a valid Material icon" in str(e.value)
+
+    def test_width_pixel_value(self):
+        """Test that pixel width configuration works correctly"""
+        st.popover("label", width=200)
+        popover_block = self.get_delta_from_queue()
+        assert popover_block.add_block.width_config.pixel_width == 200
+
+    def test_width_stretch(self):
+        """Test that stretch width configuration works correctly"""
+        st.popover("label", width="stretch")
+        popover_block = self.get_delta_from_queue()
+        assert popover_block.add_block.width_config.use_stretch
+
+    def test_width_content(self):
+        """Test that content width configuration works correctly"""
+        st.popover("label", width="content")
+        popover_block = self.get_delta_from_queue()
+        assert popover_block.add_block.width_config.use_content
+
+    @parameterized.expand(["invalid", -100, 0])
+    def test_invalid_width(self, invalid_width):
+        """Test that invalid width values raise an error"""
+        with pytest.raises(StreamlitAPIException):
+            st.popover("label", width=invalid_width)
 
 
 class StatusContainerTest(DeltaGeneratorTestCase):
@@ -825,3 +952,17 @@ class DialogTest(DeltaGeneratorTestCase):
         assert e.value.args[0].startswith(
             "Only one dialog is allowed to be opened at the same time."
         )
+
+    def test_dialog_deltagenerator_dismissible_false(self):
+        """Test that the delta-generator dialog properly handles dismissible=False"""
+
+        dialog = st._main._dialog(DialogTest.title, dismissible=False)
+
+        with dialog:
+            """No content so that 'get_delta_from_queue' returns the dialog."""
+            pass
+
+        dialog_block = self.get_delta_from_queue()
+        assert dialog_block.add_block.dialog.title == DialogTest.title
+        assert not dialog_block.add_block.dialog.is_open
+        assert dialog_block.add_block.dialog.dismissible is False
