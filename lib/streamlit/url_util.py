@@ -15,8 +15,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from typing import Final, Literal
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse, urlunparse, urlencode
 
 from typing_extensions import TypeAlias
 
@@ -120,3 +121,89 @@ def make_url_path(base_url: str, path: str) -> str:
 
     path = path.lstrip("/")
     return f"{base_url}/{path}"
+
+
+def parse_page_and_query_params(
+    page: str,
+) -> tuple[str, dict[str, str]]:
+    """Parse a page string and extract query parameters.
+
+    Parameters
+    ----------
+    page : str
+        Page string that may contain query parameters (e.g., "pages/foo.py?key=value")
+
+    Returns
+    -------
+    tuple[str, dict[str, str]]
+        A tuple of (clean_page_path, query_params_dict)
+    """
+    if "?" not in page:
+        return page, {}
+
+    page_path, query_string = page.split("?", 1)
+    parsed_params = parse_qs(query_string, keep_blank_values=True)
+    
+    # Convert from list values to single strings (taking the last value like tornado does)
+    query_params = {}
+    for key, values in parsed_params.items():
+        if values:
+            query_params[key] = values[-1]
+        else:
+            query_params[key] = ""
+    
+    return page_path, query_params
+
+
+def normalize_query_params(
+    query_params: dict[str, str | Iterable[str]] | None,
+) -> dict[str, str]:
+    """Normalize query parameters to a dict of str -> str.
+
+    Parameters
+    ----------
+    query_params : dict[str, str | Iterable[str]] | None
+        Query parameters that may contain string or iterable values
+
+    Returns
+    -------
+    dict[str, str]
+        Normalized query parameters as str -> str mapping
+    """
+    if not query_params:
+        return {}
+    
+    normalized = {}
+    for key, value in query_params.items():
+        if isinstance(value, str):
+            normalized[key] = value
+        elif isinstance(value, Iterable):
+            # Convert iterable to list and take the last value (matching Tornado behavior)
+            value_list = list(value)
+            if value_list:
+                normalized[key] = str(value_list[-1])
+            else:
+                normalized[key] = ""
+        else:
+            normalized[key] = str(value)
+    
+    return normalized
+
+
+def build_query_string(query_params: dict[str, str]) -> str:
+    """Build a query string from query parameters.
+
+    Parameters
+    ----------
+    query_params : dict[str, str]
+        Query parameters as str -> str mapping
+
+    Returns
+    -------
+    str
+        URL-encoded query string (without leading '?')
+    """
+    if not query_params:
+        return ""
+    
+    return urlencode(query_params)

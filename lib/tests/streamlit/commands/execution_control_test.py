@@ -145,3 +145,137 @@ def test_st_switch_page_context_info(patched_get_script_run_ctx):
     assert call_args.context_info == {"test_key": "test_value"}
     # check that query_params.clear() was called
     ctx.session_state.query_params.assert_called_once()
+
+
+@patch("streamlit.commands.execution_control.get_script_run_ctx")
+def test_st_switch_page_with_query_params(patched_get_script_run_ctx):
+    """Test that switch_page correctly sets query parameters."""
+    # Set up the mock script run context
+    ctx = MagicMock()
+    ctx.script_requests = MagicMock()
+    ctx.context_info = {"test_key": "test_value"}
+    
+    # Mock query_params context manager
+    query_params_mock = MagicMock()
+    ctx.session_state.query_params.return_value.__enter__.return_value = query_params_mock
+    ctx.session_state.query_params.return_value.__exit__.return_value = None
+    
+    patched_get_script_run_ctx.return_value = ctx
+
+    # Mock the StreamlitPage object
+    mock_page = MagicMock(spec=StreamlitPage)
+    mock_page._script_hash = "target_page_hash"
+
+    with patch(
+        "streamlit.commands.execution_control.get_main_script_directory",
+        return_value="/some/path",
+    ):
+        switch_page(mock_page, query_params={"key1": "value1", "key2": "value2"})
+
+    # Verify query params were set
+    query_params_mock.clear.assert_called_once()
+    query_params_mock.__setitem__.assert_any_call("key1", "value1")
+    query_params_mock.__setitem__.assert_any_call("key2", "value2")
+
+    ctx.script_requests.request_rerun.assert_called_once()
+    call_args = ctx.script_requests.request_rerun.call_args[0][0]
+    assert isinstance(call_args, RerunData)
+    assert call_args.page_script_hash == "target_page_hash"
+
+
+@patch("streamlit.commands.execution_control.get_script_run_ctx")
+def test_st_switch_page_with_query_params_in_page_string(patched_get_script_run_ctx):
+    """Test that switch_page correctly handles query params in page string."""
+    # Set up the mock script run context
+    ctx = MagicMock()
+    ctx.script_requests = MagicMock()
+    ctx.main_script_path = "/app/main.py"
+    
+    # Mock pages manager
+    mock_pages = {
+        "page1": {
+            "script_path": "/app/pages/test.py",
+            "page_script_hash": "test_hash"
+        }
+    }
+    ctx.pages_manager.get_pages.return_value = mock_pages
+    
+    # Mock query_params context manager
+    query_params_mock = MagicMock()
+    ctx.session_state.query_params.return_value.__enter__.return_value = query_params_mock
+    ctx.session_state.query_params.return_value.__exit__.return_value = None
+    
+    patched_get_script_run_ctx.return_value = ctx
+
+    with patch(
+        "streamlit.commands.execution_control.get_main_script_directory",
+        return_value="/app",
+    ), patch(
+        "streamlit.commands.execution_control.normalize_path_join",
+        return_value="/app/pages/test.py"
+    ), patch(
+        "os.path.realpath",
+        return_value="/app/pages/test.py"
+    ):
+        switch_page("pages/test.py?param1=from_url&param2=also_url")
+
+    # Verify query params from URL were set
+    query_params_mock.clear.assert_called_once()
+    query_params_mock.__setitem__.assert_any_call("param1", "from_url")
+    query_params_mock.__setitem__.assert_any_call("param2", "also_url")
+
+    ctx.script_requests.request_rerun.assert_called_once()
+    call_args = ctx.script_requests.request_rerun.call_args[0][0]
+    assert isinstance(call_args, RerunData)
+    assert call_args.page_script_hash == "test_hash"
+
+
+@patch("streamlit.commands.execution_control.get_script_run_ctx")
+def test_st_switch_page_query_params_precedence(patched_get_script_run_ctx):
+    """Test that explicit query_params take precedence over URL params."""
+    # Set up the mock script run context
+    ctx = MagicMock()
+    ctx.script_requests = MagicMock()
+    ctx.main_script_path = "/app/main.py"
+    
+    # Mock pages manager
+    mock_pages = {
+        "page1": {
+            "script_path": "/app/pages/test.py",
+            "page_script_hash": "test_hash"
+        }
+    }
+    ctx.pages_manager.get_pages.return_value = mock_pages
+    
+    # Mock query_params context manager
+    query_params_mock = MagicMock()
+    ctx.session_state.query_params.return_value.__enter__.return_value = query_params_mock
+    ctx.session_state.query_params.return_value.__exit__.return_value = None
+    
+    patched_get_script_run_ctx.return_value = ctx
+
+    with patch(
+        "streamlit.commands.execution_control.get_main_script_directory",
+        return_value="/app",
+    ), patch(
+        "streamlit.commands.execution_control.normalize_path_join",
+        return_value="/app/pages/test.py"
+    ), patch(
+        "os.path.realpath",
+        return_value="/app/pages/test.py"
+    ):
+        switch_page(
+            "pages/test.py?param1=from_url&param2=keep", 
+            query_params={"param1": "from_param", "param3": "new"}
+        )
+
+    # Verify merged params: param1 should be overridden, param2 kept, param3 added
+    query_params_mock.clear.assert_called_once()
+    query_params_mock.__setitem__.assert_any_call("param1", "from_param")  # overridden
+    query_params_mock.__setitem__.assert_any_call("param2", "keep")  # from URL
+    query_params_mock.__setitem__.assert_any_call("param3", "new")  # from param
+
+    ctx.script_requests.request_rerun.assert_called_once()
+    call_args = ctx.script_requests.request_rerun.call_args[0][0]
+    assert isinstance(call_args, RerunData)
+    assert call_args.page_script_hash == "test_hash"

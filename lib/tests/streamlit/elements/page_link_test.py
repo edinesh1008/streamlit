@@ -191,3 +191,92 @@ class PageLinkTest(DeltaGeneratorTestCase):
             st.page_link(page="https://example.com", label="Test", icon="   ")
 
         assert 'The value "   " is not a valid emoji' in str(exc_info.value)
+
+    def test_query_params_dict_parameter(self):
+        """Test that query_params parameter works correctly for external pages."""
+        st.page_link(
+            page="https://example.com", 
+            label="Test", 
+            query_params={"key1": "value1", "key2": "value2"}
+        )
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Test"
+        assert c.page == "https://example.com?key1=value1&key2=value2"
+        assert c.external
+        assert c.query_params["key1"] == "value1"
+        assert c.query_params["key2"] == "value2"
+
+    def test_query_params_in_page_string(self):
+        """Test that query params in page string work correctly for external pages."""
+        st.page_link(
+            page="https://example.com?existing=param", 
+            label="Test"
+        )
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Test"
+        assert c.page == "https://example.com?existing=param"
+        assert c.external
+        assert c.query_params["existing"] == "param"
+
+    def test_query_params_merge_precedence(self):
+        """Test that query_params parameter takes precedence over params in page string."""
+        st.page_link(
+            page="https://example.com?key1=old&key2=keep", 
+            label="Test",
+            query_params={"key1": "new", "key3": "added"}
+        )
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Test"
+        assert c.page == "https://example.com?key1=new&key2=keep&key3=added"
+        assert c.external
+        assert c.query_params["key1"] == "new"  # precedence to query_params
+        assert c.query_params["key2"] == "keep"  # from page string
+        assert c.query_params["key3"] == "added"  # from query_params
+
+    def test_query_params_iterable_values(self):
+        """Test that query_params with iterable values work correctly."""
+        st.page_link(
+            page="https://example.com", 
+            label="Test",
+            query_params={"single": "value", "multiple": ["one", "two", "three"]}
+        )
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Test"
+        # Should use last value from iterable
+        assert c.page == "https://example.com?single=value&multiple=three"
+        assert c.external
+        assert c.query_params["single"] == "value"
+        assert c.query_params["multiple"] == "three"  # last value from iterable
+
+    def test_query_params_empty_values(self):
+        """Test that empty query param values work correctly."""
+        st.page_link(
+            page="https://example.com", 
+            label="Test",
+            query_params={"empty": "", "zero": "0", "none_list": []}
+        )
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Test"
+        assert c.page == "https://example.com?empty=&zero=0&none_list="
+        assert c.external
+        assert c.query_params["empty"] == ""
+        assert c.query_params["zero"] == "0"
+        assert c.query_params["none_list"] == ""  # empty iterable becomes empty string
+
+    @patch("pathlib.Path.is_file", MagicMock(return_value=True))
+    def test_query_params_with_streamlit_page(self):
+        """Test that query_params work with StreamlitPage objects."""
+        page = st.Page("foo.py", title="Bar Test")
+        st.page_link(page=page, query_params={"param": "value"})
+
+        c = self.get_delta_from_queue().new_element.page_link
+        assert c.label == "Bar Test"
+        assert c.page_script_hash == page._script_hash
+        assert c.page == "foo"
+        assert not c.external
+        assert c.query_params["param"] == "value"

@@ -23,6 +23,7 @@ from typing import (
     TYPE_CHECKING,
     BinaryIO,
     Final,
+    Iterable,
     Literal,
     TextIO,
     Union,
@@ -62,7 +63,12 @@ from streamlit.runtime.state import (
     register_widget,
 )
 from streamlit.string_util import validate_icon_or_emoji
-from streamlit.url_util import is_url
+from streamlit.url_util import (
+    build_query_string,
+    is_url,
+    normalize_query_params,
+    parse_page_and_query_params,
+)
 from streamlit.util import in_sidebar
 
 if TYPE_CHECKING:
@@ -727,6 +733,7 @@ class ButtonMixin:
         disabled: bool = False,
         use_container_width: bool | None = None,
         width: Width = "content",
+        query_params: dict[str, str | Iterable[str]] | None = None,
     ) -> DeltaGenerator:
         r"""Display a link to another page in a multipage app or to an external page.
 
@@ -809,6 +816,15 @@ class ButtonMixin:
             - ``"content"`` (default): The button's width is set to fit its
               contents.
 
+        query_params : dict[str, str | Iterable[str]] or None
+            An optional dictionary of query parameters to append to the page
+            URL. The keys should be strings, and the values can be strings or
+            iterables of strings. If an iterable is provided, the last value
+            will be used (matching Tornado's behavior). Query parameters can
+            also be included directly in the ``page`` argument (e.g.,
+            ``"pages/foo.py?key=value"``). If both methods are used, the
+            ``query_params`` parameter takes precedence for conflicting keys.
+
         Example
         -------
         Consider the following example given this file structure:
@@ -825,6 +841,19 @@ class ButtonMixin:
         >>> st.page_link("pages/page_1.py", label="Page 1", icon="1️⃣")
         >>> st.page_link("pages/page_2.py", label="Page 2", icon="2️⃣", disabled=True)
         >>> st.page_link("http://www.google.com", label="Google", icon="🌎")
+
+        **Example with query parameters:**
+
+        >>> # Using the query_params parameter
+        >>> st.page_link("pages/details.py", label="Details", 
+        ...               query_params={"item_id": "123", "tab": "overview"})
+        >>>
+        >>> # Using query params in the page argument
+        >>> st.page_link("pages/search.py?q=streamlit&category=docs", label="Search")
+        >>>
+        >>> # Both methods - query_params takes precedence for conflicts
+        >>> st.page_link("pages/filter.py?sort=name", label="Filtered View",
+        ...               query_params={"sort": "date", "limit": "10"})
 
         The default navigation is shown here for comparison, but you can hide
         the default navigation using the |client.showSidebarNavigation|_
@@ -853,6 +882,7 @@ class ButtonMixin:
             help=help,
             disabled=disabled,
             width=width,
+            query_params=query_params,
         )
 
     def _download_button(
@@ -988,9 +1018,13 @@ class ButtonMixin:
         help: str | None = None,
         disabled: bool = False,
         width: Width = "content",
+        query_params: dict[str, str | Iterable[str]] | None = None,
     ) -> DeltaGenerator:
         page_link_proto = PageLinkProto()
         validate_width(width, allow_content=True)
+        
+        # Process query parameters
+        normalized_query_params = normalize_query_params(query_params)
 
         ctx = get_script_run_ctx()
         if not ctx:
@@ -1019,6 +1053,11 @@ class ButtonMixin:
                 page_link_proto.icon = page.icon
                 # Here the StreamlitPage's icon is already validated
                 # (using validate_icon_or_emoji) during its initialization
+            
+            # Add query params to the protobuf
+            if normalized_query_params:
+                for key, value in normalized_query_params.items():
+                    page_link_proto.query_params[key] = value
         else:
             # Convert Path to string if necessary
             if isinstance(page, Path):
@@ -1028,8 +1067,25 @@ class ButtonMixin:
             if is_url(page):
                 if label is None or label == "":
                     raise StreamlitMissingPageLabelError()
-                page_link_proto.page = page
+                
+                # Parse query params from the URL and merge with explicit params
+                clean_page, url_query_params = parse_page_and_query_params(page)
+                # Explicit query_params take precedence
+                merged_query_params = {**url_query_params, **normalized_query_params}
+                
+                # Build the final URL with query parameters
+                if merged_query_params:
+                    query_string = build_query_string(merged_query_params)
+                    page_link_proto.page = f"{clean_page}?{query_string}"
+                else:
+                    page_link_proto.page = clean_page
+                
                 page_link_proto.external = True
+                # Add query params to protobuf for frontend use
+                if merged_query_params:
+                    for key, value in merged_query_params.items():
+                        page_link_proto.query_params[key] = value
+                        
                 layout_config = LayoutConfig(width=width)
                 return self.dg._enqueue(
                     "page_link", page_link_proto, layout_config=layout_config
@@ -1040,9 +1096,14 @@ class ButtonMixin:
             ctx_main_script = ctx.main_script_path
             all_app_pages = ctx.pages_manager.get_pages()
 
+            # Parse query params from the page string and merge with explicit params
+            clean_page, url_query_params = parse_page_and_query_params(page)
+            # Explicit query_params take precedence
+            merged_query_params = {**url_query_params, **normalized_query_params}
+
             main_script_directory = get_main_script_directory(ctx_main_script)
             requested_page = os.path.realpath(
-                normalize_path_join(main_script_directory, page)
+                normalize_path_join(main_script_directory, clean_page)
             )
 
             # Handle retrieving the page_script_hash & page
@@ -1059,10 +1120,15 @@ class ButtonMixin:
 
             if page_link_proto.page_script_hash == "":
                 raise StreamlitPageNotFoundError(
-                    page=page,
+                    page=clean_page,  # Use clean_page instead of page for clearer error
                     main_script_directory=main_script_directory,
                     uses_pages_directory=bool(PagesManager.uses_pages_directory),
                 )
+            
+            # Add query params to protobuf for internal pages
+            if merged_query_params:
+                for key, value in merged_query_params.items():
+                    page_link_proto.query_params[key] = value
 
         layout_config = LayoutConfig(width=width)
         return self.dg._enqueue(

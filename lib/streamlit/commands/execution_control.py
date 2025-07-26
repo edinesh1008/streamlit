@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterable
 from itertools import dropwhile
 from pathlib import Path
 from typing import Literal, NoReturn
@@ -28,6 +29,10 @@ from streamlit.runtime.scriptrunner import (
     RerunData,
     ScriptRunContext,
     get_script_run_ctx,
+)
+from streamlit.url_util import (
+    normalize_query_params,
+    parse_page_and_query_params,
 )
 
 
@@ -155,7 +160,11 @@ def rerun(  # type: ignore[misc]
 
 
 @gather_metrics("switch_page")
-def switch_page(page: str | Path | StreamlitPage) -> NoReturn:  # type: ignore[misc]
+def switch_page(
+    page: str | Path | StreamlitPage,
+    *,
+    query_params: dict[str, str | Iterable[str]] | None = None,
+) -> NoReturn:  # type: ignore[misc]
     """Programmatically switch the current page in a multipage app.
 
     When ``st.switch_page`` is called, the current page execution stops and
@@ -170,6 +179,14 @@ def switch_page(page: str | Path | StreamlitPage) -> NoReturn:  # type: ignore[m
         The file path (relative to the main script) or an st.Page indicating
         the page to switch to.
 
+    query_params : dict[str, str | Iterable[str]] or None
+        An optional dictionary of query parameters to set when switching to 
+        the page. The keys should be strings, and the values can be strings or
+        iterables of strings. If an iterable is provided, the last value
+        will be used (matching Tornado's behavior). Query parameters can
+        also be included directly in the ``page`` argument (e.g.,
+        ``"pages/foo.py?key=value"``). If both methods are used, the
+        ``query_params`` parameter takes precedence for conflicting keys.
 
     Example
     -------
@@ -190,6 +207,16 @@ def switch_page(page: str | Path | StreamlitPage) -> NoReturn:  # type: ignore[m
     >>> if st.button("Page 2"):
     >>>     st.switch_page("pages/page_2.py")
 
+    **Example with query parameters:**
+
+    >>> # Using the query_params parameter
+    >>> if st.button("View Details"):
+    >>>     st.switch_page("pages/details.py", query_params={"item_id": "123"})
+    >>>
+    >>> # Using query params in the page argument
+    >>> if st.button("Search Results"):
+    >>>     st.switch_page("pages/search.py?q=streamlit&category=docs")
+
     .. output ::
         https://doc-switch-page.streamlit.app/
         height: 350px
@@ -202,17 +229,27 @@ def switch_page(page: str | Path | StreamlitPage) -> NoReturn:  # type: ignore[m
         # This should never be the case
         raise NoSessionContext()
 
+    # Process query parameters
+    normalized_query_params = normalize_query_params(query_params)
+
     page_script_hash = ""
     if isinstance(page, StreamlitPage):
         page_script_hash = page._script_hash
+        # For StreamlitPage, use normalized_query_params
+        final_query_params = normalized_query_params
     else:
         # Convert Path to string if necessary
         if isinstance(page, Path):
             page = str(page)
 
+        # Parse query params from the page string and merge with explicit params
+        clean_page, url_query_params = parse_page_and_query_params(page)
+        # Explicit query_params take precedence
+        merged_query_params = {**url_query_params, **normalized_query_params}
+
         main_script_directory = get_main_script_directory(ctx.main_script_path)
         requested_page = os.path.realpath(
-            normalize_path_join(main_script_directory, page)
+            normalize_path_join(main_script_directory, clean_page)
         )
         all_app_pages = ctx.pages_manager.get_pages().values()
 
@@ -220,16 +257,22 @@ def switch_page(page: str | Path | StreamlitPage) -> NoReturn:  # type: ignore[m
 
         if len(matched_pages) == 0:
             raise StreamlitAPIException(
-                f"Could not find page: `{page}`. Must be the file path relative to the main script, "
+                f"Could not find page: `{clean_page}`. Must be the file path relative to the main script, "
                 f"from the directory: `{os.path.basename(main_script_directory)}`. Only the main app file "
                 "and files in the `pages/` directory are supported."
             )
 
         page_script_hash = matched_pages[0]["page_script_hash"]
+        
+        # For internal pages, use merged_query_params
+        final_query_params = merged_query_params
 
     # We want to reset query params (with exception of embed) when switching pages
     with ctx.session_state.query_params() as qp:
         qp.clear()
+        # Set new query parameters
+        for key, value in final_query_params.items():
+            qp[key] = value
 
     ctx.script_requests.request_rerun(
         RerunData(

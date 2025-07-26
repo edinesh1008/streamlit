@@ -55,6 +55,33 @@ function PageLink(props: Readonly<Props>): ReactElement {
       // MPA Page Link
       e.preventDefault()
       if (!disabled) {
+        // Set query parameters if they exist
+        if (element.queryParams && Object.keys(element.queryParams).length > 0) {
+          const urlParams = new URLSearchParams(window.location.search)
+          
+          // Clear existing params except for embed-related ones
+          const embedParams = new Map()
+          if (urlParams.has('embed')) {
+            embedParams.set('embed', urlParams.get('embed') || '')
+          }
+          if (urlParams.has('embed_options')) {
+            embedParams.set('embed_options', urlParams.get('embed_options') || '')
+          }
+          
+          // Clear all params and restore embed params
+          urlParams.clear()
+          embedParams.forEach((value, key) => urlParams.set(key, value))
+          
+          // Add new query params
+          Object.entries(element.queryParams).forEach(([key, value]) => {
+            urlParams.set(key, value)
+          })
+          
+          // Update the URL without triggering a reload
+          const newUrl = `${window.location.pathname}?${urlParams.toString()}`
+          window.history.replaceState({}, '', newUrl)
+        }
+        
         onPageChange(element.pageScriptHash)
       }
     }
