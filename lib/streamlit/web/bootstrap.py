@@ -50,6 +50,20 @@ def _set_up_signal_handler(server: Server) -> None:
         signal.signal(signal.SIGQUIT, signal_handler)
 
 
+async def _windows_signal_wakeup_task() -> None:
+    """On Windows, periodically wake up the event loop to process signals.
+
+    This is necessary because on Windows, signal handlers may not be processed
+    when the event loop is waiting indefinitely (like when no browser tabs are connected).
+    This task ensures the event loop wakes up periodically to handle any pending signals.
+    """
+    # We need to use asyncio.sleep in a loop to periodically wake up the event loop
+    # on Windows. This allows signal handlers to be processed.
+    # ruff: noqa: ASYNC110
+    while True:
+        await asyncio.sleep(1)
+
+
 def _fix_sys_path(main_script_path: str) -> None:
     """Add the script's folder to the sys path.
 
@@ -326,14 +340,30 @@ def run(
         # and close all our threads
         _set_up_signal_handler(server)
 
+        # On Windows, start a background task to wake up the event loop periodically
+        # This ensures that signal handlers can be processed even when no browser tabs are connected
+        wakeup_task = None
+        if sys.platform == "win32":
+            _LOGGER.debug("Starting Windows signal wakeup task")
+            wakeup_task = asyncio.create_task(_windows_signal_wakeup_task())
+
         # return immediately if we're testing the server start
         if stop_immediately_for_testing:
             _LOGGER.debug("Stopping server immediately for testing")
             server.stop()
 
-        # Wait until `Server.stop` is called, either by our signal handler, or
-        # by a debug websocket session.
-        await server.stopped
+        try:
+            # Wait until `Server.stop` is called, either by our signal handler, or
+            # by a debug websocket session.
+            await server.stopped
+        finally:
+            # Clean up the wakeup task on Windows
+            if wakeup_task is not None:
+                wakeup_task.cancel()
+                try:
+                    await wakeup_task
+                except asyncio.CancelledError:
+                    pass
 
     # Define a main function to handle the event loop logic
     async def main() -> None:
