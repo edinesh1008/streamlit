@@ -127,10 +127,8 @@ function Slider({
     [debouncedSetValueWithSource]
   )
 
-  // Register query param widget on mount
-  useEffect(() => {
-    widgetMgr.registerQueryParamWidget(element.id)
-  }, [element.id, widgetMgr])
+  // NOTE: Slider widgets do not support query parameter binding
+  // due to complexity with range sliders and numeric precision
 
   const renderTickBar = useCallback((): ReactElement => {
     return (

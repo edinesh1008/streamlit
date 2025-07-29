@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { memo, ReactElement, useCallback, useEffect } from "react"
+import React, { memo, ReactElement, useCallback } from "react"
 
 import { Radio as RadioProto } from "@streamlit/protobuf"
 
@@ -61,10 +61,8 @@ function Radio({
     [setValueWithSource]
   )
 
-  // Register query param widget on mount
-  useEffect(() => {
-    widgetMgr.registerQueryParamWidget(element.id)
-  }, [element.id, widgetMgr])
+  // NOTE: Radio widgets do not support query parameter binding
+  // due to the complexity of mapping between indices and string values
 
   const { horizontal, options, captions, label, labelVisibility, help } =
     element

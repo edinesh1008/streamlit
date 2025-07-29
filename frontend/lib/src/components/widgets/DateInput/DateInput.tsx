@@ -19,7 +19,6 @@ import React, {
   ReactElement,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react"
@@ -224,10 +223,8 @@ function DateInput({
     setIsEmpty(!newValue)
   }, [isEmpty, element, setValueWithSource])
 
-  // Register query param widget on mount
-  useEffect(() => {
-    widgetMgr.registerQueryParamWidget(element.id)
-  }, [element.id, widgetMgr])
+  // NOTE: DateInput widgets do not support query parameter binding
+  // due to date serialization complexity
 
   return (
     <div className="stDateInput" data-testid="stDateInput">
