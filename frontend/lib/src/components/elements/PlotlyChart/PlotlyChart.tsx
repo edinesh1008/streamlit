@@ -375,15 +375,15 @@ export function PlotlyChart({
           setPlotlyFigure((prevFigure: PlotlyFigureType) => {
             return {
               ...prevFigure,
-              data: prevFigure.data.map(trace => ({
-                ...trace,
-                selectedpoints: null,
-              })) as typeof prevFigure.data,
-              layout: {
-                ...prevFigure.layout,
-                // selections is not part of the plotly typing:
-                selections: [],
-              },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
+              data: prevFigure.data.map((trace: any) => {
+                return {
+                  ...trace,
+                  // Set to null to clear the selection an empty
+                  // array here would still show everything as opaque
+                  selectedpoints: null,
+                }
+              }),
             }
           })
         }, 50)
@@ -489,7 +489,7 @@ export function PlotlyChart({
             return selPoints !== undefined
               ? ({ ...trace, selectedpoints: selPoints } as TraceWithSelection)
               : trace
-          })
+          }) as unknown as typeof prevFigure.data
         }
       }
 
@@ -499,11 +499,11 @@ export function PlotlyChart({
 
       return themed
     })
-    // We only need to re-run when the palette-carrying theme object changes
-    // or when selection activation toggles.
+    // Re-run when the palette-carrying theme changes or when selections are
+    // (de)activated so we can preserve or drop selection data accordingly.
     // eslint-disable-next-line react-hooks/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme])
+  }, [theme, isSelectionActivated])
 
   return (
     <div className="stPlotlyChart" data-testid="stPlotlyChart">
