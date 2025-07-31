@@ -202,15 +202,6 @@ export function PlotlyChart({
   ])
 
   useEffect(() => {
-    // If the theme changes, we need to reapply the theming to the figure
-    setPlotlyFigure(() => {
-      // Start from the original un-themed spec, so the placeholder
-      // colors get replaced with the *new* palette.
-      return applyTheming(initialFigureSpec, element.theme, theme)
-    })
-  }, [element.id, theme, element.theme, initialFigureSpec])
-
-  useEffect(() => {
     let updatedClickMode: typeof initialFigureSpec.layout.clickmode =
       initialFigureSpec.layout.clickmode
     let updatedHoverMode: typeof initialFigureSpec.layout.hovermode =
@@ -457,6 +448,52 @@ export function PlotlyChart({
     // eslint-disable-next-line react-hooks/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plotlyFigure.layout?.dragmode])
+
+  // React to theme changes on rerun
+  useEffect(() => {
+    setPlotlyFigure(prevFigure => {
+      const themed = applyTheming(initialFigureSpec, element.theme, theme)
+
+      // Merge previous non-color layout properties (margins, axis ranges, etc.)
+      themed.layout = {
+        ...prevFigure.layout,
+        ...themed.layout,
+      }
+
+      if (isSelectionActivated) {
+        // Preserve layout.selections
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const selections = (prevFigure.layout as any)?.selections
+        if (selections) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(themed.layout as any).selections = selections
+        }
+
+        // Preserve data[...].selectedpoints
+        if (prevFigure.data && themed.data) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FIXME: Replace 'any' with a concrete Plotly trace type when available.
+          themed.data = themed.data.map((trace: any, idx: number) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FIXME: Replace 'any' with a concrete Plotly trace type when available.
+            const prevTrace: any = prevFigure.data[idx]
+            const selPoints = prevTrace?.selectedpoints
+            return selPoints !== undefined
+              ? { ...trace, selectedpoints: selPoints }
+              : trace
+          })
+        }
+      }
+
+      // Keep current dimensions to avoid flicker / resize.
+      themed.layout.width = prevFigure.layout.width
+      themed.layout.height = prevFigure.layout.height
+
+      return themed
+    })
+    // We only need to re-run when the palette-carrying theme object changes
+    // or when selection activation toggles.
+    // eslint-disable-next-line react-hooks/react-compiler
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme])
 
   return (
     <div className="stPlotlyChart" data-testid="stPlotlyChart">
