@@ -203,10 +203,12 @@ export function PlotlyChart({
 
   useEffect(() => {
     // If the theme changes, we need to reapply the theming to the figure
-    setPlotlyFigure((prevState: PlotlyFigureType) => {
-      return applyTheming(prevState, element.theme, theme)
+    setPlotlyFigure(() => {
+      // Start from the original un-themed spec, so the placeholder
+      // colors get replaced with the *new* palette.
+      return applyTheming(initialFigureSpec, element.theme, theme)
     })
-  }, [element.id, theme, element.theme])
+  }, [element.id, theme, element.theme, initialFigureSpec])
 
   useEffect(() => {
     let updatedClickMode: typeof initialFigureSpec.layout.clickmode =
