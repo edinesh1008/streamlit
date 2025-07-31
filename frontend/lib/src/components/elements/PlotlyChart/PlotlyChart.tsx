@@ -24,8 +24,8 @@ import React, {
   useState,
 } from "react"
 
-import Plot, { Figure as PlotlyFigureType } from "react-plotly.js"
 import { Layout, PlotData } from "plotly.js"
+import Plot, { Figure as PlotlyFigureType } from "react-plotly.js"
 
 import { PlotlyChart as PlotlyChartProto } from "@streamlit/protobuf"
 
@@ -384,6 +384,11 @@ export function PlotlyChart({
                   selectedpoints: null,
                 }
               }),
+              layout: {
+                ...prevFigure.layout,
+                // selections is not part of the plotly typing:
+                selections: [],
+              },
             }
           })
         }, 50)
