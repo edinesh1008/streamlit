@@ -25,6 +25,7 @@ import React, {
 } from "react"
 
 import Plot, { Figure as PlotlyFigureType } from "react-plotly.js"
+import { Layout, PlotData } from "plotly.js"
 
 import { PlotlyChart as PlotlyChartProto } from "@streamlit/protobuf"
 
@@ -59,6 +60,22 @@ const FULLSCREEN_COLLAPSE_ICON = {
   path: "M160 64c0-17.7-14.3-32-32-32s-32 14.3-32 32v64H32c-17.7 0-32 14.3-32 32s14.3 32 32 32h96c17.7 0 32-14.3 32-32V64zM32 320c-17.7 0-32 14.3-32 32s14.3 32 32 32H96v64c0 17.7 14.3 32 32 32s32-14.3 32-32V352c0-17.7-14.3-32-32-32H32zM352 64c0-17.7-14.3-32-32-32s-32 14.3-32 32v96c0 17.7 14.3 32 32 32h96c17.7 0 32-14.3 32-32s-14.3-32-32-32H352V64zM320 320c-17.7 0-32 14.3-32 32v96c0 17.7 14.3 32 32 32s32-14.3 32-32V384h64c17.7 0 32-14.3 32-32s-14.3-32-32-32H320z",
 }
 
+/**
+ * Plotly typings don’t include runtime-only fields we rely on. Extend them
+ * locally to avoid falling back to `any`.
+ */
+
+// A trace that may carry Plotly’s runtime `selectedpoints` field
+type TraceWithSelection = PlotData & {
+  selectedpoints?: number[] | null
+}
+
+// Layout extended with Plotly’s runtime `selections` array
+type LayoutWithSelections = Partial<Layout> & {
+  // The full type of a selection object is complex and not needed for
+  // preservation purposes – `unknown` is sufficient.
+  selections?: unknown
+}
 export interface PlotlyChartProps {
   element: PlotlyChartProto
   widgetMgr: WidgetStateManager
@@ -358,15 +375,10 @@ export function PlotlyChart({
           setPlotlyFigure((prevFigure: PlotlyFigureType) => {
             return {
               ...prevFigure,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
-              data: prevFigure.data.map((trace: any) => {
-                return {
-                  ...trace,
-                  // Set to null to clear the selection an empty
-                  // array here would still show everything as opaque
-                  selectedpoints: null,
-                }
-              }),
+              data: prevFigure.data.map(trace => ({
+                ...trace,
+                selectedpoints: null,
+              })) as typeof prevFigure.data,
               layout: {
                 ...prevFigure.layout,
                 // selections is not part of the plotly typing:
@@ -449,7 +461,8 @@ export function PlotlyChart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [plotlyFigure.layout?.dragmode])
 
-  // React to theme changes on rerun
+  // React to theme changes on rerun, maintaining selections, dimensions,
+  // and non-color layout properties - issue #11974
   useEffect(() => {
     setPlotlyFigure(prevFigure => {
       const themed = applyTheming(initialFigureSpec, element.theme, theme)
@@ -461,23 +474,20 @@ export function PlotlyChart({
       }
 
       if (isSelectionActivated) {
-        // Preserve layout.selections
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const selections = (prevFigure.layout as any)?.selections
+        // Preserve layout.selections (runtime-only field)
+        const selections = (prevFigure.layout as LayoutWithSelections)
+          .selections
         if (selections) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(themed.layout as any).selections = selections
+          ;(themed.layout as LayoutWithSelections).selections = selections
         }
 
         // Preserve data[...].selectedpoints
         if (prevFigure.data && themed.data) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FIXME: Replace 'any' with a concrete Plotly trace type when available.
-          themed.data = themed.data.map((trace: any, idx: number) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FIXME: Replace 'any' with a concrete Plotly trace type when available.
-            const prevTrace: any = prevFigure.data[idx]
-            const selPoints = prevTrace?.selectedpoints
+          themed.data = themed.data.map((trace, idx) => {
+            const prevTrace = prevFigure.data[idx] as TraceWithSelection
+            const selPoints = prevTrace.selectedpoints
             return selPoints !== undefined
-              ? { ...trace, selectedpoints: selPoints }
+              ? ({ ...trace, selectedpoints: selPoints } as TraceWithSelection)
               : trace
           })
         }
