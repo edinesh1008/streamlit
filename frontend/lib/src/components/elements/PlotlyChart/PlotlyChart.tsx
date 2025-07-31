@@ -523,7 +523,10 @@ export function PlotlyChart({
           visibility:
             plotlyFigure.layout?.width === undefined ? "hidden" : undefined,
         }}
-        onSelected={isSelectionActivated ? handleSelectionCallback : () => {}}
+        onSelected={
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
+          isSelectionActivated ? (handleSelectionCallback as any) : () => {}
+        }
         // Double click is needed to make it easier to the user to
         // reset the selection. The default handling can be a bit annoying
         // sometimes.
