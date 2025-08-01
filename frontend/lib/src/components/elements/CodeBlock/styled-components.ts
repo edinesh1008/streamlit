@@ -202,20 +202,12 @@ export const StyledPre = styled.pre<StyledCodeProps>(
 )
 
 export const StyledCopyButtonContainer = styled.div(({ theme }) => ({
-  opacity: 0,
-  padding: `${theme.spacing.sm} ${theme.spacing.sm} 0 0`,
-  top: 0,
-  right: 0,
   position: "absolute",
-  width: "100%",
-  height: "100%",
-  backgroundColor: theme.colors.transparent,
-  zIndex: theme.zIndices.sidebar + 1,
-  display: "flex",
-  justifyContent: "flex-end",
-  alignItems: "flex-start",
-  transition: "opacity 300ms 150ms",
+  top: theme.spacing.sm,
+  right: theme.spacing.sm,
   pointerEvents: "none",
+  zIndex: theme.zIndices.priority,
+  visibility: "hidden",
 }))
 
 export const StyledCodeBlock = styled.div(({ theme }) => ({
@@ -228,7 +220,7 @@ export const StyledCodeBlock = styled.div(({ theme }) => ({
 
   "&:hover": {
     [`${StyledCopyButtonContainer}`]: {
-      opacity: 1,
+      visibility: "visible",
     },
   },
 }))
@@ -237,17 +229,16 @@ export const StyledCopyButton = styled.button(({ theme }) => ({
   pointerEvents: "auto",
   height: theme.iconSizes.threeXL,
   width: theme.iconSizes.threeXL,
-  padding: theme.spacing.none,
   border: "none",
   backgroundColor: theme.colors.transparent,
   color: theme.colors.fadedText60,
-  transform: "scale(0)",
+  cursor: "pointer",
 
-  [`${StyledCodeBlock}:hover &, &:active, &:focus, &:hover`]: {
-    opacity: 1,
-    transform: "scale(1)",
+  "&:focus": {
     outline: "none",
-    transition: "none",
+  },
+
+  "&:hover": {
     color: theme.colors.bodyText,
   },
 }))

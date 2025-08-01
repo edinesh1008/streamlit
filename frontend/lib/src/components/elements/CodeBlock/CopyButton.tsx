@@ -17,10 +17,8 @@
 import React, { memo, useEffect, useRef } from "react"
 
 import Clipboard from "clipboard"
-import { Copy as CopyIcon } from "react-feather"
 
-import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
-import { convertRemToPx } from "~lib/theme"
+import { DynamicIcon } from "~lib/components/shared/Icon"
 
 import { StyledCopyButton } from "./styled-components"
 
@@ -29,7 +27,6 @@ interface Props {
 }
 
 const CopyButton: React.FC<Props> = ({ text }) => {
-  const theme = useEmotionTheme()
   const buttonRef = useRef<HTMLButtonElement>(null)
   const clipboardRef = useRef<Clipboard | null>(null)
 
@@ -62,8 +59,11 @@ const CopyButton: React.FC<Props> = ({ text }) => {
         right: 0,
       }}
     >
-      {/* Convert size to px because using rem works but logs a console error (at least on webkit) */}
-      <CopyIcon size={convertRemToPx(theme.iconSizes.base)} />
+      <DynamicIcon
+        iconValue=":material/content_copy:"
+        size="base"
+        color="inherit"
+      />
     </StyledCopyButton>
   )
 }
