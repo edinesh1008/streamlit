@@ -217,6 +217,11 @@ export const StyledCodeBlock = styled.div(({ theme }) => ({
 }))
 
 export const StyledCopyButton = styled.button(({ theme }) => ({
+  height: theme.iconSizes.base,
+  width: theme.iconSizes.base,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
   border: "none",
   backgroundColor: theme.colors.codeBackgroundColor,
   color: theme.colors.fadedText60,
@@ -250,4 +255,5 @@ export const StyledCopyFeedback = styled.span(({ theme }) => ({
   fontSize: theme.fontSizes.sm,
   fontWeight: theme.fontWeights.normal,
   whiteSpace: "nowrap",
+  lineHeight: theme.lineHeights.none,
 }))

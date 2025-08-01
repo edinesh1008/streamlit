@@ -49,7 +49,7 @@ const CopyButton: React.FC<Props> = ({ text }) => {
       clipboardRef.current.on("success", () => {
         setShowCopiedFeedback(true)
         setTimeout(() => {
-          setShowCopiedFeedback(false)
+          setShowCopiedFeedback(true)
         }, 2000) // Hide after 2 seconds
       })
     }
