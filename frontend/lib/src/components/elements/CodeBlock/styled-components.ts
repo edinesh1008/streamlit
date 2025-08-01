@@ -256,4 +256,5 @@ export const StyledCopyFeedback = styled.span(({ theme }) => ({
   fontWeight: theme.fontWeights.normal,
   whiteSpace: "nowrap",
   lineHeight: theme.lineHeights.none,
+  paddingTop: theme.spacing.threeXS,
 }))
