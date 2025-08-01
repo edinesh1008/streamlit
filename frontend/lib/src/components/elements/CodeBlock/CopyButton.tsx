@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-import React, { memo, useEffect, useRef } from "react"
+import React, { memo, useEffect, useRef, useState } from "react"
 
 import Clipboard from "clipboard"
 
 import { DynamicIcon } from "~lib/components/shared/Icon"
 
-import { StyledCopyButton } from "./styled-components"
+import {
+  StyledCopyButton,
+  StyledCopyButtonContainer,
+  StyledCopyFeedback,
+} from "./styled-components"
 
 interface Props {
   text: string
@@ -29,6 +33,7 @@ interface Props {
 const CopyButton: React.FC<Props> = ({ text }) => {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const clipboardRef = useRef<Clipboard | null>(null)
+  const [showCopiedFeedback, setShowCopiedFeedback] = useState(false)
 
   useEffect(() => {
     const node = buttonRef.current
@@ -38,6 +43,14 @@ const CopyButton: React.FC<Props> = ({ text }) => {
         // Set the container so that copying also works in dialogs.
         // Otherwise, the copy event is swallowed somehow.
         container: node.parentElement ?? undefined,
+      })
+
+      // Listen for successful copy events
+      clipboardRef.current.on("success", () => {
+        setShowCopiedFeedback(true)
+        setTimeout(() => {
+          setShowCopiedFeedback(false)
+        }, 2000) // Hide after 2 seconds
       })
     }
 
@@ -49,18 +62,23 @@ const CopyButton: React.FC<Props> = ({ text }) => {
   }, [])
 
   return (
-    <StyledCopyButton
-      data-testid="stCodeCopyButton"
-      title="Copy to clipboard"
-      ref={buttonRef}
-      data-clipboard-text={text}
-    >
-      <DynamicIcon
-        iconValue=":material/content_copy:"
-        size="base"
-        color="inherit"
-      />
-    </StyledCopyButton>
+    <StyledCopyButtonContainer showFeedback={showCopiedFeedback}>
+      {showCopiedFeedback && <StyledCopyFeedback>Copied</StyledCopyFeedback>}
+      <StyledCopyButton
+        data-testid="stCodeCopyButton"
+        title="Copy to clipboard"
+        ref={buttonRef}
+        data-clipboard-text={text}
+      >
+        <DynamicIcon
+          iconValue={
+            showCopiedFeedback ? ":material/check:" : ":material/content_copy:"
+          }
+          size="base"
+          color="inherit"
+        />
+      </StyledCopyButton>
+    </StyledCopyButtonContainer>
   )
 }
 

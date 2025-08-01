@@ -210,22 +210,17 @@ export const StyledCodeBlock = styled.div(({ theme }) => ({
   marginBottom: undefined,
 
   "&:hover": {
-    [`${StyledCopyButton}`]: {
+    [`${StyledCopyButtonContainer}`]: {
       visibility: "visible",
     },
   },
 }))
 
 export const StyledCopyButton = styled.button(({ theme }) => ({
-  position: "absolute",
-  top: theme.spacing.lg,
-  right: theme.spacing.lg,
   border: "none",
   backgroundColor: theme.colors.codeBackgroundColor,
   color: theme.colors.fadedText60,
   cursor: "pointer",
-  zIndex: theme.zIndices.priority,
-  visibility: "hidden",
   borderRadius: theme.radii.md,
 
   "&:focus": {
@@ -235,4 +230,24 @@ export const StyledCopyButton = styled.button(({ theme }) => ({
   "&:hover": {
     color: theme.colors.bodyText,
   },
+}))
+
+export const StyledCopyButtonContainer = styled.div<{
+  showFeedback?: boolean
+}>(({ theme, showFeedback }) => ({
+  position: "absolute",
+  top: theme.spacing.lg,
+  right: theme.spacing.lg,
+  display: "flex",
+  alignItems: "center",
+  gap: theme.spacing.sm,
+  zIndex: theme.zIndices.priority,
+  visibility: showFeedback ? "visible" : "hidden",
+}))
+
+export const StyledCopyFeedback = styled.span(({ theme }) => ({
+  color: theme.colors.fadedText60,
+  fontSize: theme.fontSizes.sm,
+  fontWeight: theme.fontWeights.normal,
+  whiteSpace: "nowrap",
 }))
