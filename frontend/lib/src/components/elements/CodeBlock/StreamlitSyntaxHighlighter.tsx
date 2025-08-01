@@ -22,11 +22,7 @@ import {
 } from "react-syntax-highlighter"
 
 import CopyButton from "./CopyButton"
-import {
-  StyledCodeBlock,
-  StyledCopyButtonContainer,
-  StyledPre,
-} from "./styled-components"
+import { StyledCodeBlock, StyledPre } from "./styled-components"
 
 export interface StreamlitSyntaxHighlighterProps {
   children: string | string[]
@@ -98,9 +94,7 @@ function StreamlitSyntaxHighlighter({
         </SyntaxHighlighter>
       </StyledPre>
       {typeof children === "string" && children.trim() !== "" && (
-        <StyledCopyButtonContainer>
-          <CopyButton text={children} />
-        </StyledCopyButtonContainer>
+        <CopyButton text={children} />
       )}
     </StyledCodeBlock>
   )

@@ -54,10 +54,6 @@ const CopyButton: React.FC<Props> = ({ text }) => {
       title="Copy to clipboard"
       ref={buttonRef}
       data-clipboard-text={text}
-      style={{
-        top: 0,
-        right: 0,
-      }}
     >
       <DynamicIcon
         iconValue=":material/content_copy:"

@@ -201,15 +201,6 @@ export const StyledPre = styled.pre<StyledCodeProps>(
   })
 )
 
-export const StyledCopyButtonContainer = styled.div(({ theme }) => ({
-  position: "absolute",
-  top: theme.spacing.sm,
-  right: theme.spacing.sm,
-  pointerEvents: "none",
-  zIndex: theme.zIndices.priority,
-  visibility: "hidden",
-}))
-
 export const StyledCodeBlock = styled.div(({ theme }) => ({
   height: "100%",
   position: "relative",
@@ -219,20 +210,23 @@ export const StyledCodeBlock = styled.div(({ theme }) => ({
   marginBottom: undefined,
 
   "&:hover": {
-    [`${StyledCopyButtonContainer}`]: {
+    [`${StyledCopyButton}`]: {
       visibility: "visible",
     },
   },
 }))
 
 export const StyledCopyButton = styled.button(({ theme }) => ({
-  pointerEvents: "auto",
-  height: theme.iconSizes.threeXL,
-  width: theme.iconSizes.threeXL,
+  position: "absolute",
+  top: theme.spacing.lg,
+  right: theme.spacing.lg,
   border: "none",
-  backgroundColor: theme.colors.transparent,
+  backgroundColor: theme.colors.codeBackgroundColor,
   color: theme.colors.fadedText60,
   cursor: "pointer",
+  zIndex: theme.zIndices.priority,
+  visibility: "hidden",
+  borderRadius: theme.radii.md,
 
   "&:focus": {
     outline: "none",
