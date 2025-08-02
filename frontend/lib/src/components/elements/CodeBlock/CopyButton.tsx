@@ -23,7 +23,7 @@ import { DynamicIcon } from "~lib/components/shared/Icon"
 import {
   StyledCopyButton,
   StyledCopyButtonContainer,
-  StyledCopyFeedback,
+  StyledCopyText,
 } from "./styled-components"
 
 const COPY_SUCCESS_TIMEOUT_MS = 2000
@@ -73,7 +73,7 @@ const CopyButton: React.FC<Props> = ({ text }) => {
       {showSuccess && (
         <>
           <DynamicIcon iconValue=":material/check:" {...iconProps} />
-          <StyledCopyFeedback>Copied</StyledCopyFeedback>
+          <StyledCopyText>Copied</StyledCopyText>
         </>
       )}
       <StyledCopyButton

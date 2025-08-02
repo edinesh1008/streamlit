@@ -250,7 +250,7 @@ export const StyledCopyButton = styled.button<{ showSuccess?: boolean }>(
   })
 )
 
-export const StyledCopyFeedback = styled.span(({ theme }) => ({
+export const StyledCopyText = styled.span(({ theme }) => ({
   color: "inherit",
   fontSize: theme.fontSizes.sm,
   fontWeight: theme.fontWeights.normal,
