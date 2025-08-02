@@ -248,12 +248,10 @@ export const StyledCopyButtonContainer = styled.div<{
   zIndex: theme.zIndices.priority,
   visibility: wasCopySuccessful ? "visible" : "hidden",
   backgroundColor: theme.colors.codeBackgroundColor,
-  paddingTop: theme.spacing.sm, // align with first line of code
+  paddingTop: theme.spacing.sm,
   paddingRight: theme.spacing.sm,
   paddingBottom: theme.spacing.sm,
   paddingLeft: theme.spacing.sm,
-  // borderBottomLeftRadius: theme.radii.default,
-  // borderTopRightRadius: theme.radii.default,
   borderRadius: theme.radii.default,
 }))
 
