@@ -16,7 +16,7 @@
 
 import React from "react"
 
-import { screen } from "@testing-library/react"
+import { screen, waitFor } from "@testing-library/react"
 import Clipboard from "clipboard"
 
 import { render } from "~lib/test_util"
@@ -25,7 +25,7 @@ import CopyButton from "./CopyButton"
 
 vi.mock("clipboard")
 
-describe("CopyButton Element", () => {
+describe("CopyButton element", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -35,41 +35,69 @@ describe("CopyButton Element", () => {
     expect(screen.getByTestId("stCodeCopyButton")).toBeInTheDocument()
   })
 
-  describe("attributes", () => {
-    it("should have title", () => {
-      render(<CopyButton text="test" />)
-      expect(screen.getByTestId("stCodeCopyButton")).toHaveAttribute(
-        "title",
-        "Copy to clipboard"
-      )
-    })
-
-    it("should have clipboard text", () => {
-      render(<CopyButton text="test" />)
-      expect(screen.getByTestId("stCodeCopyButton")).toHaveAttribute(
-        "data-clipboard-text",
-        "test"
-      )
-    })
+  it("has correct title attribute", () => {
+    render(<CopyButton text="test" />)
+    expect(screen.getByTestId("stCodeCopyButton")).toHaveAttribute(
+      "title",
+      "Copy to clipboard"
+    )
   })
 
-  describe("calling clipboard", () => {
-    it("should be called on did mount", () => {
-      render(<CopyButton text="test" />)
+  it("has correct clipboard text attribute", () => {
+    render(<CopyButton text="test" />)
+    expect(screen.getByTestId("stCodeCopyButton")).toHaveAttribute(
+      "data-clipboard-text",
+      "test"
+    )
+  })
 
-      expect(Clipboard).toHaveBeenCalled()
-    })
+  it("initializes clipboard library on mount", () => {
+    render(<CopyButton text="test" />)
 
-    it("should be called on unmount", () => {
-      const { unmount } = render(<CopyButton text="test" />)
+    expect(Clipboard).toHaveBeenCalled()
+  })
 
-      unmount()
+  it("destroys clipboard library on unmount", () => {
+    const { unmount } = render(<CopyButton text="test" />)
 
-      // @ts-expect-error
-      const mockClipboard = Clipboard.mock.instances[0]
-      const mockDestroy = mockClipboard.destroy
+    unmount()
 
-      expect(mockDestroy).toHaveBeenCalled()
+    // @ts-expect-error
+    const mockClipboard = Clipboard.mock.instances[0]
+    const mockDestroy = mockClipboard.destroy
+
+    expect(mockDestroy).toHaveBeenCalled()
+  })
+
+  it("shows success message when clipboard operation succeeds", async () => {
+    // Mock clipboard to capture success callback
+    let successCallback: (() => void) | undefined
+    const mockClipboard = {
+      on: vi.fn((event: string, callback: () => void) => {
+        if (event === "success") {
+          successCallback = callback
+        }
+      }),
+      destroy: vi.fn(),
+    }
+
+    // @ts-expect-error
+    Clipboard.mockImplementation(() => mockClipboard)
+
+    render(<CopyButton text="test" />)
+
+    // Verify the success callback was registered
+    expect(mockClipboard.on).toHaveBeenCalledWith(
+      "success",
+      expect.any(Function)
+    )
+
+    // Simulate clipboard.js firing success event
+    successCallback?.()
+
+    // Verify success message appears
+    await waitFor(() => {
+      expect(screen.getByText("Copied")).toBeInTheDocument()
     })
   })
 })
