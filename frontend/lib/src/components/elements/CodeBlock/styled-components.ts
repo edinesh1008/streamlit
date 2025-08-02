@@ -202,12 +202,9 @@ export const StyledPre = styled.pre<StyledCodeProps>(
 )
 
 export const StyledCodeBlock = styled.div(({ theme }) => ({
-  height: "100%",
   position: "relative",
-  marginLeft: theme.spacing.none,
-  marginRight: theme.spacing.none,
-  marginTop: theme.spacing.none,
-  marginBottom: undefined,
+  margin: theme.spacing.none,
+  height: "100%",
 
   "&:hover": {
     [`${StyledCopyButtonContainer}`]: {
@@ -215,28 +212,6 @@ export const StyledCodeBlock = styled.div(({ theme }) => ({
     },
   },
 }))
-
-export const StyledCopyButton = styled.button<{ hidden?: boolean }>(
-  ({ theme, hidden }) => ({
-    height: theme.iconSizes.base,
-    width: theme.iconSizes.base,
-    display: hidden ? "none" : "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "none",
-    backgroundColor: theme.colors.codeBackgroundColor,
-    color: theme.colors.fadedText60,
-    cursor: "pointer",
-
-    "&:focus": {
-      outline: "none",
-    },
-
-    "&:hover": {
-      color: theme.colors.bodyText,
-    },
-  })
-)
 
 export const StyledCopyButtonContainer = styled.div<{
   wasCopySuccessful?: boolean
@@ -250,19 +225,37 @@ export const StyledCopyButtonContainer = styled.div<{
   zIndex: theme.zIndices.priority,
   visibility: wasCopySuccessful ? "visible" : "hidden",
   backgroundColor: theme.colors.codeBackgroundColor,
-  paddingTop: theme.spacing.sm,
-  paddingRight: theme.spacing.sm,
-  paddingBottom: theme.spacing.sm,
-  paddingLeft: theme.spacing.sm,
+  padding: theme.spacing.sm,
   borderRadius: theme.radii.default,
   color: theme.colors.fadedText60,
 }))
 
+export const StyledCopyButton = styled.button<{ hidden?: boolean }>(
+  ({ theme, hidden }) => ({
+    height: theme.iconSizes.base,
+    width: theme.iconSizes.base,
+    display: hidden ? "none" : "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "none",
+    backgroundColor: theme.colors.codeBackgroundColor,
+    color: "inherit",
+    cursor: "pointer",
+
+    "&:focus": {
+      outline: "none",
+    },
+
+    "&:hover": {
+      color: theme.colors.bodyText,
+    },
+  })
+)
+
 export const StyledCopyFeedback = styled.span(({ theme }) => ({
-  color: theme.colors.fadedText60,
+  color: "inherit",
   fontSize: theme.fontSizes.sm,
   fontWeight: theme.fontWeights.normal,
   whiteSpace: "nowrap",
   lineHeight: theme.lineHeights.none,
-  paddingTop: theme.spacing.threeXS,
 }))

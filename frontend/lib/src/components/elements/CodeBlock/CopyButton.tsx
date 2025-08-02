@@ -26,6 +26,8 @@ import {
   StyledCopyFeedback,
 } from "./styled-components"
 
+const COPY_SUCCESS_TIMEOUT_MS = 2000
+
 interface Props {
   text: string
 }
@@ -38,47 +40,37 @@ const CopyButton: React.FC<Props> = ({ text }) => {
 
   useEffect(() => {
     const node = buttonRef.current
+    if (!node) return
 
-    if (node !== null) {
-      clipboardRef.current = new Clipboard(node, {
-        // Set the container so that copying also works in dialogs.
-        // Otherwise, the copy event is swallowed somehow.
-        container: node.parentElement ?? undefined,
-      })
+    clipboardRef.current = new Clipboard(node, {
+      container: node.parentElement ?? undefined,
+    })
 
-      // Listen for successful copy events
-      clipboardRef.current.on("success", () => {
-        // Clear any existing timeout
-        if (timeoutRef.current !== null) {
-          clearTimeout(timeoutRef.current)
-        }
-
-        setWasCopySuccessful(true)
-        timeoutRef.current = setTimeout(() => {
-          setWasCopySuccessful(false)
-        }, 2000)
-      })
-    }
+    clipboardRef.current.on("success", () => {
+      setWasCopySuccessful(true)
+      timeoutRef.current = setTimeout(() => {
+        setWasCopySuccessful(false)
+      }, COPY_SUCCESS_TIMEOUT_MS)
+    })
 
     return () => {
-      if (clipboardRef.current !== null) {
-        clipboardRef.current.destroy()
-      }
+      clipboardRef.current?.destroy()
       if (timeoutRef.current !== null) {
         clearTimeout(timeoutRef.current)
       }
     }
   }, [])
 
+  const iconProps = {
+    size: "base" as const,
+    color: "inherit" as const,
+  }
+
   return (
     <StyledCopyButtonContainer wasCopySuccessful={wasCopySuccessful}>
       {wasCopySuccessful && (
         <>
-          <DynamicIcon
-            iconValue=":material/check:"
-            size="base"
-            color="inherit"
-          />
+          <DynamicIcon iconValue=":material/check:" {...iconProps} />
           <StyledCopyFeedback>Copied</StyledCopyFeedback>
         </>
       )}
@@ -89,11 +81,7 @@ const CopyButton: React.FC<Props> = ({ text }) => {
         ref={buttonRef}
         data-clipboard-text={text}
       >
-        <DynamicIcon
-          iconValue=":material/content_copy:"
-          size="base"
-          color="inherit"
-        />
+        <DynamicIcon iconValue=":material/content_copy:" {...iconProps} />
       </StyledCopyButton>
     </StyledCopyButtonContainer>
   )
