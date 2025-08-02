@@ -98,7 +98,7 @@ export const StyledPre = styled.pre<StyledCodeProps>(
     // Add padding around the code
     padding: theme.spacing.lg,
     // Add padding to the right to account for the copy button
-    paddingRight: theme.iconSizes.threeXL,
+    // paddingRight: theme.iconSizes.threeXL,
 
     code: { ...codeBlockStyle(theme, wrapLines) },
 
@@ -226,7 +226,6 @@ export const StyledCopyButton = styled.button(({ theme }) => ({
   backgroundColor: theme.colors.codeBackgroundColor,
   color: theme.colors.fadedText60,
   cursor: "pointer",
-  borderRadius: theme.radii.md,
 
   "&:focus": {
     outline: "none",
@@ -238,16 +237,24 @@ export const StyledCopyButton = styled.button(({ theme }) => ({
 }))
 
 export const StyledCopyButtonContainer = styled.div<{
-  showFeedback?: boolean
-}>(({ theme, showFeedback }) => ({
+  wasCopySuccessful?: boolean
+}>(({ theme, wasCopySuccessful }) => ({
   position: "absolute",
-  top: theme.spacing.lg,
-  right: theme.spacing.lg,
+  top: theme.spacing.md,
+  right: theme.spacing.md,
   display: "flex",
   alignItems: "center",
   gap: theme.spacing.sm,
   zIndex: theme.zIndices.priority,
-  visibility: showFeedback ? "visible" : "hidden",
+  visibility: wasCopySuccessful ? "visible" : "hidden",
+  backgroundColor: theme.colors.codeBackgroundColor,
+  paddingTop: theme.spacing.sm, // align with first line of code
+  paddingRight: theme.spacing.sm,
+  paddingBottom: theme.spacing.sm,
+  paddingLeft: theme.spacing.sm,
+  // borderBottomLeftRadius: theme.radii.default,
+  // borderTopRightRadius: theme.radii.default,
+  borderRadius: theme.radii.default,
 }))
 
 export const StyledCopyFeedback = styled.span(({ theme }) => ({

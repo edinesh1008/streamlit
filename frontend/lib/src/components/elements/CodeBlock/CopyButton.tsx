@@ -33,7 +33,8 @@ interface Props {
 const CopyButton: React.FC<Props> = ({ text }) => {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const clipboardRef = useRef<Clipboard | null>(null)
-  const [showCopiedFeedback, setShowCopiedFeedback] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [wasCopySuccessful, setWasCopySuccessful] = useState(false)
 
   useEffect(() => {
     const node = buttonRef.current
@@ -47,10 +48,10 @@ const CopyButton: React.FC<Props> = ({ text }) => {
 
       // Listen for successful copy events
       clipboardRef.current.on("success", () => {
-        setShowCopiedFeedback(true)
-        setTimeout(() => {
-          setShowCopiedFeedback(true)
-        }, 2000) // Hide after 2 seconds
+        setWasCopySuccessful(true)
+        timeoutRef.current = setTimeout(() => {
+          setWasCopySuccessful(false)
+        }, 2000)
       })
     }
 
@@ -58,12 +59,14 @@ const CopyButton: React.FC<Props> = ({ text }) => {
       if (clipboardRef.current !== null) {
         clipboardRef.current.destroy()
       }
+      if (timeoutRef.current !== null) {
+        clearTimeout(timeoutRef.current)
+      }
     }
   }, [])
 
   return (
-    <StyledCopyButtonContainer showFeedback={showCopiedFeedback}>
-      {showCopiedFeedback && <StyledCopyFeedback>Copied</StyledCopyFeedback>}
+    <StyledCopyButtonContainer wasCopySuccessful={wasCopySuccessful}>
       <StyledCopyButton
         data-testid="stCodeCopyButton"
         title="Copy to clipboard"
@@ -72,12 +75,13 @@ const CopyButton: React.FC<Props> = ({ text }) => {
       >
         <DynamicIcon
           iconValue={
-            showCopiedFeedback ? ":material/check:" : ":material/content_copy:"
+            wasCopySuccessful ? ":material/check:" : ":material/content_copy:"
           }
           size="base"
           color="inherit"
         />
       </StyledCopyButton>
+      {wasCopySuccessful && <StyledCopyFeedback>Copied</StyledCopyFeedback>}
     </StyledCopyButtonContainer>
   )
 }
