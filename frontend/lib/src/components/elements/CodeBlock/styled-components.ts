@@ -199,18 +199,6 @@ export const StyledPre = styled.pre<StyledCodeProps>(
   })
 )
 
-export const StyledCodeBlock = styled.div(({ theme }) => ({
-  position: "relative",
-  margin: theme.spacing.none,
-  height: "100%",
-
-  "&:hover": {
-    [`${StyledCopyButtonContainer}`]: {
-      visibility: "visible",
-    },
-  },
-}))
-
 export const StyledCopyButtonContainer = styled.div<{
   showSuccess?: boolean
 }>(({ theme, showSuccess }) => ({
@@ -226,6 +214,18 @@ export const StyledCopyButtonContainer = styled.div<{
   padding: theme.spacing.sm,
   borderRadius: theme.radii.default,
   color: theme.colors.fadedText60,
+}))
+
+export const StyledCodeBlock = styled.div(({ theme }) => ({
+  position: "relative",
+  margin: theme.spacing.none,
+  height: "100%",
+
+  "&:hover": {
+    [`${StyledCopyButtonContainer}`]: {
+      visibility: "visible",
+    },
+  },
 }))
 
 export const StyledCopyButton = styled.button<{ showSuccess?: boolean }>(
