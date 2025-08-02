@@ -214,8 +214,8 @@ export const StyledCodeBlock = styled.div(({ theme }) => ({
 }))
 
 export const StyledCopyButtonContainer = styled.div<{
-  wasCopySuccessful?: boolean
-}>(({ theme, wasCopySuccessful }) => ({
+  showSuccess?: boolean
+}>(({ theme, showSuccess }) => ({
   position: "absolute",
   top: theme.spacing.md,
   right: theme.spacing.md,
@@ -223,18 +223,18 @@ export const StyledCopyButtonContainer = styled.div<{
   alignItems: "center",
   gap: theme.spacing.sm,
   zIndex: theme.zIndices.priority,
-  visibility: wasCopySuccessful ? "visible" : "hidden",
+  visibility: showSuccess ? "visible" : "hidden",
   backgroundColor: theme.colors.codeBackgroundColor,
   padding: theme.spacing.sm,
   borderRadius: theme.radii.default,
   color: theme.colors.fadedText60,
 }))
 
-export const StyledCopyButton = styled.button<{ hidden?: boolean }>(
-  ({ theme, hidden }) => ({
+export const StyledCopyButton = styled.button<{ showSuccess?: boolean }>(
+  ({ theme, showSuccess }) => ({
     height: theme.iconSizes.base,
     width: theme.iconSizes.base,
-    display: hidden ? "none" : "flex",
+    display: showSuccess ? "none" : "flex",
     alignItems: "center",
     justifyContent: "center",
     border: "none",
