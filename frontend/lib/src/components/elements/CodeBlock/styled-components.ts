@@ -97,8 +97,6 @@ export const StyledPre = styled.pre<StyledCodeProps>(
 
     // Add padding around the code
     padding: theme.spacing.lg,
-    // Add padding to the right to account for the copy button
-    // paddingRight: theme.iconSizes.threeXL,
 
     code: { ...codeBlockStyle(theme, wrapLines) },
 

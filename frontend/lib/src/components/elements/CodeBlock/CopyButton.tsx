@@ -43,6 +43,8 @@ const CopyButton: React.FC<Props> = ({ text }) => {
     if (!node) return
 
     clipboardRef.current = new Clipboard(node, {
+      // Set the container so that copying also works in dialogs.
+      // Otherwise, the copy event is swallowed somehow.
       container: node.parentElement ?? undefined,
     })
 
