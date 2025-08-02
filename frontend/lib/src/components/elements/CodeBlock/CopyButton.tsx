@@ -48,6 +48,11 @@ const CopyButton: React.FC<Props> = ({ text }) => {
 
       // Listen for successful copy events
       clipboardRef.current.on("success", () => {
+        // Clear any existing timeout
+        if (timeoutRef.current !== null) {
+          clearTimeout(timeoutRef.current)
+        }
+
         setWasCopySuccessful(true)
         timeoutRef.current = setTimeout(() => {
           setWasCopySuccessful(false)
@@ -67,21 +72,29 @@ const CopyButton: React.FC<Props> = ({ text }) => {
 
   return (
     <StyledCopyButtonContainer wasCopySuccessful={wasCopySuccessful}>
+      {wasCopySuccessful && (
+        <>
+          <DynamicIcon
+            iconValue=":material/check:"
+            size="base"
+            color="inherit"
+          />
+          <StyledCopyFeedback>Copied</StyledCopyFeedback>
+        </>
+      )}
       <StyledCopyButton
+        hidden={wasCopySuccessful}
         data-testid="stCodeCopyButton"
         title="Copy to clipboard"
         ref={buttonRef}
         data-clipboard-text={text}
       >
         <DynamicIcon
-          iconValue={
-            wasCopySuccessful ? ":material/check:" : ":material/content_copy:"
-          }
+          iconValue=":material/content_copy:"
           size="base"
           color="inherit"
         />
       </StyledCopyButton>
-      {wasCopySuccessful && <StyledCopyFeedback>Copied</StyledCopyFeedback>}
     </StyledCopyButtonContainer>
   )
 }

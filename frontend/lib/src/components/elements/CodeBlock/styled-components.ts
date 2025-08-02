@@ -216,25 +216,27 @@ export const StyledCodeBlock = styled.div(({ theme }) => ({
   },
 }))
 
-export const StyledCopyButton = styled.button(({ theme }) => ({
-  height: theme.iconSizes.base,
-  width: theme.iconSizes.base,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "none",
-  backgroundColor: theme.colors.codeBackgroundColor,
-  color: theme.colors.fadedText60,
-  cursor: "pointer",
+export const StyledCopyButton = styled.button<{ hidden?: boolean }>(
+  ({ theme, hidden }) => ({
+    height: theme.iconSizes.base,
+    width: theme.iconSizes.base,
+    display: hidden ? "none" : "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: "none",
+    backgroundColor: theme.colors.codeBackgroundColor,
+    color: theme.colors.fadedText60,
+    cursor: "pointer",
 
-  "&:focus": {
-    outline: "none",
-  },
+    "&:focus": {
+      outline: "none",
+    },
 
-  "&:hover": {
-    color: theme.colors.bodyText,
-  },
-}))
+    "&:hover": {
+      color: theme.colors.bodyText,
+    },
+  })
+)
 
 export const StyledCopyButtonContainer = styled.div<{
   wasCopySuccessful?: boolean
@@ -253,6 +255,7 @@ export const StyledCopyButtonContainer = styled.div<{
   paddingBottom: theme.spacing.sm,
   paddingLeft: theme.spacing.sm,
   borderRadius: theme.radii.default,
+  color: theme.colors.fadedText60,
 }))
 
 export const StyledCopyFeedback = styled.span(({ theme }) => ({
