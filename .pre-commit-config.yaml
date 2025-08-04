@@ -21,7 +21,7 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # We fix ruff to a version to be in sync with the dev-requirements:
-    rev: v0.12.5
+    rev: v0.12.7
     hooks:
       # Run the linter.
       - id: ruff
@@ -208,6 +208,8 @@ repos:
           (?x)
           |^.vscode/launch\.json$
           |^.vscode/settings\.json$
+          |^frontend/app/tsconfig.json
+          |^frontend/lib/tsconfig.json
       - id: check-toml
       - id: check-yaml
         exclude: lib/conda-recipe/meta.yaml
