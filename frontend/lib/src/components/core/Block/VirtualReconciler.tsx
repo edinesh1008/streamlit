@@ -1,6 +1,11 @@
 /**
  * Virtual DOM Reconciler for preserving React component state
  * when elements are inserted/removed/reordered.
+ *
+ * This reconciler only preserves state for elements with IDs (typically widgets).
+ * Elements without IDs (like text, markdown, etc.) are rendered normally and
+ * will lose state if their position changes, which is acceptable since they
+ * typically don't have meaningful React state to preserve.
  */
 
 import React, {
@@ -11,7 +16,7 @@ import React, {
   useState,
 } from "react"
 
-import { AppNode, BlockNode, ElementNode } from "~lib/AppNode"
+import { AppNode, ElementNode } from "~lib/AppNode"
 
 interface ReconcilerChildProps {
   node: AppNode
@@ -71,11 +76,15 @@ interface VirtualReconcilerProps {
 }
 
 /**
- * VirtualReconciler maintains a virtual DOM of child components and preserves
- * their React state even when they're temporarily removed from the tree.
+ * VirtualReconciler preserves React state for widgets (elements with IDs) when
+ * they're temporarily removed from the tree due to element reordering.
  *
- * Instead of unmounting components when they're removed, it hides them and
+ * Instead of unmounting widgets when they're removed, it hides them and
  * only unmounts them after the script run is complete if they weren't re-rendered.
+ *
+ * Elements without IDs (text, markdown, etc.) are rendered normally and may
+ * lose state on reordering, which is acceptable as they typically don't have
+ * meaningful interactive state.
  */
 export const VirtualReconciler: React.FC<VirtualReconcilerProps> = ({
   nodes,
@@ -90,7 +99,7 @@ export const VirtualReconciler: React.FC<VirtualReconcilerProps> = ({
   const scriptRunIdRef = useRef(scriptRunId)
   const previousNodesRef = useRef<AppNode[]>([])
 
-  // Generate stable keys for nodes
+  // Generate stable keys for nodes - only track elements with IDs
   const getNodeKey = useCallback((node: AppNode, index: number): string => {
     if (node instanceof ElementNode) {
       const element = node.element
@@ -100,14 +109,9 @@ export const VirtualReconciler: React.FC<VirtualReconcilerProps> = ({
       if (elementId) {
         return elementId
       }
-      // Fallback to type + content hash
-      const contentKey =
-        elementType + "-" + index + "-" + node.scriptRunId.slice(-8)
-      return contentKey
-    } else if (node instanceof BlockNode) {
-      return `block-${index}-${node.scriptRunId.slice(-8)}`
     }
-    return `node-${index}`
+    // For nodes without IDs, use index-based keys (they won't be preserved)
+    return `temp-${index}-${Date.now()}`
   }, [])
 
   useEffect(() => {
@@ -153,17 +157,20 @@ export const VirtualReconciler: React.FC<VirtualReconcilerProps> = ({
         const key = getNodeKey(node, index)
         newElementOrder.push(key)
 
-        // Update or add the element
-        const existingElement = newRenderedElements.get(key)
-        if (!existingElement || existingElement.node !== node) {
-          newRenderedElements.set(key, {
-            node,
-            element: renderChild(node, key),
-            lastSeen: now,
-          })
-        } else {
-          // Update last seen time
-          existingElement.lastSeen = now
+        // Only track elements with stable IDs (not temp keys)
+        if (!key.startsWith("temp-")) {
+          // Update or add the element
+          const existingElement = newRenderedElements.get(key)
+          if (!existingElement || existingElement.node !== node) {
+            newRenderedElements.set(key, {
+              node,
+              element: renderChild(node, key),
+              lastSeen: now,
+            })
+          } else {
+            // Update last seen time
+            existingElement.lastSeen = now
+          }
         }
       })
 
@@ -197,12 +204,13 @@ export const VirtualReconciler: React.FC<VirtualReconcilerProps> = ({
     )
   }
 
-  // Render all elements, hiding those not in the current order
+  // Render all elements
   const allElements: ReactNode[] = []
   const renderedKeys = new Set<string>()
 
   // First, render elements in their current order
-  state.elementOrder.forEach(key => {
+  state.elementOrder.forEach((key, index) => {
+    // For elements with IDs that we're tracking
     const elementData = state.renderedElements.get(key)
     if (elementData) {
       renderedKeys.add(key)
@@ -214,10 +222,18 @@ export const VirtualReconciler: React.FC<VirtualReconcilerProps> = ({
           renderChild={renderChild}
         />
       )
+    } else {
+      // For elements without IDs, render directly with their temp key
+      const node = nodes[index]
+      if (node) {
+        allElements.push(
+          <React.Fragment key={key}>{renderChild(node, key)}</React.Fragment>
+        )
+      }
     }
   })
 
-  // Then, render hidden elements (to preserve their state)
+  // Then, render hidden elements with IDs (to preserve their state)
   for (const [key, elementData] of state.renderedElements) {
     if (!renderedKeys.has(key)) {
       allElements.push(
