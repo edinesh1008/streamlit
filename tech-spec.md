@@ -11,9 +11,24 @@ Currently, this is handled by reconstructing widget state from the WidgetStateMa
 - Potential flickering or UI disruptions
 - Loss of DOM state (scroll positions, focus, etc.)
 
-## Proposed Solution: Virtual DOM Reconciliation
+## Proposed Solution: ID-Based Virtual DOM Reconciliation
 
-Implement a virtual reconciliation layer that temporarily hides components instead of unmounting them when their position changes, preserving all React state until we're certain they won't be re-rendered.
+Implement a simplified virtual reconciliation layer that only preserves state for elements with IDs (widgets). Elements without IDs (static content like text, markdown) will continue to use index-based keys and may lose state on reordering, which is acceptable since they typically don't have meaningful interactive state.
+
+### Elements That Benefit
+
+**Preserved (have IDs):**
+- Input widgets: `st.text_input`, `st.number_input`, `st.text_area`
+- Selection widgets: `st.selectbox`, `st.multiselect`, `st.radio`, `st.checkbox`
+- Interactive widgets: `st.button`, `st.slider`, `st.date_input`, `st.time_input`
+- Data widgets: `st.data_editor`, `st.file_uploader`
+- Interactive charts: Plotly charts with selections, Vega-Lite charts with interactions
+
+**Not Preserved (no IDs):**
+- Display elements: `st.text`, `st.markdown`, `st.title`, `st.header`
+- Static visualizations: `st.metric`, `st.progress`, `st.image`
+- Layout elements: `st.container`, `st.columns` (the containers themselves, not their contents)
+- Informational: `st.info`, `st.warning`, `st.error`, `st.success`
 
 ### Key Components
 
@@ -39,24 +54,26 @@ interface ReconcilerState {
 - Only unmounts components after script run completion if they weren't re-rendered
 - Tracks component order for proper visual arrangement
 
-#### 2. Stable Key Generation (`elementKey.ts`)
+#### 2. Simplified Key Generation
 
-Generate content-based keys that remain stable across re-renders:
+The simplified approach uses element IDs directly as React keys:
 
 ```typescript
-export function generateStableElementKey(
-  element: Element,
-  deltaPath: number[],
-  scriptRunId: string
-): string
+const getNodeKey = (node: AppNode, index: number): string => {
+  if (node instanceof ElementNode) {
+    const elementId = (element as any)[elementType]?.id
+    if (elementId) {
+      return elementId  // Stable key for widgets
+    }
+  }
+  // Temporary key for elements without IDs
+  return `temp-${index}-${Date.now()}`
+}
 ```
 
-**Key Generation Priority:**
-
-1. Use explicit element ID if available (for widgets)
-2. Generate hash based on element type and content
-3. Include position hint for uniqueness
-4. Append script run ID suffix for disambiguation
+**Key Strategy:**
+- **Widgets with IDs**: Use their unique ID as key → state preserved
+- **Static elements**: Use temporary index-based keys → state not preserved (acceptable)
 
 #### 3. Integration with Block Renderer
 
@@ -70,45 +87,49 @@ Update `Block.tsx` to use the VirtualReconciler:
 
 ### State Preservation Strategy
 
-1. **Initial Render**: Components are rendered normally and added to the reconciler's map
+1. **Initial Render**:
+   - Widgets (with IDs) are rendered and tracked in the reconciler's map
+   - Static elements use temporary keys and are not tracked
 2. **Element Insertion**:
-   - New elements get new keys and are rendered
-   - Existing elements keep their keys and remain mounted
-   - React doesn't see position changes as identity changes
-3. **Temporary Hiding**: Elements not in current render are hidden but kept in DOM
-4. **Cleanup**: After script run completes, remove components that weren't re-rendered
+   - New widgets get their ID as key and are tracked
+   - Existing widgets keep their ID-based keys and remain mounted
+   - Static elements may re-mount if their position changes
+3. **Temporary Hiding**: Widgets not in current render are hidden but kept in DOM
+4. **Cleanup**: After script run completes, remove widgets that weren't re-rendered
 
 ### Benefits
 
-1. **Complete State Preservation**:
-   - React component state (`useState`, `useRef`, etc.)
-   - DOM state (scroll positions, focus, selections)
+1. **Widget State Preservation**:
+   - React component state for widgets (`useState`, `useRef`, etc.)
+   - DOM state for interactive elements (focus, selections)
    - Event listeners and effect cleanup functions
-   - Animation states
+   - Form input states and validation
 
-2. **Better Performance**:
-   - No state reconstruction overhead
-   - Reduced re-rendering
-   - Smoother animations and transitions
+2. **Simplified Implementation**:
+   - Only tracks elements with IDs
+   - Reduced memory footprint
+   - Clear, predictable behavior
+   - Easier to debug and maintain
 
-3. **Improved UX**:
-   - No flickering when elements reorder
-   - Maintains user interactions (e.g., expanded/collapsed states)
-   - Preserves form input states
+3. **Better Performance**:
+   - No state reconstruction overhead for widgets
+   - Reduced re-rendering of interactive components
+   - Minimal tracking overhead for static content
 
 ### Considerations
 
-1. **Memory Usage**: Hidden components remain in memory
-   - Mitigation: Clean up after each script run
-   - Only affects components at the same tree level
+1. **Selective State Preservation**:
+   - Only widgets with IDs preserve state
+   - Static elements (text, markdown) may re-render on position change
+   - This is acceptable as static elements rarely have meaningful state
 
-2. **CSS Implications**: Using `display: contents` for wrapper
-   - Preserves layout flow
-   - Doesn't affect styling of child components
+2. **Memory Usage**: Only widgets remain in memory when hidden
+   - Much lower memory footprint than preserving all elements
+   - Clean up after each script run
 
-3. **Backward Compatibility**:
-   - Falls back to normal rendering when disabled
-   - Forms and other special components can opt out
+3. **Developer Experience**:
+   - Clear mental model: ID = preserved state
+   - Predictable behavior
    - No changes to public API
 
 ## Alternative Approaches Considered
