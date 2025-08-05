@@ -456,7 +456,11 @@ export class BlockNode implements AppNode {
     const newChildren = this.children.slice()
     if (path.length === 1) {
       // Base case
-      if (node instanceof ElementNode && getElementId(node.element)) {
+      const existingNode = newChildren[childIndex]
+      if (
+        existingNode instanceof ElementNode &&
+        getElementId(existingNode.element)
+      ) {
         newChildren.splice(childIndex, 0, node)
       } else {
         newChildren[childIndex] = node
