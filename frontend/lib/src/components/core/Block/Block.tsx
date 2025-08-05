@@ -78,7 +78,6 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
     <>
       {props.node.children &&
         props.node.children.map((node: AppNode, index: number): ReactNode => {
-          const indexOffset = transientElementCount + blockCount
           const disableFullscreenMode =
             libConfig.disableFullscreenMode || props.disableFullscreenMode
 
@@ -102,6 +101,7 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
                 // an element ID stable across reruns. Therefore, we adjust
                 // the index to ignore any transient or block elements
                 // that have already been added to the tree.
+                const indexOffset = transientElementCount + blockCount
                 key = (index - indexOffset).toString()
               }
             }
