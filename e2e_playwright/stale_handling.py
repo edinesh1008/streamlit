@@ -33,8 +33,18 @@ if st.checkbox("Transient Spinner", value=False):
     else:
         st.write("Some text")
         placeholder.write("Has rerun")
-        time.sleep(5)
+        time.sleep(4)
 
         del st.session_state.has_ran
 
     st.button("Rerun")
+
+if st.checkbox("Expected stale elemenet", value=False):
+    st.write("First text")
+
+    if st.button("Rerun"):
+        st.write("Clicked button")
+        time.sleep(4)
+
+    st.write("Second text")
+    st.write("Third text")

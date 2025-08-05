@@ -38,3 +38,26 @@ def test_stale_element_handling(app: Page):
     # The key test: verify that there is still a single "Some text" message
     # In the previous issue, two messages would be shown with one of them being stale.
     expect(app.get_by_text("Some text")).not_to_have_count(2)
+
+
+def test_expected_stale_element(app: Page):
+    """Test that elements are correctly marked as stale after reruns."""
+    # Check the checkbox to enable the expected stale element test:
+    click_checkbox(app, "Expected stale elemenet")
+
+    expect(app.get_by_text("First text")).to_be_visible()
+    expect(app.get_by_text("Second text")).to_be_visible()
+    expect(app.get_by_text("Third text")).to_be_visible()
+
+    # Click the rerun button but don't wait for rerun:
+    button_element = get_button(app, "Rerun")
+    button_element.click()
+
+    expect(app.get_by_text("Clicked button")).to_be_visible()
+    # The second text was overwritten by the Clicked button text.
+    # This is expected behaviour currently.
+    expect(app.get_by_text("Second text")).not_to_be_visible()
+    # The third text should be marked as stale (atleast until the rerun has finished)
+    expect(
+        app.get_by_test_id("stElementContainer").filter(has_text="Third text")
+    ).to_have_attribute("data-stale", "true")
