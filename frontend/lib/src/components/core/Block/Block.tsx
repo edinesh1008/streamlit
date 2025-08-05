@@ -98,6 +98,10 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
                 key = `transient-${transientElementCount}`
                 transientElementCount += 1
               } else {
+                // We want to keep the keys of elements that don't have
+                // an element ID stable across reruns. Therefore, we adjust
+                // the index to ignore any transient or block elements
+                // that have already been added to the tree.
                 key = (index - indexOffset).toString()
               }
             }
