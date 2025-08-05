@@ -20,8 +20,11 @@ from e2e_playwright.shared.app_utils import (
 )
 
 
-def test_stale_element_handling(app: Page):
-    """Test that elements don't incorrectly get marked as stale after reruns."""
+def test_transient_spinner_handling(app: Page):
+    """Test that elements after a spinner are not marked as stale
+    because of the spinner.
+    """
+
     # Check the checkbox to enable the transient spinner functionality
     # This automatically waits for the app to run
     click_checkbox(app, "Transient Spinner")
