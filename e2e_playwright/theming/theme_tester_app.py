@@ -43,7 +43,7 @@ def run_theme_tester_app():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        if st.button("Open Dialog", use_container_width=True):
+        if st.button("Open Dialog", width="stretch"):
             my_dialog()
         st.segmented_control(
             "Segmented Control",
@@ -61,6 +61,14 @@ def run_theme_tester_app():
             default=["Option 1"],
             label_visibility="collapsed",
         )
+        st.json(
+            {
+                "name": "Kevin",
+                "age": 7,
+                "breed": "Welsh Corgi",
+            }
+        )
+
     with col2:
         with st.expander("Expander", expanded=True):
             st.text_area(
@@ -95,6 +103,8 @@ def run_theme_tester_app():
                 value=50,
                 label_visibility="collapsed",
             )
+            st.write("Write `inline code`")
+            st.caption("Caption `inline code`")
 
     with col3:
         tab1, _, _ = st.tabs(["Tab 1", "Tab 2", "Tab 3"])

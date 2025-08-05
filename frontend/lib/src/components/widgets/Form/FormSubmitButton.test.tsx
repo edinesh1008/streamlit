@@ -17,7 +17,7 @@ import React from "react"
 
 import { screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
-import { enableAllPlugins } from "immer"
+import { enableMapSet, enablePatches } from "immer"
 
 import { Button as ButtonProto } from "@streamlit/protobuf"
 
@@ -31,7 +31,8 @@ import {
 import { FormSubmitButton, Props } from "./FormSubmitButton"
 
 // Required by ImmerJS
-enableAllPlugins()
+enablePatches()
+enableMapSet()
 
 describe("FormSubmitButton", () => {
   let formsData: FormsData
@@ -100,10 +101,13 @@ describe("FormSubmitButton", () => {
       {}
     )
 
+    // Ensure both the button and the tooltip target have the correct width.
+    // These will be 100% and the ElementContainer will have styles to determine
+    // the button width.
     const formSubmitButton = screen.getByRole("button")
-    expect(formSubmitButton).toHaveStyle("width: auto")
+    expect(formSubmitButton).toHaveStyle("width: 100%")
     const tooltipTarget = screen.getByTestId("stTooltipHoverTarget")
-    expect(tooltipTarget).toHaveStyle("width: auto")
+    expect(tooltipTarget).toHaveStyle("width: 100%")
 
     await user.hover(tooltipTarget)
 

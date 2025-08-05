@@ -16,16 +16,19 @@
 
 import React, { memo, ReactElement } from "react"
 
+import { getLogger } from "loglevel"
+
 import { Exception as ExceptionProto } from "@streamlit/protobuf"
 import { isLocalhost } from "@streamlit/utils"
 
-import { notNullOrUndefined } from "~lib/util/utils"
-import AlertContainer, { Kind } from "~lib/components/shared/AlertContainer"
-import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 import { StyledCode } from "~lib/components/elements/CodeBlock/styled-components"
+import AlertContainer, { Kind } from "~lib/components/shared/AlertContainer"
 import { StyledStackTrace } from "~lib/components/shared/ErrorElement/styled-components"
+import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
+import { notNullOrUndefined } from "~lib/util/utils"
 
 import {
+  StyledExceptionCopyButton,
   StyledExceptionLinks,
   StyledExceptionMessage,
   StyledExceptionWrapper,
@@ -34,6 +37,8 @@ import {
   StyledStackTraceRow,
   StyledStackTraceTitle,
 } from "./styled-components"
+
+export const LOG = getLogger("ExceptionElement")
 
 export interface ExceptionElementProps {
   element: ExceptionProto
@@ -89,7 +94,7 @@ function StackTrace({ stackTrace }: Readonly<StackTraceProps>): ReactElement {
       <StyledStackTraceTitle>Traceback:</StyledStackTraceTitle>
       <StyledStackTrace>
         <StyledStackTraceContent>
-          <StyledCode>
+          <StyledCode wrapLines={false}>
             {stackTrace.map((row: string, index: number) => (
               <StyledStackTraceRow
                 // TODO: Update to match React best practices
@@ -113,12 +118,23 @@ function StackTrace({ stackTrace }: Readonly<StackTraceProps>): ReactElement {
 function ExceptionElement({
   element,
 }: Readonly<ExceptionElementProps>): ReactElement {
+  const formattedExceptionShort = `${element.type}: ${element.message}`
+  const formattedExceptionFull = `${formattedExceptionShort}\n\n${element.stackTrace?.join(
+    "\n"
+  )}`
+
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(
-    `${element.type}: ${element.message}`
+    formattedExceptionShort
   )}`
   const chatGptUrl = `https://chatgpt.com/?q=${encodeURIComponent(
-    `${element.type}: ${element.message}\n\n${element.stackTrace?.join("\n")}`
+    formattedExceptionFull
   )}`
+
+  const onCopyClick = (): void => {
+    navigator.clipboard.writeText(formattedExceptionFull).catch(error => {
+      LOG.error("Failed to copy exception details to clipboard:", error)
+    })
+  }
 
   return (
     <div className="stException" data-testid="stException">
@@ -136,6 +152,9 @@ function ExceptionElement({
           ) : null}
           {isLocalhost() && (
             <StyledExceptionLinks>
+              <StyledExceptionCopyButton onClick={onCopyClick}>
+                Copy
+              </StyledExceptionCopyButton>
               <a href={searchUrl} target="_blank" rel="noopener noreferrer">
                 Ask Google
               </a>

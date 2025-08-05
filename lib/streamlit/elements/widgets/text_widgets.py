@@ -20,8 +20,10 @@ from typing import TYPE_CHECKING, Literal, cast, overload
 
 from streamlit.elements.lib.form_utils import current_form_id
 from streamlit.elements.lib.layout_utils import (
+    Height,
     LayoutConfig,
     WidthWithoutContent,
+    validate_height,
     validate_width,
 )
 from streamlit.elements.lib.policies import (
@@ -204,8 +206,8 @@ class TextWidgetsMixin:
         on_change : callable
             An optional callback invoked when this text input's value changes.
 
-        args : tuple
-            An optional tuple of args to pass to the callback.
+        args : list or tuple
+            An optional list or tuple of args to pass to the callback.
 
         kwargs : dict
             An optional dict of kwargs to pass to the callback.
@@ -241,8 +243,16 @@ class TextWidgetsMixin:
               <https://fonts.google.com/icons?icon.set=Material+Symbols&icon.style=Rounded>`_
               font library.
 
-        width : WidthWithoutContent
-            The width of the text input. Defaults to "stretch".
+        width : "stretch" or int
+            The width of the text input widget. This can be one of the
+            following:
+
+            - ``"stretch"`` (default): The width of the widget matches the
+              width of the parent container.
+            - An integer specifying the width in pixels: The widget has a
+              fixed width. If the specified width is greater than the width of
+              the parent container, the width of the widget matches the width
+              of the parent container.
 
         Returns
         -------
@@ -402,7 +412,7 @@ class TextWidgetsMixin:
         self,
         label: str,
         value: str = "",
-        height: int | None = None,
+        height: Height | None = None,
         max_chars: int | None = None,
         key: Key | None = None,
         help: str | None = None,
@@ -422,7 +432,7 @@ class TextWidgetsMixin:
         self,
         label: str,
         value: SupportsStr | None = None,
-        height: int | None = None,
+        height: Height | None = None,
         max_chars: int | None = None,
         key: Key | None = None,
         help: str | None = None,
@@ -442,7 +452,7 @@ class TextWidgetsMixin:
         self,
         label: str,
         value: str | SupportsStr | None = "",
-        height: int | None = None,
+        height: Height | None = None,
         max_chars: int | None = None,
         key: Key | None = None,
         help: str | None = None,
@@ -486,10 +496,24 @@ class TextWidgetsMixin:
             cast to str internally. If ``None``, will initialize empty and
             return ``None`` until the user provides input. Defaults to empty string.
 
-        height : int or None
-            Desired height of the UI element expressed in pixels. If this is
-            ``None`` (default), the widget's initial height fits three lines.
-            The height must be at least 68 pixels, which fits two lines.
+        height : "content", "stretch", int, or None
+            The height of the text area widget. This can be one of the
+            following:
+
+            - ``None`` (default): The height of the widget fits three lines.
+            - ``"content"``: The height of the widget matches the
+              height of its content.
+            - ``"stretch"``: The height of the widget matches the height of
+              its content or the height of the parent container, whichever is
+              larger. If the widget is not in a parent container, the height
+              of the widget matches the height of its content.
+            - An integer specifying the height in pixels: The widget has a
+              fixed height. If the content is larger than the specified
+              height, scrolling is enabled.
+
+            The widget's height can't be smaller than the height of two lines.
+            When ``label_visibility="collapsed"``, the minimum height is 68
+            pixels. Otherwise, the minimum height is 98 pixels.
 
         max_chars : int or None
             Maximum number of characters allowed in text area.
@@ -511,8 +535,8 @@ class TextWidgetsMixin:
         on_change : callable
             An optional callback invoked when this text_area's value changes.
 
-        args : tuple
-            An optional tuple of args to pass to the callback.
+        args : list or tuple
+            An optional list or tuple of args to pass to the callback.
 
         kwargs : dict
             An optional dict of kwargs to pass to the callback.
@@ -531,8 +555,16 @@ class TextWidgetsMixin:
             label, which can help keep the widget aligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
-        width : WidthWithoutContent
-            The width of the text area. Defaults to "stretch".
+        width : "stretch" or int
+            The width of the text area widget. This can be one of the
+            following:
+
+            - ``"stretch"`` (default): The width of the widget matches the
+              width of the parent container.
+            - An integer specifying the width in pixels: The widget has a
+              fixed width. If the specified width is greater than the width of
+              the parent container, the width of the widget matches the width
+              of the parent container.
 
         Returns
         -------
@@ -560,12 +592,6 @@ class TextWidgetsMixin:
            height: 300px
 
         """
-        # Specified height must be at least 68 pixels (3 lines of text).
-        if height is not None and height < 68:
-            raise StreamlitAPIException(
-                f"Invalid height {height}px for `st.text_area` - must be at least 68 pixels."
-            )
-
         ctx = get_script_run_ctx()
         return self._text_area(
             label=label,
@@ -588,7 +614,7 @@ class TextWidgetsMixin:
         self,
         label: str,
         value: SupportsStr | None = "",
-        height: int | None = None,
+        height: Height | None = None,
         max_chars: int | None = None,
         key: Key | None = None,
         help: str | None = None,
@@ -646,9 +672,6 @@ class TextWidgetsMixin:
         if help is not None:
             text_area_proto.help = dedent(help)
 
-        if height is not None:
-            text_area_proto.height = height
-
         if max_chars is not None:
             text_area_proto.max_chars = max_chars
 
@@ -673,7 +696,16 @@ class TextWidgetsMixin:
             text_area_proto.set_value = True
 
         validate_width(width)
-        layout_config = LayoutConfig(width=width)
+        if height is not None:
+            validate_height(height, allow_content=True)
+        else:
+            # We want to maintain the same approximately three lines of text height
+            # for the text input when the label is collapsed.
+            # These numbers are for the entire element including the label and
+            # padding.
+            height = 122 if label_visibility != "collapsed" else 94
+
+        layout_config = LayoutConfig(width=width, height=height)
 
         self.dg._enqueue("text_area", text_area_proto, layout_config=layout_config)
         return widget_state.value

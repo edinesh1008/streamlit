@@ -24,8 +24,6 @@ import {
   Select as UISelect,
 } from "baseui/select"
 import without from "lodash/without"
-import { isMobile } from "react-device-detect"
-import { useTheme } from "@emotion/react"
 
 import { MultiSelect as MultiSelectProto } from "@streamlit/protobuf"
 
@@ -39,13 +37,17 @@ import {
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
 import { StyledUISelect } from "~lib/components/widgets/Multiselect/styled-components"
-import { EmotionTheme } from "~lib/theme"
-import { labelVisibilityProtoValueToEnum } from "~lib/util/utils"
-import { WidgetStateManager } from "~lib/WidgetStateManager"
 import {
   useBasicWidgetState,
   ValueWithSource,
 } from "~lib/hooks/useBasicWidgetState"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
+import { isMobile } from "~lib/util/isMobile"
+import {
+  getSelectPlaceholder,
+  labelVisibilityProtoValueToEnum,
+} from "~lib/util/utils"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
 
 export interface Props {
   disabled: boolean
@@ -97,7 +99,7 @@ const updateWidgetMgrState = (
 const Multiselect: FC<Props> = props => {
   const { element, widgetMgr, fragmentId } = props
 
-  const theme: EmotionTheme = useTheme()
+  const theme = useEmotionTheme()
   const isInSidebar = useContext(IsSidebarContext)
   const [value, setValueWithSource] = useBasicWidgetState<
     MultiselectValue,
@@ -201,17 +203,16 @@ const Multiselect: FC<Props> = props => {
   )
 
   const { options } = element
-  let disabled = props.disabled
-  let placeholder = element.placeholder
-  if (options.length === 0) {
-    if (!element.acceptNewOptions) {
-      placeholder = "No options to select"
-      // When a user cannot add new options and there are no options to select from, we disable the selectbox
-      disabled = true
-    } else {
-      placeholder = "Add options"
-    }
-  }
+
+  // Get placeholder and disabled state using utility function
+  const { placeholder, shouldDisable } = getSelectPlaceholder(
+    element.placeholder,
+    options,
+    element.acceptNewOptions ?? false,
+    true // isMultiSelect = true for multi-select
+  )
+
+  const disabled = props.disabled || shouldDisable
   const selectOptions: MultiselectOption[] = options.map(
     (option: string, index: number) => {
       return {
@@ -227,6 +228,18 @@ const Multiselect: FC<Props> = props => {
   // Check if we have more than 10 options in the selectbox.
   // If that's true, we show the keyboard on mobile. If not, we hide it.
   const showKeyboardOnMobile = options.length > 10
+
+  // Calculate the max height of the selectbox based on the baseFontSize
+  // to better support advanced theming
+  const maxHeight = useMemo(() => {
+    // Option height = lineHeight (1.6 * baseFontSize) + margin/padding (14px total)
+    const optionHeight = theme.fontSizes.baseFontSize * 1.6 + 14
+    // Allow up to 4 options tall before scrolling + show small portion
+    // of the next row so its clear the user can scroll
+    const pxMaxHeight = Math.round(optionHeight * 4.25)
+    // Return value in px
+    return `${pxMaxHeight}px`
+  }, [theme.fontSizes.baseFontSize])
 
   return (
     <div className="stMultiSelect" data-testid="stMultiSelect">
@@ -301,6 +314,7 @@ const Multiselect: FC<Props> = props => {
             },
             ControlContainer: {
               style: {
+                maxHeight: maxHeight,
                 minHeight: theme.sizes.minElementHeight,
                 // Baseweb requires long-hand props, short-hand leads to weird bugs & warnings.
                 borderLeftWidth: theme.sizes.borderWidth,
@@ -319,6 +333,7 @@ const Multiselect: FC<Props> = props => {
             },
             ValueContainer: {
               style: () => ({
+                overflowY: "auto",
                 paddingLeft: theme.spacing.sm,
                 paddingTop: theme.spacing.none,
                 paddingBottom: theme.spacing.none,
@@ -354,6 +369,7 @@ const Multiselect: FC<Props> = props => {
                 overrides: {
                   Root: {
                     style: {
+                      fontWeight: theme.fontWeights.normal,
                       borderTopLeftRadius: theme.radii.md,
                       borderTopRightRadius: theme.radii.md,
                       borderBottomRightRadius: theme.radii.md,
@@ -410,7 +426,7 @@ const Multiselect: FC<Props> = props => {
               props: {
                 // Change the 'readonly' prop to hide the mobile keyboard if options < 10
                 readOnly:
-                  isMobile && showKeyboardOnMobile === false
+                  isMobile() && showKeyboardOnMobile === false
                     ? "readonly"
                     : null,
               },

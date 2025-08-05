@@ -16,13 +16,13 @@
 
 import React, { memo, ReactElement } from "react"
 
-import { useTheme } from "@emotion/react"
 import { Face, SmartToy } from "@emotion-icons/material-outlined"
 
 import { Block as BlockProto } from "@streamlit/protobuf"
 
 import Icon, { DynamicIcon } from "~lib/components/shared/Icon"
-import { EmotionTheme } from "~lib/theme"
+import { useCrossOriginAttribute } from "~lib/hooks/useCrossOriginAttribute"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { StreamlitEndpoints } from "~lib/StreamlitEndpoints"
 
 import {
@@ -44,7 +44,8 @@ function ChatMessageAvatar(
   props: Readonly<ChatMessageAvatarProps>
 ): ReactElement {
   const { avatar, avatarType, name, endpoints } = props
-  const theme: EmotionTheme = useTheme()
+  const theme = useEmotionTheme()
+  const crossOrigin = useCrossOriginAttribute(avatar)
 
   if (avatar) {
     switch (avatarType) {
@@ -53,6 +54,7 @@ function ChatMessageAvatar(
           <StyledAvatarImage
             src={endpoints.buildMediaURL(avatar)}
             alt={`${name} avatar`}
+            crossOrigin={crossOrigin}
           />
         )
       case BlockProto.ChatMessage.AvatarType.EMOJI:

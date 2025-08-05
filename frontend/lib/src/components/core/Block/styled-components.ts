@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React from "react"
+import React, { CSSProperties } from "react"
 
 import styled from "@emotion/styled"
 
@@ -22,6 +22,7 @@ import { Block as BlockProto, streamlit } from "@streamlit/protobuf"
 
 import { StyledCheckbox } from "~lib/components/widgets/Checkbox/styled-components"
 import { EmotionTheme, STALE_STYLES } from "~lib/theme"
+import { assertNever } from "~lib/util/assertNever"
 
 function translateGapWidth(
   gap: streamlit.GapSize | undefined,
@@ -44,18 +45,23 @@ export interface StyledElementContainerProps {
   height: React.CSSProperties["height"]
   elementType: string
   overflow: React.CSSProperties["overflow"]
+  flex?: React.CSSProperties["flex"]
 }
 
 const GLOBAL_ELEMENTS = ["balloons", "snow"]
 export const StyledElementContainer = styled.div<StyledElementContainerProps>(
-  ({ theme, isStale, width, height, elementType, overflow }) => ({
+  ({ theme, isStale, width, height, elementType, overflow, flex }) => ({
     width,
     height,
     maxWidth: "100%",
+    // Important so that individual elements don't take up too much space
+    // in horizontal layouts. Particularly when an element uses the full screen wrapper.
+    minWidth: "1rem",
     // Allows to have absolutely-positioned nodes inside app elements, like
     // floating buttons.
     position: "relative",
     overflow,
+    flex,
 
     "@media print": {
       overflow: "visible",
@@ -147,36 +153,79 @@ export const StyledColumn = styled.div<StyledColumnProps>(
   }
 )
 
-export interface StyledBlockWrapperProps {
-  border: boolean
-  height?: number
+const getAlignItems = (
+  align: BlockProto.FlexContainer.Align | undefined | null
+): CSSProperties["alignItems"] => {
+  switch (align) {
+    case BlockProto.FlexContainer.Align.ALIGN_START:
+      return "start"
+    case BlockProto.FlexContainer.Align.ALIGN_CENTER:
+      return "center"
+    case BlockProto.FlexContainer.Align.ALIGN_END:
+      return "end"
+    case BlockProto.FlexContainer.Align.STRETCH:
+      return "stretch"
+    case BlockProto.FlexContainer.Align.ALIGN_UNDEFINED:
+    case undefined:
+    case null:
+      // This is the existing default behavior
+      return "start"
+    default:
+      assertNever(align)
+  }
 }
 
-export const StyledBlockWrapper = styled.div<StyledBlockWrapperProps>(
-  ({ theme, border, height }) => ({
-    display: "block",
-    ...(border && {
-      border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
-      borderRadius: theme.radii.default,
-      padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
-    }),
-    ...(height && {
-      height: `${height}px`,
-      overflow: "auto",
-    }),
-  })
-)
+const getJustifyContent = (
+  justify: BlockProto.FlexContainer.Justify | undefined | null
+): CSSProperties["justifyContent"] => {
+  switch (justify) {
+    case BlockProto.FlexContainer.Justify.JUSTIFY_START:
+      return "start"
+    case BlockProto.FlexContainer.Justify.JUSTIFY_CENTER:
+      return "center"
+    case BlockProto.FlexContainer.Justify.JUSTIFY_END:
+      return "end"
+    case BlockProto.FlexContainer.Justify.SPACE_BETWEEN:
+      return "space-between"
+    case BlockProto.FlexContainer.Justify.JUSTIFY_UNDEFINED:
+    case undefined:
+    case null:
+      // This is the existing default behavior
+      return "start"
+    default:
+      assertNever(justify)
+  }
+}
 
 export interface StyledFlexContainerBlockProps {
   direction: React.CSSProperties["flexDirection"]
   gap?: streamlit.GapSize | undefined
   flex?: React.CSSProperties["flex"]
-  wrap?: boolean
+  // This marks the prop as a transient property so it is
+  // not passed to the DOM. It overlaps with a valid attribute
+  // so passing it to the DOM will cause an error in the console.
+  $wrap?: boolean
+  height?: React.CSSProperties["height"]
+  border: boolean
+  align?: BlockProto.FlexContainer.Align | null
+  justify?: BlockProto.FlexContainer.Justify | null
+  overflow?: React.CSSProperties["overflow"]
 }
 
 export const StyledFlexContainerBlock =
   styled.div<StyledFlexContainerBlockProps>(
-    ({ theme, direction, gap, flex, wrap }) => {
+    ({
+      theme,
+      direction,
+      gap,
+      flex,
+      $wrap,
+      height,
+      border,
+      align,
+      justify,
+      overflow,
+    }) => {
       let gapWidth
       if (gap !== undefined) {
         gapWidth = translateGapWidth(gap, theme)
@@ -187,10 +236,19 @@ export const StyledFlexContainerBlock =
         gap: gapWidth,
         width: "100%",
         maxWidth: "100%",
-        height: "auto",
+        height: height ?? "auto",
+        minWidth: "1rem",
         flexDirection: direction,
         flex,
-        flexWrap: wrap ? "wrap" : "nowrap",
+        alignItems: getAlignItems(align),
+        justifyContent: getJustifyContent(justify),
+        flexWrap: $wrap ? "wrap" : "nowrap",
+        ...(border && {
+          border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
+          borderRadius: theme.radii.default,
+          padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
+        }),
+        overflow,
       }
     }
   )
@@ -198,13 +256,19 @@ export const StyledFlexContainerBlock =
 export interface StyledLayoutWrapperProps {
   width?: React.CSSProperties["width"]
   height?: React.CSSProperties["height"]
+  flex?: React.CSSProperties["flex"]
 }
 
 export const StyledLayoutWrapper = styled.div<StyledLayoutWrapperProps>(
-  ({ width, height }) => ({
+  ({ width, height, flex }) => ({
     display: "flex",
+    // This shouldn't matter since this is a wrapper and should only have one child.
+    // However, adding it here to be explicit.
+    flexDirection: "column",
     width,
     maxWidth: "100%",
+    minWidth: "1rem",
     height,
+    flex,
   })
 )

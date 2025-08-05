@@ -239,7 +239,36 @@ class ContextProxy:
     @property
     @gather_metrics("context.theme")
     def theme(self) -> StreamlitTheme:
-        """A read-only object containing information about the current Streamlit app theme."""
+        """A read-only, dictionary-like object containing theme information.
+
+        Theme information is restricted to the ``type`` of the theme (dark or
+        light) and is inferred from the background color of the app.
+
+        .. note::
+            Changes made to the background color through CSS are not included.
+            Additionally, the theme type may be incorrect during a change in
+            theme, like in the following situations:
+
+            - When the app is first loaded within a session
+            - When the user changes the theme in the settings menu
+
+            For more information and to upvote an improvement, see GitHub issue
+            `#11920 <https://github.com/streamlit/streamlit/issues/11920>`_.
+
+        Attributes
+        ----------
+        type : "light", "dark"
+            The theme type inferred from the background color of the app.
+
+        Example
+        -------
+        Access the theme type of the app:
+
+        >>> import streamlit as st
+        >>>
+        >>> st.write(f"The current theme type is {st.context.theme.type}.")
+
+        """
         ctx = get_script_run_ctx()
 
         if ctx is None or ctx.context_info is None:

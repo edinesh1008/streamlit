@@ -41,10 +41,22 @@ export interface StreamlitWindowObject {
   BACKEND_BASE_URL?: string
   // URL pointing to where the _stcore/host-config endpoint is being served.
   HOST_CONFIG_BASE_URL?: string
+  // URL pointing to where the /media assets are being served from for download only.
+  DOWNLOAD_ASSETS_BASE_URL?: string
   // URL pointing to the main page of this Streamlit app. Setting this is needed
   // when setting BACKEND_BASE_URL so that handling page URLs in multipage apps
   // works.
   MAIN_PAGE_BASE_URL?: string
+
+  // When our Streamlit app is embedded in an iframe, this can be set by the
+  // parent frame of the app so that the Streamlit app is aware of its own
+  // Service Worker clientId. This has to be done when using Custom Components
+  // in an app deployed in a context where we use a Service Worker as `fetch`
+  // requests sent from the component iframe set `resultingClientId` but not
+  // `replacesClientId`, which means that without this we would be unable to
+  // associate a `fetch` request from a custom component iframe with its parent
+  // frame.
+  CUSTOM_COMPONENT_CLIENT_ID?: string
 
   // Theme related settings.
   LIGHT_THEME?: ICustomThemeConfig

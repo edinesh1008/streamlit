@@ -123,8 +123,8 @@ class CheckboxMixin:
         on_change : callable
             An optional callback invoked when this checkbox's value changes.
 
-        args : tuple
-            An optional tuple of args to pass to the callback.
+        args : list or tuple
+            An optional list or tuple of args to pass to the callback.
 
         kwargs : dict
             An optional dict of kwargs to pass to the callback.
@@ -139,9 +139,18 @@ class CheckboxMixin:
             label, which can help keep the widget aligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
-        width : Width
-            The width of the widget. Can be an integer for pixel width,
-            or one of "content" or "stretch". Defaults to "content".
+        width : "content", "stretch", or int
+            The width of the checkbox widget. This can be one of the following:
+
+            - ``"content"`` (default): The width of the widget matches the
+              width of its content, but doesn't exceed the width of the parent
+              container.
+            - ``"stretch"``: The width of the widget matches the width of the
+              parent container.
+            - An integer specifying the width in pixels: The widget has a
+              fixed width. If the specified width is greater than the width of
+              the parent container, the width of the widget matches the width
+              of the parent container.
 
         Returns
         -------
@@ -240,8 +249,8 @@ class CheckboxMixin:
         on_change : callable
             An optional callback invoked when this toggle's value changes.
 
-        args : tuple
-            An optional tuple of args to pass to the callback.
+        args : list or tuple
+            An optional list or tuple of args to pass to the callback.
 
         kwargs : dict
             An optional dict of kwargs to pass to the callback.
@@ -256,9 +265,18 @@ class CheckboxMixin:
             label, which can help keep the widget aligned with other widgets.
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
-        width : Width
-            The width of the widget. Can be an integer for pixel width,
-            or one of "content" or "stretch". Defaults to "content".
+        width : "content", "stretch", or int
+            The width of the toggle widget. This can be one of the following:
+
+            - ``"content"`` (default): The width of the widget matches the
+              width of its content, but doesn't exceed the width of the parent
+              container.
+            - ``"stretch"``: The width of the widget matches the width of the
+              parent container.
+            - An integer specifying the width in pixels: The widget has a
+              fixed width. If the specified width is greater than the width of
+              the parent container, the width of the widget matches the width
+              of the parent container.
 
         Returns
         -------

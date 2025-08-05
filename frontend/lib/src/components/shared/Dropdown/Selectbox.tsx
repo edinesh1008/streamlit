@@ -23,27 +23,30 @@ import React, {
   useState,
 } from "react"
 
-import { isMobile } from "react-device-detect"
 import { ChevronDown } from "baseui/icon"
 import {
   type OnChangeParams,
   type Option,
   Select as UISelect,
 } from "baseui/select"
-import { useTheme } from "@emotion/react"
 import sortBy from "lodash/sortBy"
 
 import IsSidebarContext from "~lib/components/core/IsSidebarContext"
 import VirtualDropdown from "~lib/components/shared/Dropdown/VirtualDropdown"
-import { isNullOrUndefined, LabelVisibilityOptions } from "~lib/util/utils"
-import { hasMatch, score } from "~lib/vendor/fzy.js/fuzzySearch"
 import { Placement } from "~lib/components/shared/Tooltip"
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import {
   StyledWidgetLabelHelp,
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
-import { EmotionTheme } from "~lib/theme"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
+import { isMobile } from "~lib/util/isMobile"
+import {
+  getSelectPlaceholder,
+  isNullOrUndefined,
+  LabelVisibilityOptions,
+} from "~lib/util/utils"
+import { hasMatch, score } from "~lib/vendor/fzy.js/fuzzySearch"
 
 export interface Props {
   value: string | null
@@ -54,9 +57,9 @@ export interface Props {
   label?: string | null
   labelVisibility?: LabelVisibilityOptions
   help?: string
-  placeholder?: string
+  placeholder: string
   clearable?: boolean
-  acceptNewOptions?: boolean | null
+  acceptNewOptions: boolean
 }
 
 interface SelectOption {
@@ -99,7 +102,7 @@ const Selectbox: React.FC<Props> = ({
   clearable,
   acceptNewOptions,
 }) => {
-  const theme: EmotionTheme = useTheme()
+  const theme = useEmotionTheme()
   const isInSidebar = useContext(IsSidebarContext)
 
   const [value, setValue] = useState<string | null>(propValue)
@@ -150,7 +153,6 @@ const Selectbox: React.FC<Props> = ({
     []
   )
 
-  let selectDisabled = disabled
   const opts = propOptions
 
   let selectValue: Option[] = []
@@ -158,16 +160,16 @@ const Selectbox: React.FC<Props> = ({
     selectValue = [{ label: value, value }]
   }
 
-  let selectboxPlaceholder = placeholder
-  if (opts.length === 0) {
-    if (!acceptNewOptions) {
-      selectboxPlaceholder = "No options to select"
-      // When a user cannot add new options and there are no options to select from, we disable the selectbox
-      selectDisabled = true
-    } else {
-      selectboxPlaceholder = "Add an option"
-    }
-  }
+  // Get placeholder and disabled state using utility function
+  const { placeholder: selectboxPlaceholder, shouldDisable } =
+    getSelectPlaceholder(
+      placeholder,
+      opts,
+      acceptNewOptions,
+      false // isMultiSelect = false for single select
+    )
+
+  const selectDisabled = disabled || shouldDisable
 
   const selectOptions: SelectOption[] = opts.map(
     (option: string, index: number) => ({
@@ -197,7 +199,7 @@ const Selectbox: React.FC<Props> = ({
         )}
       </WidgetLabel>
       <UISelect
-        creatable={acceptNewOptions ?? false}
+        creatable={acceptNewOptions}
         disabled={selectDisabled}
         labelKey="label"
         aria-label={label || ""}
@@ -215,6 +217,7 @@ const Selectbox: React.FC<Props> = ({
           Root: {
             style: () => ({
               lineHeight: theme.lineHeights.inputWidget,
+              fontWeight: theme.fontWeights.normal,
             }),
           },
           Dropdown: { component: VirtualDropdown },
@@ -270,7 +273,8 @@ const Selectbox: React.FC<Props> = ({
           Input: {
             props: {
               // Change the 'readonly' prop to hide the mobile keyboard if options < 10
-              readOnly: isMobile && !showKeyboardOnMobile ? "readonly" : null,
+              readOnly:
+                isMobile() && !showKeyboardOnMobile ? "readonly" : null,
             },
             style: () => ({
               lineHeight: theme.lineHeights.inputWidget,

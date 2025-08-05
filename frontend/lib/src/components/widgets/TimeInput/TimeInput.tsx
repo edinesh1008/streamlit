@@ -16,29 +16,29 @@
 
 import React, { memo, ReactElement, useCallback, useContext } from "react"
 
-import { TimePicker as UITimePicker } from "baseui/timepicker"
-import { StyledClearIcon } from "baseui/input/styled-components"
 import { ChevronDown } from "baseui/icon"
-import { useTheme } from "@emotion/react"
+import { StyledClearIcon } from "baseui/input/styled-components"
+import { TimePicker as UITimePicker } from "baseui/timepicker"
 
 import { TimeInput as TimeInputProto } from "@streamlit/protobuf"
 
-import { WidgetStateManager } from "~lib/WidgetStateManager"
-import {
-  useBasicWidgetState,
-  ValueWithSource,
-} from "~lib/hooks/useBasicWidgetState"
 import IsSidebarContext from "~lib/components/core/IsSidebarContext"
+import { Placement } from "~lib/components/shared/Tooltip"
+import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import {
   StyledWidgetLabelHelp,
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
-import TooltipIcon from "~lib/components/shared/TooltipIcon"
-import { Placement } from "~lib/components/shared/Tooltip"
+import {
+  useBasicWidgetState,
+  ValueWithSource,
+} from "~lib/hooks/useBasicWidgetState"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import {
   isNullOrUndefined,
   labelVisibilityProtoValueToEnum,
 } from "~lib/util/utils"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
 
 import { StyledClearIconContainer } from "./styled-components"
 
@@ -70,7 +70,7 @@ function TimeInput({
   const isInSidebar = useContext(IsSidebarContext)
 
   const clearable = isNullOrUndefined(element.default) && !disabled
-  const theme = useTheme()
+  const theme = useEmotionTheme()
 
   const selectOverrides = {
     Select: {
@@ -107,6 +107,9 @@ function TimeInput({
           },
 
           SingleValue: {
+            style: {
+              fontWeight: theme.fontWeights.normal,
+            },
             props: {
               "data-testid": "stTimeInputTimeDisplay",
             },
@@ -145,6 +148,13 @@ function TimeInput({
               },
             },
           },
+
+          Placeholder: {
+            style: () => ({
+              color: theme.colors.fadedText60,
+            }),
+          },
+
           SelectArrow: {
             component: ChevronDown,
 

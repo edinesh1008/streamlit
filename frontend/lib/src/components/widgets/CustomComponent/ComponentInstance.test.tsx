@@ -16,33 +16,34 @@
 
 import React from "react"
 
-import { Mock, MockInstance } from "vitest"
 import { act, fireEvent, screen } from "@testing-library/react"
+import { Mock, MockInstance } from "vitest"
 
 import {
   ComponentInstance as ComponentInstanceProto,
+  IComponentInstance as IComponentInstanceProto,
   SpecialArg,
 } from "@streamlit/protobuf"
 
+import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
+import { mockEndpoints } from "~lib/mocks/mocks"
+import { mockTheme } from "~lib/mocks/mockTheme"
+import { renderWithContexts } from "~lib/test_util"
+import { bgColorToBaseString, toExportedTheme } from "~lib/theme"
 import {
   DEFAULT_IFRAME_FEATURE_POLICY,
   DEFAULT_IFRAME_SANDBOX_POLICY,
 } from "~lib/util/IFrameUtil"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
-import { bgColorToBaseString, toExportedTheme } from "~lib/theme"
-import { mockEndpoints } from "~lib/mocks/mocks"
-import { mockTheme } from "~lib/mocks/mockTheme"
-import { renderWithContexts } from "~lib/test_util"
-import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
 
 import ComponentInstance, {
   COMPONENT_READY_WARNING_TIME_MS,
 } from "./ComponentInstance"
+import { ComponentRegistry } from "./ComponentRegistry"
 import {
   LOG as componentUtilsLog,
   CUSTOM_COMPONENT_API_VERSION,
 } from "./componentUtils"
-import { ComponentRegistry } from "./ComponentRegistry"
 import { ComponentMessageType, StreamlitMessageType } from "./enums"
 
 // We have some timeouts that we want to use fake timers for.
@@ -68,6 +69,7 @@ const MOCK_COMPONENT_NAME = "mock_component_name"
 
 describe("ComponentInstance", () => {
   let logWarnSpy: MockInstance
+  let originalStreamlitWindowObj: typeof window.__streamlit
   const getComponentRegistry = (): ComponentRegistry => {
     return new ComponentRegistry(mockEndpoints())
   }
@@ -85,6 +87,11 @@ describe("ComponentInstance", () => {
       elementRef: { current: null },
       values: [250],
     })
+    originalStreamlitWindowObj = window.__streamlit
+  })
+
+  afterEach(() => {
+    window.__streamlit = originalStreamlitWindowObj
   })
 
   it("registers a message listener on render", () => {
@@ -157,6 +164,59 @@ describe("ComponentInstance", () => {
     expect(iframe).toHaveAttribute("allow", DEFAULT_IFRAME_FEATURE_POLICY)
     expect(iframe).toHaveAttribute("sandbox", DEFAULT_IFRAME_SANDBOX_POLICY)
     expect(iframe).toHaveClass("stCustomComponentV1")
+  })
+
+  it("Gets URL from componentRegistry if one is not set in proto", () => {
+    const componentRegistry = getComponentRegistry()
+    // @ts-expect-error - accessing private properties for testing
+    componentRegistry.endpoints.buildComponentURL = vi
+      .fn()
+      .mockImplementation(() => "http://another.mock.url")
+
+    renderWithContexts(
+      <ComponentInstance
+        element={createElementProp({}, [], { url: undefined })}
+        disabled={false}
+        widgetMgr={
+          new WidgetStateManager({
+            sendRerunBackMsg: vi.fn(),
+            formsDataChanged: vi.fn(),
+          })
+        }
+      />,
+      {
+        componentRegistry,
+      }
+    )
+    const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
+    expect(iframe).toHaveAttribute(
+      "src",
+      "http://another.mock.url?streamlitUrl=http%3A%2F%2Flocalhost%3A3000%2F"
+    )
+  })
+
+  it("includes window.__streamlit?.CUSTOM_COMPONENT_CLIENT_ID in queryString if set", () => {
+    window.__streamlit = { CUSTOM_COMPONENT_CLIENT_ID: "foobar" }
+    renderWithContexts(
+      <ComponentInstance
+        element={createElementProp()}
+        disabled={false}
+        widgetMgr={
+          new WidgetStateManager({
+            sendRerunBackMsg: vi.fn(),
+            formsDataChanged: vi.fn(),
+          })
+        }
+      />,
+      {
+        componentRegistry: getComponentRegistry(),
+      }
+    )
+    const iframe = screen.getByTitle(MOCK_COMPONENT_NAME)
+    expect(iframe).toHaveAttribute(
+      "src",
+      "http://a.mock.url?__streamlit_parent_client_id=foobar&streamlitUrl=http%3A%2F%2Flocalhost%3A3000%2F"
+    )
   })
 
   it("displays a skeleton initially with a certain height", () => {
@@ -926,7 +986,8 @@ describe("ComponentInstance", () => {
   function createElementProp(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
     jsonArgs: { [name: string]: any } = {},
-    specialArgs: SpecialArg[] = []
+    specialArgs: SpecialArg[] = [],
+    overrides: Partial<IComponentInstanceProto> = {}
   ): ComponentInstanceProto {
     return ComponentInstanceProto.create({
       jsonArgs: JSON.stringify(jsonArgs),
@@ -934,6 +995,7 @@ describe("ComponentInstance", () => {
       componentName: MOCK_COMPONENT_NAME,
       id: MOCK_WIDGET_ID,
       url: MOCK_COMPONENT_URL,
+      ...overrides,
     })
   }
 })

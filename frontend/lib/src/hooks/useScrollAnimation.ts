@@ -80,7 +80,8 @@ function step(
 export default function useScrollAnimation(
   target: HTMLElement | null,
   onEnd: () => void,
-  isAnimating: boolean
+  isAnimating: boolean,
+  active: boolean
 ): void {
   const animator = useRef(0)
 
@@ -90,6 +91,7 @@ export default function useScrollAnimation(
 
       animator.current = requestAnimationFrame(() => {
         if (target) {
+          // eslint-disable-next-line streamlit-custom/no-force-reflow-access -- Existing usage
           const toNumber = target.scrollHeight - target.offsetHeight
           let nextValue = step(
             from,
@@ -123,9 +125,10 @@ export default function useScrollAnimation(
   }, [onEnd])
 
   useLayoutEffect(() => {
-    if (!target || !isAnimating) {
+    if (!target || !isAnimating || !active) {
       return
     }
+    // eslint-disable-next-line streamlit-custom/no-force-reflow-access -- Existing usage
     animate(target.scrollTop, 1)
 
     if (target) {
@@ -144,5 +147,5 @@ export default function useScrollAnimation(
     }
 
     return () => cancelAnimationFrame(animator.current)
-  }, [animate, animator, handleCancelAnimation, target, isAnimating])
+  }, [animate, animator, handleCancelAnimation, target, isAnimating, active])
 }

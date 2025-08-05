@@ -16,7 +16,7 @@
 
 import React from "react"
 
-import { fireEvent, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 
 import {
@@ -25,9 +25,9 @@ import {
   IChatInputValue,
 } from "@streamlit/protobuf"
 
+import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
 import { render } from "~lib/test_util"
 import { WidgetStateManager } from "~lib/WidgetStateManager"
-import * as UseResizeObserver from "~lib/hooks/useResizeObserver"
 
 import ChatInput, { Props } from "./ChatInput"
 
@@ -254,12 +254,12 @@ describe("ChatInput widget", () => {
     const chatInput = screen.getByTestId("stChatInputTextArea")
     await user.type(chatInput, "1234567890")
     expect(chatInput).toHaveTextContent("1234567890")
-    // TODO: Utilize user-event instead of fireEvent
-    // eslint-disable-next-line testing-library/prefer-user-event
-    fireEvent.keyDown(chatInput, { key: "Enter", ctrlKey: true })
+
+    await user.keyboard("{Control>}{Enter}{/Control}")
+
     // We cannot test the value to be changed cause that is essentially a
     // change event.
-    expect(chatInput).not.toHaveTextContent("")
+    expect(screen.getByTestId("stChatInputTextArea")).not.toHaveTextContent("")
     expect(spy).not.toHaveBeenCalled()
   })
 

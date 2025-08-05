@@ -21,7 +21,7 @@ import types
 from contextlib import contextmanager
 from enum import Enum
 from timeit import default_timer as timer
-from typing import TYPE_CHECKING, Callable, Final, Literal, cast
+from typing import TYPE_CHECKING, Any, Callable, Final, Literal, cast
 
 from blinker import Signal
 
@@ -151,7 +151,7 @@ def _mpa_v1(main_script_path: str) -> None:
         StreamlitPage(pages_folder / page.name) for page in pages
     ]
     # Initialize the navigation with all the pages:
-    position: Literal["sidebar", "hidden"] = (
+    position: Literal["sidebar", "hidden", "top"] = (
         "hidden"
         if config.get_option("client.showSidebarNavigation") is False
         else "sidebar"
@@ -388,6 +388,8 @@ class ScriptRunner:
         client_state = ClientState()
         client_state.query_string = ctx.query_string
         client_state.page_script_hash = ctx.page_script_hash
+        if ctx.context_info:
+            client_state.context_info.CopyFrom(ctx.context_info)
         self.on_event.send(
             self, event=ScriptRunnerEvent.SHUTDOWN, client_state=client_state
         )
@@ -760,7 +762,7 @@ def _clean_problem_modules() -> None:
     if "keras" in sys.modules:
         try:
             keras = sys.modules["keras"]
-            keras.backend.clear_session()
+            cast("Any", keras).backend.clear_session()
         except Exception:  # noqa: S110
             # We don't want to crash the app if we can't clear the Keras session.
             pass
@@ -768,7 +770,7 @@ def _clean_problem_modules() -> None:
     if "matplotlib.pyplot" in sys.modules:
         try:
             plt = sys.modules["matplotlib.pyplot"]
-            plt.close("all")
+            cast("Any", plt).close("all")
         except Exception:  # noqa: S110
             # We don't want to crash the app if we can't close matplotlib
             pass

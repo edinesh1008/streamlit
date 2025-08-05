@@ -24,7 +24,6 @@ import React, {
   useState,
 } from "react"
 
-import { useTheme } from "@emotion/react"
 import { getLogger } from "loglevel"
 import queryString from "query-string"
 import { flushSync } from "react-dom"
@@ -35,22 +34,22 @@ import {
   Skeleton as SkeletonProto,
 } from "@streamlit/protobuf"
 
+import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
 import { LibContext } from "~lib/components/core/LibContext"
 import AlertElement from "~lib/components/elements/AlertElement"
 import { Skeleton } from "~lib/components/elements/Skeleton"
-import ErrorElement from "~lib/components/shared/ErrorElement"
 import { Kind } from "~lib/components/shared/AlertContainer"
+import ErrorElement from "~lib/components/shared/ErrorElement"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import useTimeout from "~lib/hooks/useTimeout"
-import { EmotionTheme } from "~lib/theme"
+import { COMMUNITY_URL, COMPONENT_DEVELOPER_URL } from "~lib/urls"
+import { ensureError } from "~lib/util/ErrorHandling"
 import {
   DEFAULT_IFRAME_FEATURE_POLICY,
   DEFAULT_IFRAME_SANDBOX_POLICY,
 } from "~lib/util/IFrameUtil"
-import { WidgetStateManager } from "~lib/WidgetStateManager"
-import { COMMUNITY_URL, COMPONENT_DEVELOPER_URL } from "~lib/urls"
-import { ensureError } from "~lib/util/ErrorHandling"
 import { isNullOrUndefined, notNullOrUndefined } from "~lib/util/utils"
-import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
 
 import { ComponentRegistry } from "./ComponentRegistry"
 import {
@@ -99,10 +98,17 @@ function getSrc(
   }
 
   // Add streamlitUrl query parameter to src
+  const customComponentClientId =
+    window.__streamlit?.CUSTOM_COMPONENT_CLIENT_ID
   const currentUrl = new URL(window.location.href)
   src = queryString.stringifyUrl({
     url: src,
-    query: { streamlitUrl: currentUrl.origin + currentUrl.pathname },
+    query: {
+      streamlitUrl: currentUrl.origin + currentUrl.pathname,
+      ...(customComponentClientId && {
+        __streamlit_parent_client_id: customComponentClientId,
+      }),
+    },
   })
   return src
 }
@@ -179,7 +185,7 @@ function compareDataframeArgs(
  * by {@link COMPONENT_READY_WARNING_TIME_MS}, a warning element is rendered instead.
  */
 function ComponentInstance(props: Props): ReactElement {
-  const theme: EmotionTheme = useTheme()
+  const theme = useEmotionTheme()
   const { componentRegistry: registry } = useContext(LibContext)
 
   const [componentError, setComponentError] = useState<Error>()

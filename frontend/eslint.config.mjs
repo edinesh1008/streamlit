@@ -111,6 +111,8 @@ export default tseslint.config([
       "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "off",
       // We don't want to warn about empty fragments
       "@eslint-react/no-useless-fragment": "off",
+      // We want to enforce display names for context providers for better debugging
+      "@eslint-react/no-missing-context-display-name": "error",
       // TypeScript rules with type-checking
       // We want to use these, but we have far too many instances of these rules
       // for it to be realistic right now. Over time, we should fix these.
@@ -170,7 +172,7 @@ export default tseslint.config([
           selector: "CallExpression[callee.name='withTheme']",
           message:
             "The use of withTheme HOC is not allowed for functional components. " +
-            "Please use the useTheme hook instead.",
+            "Please use the useEmotionTheme hook instead.",
         },
       ],
       "no-restricted-globals": [
@@ -180,6 +182,27 @@ export default tseslint.config([
           message:
             "Please use window.localStorage instead since localStorage is not " +
             "supported in some browsers (e.g. Android WebView).",
+        },
+        {
+          name: "innerWidth",
+          message: "Please use the `useWindowDimensionsContext` hook instead.",
+        },
+        {
+          name: "innerHeight",
+          message: "Please use the `useWindowDimensionsContext` hook instead.",
+        },
+      ],
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "window",
+          property: "innerWidth",
+          message: "Please use the `useWindowDimensionsContext` hook instead.",
+        },
+        {
+          object: "window",
+          property: "innerHeight",
+          message: "Please use the `useWindowDimensionsContext` hook instead.",
         },
       ],
       // Imports should be `import "./FooModule"`, not `import "./FooModule.js"`
@@ -222,7 +245,7 @@ export default tseslint.config([
         },
       ],
       "import/order": [
-        1,
+        "error",
         {
           pathGroups: [
             {
@@ -232,6 +255,11 @@ export default tseslint.config([
             },
             {
               pattern: "@streamlit/**",
+              group: "internal",
+              position: "before",
+            },
+            {
+              pattern: "~lib/**",
               group: "internal",
               position: "before",
             },
@@ -246,12 +274,17 @@ export default tseslint.config([
             "index",
           ],
           "newlines-between": "always",
+          alphabetize: {
+            order: "asc",
+            caseInsensitive: true,
+          },
         },
       ],
       "streamlit-custom/no-hardcoded-theme-values": "error",
       "streamlit-custom/use-strict-null-equality-checks": "error",
       // We only turn this rule on for certain directories
       "streamlit-custom/enforce-memo": "off",
+      "streamlit-custom/no-force-reflow-access": "error",
       "no-restricted-imports": [
         "error",
         {
@@ -259,6 +292,12 @@ export default tseslint.config([
             {
               name: "timezone-mock",
               message: "Please use the withTimezones test harness instead",
+            },
+            {
+              name: "@emotion/react",
+              message:
+                "Please use the useEmotionTheme hook instead of useTheme for type-safety",
+              importNames: ["useTheme"],
             },
           ],
         },
@@ -300,6 +339,8 @@ export default tseslint.config([
       ...vitest.configs.recommended.rules,
       // Allow hardcoded styles in test files
       "streamlit-custom/no-hardcoded-theme-values": "off",
+      // Allow force reflow access in test files
+      "streamlit-custom/no-force-reflow-access": "off",
 
       // Testing library rules
       "testing-library/prefer-user-event": "error",

@@ -16,12 +16,10 @@
 
 import React, { FC, PropsWithChildren, useMemo } from "react"
 
-import { useTheme } from "@emotion/react"
-
-import { StyledFullScreenFrame } from "~lib/components/shared/FullScreenWrapper/styled-components"
 import { ElementFullscreenContext } from "~lib/components/shared/ElementFullscreen/ElementFullscreenContext"
-import { EmotionTheme } from "~lib/theme"
+import { StyledFullScreenFrame } from "~lib/components/shared/FullScreenWrapper/styled-components"
 import { useCalculatedWidth } from "~lib/hooks/useCalculatedWidth"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 
 import { useFullscreen } from "./useFullscreen"
 
@@ -34,7 +32,7 @@ const ElementFullscreenWrapper: FC<ElementFullscreenWrapperProps> = ({
   children,
   height,
 }) => {
-  const theme: EmotionTheme = useTheme()
+  const theme = useEmotionTheme()
   const { expanded, fullHeight, fullWidth, zoomIn, zoomOut } = useFullscreen()
   const [width, elementRef] = useCalculatedWidth()
 

@@ -22,9 +22,9 @@ import {
   StyledList,
 } from "baseui/menu"
 import { FixedSizeList } from "react-window"
-import { useTheme } from "@emotion/react"
 
 import { OverflowTooltip, Placement } from "~lib/components/shared/Tooltip"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { convertRemToPx } from "~lib/theme/utils"
 
 import { ThemedStyledDropdownListItem } from "./styled-components"
@@ -63,7 +63,7 @@ function FixedSizeListItem(props: FixedSizeListItemProps): ReactElement {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
 const VirtualDropdown = forwardRef<any, any>((props, ref) => {
-  const theme = useTheme()
+  const theme = useEmotionTheme()
   // TODO: Update to match React best practices
   // eslint-disable-next-line @eslint-react/no-children-to-array
   const children = Children.toArray(props.children) as ReactElement[]

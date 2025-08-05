@@ -24,24 +24,23 @@ import React, {
 } from "react"
 
 import { Video } from "@emotion-icons/open-iconic"
-import { useTheme } from "@emotion/react"
-import { isMobile } from "react-device-detect"
 import Webcam from "react-webcam"
 
-import { debounce } from "~lib/util/utils"
 import Icon from "~lib/components/shared/Icon"
-import { EmotionTheme } from "~lib/theme"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import themeColors from "~lib/theme/emotionBaseTheme/themeColors"
 import { CAMERA_PERMISSION_URL } from "~lib/urls"
+import { isMobile } from "~lib/util/isMobile"
+import { debounce } from "~lib/util/utils"
 
 import CameraInputButton from "./CameraInputButton"
-import SwitchFacingModeButton, { FacingMode } from "./SwitchFacingModeButton"
 import {
   StyledBox,
   StyledCameraInput,
   StyledDescription,
   StyledLink,
 } from "./styled-components"
+import SwitchFacingModeButton, { FacingMode } from "./SwitchFacingModeButton"
 
 export interface Props {
   handleCapture: (capturedPhoto: string | null) => void
@@ -121,7 +120,7 @@ const WebcamComponent = ({
     }
   }
 
-  const theme: EmotionTheme = useTheme()
+  const theme = useEmotionTheme()
 
   return (
     <StyledCameraInput data-testid="stCameraInputWebcamComponent">
@@ -130,7 +129,9 @@ const WebcamComponent = ({
       !clearPhotoInProgress ? (
         <AskForCameraPermission width={debouncedWidth} />
       ) : (
-        isMobile && <SwitchFacingModeButton switchFacingMode={setFacingMode} />
+        isMobile() && (
+          <SwitchFacingModeButton switchFacingMode={setFacingMode} />
+        )
       )}
       <StyledBox
         data-testid="stCameraInputWebcamStyledBox"

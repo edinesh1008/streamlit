@@ -296,6 +296,12 @@ class FileUploaderMixin:
               example, to only accept JPG/JPEG and PNG files, use
               ``["jpg", "jpeg", "png"]``.
 
+            .. note::
+                This is a best-effort check, but doesn't provide a
+                security guarantee against users uploading files of other types
+                or type extensions. The correct handling of uploaded files is
+                part of the app developer's responsibility.
+
         accept_multiple_files : bool
             Whether to accept more than one file in a submission. If this is
             ``False`` (default), the user can only submit one file at a time.
@@ -320,8 +326,8 @@ class FileUploaderMixin:
             An optional callback invoked when this file_uploader's value
             changes.
 
-        args : tuple
-            An optional tuple of args to pass to the callback.
+        args : list or tuple
+            An optional list or tuple of args to pass to the callback.
 
         kwargs : dict
             An optional dict of kwargs to pass to the callback.
@@ -337,9 +343,15 @@ class FileUploaderMixin:
             If this is ``"collapsed"``, Streamlit displays no label or spacer.
 
         width : "stretch" or int
-            The width of the file uploader widget. If "stretch" (default), the widget
-            will take up the full width of its container. If an integer, the width
-            will be set to that number of pixels.
+            The width of the file uploader widget. This can be one of the
+            following:
+
+            - ``"stretch"`` (default): The width of the widget matches the
+              width of the parent container.
+            - An integer specifying the width in pixels: The widget has a
+              fixed width. If the specified width is greater than the width of
+              the parent container, the width of the widget matches the width
+              of the parent container.
 
         Returns
         -------
