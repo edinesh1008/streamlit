@@ -1226,9 +1226,9 @@ export class App extends PureComponent<Props, State> {
 
     this.metricsMgr.enqueue("updateReport")
 
-    // Remove any elements that are not displayed in the app
-    // simplifying the tree of elements to what users see.
-    // We do this before any new deltas are applied.
+    // Remove any transient elements. Transient elements are expected to
+    // not be part of a new rerun and can therefore be cleaned up from the
+    // element tree before applying any new deltas.
     this.setState(({ elements }) => ({
       elements: elements.removeTransientNodes(),
     }))
