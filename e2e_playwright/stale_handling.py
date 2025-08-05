@@ -19,10 +19,6 @@ import streamlit as st
 if st.checkbox("Transient Spinner", value=False):
     placeholder = st.empty()
 
-    # Related issues:
-    # https://github.com/streamlit/streamlit/issues/9239
-    # https://github.com/streamlit/streamlit/issues/9239
-
     if "has_ran" not in st.session_state:
         with st.spinner("Spinner"):
             time.sleep(2)
