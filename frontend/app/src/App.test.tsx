@@ -1287,7 +1287,7 @@ describe("App", () => {
 
       // Wait for the element to be rendered
       await waitFor(() => {
-        expect(screen.getByText("Test element")).toBeInTheDocument()
+        expect(screen.getByText("Test element")).toBeVisible()
       })
 
       // Clear the spy call count before sending newSession
