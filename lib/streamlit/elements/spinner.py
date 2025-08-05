@@ -112,15 +112,12 @@ def spinner(
 
     display_message = True
     display_message_lock = threading.Lock()
-    spinner_proto: SpinnerProto | None = None
 
     try:
 
         def set_message() -> None:
             with display_message_lock:
                 if display_message:
-                    nonlocal spinner_proto
-
                     spinner_proto = SpinnerProto()
                     spinner_proto.text = clean_text(text)
                     spinner_proto.cache = _cache

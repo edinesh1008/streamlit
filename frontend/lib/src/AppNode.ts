@@ -152,8 +152,7 @@ export interface AppNode {
   ): AppNode | undefined
 
   /**
-   * Recursively remove children nodes that are not visible to the user.
-   * Specifically, empty elements that are specified to be cleared.
+   * Recursively remove children nodes that are marked as transient.
    */
   removeTransientNodes(): AppNode | undefined
 
@@ -166,6 +165,11 @@ export interface AppNode {
 
   /**
    * Return true if this node should be treated as transient.
+   *
+   * A transient element is an element that is expected to be only
+   * shown in a single rerun and that shouldn't impact other elements.
+   * Transient elements are rendered but do not overwrite existing elements
+   * in the UI.
    */
   isTransient(): boolean
 }
@@ -463,6 +467,7 @@ export class BlockNode implements AppNode {
   }
 
   public isTransient(): boolean {
+    // A block is never transient at the moment.
     return false
   }
 
