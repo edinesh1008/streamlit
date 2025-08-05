@@ -19,7 +19,11 @@ syntax = "proto3";
 option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "EmptyProto";
 
-// A python empty.
+// An empty placeholder element that doesn't take any space.
 message Empty {
+  // If this is marked as transient, it will not
+  // replace other elements in the delta path below.
+  // This can be used to prevent some unexpected stale
+  // behavior or unmounting of elements.
   optional bool transient = 1;
 }
