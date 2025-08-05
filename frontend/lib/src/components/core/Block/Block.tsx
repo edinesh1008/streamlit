@@ -71,14 +71,14 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
 
   // Capture all the element ids to avoid rendering the same element twice
   const elementKeySet = new Set<string>()
-  let clearableCount = 0
+  let transientElementCount = 0
   let blockCount = 0
 
   return (
     <>
       {props.node.children &&
         props.node.children.map((node: AppNode, index: number): ReactNode => {
-          const indexOffset = clearableCount + blockCount
+          const indexOffset = transientElementCount + blockCount
           const disableFullscreenMode =
             libConfig.disableFullscreenMode || props.disableFullscreenMode
 
@@ -94,9 +94,9 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
 
             let key = getElementId(node.element)
             if (key === undefined) {
-              if (node.element.type === "spinner") {
-                key = `transient-${clearableCount}`
-                clearableCount += 1
+              if (node.isTransient()) {
+                key = `transient-${transientElementCount}`
+                transientElementCount += 1
               } else {
                 key = (index - indexOffset).toString()
               }
@@ -131,7 +131,7 @@ const ChildRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
             blockCount += 1
 
             // TODO: Update to match React best practices
-            // eslint-disable-next-line @eslint-react/no-array-index-key, @typescript-eslint/no-use-before-define
+            // eslint-disable-next-line @typescript-eslint/no-use-before-define
             return <BlockNodeRenderer key={key} {...childProps} />
           }
 

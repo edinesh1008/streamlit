@@ -163,10 +163,11 @@ export interface AppNode {
    * Otherwise, a new Set will be created and will be returned.
    */
   getElements(elementSet?: Set<Element>): Set<Element>
-}
 
-function isTransient(appNode: AppNode) {
-  return appNode instanceof ElementNode && appNode.element.type === "spinner"
+  /**
+   * Return true if this node should be treated as transient.
+   */
+  isTransient(): boolean
 }
 
 /**
@@ -295,7 +296,11 @@ export class ElementNode implements AppNode {
   }
 
   public removeTransientNodes(): ElementNode | undefined {
-    return isTransient(this) ? undefined : this
+    return this.isTransient() ? undefined : this
+  }
+
+  public isTransient(): boolean {
+    return this.element.type === "spinner"
   }
 
   public getElements(elements?: Set<Element>): Set<Element> {
@@ -454,6 +459,10 @@ export class BlockNode implements AppNode {
     return this.children[childIndex].getIn(path.slice(1))
   }
 
+  public isTransient(): boolean {
+    return false
+  }
+
   public setIn(path: number[], node: AppNode, scriptRunId: string): BlockNode {
     if (path.length === 0) {
       throw new Error(`empty path!`)
@@ -468,11 +477,11 @@ export class BlockNode implements AppNode {
 
     const newChildren = this.children.slice()
     if (path.length === 1) {
-      if (isTransient(node) && !isTransient(newChildren[childIndex])) {
+      if (node.isTransient() && !newChildren[childIndex].isTransient()) {
         // If the node is transient, and it is not replacing a transient
         // element, we insert at the childIndex. This will ensure that
         // the transient element do not remove other elements so that
-        // those elements have a chance to maintain their React state
+        // those elements have a chance to maintain their React state.
         newChildren.splice(childIndex, 0, node)
       } else {
         // A non-transient element always replaces the existing element
