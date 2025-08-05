@@ -21,7 +21,10 @@ import { ButtonGroup } from "@streamlit/protobuf"
 import type { ElementNode } from "~lib/AppNode"
 import { StyledElementContainer } from "~lib/components/core/Block/styled-components"
 import { FlexContext } from "~lib/components/core/Layout/FlexContext"
-import { useLayoutStyles } from "~lib/components/core/Layout/useLayoutStyles"
+import {
+  SubElement,
+  useLayoutStyles,
+} from "~lib/components/core/Layout/useLayoutStyles"
 import { MinFlexElementWidth } from "~lib/components/core/Layout/utils"
 import { useRequiredContext } from "~lib/hooks/useRequiredContext"
 
@@ -201,7 +204,9 @@ export const StyledElementContainerLayoutWrapper: FC<
   const styles = useLayoutStyles({
     element: node.element,
     subElement:
-      (node.element?.type && node.element[node.element.type]) || undefined,
+      (node.element?.type &&
+        (node.element[node.element.type] as SubElement)) ||
+      undefined,
     styleOverrides,
     minStretchBehavior,
   })

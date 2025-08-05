@@ -21,10 +21,10 @@ import { Block as BlockProto, Element, streamlit } from "@streamlit/protobuf"
 import { FlexContext, IFlexContext } from "./FlexContext"
 import { Direction, MinFlexElementWidth } from "./utils"
 
-type SubElement = {
+export type SubElement = {
   useContainerWidth?: boolean | null
-  height?: number
-  width?: number
+  height?: number | null
+  width?: number | null
   // We must include this for backwards compatiblity since
   // Alert.proto has been released (1.45) with the field in this position.
   widthConfig?: streamlit.IWidthConfig | null | undefined
