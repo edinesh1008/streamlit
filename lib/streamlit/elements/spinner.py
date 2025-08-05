@@ -100,6 +100,11 @@ def spinner(
     validate_width(width, allow_content=True)
     layout_config = LayoutConfig(width=width)
 
+    # Create a transient empty placeholder for the spinner element.
+    # Transient elements are rendered in the frontend, but do not overwrite
+    # existing elements in the delta path, preventing some unexpected stale
+    # behavior or unmounting of elements. We can use it here since the spinner
+    # can appear only in some reruns.
     empty_proto = EmptyProto(transient=True)
     spinner_placeholder = get_dg_singleton_instance().main_dg._enqueue(
         "empty", empty_proto
