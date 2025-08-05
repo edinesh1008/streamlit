@@ -30,6 +30,7 @@ import {
 } from "@streamlit/protobuf"
 
 import {
+  getElementId,
   getLoadingScreenType,
   isNullOrUndefined,
   LoadingScreenType,
@@ -455,7 +456,11 @@ export class BlockNode implements AppNode {
     const newChildren = this.children.slice()
     if (path.length === 1) {
       // Base case
-      newChildren[childIndex] = node
+      if (node instanceof ElementNode && getElementId(node.element)) {
+        newChildren.splice(childIndex, 0, node)
+      } else {
+        newChildren[childIndex] = node
+      }
     } else {
       // Pop the current element off our path, and recurse into our children
       newChildren[childIndex] = newChildren[childIndex].setIn(
