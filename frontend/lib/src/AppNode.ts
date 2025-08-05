@@ -480,7 +480,7 @@ export class BlockNode implements AppNode {
 
     const newChildren = this.children.slice()
     if (path.length === 1) {
-      if (node.isTransient() && !newChildren[childIndex].isTransient()) {
+      if (node.isTransient() && !newChildren[childIndex]?.isTransient()) {
         // If the node is transient, and it is not replacing a transient
         // element, we insert at the childIndex. This will ensure that
         // the transient element do not remove other elements so that
