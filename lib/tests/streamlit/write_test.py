@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import dataclasses
-import time
 import unittest
 from collections import namedtuple
 from typing import Any
@@ -419,15 +418,6 @@ class StreamlitWriteTest(unittest.TestCase):
             'Invalid arguments were passed to "st.write" function.'
             in logs.records[0].msg
         )
-
-    def test_spinner(self):
-        """Test st.spinner."""
-        # TODO(armando): Test that the message is actually passed to
-        # message.warning
-        with patch("streamlit.delta_generator.DeltaGenerator.empty") as e:
-            with st.spinner("some message"):
-                time.sleep(0.15)
-            e.assert_called_once_with()
 
     def test_sidebar(self):
         """Test st.write in the sidebar."""

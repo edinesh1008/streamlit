@@ -33,10 +33,13 @@ class SpinnerTest(DeltaGeneratorTestCase):
             el = self.get_delta_from_queue().new_element
             assert el.spinner.text == "some text"
             assert not el.spinner.cache
-        # Check if it gets reset to st.empty()
+
+        # Check that the element gets reset to an transient empty placeholder:
         last_delta = self.get_delta_from_queue()
         assert last_delta.HasField("new_element")
         assert last_delta.new_element.WhichOneof("type") == "empty"
+        assert last_delta.new_element.empty.transient is True
+
         assert not el.spinner.show_time
 
     def test_spinner_within_chat_message(self):
@@ -49,14 +52,12 @@ class SpinnerTest(DeltaGeneratorTestCase):
             el = self.get_delta_from_queue().new_element
             assert el.spinner.text == "some text"
             assert not el.spinner.cache
-        # Check that the element gets reset to an empty container block:
+
+        # Check that the element gets reset to an transient empty placeholder:
         last_delta = self.get_delta_from_queue()
-        assert last_delta.HasField("add_block")
-        # The block should have `allow_empty` set to false,
-        # which means that it will be ignored on the frontend in case
-        # it the container is empty. This is the desired behavior
-        # for spinner
-        assert not last_delta.add_block.allow_empty
+        assert last_delta.HasField("new_element")
+        assert last_delta.new_element.WhichOneof("type") == "empty"
+        assert last_delta.new_element.empty.transient is True
 
     def test_spinner_for_caching(self):
         """Test st.spinner in cache functions."""
@@ -66,10 +67,11 @@ class SpinnerTest(DeltaGeneratorTestCase):
             el = self.get_delta_from_queue().new_element
             assert el.spinner.text == "some text"
             assert el.spinner.cache
-        # Check if it gets reset to st.empty()
+        # Check that the element gets reset to an transient empty placeholder:
         last_delta = self.get_delta_from_queue()
         assert last_delta.HasField("new_element")
         assert last_delta.new_element.WhichOneof("type") == "empty"
+        assert last_delta.new_element.empty.transient is True
 
     def test_spinner_time(self):
         """Test st.spinner with show_time."""
@@ -78,10 +80,11 @@ class SpinnerTest(DeltaGeneratorTestCase):
             el = self.get_delta_from_queue().new_element
             assert el.spinner.text == "some text"
             assert el.spinner.show_time
-        # Check if it gets reset to st.empty()
+        # Check that the element gets reset to an transient empty placeholder:
         last_delta = self.get_delta_from_queue()
         assert last_delta.HasField("new_element")
         assert last_delta.new_element.WhichOneof("type") == "empty"
+        assert last_delta.new_element.empty.transient is True
 
     def test_spinner_with_width(self):
         """Test st.spinner with different width types."""
