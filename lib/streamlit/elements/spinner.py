@@ -18,7 +18,7 @@ import contextlib
 import threading
 from typing import TYPE_CHECKING, Final
 
-import streamlit as st
+from streamlit.delta_generator_singletons import get_dg_singleton_instance
 from streamlit.elements.lib.layout_utils import (
     LayoutConfig,
     Width,
@@ -93,28 +93,35 @@ def spinner(
         height: 210px
 
     """
+    from streamlit.proto.Empty_pb2 import Empty as EmptyProto
     from streamlit.proto.Spinner_pb2 import Spinner as SpinnerProto
     from streamlit.string_util import clean_text
 
     validate_width(width, allow_content=True)
     layout_config = LayoutConfig(width=width)
 
-    message = st.empty()
+    empty_proto = EmptyProto(transient=True)
+    spinner_placeholder = get_dg_singleton_instance().main_dg._enqueue(
+        "empty", empty_proto
+    )
 
     display_message = True
     display_message_lock = threading.Lock()
+    spinner_proto: SpinnerProto | None = None
 
     try:
 
         def set_message() -> None:
             with display_message_lock:
                 if display_message:
+                    nonlocal spinner_proto
+
                     spinner_proto = SpinnerProto()
                     spinner_proto.text = clean_text(text)
                     spinner_proto.cache = _cache
                     spinner_proto.show_time = show_time
-                    spinner_proto.is_complete = False
-                    message._enqueue(
+
+                    spinner_placeholder._enqueue(
                         "spinner", spinner_proto, layout_config=layout_config
                     )
 
@@ -127,9 +134,6 @@ def spinner(
             with display_message_lock:
                 display_message = False
 
-            spinner_proto = SpinnerProto()
-            spinner_proto.text = clean_text(text)
-            spinner_proto.cache = _cache
-            spinner_proto.show_time = show_time
-            spinner_proto.is_complete = True
-            message._enqueue("spinner", spinner_proto)
+            # Clear the spinner element with the empty transient element
+            # from above:
+            spinner_placeholder._enqueue("empty", empty_proto)

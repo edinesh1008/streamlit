@@ -300,7 +300,10 @@ export class ElementNode implements AppNode {
   }
 
   public isTransient(): boolean {
-    return this.element.type === "spinner"
+    return (
+      this.element.type === "spinner" ||
+      (this.element.type === "empty" && this.element.empty?.transient === true)
+    )
   }
 
   public getElements(elements?: Set<Element>): Set<Element> {
