@@ -1246,6 +1246,62 @@ describe("App", () => {
 
       expect(document.title).toBe("some title")
     })
+
+    it("calls removeTransientNodes on elements when handling new session", async () => {
+      // Import AppRoot to spy on its prototype method
+      const { AppRoot } = await import("@streamlit/lib")
+      const removeTransientNodesSpy = vi.spyOn(
+        AppRoot.prototype,
+        "removeTransientNodes"
+      )
+
+      renderApp(getProps())
+
+      // Set up initial state with connection
+      act(() => {
+        getMockConnectionManagerProp("connectionStateChanged")(
+          ConnectionState.CONNECTED
+        )
+      })
+
+      // Add some elements first to ensure state.elements is populated
+      sendForwardMessage("sessionStatusChanged", {
+        runOnSave: false,
+        scriptIsRunning: true,
+      })
+
+      sendForwardMessage(
+        "delta",
+        {
+          type: "newElement",
+          newElement: {
+            type: "text",
+            text: {
+              body: "Test element",
+              help: "",
+            },
+          },
+        },
+        { deltaPath: [0, 0], activeScriptHash: "hash1" }
+      )
+
+      // Wait for the element to be rendered
+      await waitFor(() => {
+        expect(screen.getByText("Test element")).toBeInTheDocument()
+      })
+
+      // Clear the spy call count before sending newSession
+      removeTransientNodesSpy.mockClear()
+
+      // Send newSession message which should trigger removeTransientNodes
+      sendForwardMessage("newSession", NEW_SESSION_JSON)
+
+      // Verify removeTransientNodes was called
+      expect(removeTransientNodesSpy).toHaveBeenCalled()
+
+      // Clean up
+      removeTransientNodesSpy.mockRestore()
+    })
   })
 
   describe("Header", () => {
