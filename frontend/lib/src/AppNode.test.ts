@@ -97,6 +97,87 @@ describe("AppNode.setIn", () => {
       "Bad 'setIn' index 2 (should be between [0, 1])"
     )
   })
+
+  it("inserts transient nodes without replacing", () => {
+    const newBlock = BLOCK.setIn([0], spinner("transient"), NO_SCRIPT_RUN_ID)
+
+    // Check that the new node was inserted at index 0
+    expect(newBlock.getIn([0])).toBeSpinnerNode("transient")
+    // Check that the original node at index 0 is now at index 1.
+    expect(newBlock.getIn([1])).toBeTextNode("1")
+    // Check that the original node at index 1 is now at index 2.
+    expect(newBlock.getIn([2])).toStrictEqual(BLOCK.getIn([1]))
+  })
+
+  it("replaces transient nodes with transient nodes", () => {
+    const newBlock = BLOCK.setIn([0], spinner("transient"), NO_SCRIPT_RUN_ID)
+    const newBlock2 = newBlock.setIn(
+      [0],
+      spinner("new transient"),
+      NO_SCRIPT_RUN_ID
+    )
+
+    // Check that the new node was inserted at index 0
+    expect(newBlock2.getIn([0])).toBeSpinnerNode("new transient")
+    // Check that the original node at index 0 is still at index 1.
+    expect(newBlock2.getIn([1])).toBeTextNode("1")
+    // Check that the original node at index 1 is still at index 2.
+    expect(newBlock2.getIn([2])).toStrictEqual(BLOCK.getIn([1]))
+  })
+
+  it("replaces non-transient nodes with non-transient-nodes", () => {
+    const newBlock = BLOCK.setIn([0], text("new"), NO_SCRIPT_RUN_ID)
+
+    // Check that the new node replaced the node at index 0
+    expect(newBlock.getIn([0])).toBeTextNode("new")
+    // Check that the node at index 1 is still the original block
+    expect(newBlock.getIn([1])).toStrictEqual(BLOCK.getIn([1]))
+    // And that the children size has not increased
+    expect(newBlock.children.length).toBe(BLOCK.children.length)
+  })
+})
+
+describe("ElementNode.isTransient", () => {
+  it("returns true for spinner", () => {
+    const node = spinner("loading")
+    expect(node.isTransient()).toBe(true)
+  })
+
+  it("returns true for empty with transient=true", () => {
+    const node = empty(true)
+    expect(node.isTransient()).toBe(true)
+  })
+
+  it("returns false for empty with transient=false", () => {
+    const node = empty(false)
+    expect(node.isTransient()).toBe(false)
+  })
+
+  it("returns false for other elements", () => {
+    const node = text("foo")
+    expect(node.isTransient()).toBe(false)
+  })
+})
+
+describe("ElementNode.removeTransientNodes", () => {
+  // prettier-ignore
+  const TRANSIENT_BLOCK = block([
+    text("1"),
+    spinner("transient"),
+    block([
+      text("2"),
+      spinner("transient"),
+    ]),
+  ])
+
+  it("removes transient nodes", () => {
+    const newBlock = TRANSIENT_BLOCK.removeTransientNodes()
+    expect(newBlock.getIn([0])).toBeTextNode("1")
+    // The transient spinner at index 1 should be removed.
+    // The block at the original index 2 should be at index 1 now.
+    expect(newBlock.getIn([1, 0])).toBeTextNode("2")
+    expect(newBlock.getIn([1, 1])).toBeUndefined()
+  })
 })
 
 describe("ElementNode.quiverElement", () => {
@@ -1085,6 +1166,34 @@ function text(textArg: string, scriptRunId = NO_SCRIPT_RUN_ID): ElementNode {
   )
 }
 
+/** Create a `Spinner` element node with the given properties. */
+function spinner(
+  textArg: string,
+  scriptRunId = NO_SCRIPT_RUN_ID
+): ElementNode {
+  const element = makeProto(Element, { spinner: { text: textArg } })
+  return new ElementNode(
+    element,
+    ForwardMsgMetadata.create(),
+    scriptRunId,
+    FAKE_SCRIPT_HASH
+  )
+}
+
+/** Create a `Empty` element node with the given properties. */
+function empty(
+  transient: boolean,
+  scriptRunId = NO_SCRIPT_RUN_ID
+): ElementNode {
+  const element = makeProto(Element, { empty: { transient } })
+  return new ElementNode(
+    element,
+    ForwardMsgMetadata.create(),
+    scriptRunId,
+    FAKE_SCRIPT_HASH
+  )
+}
+
 /** Create a BlockNode with the given properties. */
 function block(
   children: AppNode[] = [],
@@ -1168,12 +1277,14 @@ declare global {
   namespace vi {
     interface Matchers<R> {
       toBeTextNode(text: string): R
+      toBeSpinnerNode(text: string): R
     }
   }
 }
 
 interface CustomMatchers<R = unknown> {
   toBeTextNode(text: string): R
+  toBeSpinnerNode(text: string): R
 }
 
 declare module "vitest" {
@@ -1193,6 +1304,14 @@ expect.extend({
       }
     }
 
+    if (isNullOrUndefined(elementNode.element)) {
+      return {
+        message: () =>
+          `expected ${received} to be an instance of ElementNode with a valid element`,
+        pass: false,
+      }
+    }
+
     const { type } = elementNode.element
     if (type !== "text") {
       return {
@@ -1206,6 +1325,39 @@ expect.extend({
     return {
       message: () =>
         `expected ${received}.element.text.body to be "${textArg}", but it was "${textBody}"`,
+      pass: textBody === textArg,
+    }
+  },
+  toBeSpinnerNode(received, textArg) {
+    const elementNode = received as ElementNode
+    if (isNullOrUndefined(elementNode)) {
+      return {
+        message: () => `expected ${received} to be an instance of ElementNode`,
+        pass: false,
+      }
+    }
+
+    if (isNullOrUndefined(elementNode.element)) {
+      return {
+        message: () =>
+          `expected ${received} to be an instance of ElementNode with a valid element`,
+        pass: false,
+      }
+    }
+
+    const { type } = elementNode.element
+    if (type !== "spinner") {
+      return {
+        message: () =>
+          `expected ${received}.element.type to be 'spinner', but it was ${type}`,
+        pass: false,
+      }
+    }
+
+    const textBody = elementNode.element.spinner?.text
+    return {
+      message: () =>
+        `expected ${received}.element.spinner.text to be "${textArg}", but it was "${textBody}"`,
       pass: textBody === textArg,
     }
   },
