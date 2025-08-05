@@ -97,6 +97,8 @@ class CustomThemeCategories(str, Enum):
     """Theme categories that can be set with custom theme config."""
 
     SIDEBAR = "sidebar"
+    LIGHT = "light"
+    DARK = "dark"
 
 
 def set_option(key: str, value: Any, where_defined: str = _USER_DEFINED) -> None:
@@ -1120,10 +1122,31 @@ _create_section("theme", "Settings to define a custom theme for your Streamlit a
 
 # Create a section for each custom theme element
 for cat in list(CustomThemeCategories):
-    _create_section(
-        f"theme.{cat.value}",
-        f"Settings to define a custom {cat.value} theme in your Streamlit app.",
-    )
+    if cat == CustomThemeCategories.SIDEBAR:
+        _create_section(
+            f"theme.{cat.value}",
+            f"Settings to define a custom {cat.value} theme in your Streamlit app.",
+        )
+    elif cat == CustomThemeCategories.LIGHT:
+        _create_section(
+            f"theme.{cat.value}",
+            "Settings to define a custom light theme that inherits from the base light theme.",
+        )
+        # Also create the nested sidebar section for light theme
+        _create_section(
+            f"theme.{cat.value}.sidebar",
+            "Settings to define a custom light sidebar theme.",
+        )
+    elif cat == CustomThemeCategories.DARK:
+        _create_section(
+            f"theme.{cat.value}",
+            "Settings to define a custom dark theme that inherits from the base dark theme.",
+        )
+        # Also create the nested sidebar section for dark theme
+        _create_section(
+            f"theme.{cat.value}.sidebar",
+            "Settings to define a custom dark sidebar theme.",
+        )
 
 _create_theme_options(
     "base",
@@ -1137,7 +1160,12 @@ _create_theme_options(
 
 _create_theme_options(
     "primaryColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Primary accent color.
     """,
@@ -1145,7 +1173,12 @@ _create_theme_options(
 
 _create_theme_options(
     "backgroundColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Background color of the app.
     """,
@@ -1153,7 +1186,12 @@ _create_theme_options(
 
 _create_theme_options(
     "secondaryBackgroundColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Background color used for most interactive widgets.
     """,
@@ -1161,7 +1199,12 @@ _create_theme_options(
 
 _create_theme_options(
     "textColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Color used for almost all text.
     """,
@@ -1169,7 +1212,12 @@ _create_theme_options(
 
 _create_theme_options(
     "linkColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Color used for all links.
     """,
@@ -1177,7 +1225,12 @@ _create_theme_options(
 
 _create_theme_options(
     "linkUnderline",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Whether or not links should be displayed with an underline.
     """,
@@ -1186,7 +1239,12 @@ _create_theme_options(
 
 _create_theme_options(
     "codeBackgroundColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Background color used for code blocks.
     """,
@@ -1194,7 +1252,12 @@ _create_theme_options(
 
 _create_theme_options(
     "font",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The font family for all text, except code blocks.
 
@@ -1214,7 +1277,7 @@ _create_theme_options(
 
 _create_theme_options(
     "fontFaces",
-    categories=["theme"],
+    categories=["theme", CustomThemeCategories.LIGHT, CustomThemeCategories.DARK],
     description="""
         An array of fonts to use in your app.
 
@@ -1245,7 +1308,7 @@ _create_theme_options(
 
 _create_theme_options(
     "baseFontSize",
-    categories=["theme"],
+    categories=["theme", CustomThemeCategories.LIGHT, CustomThemeCategories.DARK],
     description="""
         The root font size (in pixels) for the app.
 
@@ -1259,7 +1322,7 @@ _create_theme_options(
 
 _create_theme_options(
     "baseFontWeight",
-    categories=["theme"],
+    categories=["theme", CustomThemeCategories.LIGHT, CustomThemeCategories.DARK],
     description="""
         The root font weight for the app.
 
@@ -1273,7 +1336,12 @@ _create_theme_options(
 
 _create_theme_options(
     "headingFont",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The font family to use for headings.
 
@@ -1291,7 +1359,12 @@ _create_theme_options(
 
 _create_theme_options(
     "headingFontSizes",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         One or more font sizes for h1-h6 headings.
 
@@ -1323,7 +1396,12 @@ _create_theme_options(
 
 _create_theme_options(
     "headingFontWeights",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         One or more font weights for h1-h6 headings.
 
@@ -1353,7 +1431,12 @@ _create_theme_options(
 
 _create_theme_options(
     "codeFont",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The font family to use for code (monospace) in the sidebar.
 
@@ -1369,7 +1452,12 @@ _create_theme_options(
 
 _create_theme_options(
     "codeFontSize",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The font size (in pixels or rem) for code blocks and code text.
 
@@ -1382,7 +1470,12 @@ _create_theme_options(
 
 _create_theme_options(
     "codeFontWeight",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The font weight for code blocks and code text.
 
@@ -1397,7 +1490,12 @@ _create_theme_options(
 
 _create_theme_options(
     "baseRadius",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The radius used as basis for the corners of most UI elements.
 
@@ -1416,7 +1514,12 @@ _create_theme_options(
 
 _create_theme_options(
     "buttonRadius",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The radius used as basis for the corners of buttons.
 
@@ -1437,7 +1540,12 @@ _create_theme_options(
 
 _create_theme_options(
     "borderColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The color of the border around elements.
     """,
@@ -1445,7 +1553,12 @@ _create_theme_options(
 
 _create_theme_options(
     "dataframeBorderColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The color of the border around dataframes and tables.
 
@@ -1455,7 +1568,12 @@ _create_theme_options(
 
 _create_theme_options(
     "dataframeHeaderBackgroundColor",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         The background color of the dataframe's header.
 
@@ -1469,7 +1587,12 @@ _create_theme_options(
 
 _create_theme_options(
     "showWidgetBorder",
-    categories=["theme", CustomThemeCategories.SIDEBAR],
+    categories=[
+        "theme",
+        CustomThemeCategories.SIDEBAR,
+        CustomThemeCategories.LIGHT,
+        CustomThemeCategories.DARK,
+    ],
     description="""
         Whether to show a border around input widgets.
     """,
@@ -1478,7 +1601,7 @@ _create_theme_options(
 
 _create_theme_options(
     "showSidebarBorder",
-    categories=["theme"],
+    categories=["theme", CustomThemeCategories.LIGHT, CustomThemeCategories.DARK],
     description="""
         Whether to show a vertical separator between the sidebar and the main
         content area.
@@ -1489,7 +1612,7 @@ _create_theme_options(
 
 _create_theme_options(
     "chartCategoricalColors",
-    categories=["theme"],
+    categories=["theme", CustomThemeCategories.LIGHT, CustomThemeCategories.DARK],
     description="""
         An array of colors to use for categorical chart data.
 
@@ -1532,7 +1655,7 @@ _create_theme_options(
 
 _create_theme_options(
     "chartSequentialColors",
-    categories=["theme"],
+    categories=["theme", CustomThemeCategories.LIGHT, CustomThemeCategories.DARK],
     description="""
         An array of ten colors to use for sequential or continuous chart data.
 
@@ -1772,7 +1895,11 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
         for name, value in section_data.items():
             option_name = f"{section_path}.{name}"
             # Process it as a nested config section if it's a custom theme sub-category
-            if name in [CustomThemeCategories.SIDEBAR.value]:
+            if name in [
+                CustomThemeCategories.SIDEBAR.value,
+                CustomThemeCategories.LIGHT.value,
+                CustomThemeCategories.DARK.value,
+            ]:
                 process_section(option_name, value)
             else:
                 # It's a regular config option, set it

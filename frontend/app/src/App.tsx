@@ -1312,6 +1312,59 @@ export class App extends PureComponent<Props, State> {
     )
   }
 
+  hasThemeConfiguration = (themeConfig: ICustomThemeConfig): boolean => {
+    // Check if the theme configuration has any non-default values
+    const hasColorConfig = !!(
+      themeConfig.primaryColor ||
+      themeConfig.backgroundColor ||
+      themeConfig.secondaryBackgroundColor ||
+      themeConfig.textColor ||
+      themeConfig.linkColor
+    )
+
+    const hasFontConfig = !!(
+      themeConfig.bodyFont ||
+      themeConfig.headingFont ||
+      themeConfig.codeFont ||
+      themeConfig.fontFaces?.length
+    )
+
+    const hasOtherConfig = !!(
+      themeConfig.baseRadius ||
+      themeConfig.buttonRadius ||
+      themeConfig.borderColor ||
+      themeConfig.showWidgetBorder !== undefined ||
+      themeConfig.chartCategoricalColors?.length ||
+      themeConfig.chartSequentialColors?.length
+    )
+
+    return hasColorConfig || hasFontConfig || hasOtherConfig
+  }
+
+  createAutoCustomTheme = (themeInput: CustomThemeConfig): ThemeConfig => {
+    // Create an auto theme that switches between light and dark based on system preference
+    const lightConfig = themeInput.light || new CustomThemeConfig()
+    const darkConfig = themeInput.dark || new CustomThemeConfig()
+
+    // Determine which theme to use based on system preference
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches
+    const selectedConfig = prefersDark ? darkConfig : lightConfig
+
+    // Convert to the correct type for createTheme
+    const themeConfigProto = new CustomThemeConfig(selectedConfig)
+
+    // Create the theme with auto switching capability
+    const autoTheme = createTheme(
+      `${CUSTOM_THEME_NAME} Auto`,
+      themeConfigProto
+    )
+    autoTheme.name = `${CUSTOM_THEME_NAME} Auto`
+
+    return autoTheme
+  }
+
   processThemeInput(themeInput: CustomThemeConfig): void {
     const themeHash = this.createThemeHash(themeInput)
     if (themeHash === this.state.themeHash) {
@@ -1321,17 +1374,53 @@ export class App extends PureComponent<Props, State> {
 
     const usingCustomTheme = !isPresetTheme(this.props.theme.activeTheme)
     if (themeInput) {
-      const customTheme = createTheme(CUSTOM_THEME_NAME, themeInput)
-      // For now, users can only add one custom theme.
-      this.props.theme.addThemes([customTheme])
+      // Check if light/dark theme configurations are present
+      const hasLightTheme =
+        themeInput.light && this.hasThemeConfiguration(themeInput.light)
+      const hasDarkTheme =
+        themeInput.dark && this.hasThemeConfiguration(themeInput.dark)
 
-      const userPreference = getCachedTheme()
-      if (userPreference === null || usingCustomTheme) {
-        // Update the theme to be customTheme either if the user hasn't set a
-        // preference (developer-provided custom themes should be the default
-        // for an app) or if a custom theme is currently active (to ensure that
-        // we pick up any new changes to it).
-        this.setAndSendTheme(customTheme)
+      const customThemes: ThemeConfig[] = []
+
+      if (hasLightTheme || hasDarkTheme) {
+        // Create separate light and dark custom themes
+        if (hasLightTheme && themeInput.light) {
+          const lightThemeProto = new CustomThemeConfig(themeInput.light)
+          const lightTheme = createTheme(
+            `${CUSTOM_THEME_NAME} Light`,
+            lightThemeProto
+          )
+          customThemes.push(lightTheme)
+        }
+        if (hasDarkTheme && themeInput.dark) {
+          const darkThemeProto = new CustomThemeConfig(themeInput.dark)
+          const darkTheme = createTheme(
+            `${CUSTOM_THEME_NAME} Dark`,
+            darkThemeProto
+          )
+          customThemes.push(darkTheme)
+        }
+
+        // Create an auto theme that switches between light and dark based on system preference
+        const autoTheme = this.createAutoCustomTheme(themeInput)
+        customThemes.unshift(autoTheme) // Add auto theme first
+
+        this.props.theme.addThemes(customThemes)
+
+        const userPreference = getCachedTheme()
+        if (userPreference === null || usingCustomTheme) {
+          // Default to the auto theme for light/dark switching
+          this.setAndSendTheme(autoTheme)
+        }
+      } else {
+        // Fall back to single custom theme (existing behavior)
+        const customTheme = createTheme(CUSTOM_THEME_NAME, themeInput)
+        this.props.theme.addThemes([customTheme])
+
+        const userPreference = getCachedTheme()
+        if (userPreference === null || usingCustomTheme) {
+          this.setAndSendTheme(customTheme)
+        }
       }
     } else {
       // Remove the custom theme menu option.

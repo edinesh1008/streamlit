@@ -740,6 +740,30 @@ class AppSession:
             msg.new_session.custom_theme.sidebar,
             f"theme.{config.CustomThemeCategories.SIDEBAR.value}",
         )
+        # Light and dark themes inherit from base theme
+        _populate_theme_msg_with_inheritance(
+            msg.new_session.custom_theme.light,
+            f"theme.{config.CustomThemeCategories.LIGHT.value}",
+            ["theme"],
+        )
+        # Light sidebar inherits from both base theme and base sidebar
+        _populate_theme_msg_with_inheritance(
+            msg.new_session.custom_theme.light.sidebar,
+            f"theme.{config.CustomThemeCategories.LIGHT.value}.sidebar",
+            ["theme", f"theme.{config.CustomThemeCategories.SIDEBAR.value}"],
+        )
+        # Dark theme inherits from base theme
+        _populate_theme_msg_with_inheritance(
+            msg.new_session.custom_theme.dark,
+            f"theme.{config.CustomThemeCategories.DARK.value}",
+            ["theme"],
+        )
+        # Dark sidebar inherits from both base theme and base sidebar
+        _populate_theme_msg_with_inheritance(
+            msg.new_session.custom_theme.dark.sidebar,
+            f"theme.{config.CustomThemeCategories.DARK.value}.sidebar",
+            ["theme", f"theme.{config.CustomThemeCategories.SIDEBAR.value}"],
+        )
 
         # Immutable session data. We send this every time a new session is
         # started, to avoid having to track whether the client has already
@@ -932,8 +956,51 @@ def _populate_config_msg(msg: Config) -> None:
     msg.toolbar_mode = _get_toolbar_mode()
 
 
-def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
-    theme_opts = config.get_options_for_section(section)
+def _get_merged_theme_options(
+    section: str, base_sections: list[str] | None = None
+) -> dict[str, Any]:
+    """Get theme options for a section with inheritance from base sections.
+
+    Args:
+        section: The theme section to get options for (e.g., "theme.light")
+        base_sections: List of base sections to inherit from (e.g., ["theme"])
+
+    Returns
+    -------
+    dict[str, Any]
+        Dictionary of merged theme options with inheritance applied
+    """
+    merged_opts = {}
+
+    # First, apply base section options if provided
+    if base_sections:
+        for base_section in base_sections:
+            base_opts = config.get_options_for_section(base_section)
+            merged_opts.update(
+                {key: value for key, value in base_opts.items() if value is not None}
+            )
+
+    # Then, apply the specific section options (these override base options)
+    section_opts = config.get_options_for_section(section)
+    merged_opts.update(
+        {key: value for key, value in section_opts.items() if value is not None}
+    )
+
+    return merged_opts
+
+
+def _populate_theme_msg_with_inheritance(
+    msg: CustomThemeConfig, section: str, base_sections: list[str] | None = None
+) -> None:
+    """Populate theme message with inheritance from base sections."""
+    theme_opts = _get_merged_theme_options(section, base_sections)
+
+    # Set implicit base theme for light/dark themes
+    if section.endswith(".light") and "base" not in theme_opts:
+        theme_opts["base"] = "light"
+    elif section.endswith(".dark") and "base" not in theme_opts:
+        theme_opts["base"] = "dark"
+
     if all(val is None for val in theme_opts.values()):
         return
 
@@ -955,6 +1022,14 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
         ):
             setattr(msg, to_snake_case(option_name), option_val)
 
+    # Handle special cases with inheritance
+    _populate_theme_special_fields(msg, theme_opts)
+
+
+def _populate_theme_special_fields(
+    msg: CustomThemeConfig, theme_opts: dict[str, Any]
+) -> None:
+    """Handle special theme fields that need custom processing."""
     # NOTE: If unset, base and font will default to the protobuf enum zero
     # values, which are BaseTheme.LIGHT and FontFamily.SANS_SERIF,
     # respectively. This is why we both don't handle the cases explicitly and
@@ -963,7 +1038,7 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
         "light": msg.BaseTheme.LIGHT,
         "dark": msg.BaseTheme.DARK,
     }
-    base = theme_opts.get("base", None)
+    base = theme_opts.get("base")
     if base is not None:
         if base not in base_map:
             _LOGGER.warning(
@@ -977,11 +1052,11 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
 
     # Since the font field uses the deprecated enum, we need to put the font
     # config into the body_font field instead:
-    body_font = theme_opts.get("font", None)
+    body_font = theme_opts.get("font")
     if body_font:
         msg.body_font = body_font
 
-    font_faces = theme_opts.get("fontFaces", None)
+    font_faces = theme_opts.get("fontFaces")
     # If fontFaces was configured via config.toml, it's already a parsed list of
     # dictionaries. However, if it was provided via env variable or via CLI arg,
     # it's a json string that still needs to be parsed.
@@ -1010,7 +1085,7 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
                     exc_info=e,
                 )
 
-    heading_font_sizes = theme_opts.get("headingFontSizes", None)
+    heading_font_sizes = theme_opts.get("headingFontSizes")
     # headingFontSizes is either an single string value (set for all headings) or
     # a list of strings (set specific headings). However, if it was provided via env variable or via CLI arg,
     # it's a json string that needs to be parsed.
@@ -1049,7 +1124,7 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
                     exc_info=e,
                 )
 
-    heading_font_weights = theme_opts.get("headingFontWeights", None)
+    heading_font_weights = theme_opts.get("headingFontWeights")
     # headingFontWeights is either an integer (set for all headings) or
     # a list of integers (set specific headings). However, if it was provided via env variable or via CLI arg,
     # it's a json string that needs to be parsed.
@@ -1090,7 +1165,7 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
                     exc_info=e,
                 )
 
-    chart_categorical_colors = theme_opts.get("chartCategoricalColors", None)
+    chart_categorical_colors = theme_opts.get("chartCategoricalColors")
     # If chartCategoricalColors was configured via config.toml, it's already a list of
     # strings. However, if it was provided via env variable or via CLI arg,
     # it's a json string that needs to be parsed.
@@ -1116,7 +1191,7 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
                     exc_info=e,
                 )
 
-    chart_sequential_colors = theme_opts.get("chartSequentialColors", None)
+    chart_sequential_colors = theme_opts.get("chartSequentialColors")
     # If chartSequentialColors was configured via config.toml, it's already a list of
     # strings. However, if it was provided via env variable or via CLI arg,
     # it's a json string that needs to be parsed.
@@ -1148,6 +1223,34 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
                     color,
                     exc_info=e,
                 )
+
+
+def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
+    """Populate theme message without inheritance (for backwards compatibility)."""
+    theme_opts = config.get_options_for_section(section)
+    if all(val is None for val in theme_opts.values()):
+        return
+
+    for option_name, option_val in theme_opts.items():
+        # We need to ignore some config options here that need special handling
+        # and cannot directly be set on the protobuf.
+        if (
+            option_name
+            not in {
+                "base",
+                "font",
+                "fontFaces",
+                "headingFontSizes",
+                "headingFontWeights",
+                "chartCategoricalColors",
+                "chartSequentialColors",
+            }
+            and option_val is not None
+        ):
+            setattr(msg, to_snake_case(option_name), option_val)
+
+    # Handle special cases
+    _populate_theme_special_fields(msg, theme_opts)
 
 
 def _populate_user_info_msg(msg: UserInfo) -> None:

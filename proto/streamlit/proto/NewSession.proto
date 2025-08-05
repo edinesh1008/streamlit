@@ -186,8 +186,10 @@ message CustomThemeConfig {
   optional string dataframe_header_background_color = 31;
   repeated string chart_categorical_colors = 33;
   repeated string chart_sequential_colors = 36;
+  optional CustomThemeConfig light = 37;
+  optional CustomThemeConfig dark = 38;
 
-  // Next ID: 37
+  // Next ID: 39
 }
 
 message FontFace {
