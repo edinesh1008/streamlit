@@ -51,7 +51,7 @@ def test_transient_spinner_handling(app: Page):
 def test_expected_stale_element(app: Page):
     """Test that elements are correctly marked as stale after reruns."""
     # Check the checkbox to enable the expected stale element test:
-    click_checkbox(app, "Expected stale elemenet")
+    click_checkbox(app, "Expected stale element")
 
     expect(app.get_by_text("First text")).to_be_visible()
     expect(app.get_by_text("Second text")).to_be_visible()

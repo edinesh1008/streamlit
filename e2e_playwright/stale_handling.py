@@ -39,7 +39,7 @@ if st.checkbox("Transient Spinner", value=False):
 
     st.button("Rerun")
 
-if st.checkbox("Expected stale elemenet", value=False):
+if st.checkbox("Expected stale element", value=False):
     st.write("First text")
 
     if st.button("Rerun"):
