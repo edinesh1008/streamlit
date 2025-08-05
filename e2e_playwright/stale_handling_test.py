@@ -23,6 +23,11 @@ from e2e_playwright.shared.app_utils import (
 def test_transient_spinner_handling(app: Page):
     """Test that elements after a spinner are not marked as stale
     because of the spinner.
+
+
+    Related issues:
+    https://github.com/streamlit/streamlit/issues/9239
+    https://github.com/streamlit/streamlit/issues/9239
     """
 
     # Check the checkbox to enable the transient spinner functionality
