@@ -220,7 +220,6 @@ def compute_and_register_element_id(
     dg : DeltaGenerator | None
         The DeltaGenerator of each element. `None` if the element is not a widget.
 
-
     kwargs : SAFE_VALUES | Iterable[SAFE_VALUES]
         The arguments to use to compute the element ID.
         The arguments must be stable, deterministic values.

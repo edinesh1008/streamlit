@@ -339,6 +339,7 @@ class TextWidgetsMixin:
             placeholder=str(placeholder),
             icon=icon,
             width=width,
+            key_as_main_identity=True,
         )
 
         session_state = get_session_state().filtered_state
