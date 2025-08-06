@@ -186,7 +186,6 @@ def compute_and_register_element_id(
     user_key: str | None,
     form_id: str | None,
     dg: DeltaGenerator | None = None,
-    style: str | None = None,
     key_as_main_identity: bool = False,
     **kwargs: SAFE_VALUES | Iterable[SAFE_VALUES],
 ) -> str:
@@ -221,10 +220,6 @@ def compute_and_register_element_id(
     dg : DeltaGenerator | None
         The DeltaGenerator of each element. `None` if the element is not a widget.
 
-    style: str | None
-        The style of the element, to provide more context to the user in the
-        error message. This should be `None` if the element does not support
-        the style parameter.
 
     kwargs : SAFE_VALUES | Iterable[SAFE_VALUES]
         The arguments to use to compute the element ID.
@@ -238,19 +233,6 @@ def compute_and_register_element_id(
     kwargs_to_use = {**kwargs}
     if form_id:
         kwargs_to_use["form_id"] = form_id
-    if style:
-        kwargs_to_use["style"] = style
-
-    # If style is provided, use it for the error message, to provide more
-    # context to the user.
-    if style == "borderless":
-        # The borderless style is used by st.feedback, but users expect to see
-        # "feedback" in errors
-        element_type_for_error = "feedback"
-    elif style:
-        element_type_for_error = style
-    else:
-        element_type_for_error = element_type
 
     if ctx:
         # Add the active script hash to give elements on different
@@ -272,7 +254,7 @@ def compute_and_register_element_id(
     )
 
     if ctx:
-        _register_element_id(ctx, element_type_for_error, element_id)
+        _register_element_id(ctx, element_type, element_id)
     return element_id
 
 
