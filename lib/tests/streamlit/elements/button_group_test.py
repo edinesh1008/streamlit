@@ -966,7 +966,7 @@ class TestButtonGroupDuplicateElementIdErrorMessages(DeltaGeneratorTestCase):
         _ = compute_and_register_element_id(
             "button_group",
             user_key=None,
-            form_id=None,
+            dg=None,
             **kwargs,
         )
         # Try to create another element with the same parameters - should raise error
@@ -974,7 +974,7 @@ class TestButtonGroupDuplicateElementIdErrorMessages(DeltaGeneratorTestCase):
             compute_and_register_element_id(
                 "button_group",
                 user_key=None,
-                form_id=None,
+                dg=None,
                 **kwargs,
             )
         msg = str(exc_info.value)

@@ -28,10 +28,10 @@ from google.protobuf.message import Message
 from typing_extensions import TypeAlias
 
 from streamlit import config
+from streamlit.elements.lib.form_utils import current_form_id
 from streamlit.errors import StreamlitDuplicateElementId, StreamlitDuplicateElementKey
 from streamlit.proto.ChatInput_pb2 import ChatInput
 from streamlit.proto.LabelVisibilityMessage_pb2 import LabelVisibilityMessage
-from streamlit.proto.RootContainer_pb2 import RootContainer
 from streamlit.runtime.scriptrunner_utils.script_run_context import (
     ScriptRunContext,
     get_script_run_ctx,
@@ -184,8 +184,7 @@ def compute_and_register_element_id(
     element_type: str,
     *,
     user_key: str | None,
-    form_id: str | None,
-    dg: DeltaGenerator | None = None,
+    dg: DeltaGenerator | None,
     key_as_main_identity: bool = False,
     **kwargs: SAFE_VALUES | Iterable[SAFE_VALUES],
 ) -> str:
@@ -213,10 +212,6 @@ def compute_and_register_element_id(
         The user-specified key for the element. `None` if no key is provided
         or if the element doesn't support a specifying a key.
 
-    form_id : str | None
-        The ID of the form that the element belongs to. `None` or empty string
-        if the element doesn't belong to a form or doesn't support forms.
-
     dg : DeltaGenerator | None
         The DeltaGenerator of each element. `None` if the element is not a widget.
 
@@ -230,21 +225,18 @@ def compute_and_register_element_id(
     ctx = get_script_run_ctx()
 
     kwargs_to_use = {**kwargs}
-    if form_id:
-        kwargs_to_use["form_id"] = form_id
 
     if ctx:
         # Add the active script hash to give elements on different
         # pages unique IDs.
         kwargs_to_use["active_script_hash"] = ctx.active_script_hash
 
-    if dg:
+    if dg and user_key is None:
+        kwargs_to_use["form_id"] = current_form_id(dg)
         # If no key is provided and the widget element is inside the sidebar area
         # add it to the kwargs
         # allowing the same widget to be both in main area and sidebar.
-        active_dg_root_container = dg._active_dg._root_container
-        if active_dg_root_container == RootContainer.SIDEBAR and user_key is None:
-            kwargs_to_use["active_dg_root_container"] = str(active_dg_root_container)
+        kwargs_to_use["active_dg_root_container"] = dg._active_dg._root_container
 
     element_id = _compute_element_id(
         element_type,

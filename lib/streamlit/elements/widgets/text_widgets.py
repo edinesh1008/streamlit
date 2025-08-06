@@ -328,8 +328,8 @@ class TextWidgetsMixin:
         element_id = compute_and_register_element_id(
             "text_input",
             user_key=key,
-            form_id=current_form_id(self.dg),
             dg=self.dg,
+            key_as_main_identity=True,
             label=label,
             value=value,
             max_chars=max_chars,
@@ -339,7 +339,6 @@ class TextWidgetsMixin:
             placeholder=str(placeholder),
             icon=icon,
             width=width,
-            key_as_main_identity=True,
         )
 
         session_state = get_session_state().filtered_state
@@ -644,8 +643,8 @@ class TextWidgetsMixin:
         element_id = compute_and_register_element_id(
             "text_area",
             user_key=key,
-            form_id=current_form_id(self.dg),
             dg=self.dg,
+            key_as_main_identity=True,
             label=label,
             value=value,
             height=height,
@@ -653,7 +652,6 @@ class TextWidgetsMixin:
             help=help,
             placeholder=str(placeholder),
             width=width,
-            key_as_main_identity=True,
         )
 
         session_state = get_session_state().filtered_state

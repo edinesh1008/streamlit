@@ -541,8 +541,8 @@ class SelectboxMixin:
         element_id = compute_and_register_element_id(
             "selectbox",
             user_key=key,
-            form_id=current_form_id(self.dg),
             dg=self.dg,
+            key_as_main_identity=True,
             label=label,
             options=formatted_options,
             index=index,
@@ -550,7 +550,6 @@ class SelectboxMixin:
             placeholder=placeholder,
             accept_new_options=accept_new_options,
             width=width,
-            key_as_main_identity=True,
         )
 
         session_state = get_session_state().filtered_state
