@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any, Callable
 
 import streamlit as st
 
@@ -93,7 +94,7 @@ with st.sidebar:
         ],
     )
 
-    def get_format_func(choice):
+    def get_format_func(choice: str) -> Callable[[Any], str]:
         if choice == "Uppercase":
             return lambda x: str(x).upper()
         if choice == "Type prefixed":
@@ -117,7 +118,7 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Selectbox Widget")
-    selected_option = st.selectbox(
+    selected_option = st.selectbox(  # type: ignore
         label=label,
         options=options,
         index=index,

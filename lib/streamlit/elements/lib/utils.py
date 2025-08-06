@@ -224,25 +224,24 @@ def compute_and_register_element_id(
     """
     ctx = get_script_run_ctx()
 
-    kwargs_to_use = {**kwargs}
+    ignore_command_kwargs = key_as_main_identity and user_key
+
+    kwargs_to_use = {} if ignore_command_kwargs else {**kwargs}
 
     if ctx:
         # Add the active script hash to give elements on different
-        # pages unique IDs.
+        # pages unique IDs. This is added even if
+        # key_as_main_identity is specified.
         kwargs_to_use["active_script_hash"] = ctx.active_script_hash
 
-    if dg and user_key is None:
+    if dg and not ignore_command_kwargs:
         kwargs_to_use["form_id"] = current_form_id(dg)
         # If no key is provided and the widget element is inside the sidebar area
         # add it to the kwargs
         # allowing the same widget to be both in main area and sidebar.
         kwargs_to_use["active_dg_root_container"] = dg._active_dg._root_container
 
-    element_id = _compute_element_id(
-        element_type,
-        user_key,
-        **kwargs_to_use if not key_as_main_identity else {},
-    )
+    element_id = _compute_element_id(element_type, user_key, **kwargs_to_use)
 
     if ctx:
         _register_element_id(ctx, element_type, element_id)
