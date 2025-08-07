@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "MarkdownProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // Formatted text
 message Markdown {
@@ -28,7 +28,7 @@ message Markdown {
   bool is_caption = 3; // TODO [Karen]: Remove this field if favor of element_type
 
   enum Type {
-    UNSPECIFIED = 0;  // This is recommended to be reserved for proto files backwards compatibility reasons.
+    UNSPECIFIED = 0; // This is recommended to be reserved for proto files backwards compatibility reasons.
     NATIVE = 1;
     CAPTION = 2;
     CODE = 3;

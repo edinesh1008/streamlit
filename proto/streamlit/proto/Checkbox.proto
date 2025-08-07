@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "CheckboxProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "CheckboxProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message Checkbox {
   enum StyleType {

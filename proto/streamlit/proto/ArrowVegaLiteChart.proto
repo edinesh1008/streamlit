@@ -16,11 +16,11 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "ArrowVegaLiteChartProto";
-
 import "streamlit/proto/Arrow.proto";
 import "streamlit/proto/ArrowNamedDataSet.proto";
+
+option java_outer_classname = "ArrowVegaLiteChartProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message ArrowVegaLiteChart {
   // The a JSON-formatted string with the Vega-Lite spec.

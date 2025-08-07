@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "ColorPickerProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "ColorPickerProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message ColorPicker {
   string id = 1;

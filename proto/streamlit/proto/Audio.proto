@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "AudioProto";
-
 import "streamlit/proto/WidthConfig.proto";
+
+option java_outer_classname = "AudioProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message Audio {
   string url = 5;

@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "SnowProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // A python empty.
 message Snow {
-  bool show = 1;  // Dummy boolean because protos need to have something.
+  bool show = 1; // Dummy boolean because protos need to have something.
 }

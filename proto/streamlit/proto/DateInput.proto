@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "DateInputProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "DateInputProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message DateInput {
   string id = 1;

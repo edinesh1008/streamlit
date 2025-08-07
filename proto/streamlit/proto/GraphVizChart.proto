@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "GraphVizChartProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message GraphVizChart {
   // A specification of the GraphViz graph in the "Dot" language.

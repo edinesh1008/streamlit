@@ -16,11 +16,11 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "NewSessionProto";
-
 import "streamlit/proto/AppPage.proto";
 import "streamlit/proto/SessionStatus.proto";
+
+option java_outer_classname = "NewSessionProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // NOTE: These proto types are used by some external services so need to
 // remain relatively stable. While they aren't entirely set in stone, changing

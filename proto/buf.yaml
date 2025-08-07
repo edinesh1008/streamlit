@@ -1,0 +1,35 @@
+# buf.yaml - Main buf configuration for the Streamlit proto files
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  except:
+    # Exceptions for your existing proto structure
+    - DIRECTORY_SAME_PACKAGE # Directory has files with different packages
+    - PACKAGE_DEFINED # Many files don't have package declarations
+    - PACKAGE_DIRECTORY_MATCH # Package doesn't match directory structure
+    - FILE_LOWER_SNAKE_CASE # Files are not lower snake case
+    - ENUM_VALUE_PREFIX # Enums don't have the enum name prefix
+    - ENUM_ZERO_VALUE_SUFFIX # Enums don't have a zero value suffix
+    - PACKAGE_VERSION_SUFFIX # Packages don't have a version suffix
+  ignore:
+    # Ignore the openmetrics file which has different conventions
+    - streamlit/proto/openmetrics_data_model.proto
+  rpc_allow_same_request_response: false
+  rpc_allow_google_protobuf_empty_requests: true
+  rpc_allow_google_protobuf_empty_responses: true
+  service_suffix: Service
+  # allow_comment_ignores: true
+breaking:
+  use:
+    - FILE
+  except:
+    # Breaking change detection exceptions
+    - EXTENSION_NO_DELETE
+    - FIELD_SAME_DEFAULT
+    - FILE_SAME_PACKAGE
+  ignore:
+    # Ignore the openmetrics file for breaking changes
+    - streamlit/proto/openmetrics_data_model.proto

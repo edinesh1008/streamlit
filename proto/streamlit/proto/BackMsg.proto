@@ -16,11 +16,11 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "BackMsgProto";
-
 import "streamlit/proto/ClientState.proto";
 import "streamlit/proto/Common.proto";
+
+option java_outer_classname = "BackMsgProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // A message from the browser to the server.
 message BackMsg {

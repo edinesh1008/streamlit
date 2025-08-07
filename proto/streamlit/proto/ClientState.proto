@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "ClientStateProto";
-
 import "streamlit/proto/WidgetStates.proto";
+
+option java_outer_classname = "ClientStateProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message ContextInfo {
   optional string timezone = 1;

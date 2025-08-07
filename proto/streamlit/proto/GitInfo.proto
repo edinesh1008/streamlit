@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "GitInfoProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // Message used to update page metadata.
 message GitInfo {

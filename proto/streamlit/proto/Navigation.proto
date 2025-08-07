@@ -16,10 +16,9 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-
-
 import "streamlit/proto/AppPage.proto";
+
+option java_package = "com.snowflake.apps.streamlit";
 
 message Navigation {
   repeated string sections = 1;

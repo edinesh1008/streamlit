@@ -16,11 +16,11 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "VegaLiteChartProto";
-
 import "streamlit/proto/DataFrame.proto";
 import "streamlit/proto/NamedDataSet.proto";
+
+option java_outer_classname = "VegaLiteChartProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // DEPRECATED: This proto message is deprecated and unused. The ArrowVegaLiteChart
 // proto message should be used instead.

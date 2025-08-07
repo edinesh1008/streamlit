@@ -16,11 +16,11 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "WidgetStatesProto";
-
 import "streamlit/proto/Common.proto";
 import "streamlit/proto/Components.proto";
+
+option java_outer_classname = "WidgetStatesProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // State for every widget in an app.
 message WidgetStates {

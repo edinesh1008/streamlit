@@ -16,13 +16,13 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "ToastProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message Toast {
-    // Display message
-    string body = 1;
+  // Display message
+  string body = 1;
 
-    // Emoji
-    string icon = 2;
+  // Emoji
+  string icon = 2;
 }

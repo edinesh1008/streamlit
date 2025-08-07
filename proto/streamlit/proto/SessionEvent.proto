@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "SessionEventProto";
-
 import "streamlit/proto/Exception.proto";
+
+option java_outer_classname = "SessionEventProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // A transient event sent to all browsers connected to an associated app.
 message SessionEvent {

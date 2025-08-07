@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "PlotlyChartProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message PlotlyChart {
   // If True, will overwrite the chart width spec to fit to container.
@@ -45,9 +45,9 @@ message PlotlyChart {
 
   // Available selection modes:
   enum SelectionMode {
-      POINTS = 0; // Point selection mode
-      BOX = 1; // Box selection mode
-      LASSO = 2; // Lasso selection mode
+    POINTS = 0; // Point selection mode
+    BOX = 1; // Box selection mode
+    LASSO = 2; // Lasso selection mode
   }
 
   // DEPRECATED and unused.
@@ -58,9 +58,7 @@ message PlotlyChart {
     // DEPRECATED and unused.
     Figure figure = 2;
   }
-
 }
-
 
 // DEPRECATED and unused.
 message Figure {

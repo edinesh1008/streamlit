@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "MetricProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "MetricProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message Metric {
   string label = 1;
@@ -31,12 +31,12 @@ message Metric {
   LabelVisibilityMessage label_visibility = 7;
   bool show_border = 8;
 
-  enum MetricColor{
+  enum MetricColor {
     RED = 0;
     GREEN = 1;
     GRAY = 2;
   }
-  enum MetricDirection{
+  enum MetricDirection {
     DOWN = 0;
     UP = 1;
     NONE = 2;

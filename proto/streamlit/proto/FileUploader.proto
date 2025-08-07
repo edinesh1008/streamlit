@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "FileUploaderProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "FileUploaderProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // file_uploader widget
 message FileUploader {

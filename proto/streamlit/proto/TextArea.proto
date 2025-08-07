@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "TextAreaProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "TextAreaProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message TextArea {
   string id = 1;

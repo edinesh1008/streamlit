@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "NumberInputProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "NumberInputProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message NumberInput {
   enum DataType {

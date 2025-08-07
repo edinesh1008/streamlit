@@ -16,12 +16,11 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "DocStringProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // Formatted text
 message DocString {
-
   // [DEPRECATED] The name of the object.
   //string name = 1;
   reserved 1;
@@ -49,7 +48,6 @@ message DocString {
   // List of this object's methods and member variables.
   repeated Member members = 8;
 }
-
 
 message Member {
   // The name of the object.

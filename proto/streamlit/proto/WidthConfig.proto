@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "WidthConfigProto";
-
 package streamlit;
+
+option java_outer_classname = "WidthConfigProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message WidthConfig {
   oneof width_spec {

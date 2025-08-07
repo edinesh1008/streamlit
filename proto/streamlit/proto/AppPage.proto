@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "AppPageProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 // A page in the app. Includes both the name of the page as well as the full
 // path to the corresponding script file.

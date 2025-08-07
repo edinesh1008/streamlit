@@ -16,8 +16,8 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
 option java_outer_classname = "LabelVisibilityMessageProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message LabelVisibilityMessage {
   // We use separate LabelVisibilityMessage instead of just defining Enum and

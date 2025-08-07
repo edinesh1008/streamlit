@@ -16,10 +16,10 @@
 
 syntax = "proto3";
 
-option java_package = "com.snowflake.apps.streamlit";
-option java_outer_classname = "RadioProto";
-
 import "streamlit/proto/LabelVisibilityMessage.proto";
+
+option java_outer_classname = "RadioProto";
+option java_package = "com.snowflake.apps.streamlit";
 
 message Radio {
   string id = 1;
