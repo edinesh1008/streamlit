@@ -76,4 +76,40 @@ describe("UploadedFile widget", () => {
     await user.click(deleteBtn)
     expect(props.onDelete).toHaveBeenCalledWith(1)
   })
+
+  it("disables delete button when disabled prop is true", async () => {
+    const user = userEvent.setup()
+    const props = {
+      ...getProps({
+        type: "uploaded",
+        fileId: "fileId",
+        fileUrls: {},
+      }),
+      disabled: true,
+    }
+    render(<UploadedFile {...props} />)
+    expect(screen.getByTestId("stFileUploaderFile")).toBeInTheDocument()
+    const deleteBtn = screen.getByRole("button")
+    expect(deleteBtn).toBeDisabled()
+    await user.click(deleteBtn)
+    expect(props.onDelete).not.toHaveBeenCalled()
+  })
+
+  it("enables delete button when disabled prop is false", async () => {
+    const user = userEvent.setup()
+    const props = {
+      ...getProps({
+        type: "uploaded",
+        fileId: "fileId",
+        fileUrls: {},
+      }),
+      disabled: false,
+    }
+    render(<UploadedFile {...props} />)
+    expect(screen.getByTestId("stFileUploaderFile")).toBeInTheDocument()
+    const deleteBtn = screen.getByRole("button")
+    expect(deleteBtn).not.toBeDisabled()
+    await user.click(deleteBtn)
+    expect(props.onDelete).toHaveBeenCalledWith(1)
+  })
 })

@@ -625,6 +625,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
             items={newestToOldestFiles}
             pageSize={3}
             onDelete={this.deleteFile}
+            disabled={disabled}
             resetOnAdd
           />
         )}

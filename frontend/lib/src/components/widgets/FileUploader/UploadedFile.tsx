@@ -42,6 +42,7 @@ import { UploadFileInfo } from "./UploadFileInfo"
 export interface Props {
   fileInfo: UploadFileInfo
   onDelete: (id: number) => void
+  disabled?: boolean
 }
 
 export interface UploadedFileStatusProps {
@@ -75,7 +76,7 @@ export const UploadedFileStatus = ({
   return null
 }
 
-const UploadedFile = ({ fileInfo, onDelete }: Props): React.ReactElement => {
+const UploadedFile = ({ fileInfo, onDelete, disabled }: Props): React.ReactElement => {
   return (
     <StyledUploadedFile
       className="stFileUploaderFile"
@@ -98,6 +99,7 @@ const UploadedFile = ({ fileInfo, onDelete }: Props): React.ReactElement => {
         <BaseButton
           onClick={() => onDelete(fileInfo.id)}
           kind={BaseButtonKind.MINIMAL}
+          disabled={disabled}
         >
           <Icon content={Clear} size="lg" />
         </BaseButton>
