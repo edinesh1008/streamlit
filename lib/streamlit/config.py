@@ -21,6 +21,8 @@ import logging
 import os
 import secrets
 import threading
+import urllib.parse
+import urllib.request
 from collections import OrderedDict
 from enum import Enum
 from typing import Any, Callable, Final, Literal
@@ -1129,9 +1131,15 @@ _create_theme_options(
     "base",
     categories=["theme"],
     description="""
-        The preset Streamlit theme that your custom theme inherits from.
+        The preset Streamlit theme that your custom theme inherits from, or a path/URL to a theme file.
 
-        This can be one of the following: "light" or "dark".
+        This can be one of the following:
+        - "light" or "dark" (preset themes)
+        - A local file path to a .toml theme file (e.g., "themes/custom.toml")
+        - A URL to a .toml theme file (e.g., "https://example.com/theme.toml")
+
+        When using a theme file, it should contain a [theme] section with theme options.
+        Any options also set in config.toml will override the theme file values.
     """,
 )
 
@@ -1782,6 +1790,247 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
         process_section(section, options)
 
 
+def _load_theme_file(file_path_or_url: str) -> dict[str, Any]:
+    """Load and parse a theme TOML file from a local path or URL.
+
+    Parameters
+    ----------
+    file_path_or_url : str
+        The path to a local TOML file or a URL pointing to a TOML file
+
+    Returns
+    -------
+    dict[str, Any]
+        The parsed TOML content as a dictionary
+
+    Raises
+    ------
+    StreamlitAPIException
+        If the file cannot be found, read, or parsed
+    """
+
+    def _raise_missing_toml() -> None:
+        raise StreamlitAPIException(
+            "The 'toml' package is required to load theme files. "
+            "Please install it with 'pip install toml'."
+        )
+
+    def _raise_file_not_found() -> None:
+        raise FileNotFoundError(f"Theme file not found: {file_path_or_url}")
+
+    def _raise_missing_theme_section() -> None:
+        raise StreamlitAPIException(
+            f"Theme file {file_path_or_url} must contain a [theme] section"
+        )
+
+    def _raise_invalid_url_scheme() -> None:
+        raise StreamlitAPIException(
+            f"Only http and https URLs are supported for theme files, got: {parsed_url.scheme}"
+        )
+
+    try:
+        import toml
+    except ImportError:
+        _raise_missing_toml()
+
+    # Check if it's a URL (only allow http/https schemes)
+    parsed_url = urllib.parse.urlparse(file_path_or_url)
+    is_url = parsed_url.scheme in ("http", "https")
+
+    try:
+        if is_url:
+            # Load from URL - only allow http/https schemes for security
+            if parsed_url.scheme not in ("http", "https"):
+                _raise_invalid_url_scheme()
+            # We explicitly validate the scheme above to only allow http/https
+            with urllib.request.urlopen(file_path_or_url) as response:  # noqa: S310
+                content = response.read().decode("utf-8")
+        else:
+            # Load from local file path
+            # Resolve relative paths from the current working directory
+            if not os.path.isabs(file_path_or_url):
+                file_path_or_url = os.path.join(os.getcwd(), file_path_or_url)
+
+            if not os.path.exists(file_path_or_url):
+                _raise_file_not_found()
+
+            with open(file_path_or_url, encoding="utf-8") as f:
+                content = f.read()
+
+        # Parse the TOML content
+        parsed_theme = toml.loads(content)
+
+        # Validate that the theme file has a theme section
+        if "theme" not in parsed_theme:
+            _raise_missing_theme_section()
+
+        return parsed_theme
+
+    except FileNotFoundError as e:
+        raise StreamlitAPIException(f"Theme file not found: {file_path_or_url}") from e
+    except urllib.error.URLError as e:
+        raise StreamlitAPIException(
+            f"Could not load theme file from URL {file_path_or_url}: {e}"
+        ) from e
+    except Exception as e:
+        raise StreamlitAPIException(
+            f"Error loading theme file {file_path_or_url}: {e}"
+        ) from e
+
+
+def _apply_theme_inheritance(
+    base_theme: dict[str, Any], override_theme: dict[str, Any]
+) -> dict[str, Any]:
+    """Apply theme inheritance where override_theme values take precedence over base_theme.
+
+    Parameters
+    ----------
+    base_theme : dict[str, Any]
+        The base theme configuration (from theme.toml)
+    override_theme : dict[str, Any]
+        The override theme configuration (from config.toml)
+
+    Returns
+    -------
+    dict[str, Any]
+        The merged theme configuration
+    """
+    # Start with a deep copy of the base theme
+    merged_theme = copy.deepcopy(base_theme)
+
+    # Apply overrides from the config.toml
+    for section_name, section_data in override_theme.items():
+        if section_name not in merged_theme:
+            merged_theme[section_name] = {}
+
+        if isinstance(section_data, dict):
+            # Handle nested sections like theme.sidebar
+            for key, value in section_data.items():
+                merged_theme[section_name][key] = value
+        else:
+            # Handle direct theme options
+            merged_theme[section_name] = section_data
+
+    return merged_theme
+
+
+def _process_theme_inheritance() -> None:
+    """Process theme inheritance if theme.base points to a theme file.
+
+    This function checks if theme.base is set to a file path or URL,
+    loads the theme file, and applies inheritance logic where the
+    current config.toml values override the theme file values.
+    """
+    # Get the current theme.base value
+    if _config_options is None:
+        return
+
+    base_option = _config_options.get("theme.base")
+    if not base_option or base_option.value is None:
+        return
+
+    base_value = base_option.value
+
+    # Check if it's a file path or URL (not just "light" or "dark")
+    if base_value in ("light", "dark"):
+        return
+
+    def _raise_invalid_nested_base() -> None:
+        raise StreamlitAPIException(
+            f"Theme file {base_value} cannot reference another theme file in its base property. "
+            f"Only 'light' and 'dark' are allowed in theme files."
+        )
+
+    try:
+        # Load the theme file
+        theme_file_content = _load_theme_file(base_value)
+
+        # Validate that the theme file doesn't have nested base references to other files
+        theme_base = theme_file_content.get("theme", {}).get("base")
+        if theme_base and theme_base not in ("light", "dark"):
+            _raise_invalid_nested_base()
+
+        # Get current theme options from config.toml
+        current_theme_options = {}
+        if _config_options is not None:
+            for opt_name, opt_val in _config_options.items():
+                if opt_name.startswith("theme.") and opt_val.value is not None:
+                    # Convert dot notation back to nested dict
+                    parts = opt_name.split(".")
+                    if len(parts) == 2:  # theme.option
+                        _, option = parts
+                        if option != "base":  # Don't include the base option itself
+                            current_theme_options[option] = opt_val.value
+                    elif len(parts) == 3:  # theme.sidebar.option
+                        _, section, option = parts
+                        if section not in current_theme_options:
+                            current_theme_options[section] = {}
+                        current_theme_options[section][option] = opt_val.value
+
+        # Apply inheritance: theme file as base, config.toml as overrides
+        merged_theme = _apply_theme_inheritance(
+            theme_file_content, {"theme": current_theme_options}
+        )
+
+        # Update the config options with the merged theme
+        # First, clear existing theme options (except base)
+        if _config_options is not None:
+            theme_options_to_remove = [
+                opt_name
+                for opt_name in _config_options
+                if opt_name.startswith("theme.") and opt_name != "theme.base"
+            ]
+            for opt_name in theme_options_to_remove:
+                _set_option(opt_name, None, "reset for theme inheritance")
+
+        # Set the merged theme options
+        theme_section = merged_theme.get("theme", {})
+        for option_name, option_value in theme_section.items():
+            if option_name == "base":
+                # For base, use the original value from the theme file if it exists,
+                # otherwise keep the current base (which points to our theme file)
+                theme_file_base = theme_file_content.get("theme", {}).get("base")
+                if theme_file_base:
+                    _set_option(
+                        "theme.base", theme_file_base, f"theme file: {base_value}"
+                    )
+                continue
+
+            if isinstance(option_value, dict):
+                # Handle nested sections like sidebar
+                for sub_option, sub_value in option_value.items():
+                    _set_option(
+                        f"theme.{option_name}.{sub_option}",
+                        sub_value,
+                        f"theme file: {base_value}",
+                    )
+            else:
+                _set_option(
+                    f"theme.{option_name}", option_value, f"theme file: {base_value}"
+                )
+
+        # Handle sidebar section if it exists
+        sidebar_section = merged_theme.get("theme.sidebar") or merged_theme.get(
+            "theme", {}
+        ).get("sidebar")
+        if sidebar_section:
+            for option_name, option_value in sidebar_section.items():
+                _set_option(
+                    f"theme.sidebar.{option_name}",
+                    option_value,
+                    f"theme file: {base_value}",
+                )
+
+    except Exception:
+        # Import logger locally to prevent circular references
+        from streamlit.logger import get_logger
+
+        logger: Final = get_logger(__name__)
+        logger.exception("Error processing theme inheritance")
+        # Don't raise the exception to prevent breaking the config loading process
+        # Just log the error and continue with the original config
+
+
 def _maybe_read_env_variable(value: Any) -> Any:
     """If value is "env:foo", return value of environment variable "foo".
 
@@ -1917,6 +2166,9 @@ def get_config_options(
                 file_contents = file.read()
 
             _update_config_with_toml(file_contents, filename)
+
+        # Handle theme inheritance if theme.base points to a file
+        _process_theme_inheritance()
 
         _update_config_with_sensitive_env_var(_config_options)
 
