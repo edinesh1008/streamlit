@@ -1,0 +1,26 @@
+# buf.gen.yaml - Code generation configuration for buf
+# This file is optional and only needed if you want to use buf for code generation
+version: v2
+managed:
+  enabled: true
+  override:
+    # Preserve your existing Java package structure
+    - file_option: java_package
+      value: com.snowflake.apps.streamlit
+    - file_option: java_outer_classname
+      value: prefix.proto|remove_prefix(streamlit/proto/)|suffix(Proto)
+plugins:
+  # Python generation (if needed)
+  - remote: buf.build/protocolbuffers/python
+    out: ../lib/streamlit/proto
+    opt:
+      - paths=source_relative
+
+  # JavaScript/TypeScript generation (if needed)
+  - remote: buf.build/bufbuild/protobuf-es
+    out: ../frontend/protobuf/src
+    opt:
+      - target=ts
+      - import_extension=none
+
+  # You can add more plugins as needed for other language targets
