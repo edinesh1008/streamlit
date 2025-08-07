@@ -1942,8 +1942,14 @@ def _process_theme_inheritance() -> None:
         )
 
     try:
+        # Resolve theme file path relative to the current working directory
+        resolved_base_value = base_value
+        if not os.path.isabs(base_value):
+            # If it's a relative path, resolve it relative to the current working directory
+            resolved_base_value = os.path.join(os.getcwd(), base_value)
+
         # Load the theme file
-        theme_file_content = _load_theme_file(base_value)
+        theme_file_content = _load_theme_file(resolved_base_value)
 
         # Validate that the theme file doesn't have nested base references to other files
         theme_base = theme_file_content.get("theme", {}).get("base")
