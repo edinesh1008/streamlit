@@ -292,7 +292,7 @@ def test_disabled_file_uploader_prevents_file_deletion(app: Page):
     file_conten = b"file1content"
     file = FilePayload(name=file_name, mimeType="text/plain", buffer=file_conten)
 
-    file_uploader = get_file_uploader(app, "Drop a file:")
+    file_uploader = get_file_uploader(app, "Single txt file uploader")
 
     with app.expect_file_chooser() as fc_info:
         file_uploader.get_by_test_id("stFileUploaderDropzone").click()

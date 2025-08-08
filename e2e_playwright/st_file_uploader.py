@@ -18,7 +18,7 @@ from streamlit import runtime
 uploader_disabled = st.toggle("Disable uploader", value=False)
 
 single_file = st.file_uploader(
-    "Drop a file:", type=["txt"], key="single", disabled=uploader_disabled
+    "Single txt file uploader", type=["txt"], key="single", disabled=uploader_disabled
 )
 if single_file is None:
     st.text("No upload")
