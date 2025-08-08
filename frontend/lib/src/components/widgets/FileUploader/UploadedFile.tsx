@@ -42,7 +42,7 @@ import { UploadFileInfo } from "./UploadFileInfo"
 export interface Props {
   fileInfo: UploadFileInfo
   onDelete: (id: number) => void
-  disabled?: boolean
+  disabled: boolean
 }
 
 export interface UploadedFileStatusProps {
@@ -76,7 +76,11 @@ export const UploadedFileStatus = ({
   return null
 }
 
-const UploadedFile = ({ fileInfo, onDelete, disabled }: Props): React.ReactElement => {
+const UploadedFile = ({
+  fileInfo,
+  onDelete,
+  disabled,
+}: Props): React.ReactElement => {
   return (
     <StyledUploadedFile
       className="stFileUploaderFile"

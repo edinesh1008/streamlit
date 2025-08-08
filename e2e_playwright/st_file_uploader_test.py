@@ -29,6 +29,7 @@ from e2e_playwright.conftest import (
 from e2e_playwright.shared.app_utils import (
     check_top_level_class,
     get_element_by_key,
+    get_file_uploader,
     goto_app,
 )
 
@@ -283,6 +284,29 @@ def test_uploads_and_deletes_multiple_files(
     expect(app.get_by_test_id("stText").nth(uploader_index)).to_have_text(
         "No upload", use_inner_text=True
     )
+
+
+def test_disabled_file_uploader_prevents_file_deletion(app: Page):
+    """Test that a disabled file uploader prevents file deletion."""
+    file_name = "file1.txt"
+    file_conten = b"file1content"
+    file = FilePayload(name=file_name, mimeType="text/plain", buffer=file_conten)
+
+    file_uploader = get_file_uploader(app, "Drop a file:")
+
+    with app.expect_file_chooser() as fc_info:
+        file_uploader.get_by_test_id("stFileUploaderDropzone").click()
+
+    file_chooser = fc_info.value
+    file_chooser.set_files(files=[file])
+
+    wait_for_app_run(app, wait_delay=500)
+
+    uploaded_file_names = file_uploader.get_by_test_id("stFileUploaderFileName")
+    expect(uploaded_file_names).to_have_text(file["name"], use_inner_text=True)
+
+    delete_button = file_uploader.get_by_test_id("stFileUploaderDeleteBtn")
+    expect(delete_button.locator("button")).to_be_disabled()
 
 
 def test_uploads_directory_with_multiple_files(
