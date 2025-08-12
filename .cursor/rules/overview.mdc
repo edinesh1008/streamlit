@@ -22,6 +22,19 @@ alwaysApply: true
 - `scripts/`: Utility scripts for development and CI/CD.
 - `component-lib/`: Library for building custom components.
 
+## Python environment
+
+- Ensure a venv is active before running Python commands for the first time when opening a new terminal. If `$VIRTUAL_ENV` is already set, do not re-activate.
+- Preferred location: `<repo_root>/lib/venv`. Activate with: `source "$(git rev-parse --show-toplevel 2>/dev/null || pwd)/lib/venv/bin/activate"`.
+- If not active, try in order: `<repo_root>/lib/venv`, `<repo_root>/.venv`, `<repo_root>/venv`. If none found, ask the user.
+
+## Test execution
+
+- Prefer running a specific test or test file while iterating; avoid full-suite runs unless necessary.
+- Python unit: `PYTHONPATH=lib pytest lib/tests/streamlit/<path_to_test>.py`
+- Frontend unit: `cd frontend && yarn vitest <workspace_path_to_test>.test.tsx`
+- E2E (Playwright): `make run-e2e-test e2e_playwright/<test_file>.py`
+
 ## `make` commands
 
 Selection of `make` commands executable from root relevant for development:
