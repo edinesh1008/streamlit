@@ -443,6 +443,7 @@ class DeltaGenerator(
         element_proto: Message,
         add_rows_metadata: AddRowsMetadata | None = None,
         layout_config: LayoutConfig | None = None,
+        transitive: bool = False,
     ) -> DeltaGenerator:
         """Create NewElement delta, fill it, and enqueue it.
 
@@ -506,7 +507,9 @@ class DeltaGenerator(
             # position.
             new_cursor = (
                 dg._cursor.get_locked_cursor(
-                    delta_type=delta_type, add_rows_metadata=add_rows_metadata
+                    delta_type=delta_type,
+                    add_rows_metadata=add_rows_metadata,
+                    transitive=transitive,
                 )
                 if dg._cursor is not None
                 else None
@@ -585,7 +588,7 @@ class DeltaGenerator(
         block_dg._form_data = FormData(current_form_id(dg))
 
         # Must be called to increment this cursor's index.
-        dg._cursor.get_locked_cursor(add_rows_metadata=None)
+        dg._cursor.get_locked_cursor(add_rows_metadata=None, transitive=False)
         _enqueue_message(msg)
 
         caching.save_block_message(

@@ -107,7 +107,7 @@ def spinner(
     # can appear only in some reruns.
     empty_proto = EmptyProto(transient=True)
     spinner_placeholder = get_dg_singleton_instance().main_dg._enqueue(
-        "empty", empty_proto
+        "empty", empty_proto, transitive=True
     )
 
     display_message = True
@@ -124,7 +124,10 @@ def spinner(
                     spinner_proto.show_time = show_time
 
                     spinner_placeholder._enqueue(
-                        "spinner", spinner_proto, layout_config=layout_config
+                        "spinner",
+                        spinner_proto,
+                        layout_config=layout_config,
+                        transitive=True,
                     )
 
         add_script_run_ctx(threading.Timer(DELAY_SECS, set_message)).start()
@@ -138,4 +141,4 @@ def spinner(
 
             # Clear the spinner element with the empty transient element
             # from above:
-            spinner_placeholder._enqueue("empty", empty_proto)
+            spinner_placeholder._enqueue("empty", empty_proto, transitive=True)

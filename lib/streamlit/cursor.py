@@ -91,7 +91,7 @@ class Cursor:
     def is_locked(self) -> bool:
         raise NotImplementedError()
 
-    def get_locked_cursor(self, **props: Any) -> LockedCursor:
+    def get_locked_cursor(self, transitive: bool, **props: Any) -> LockedCursor:
         raise NotImplementedError()
 
     @property
@@ -140,7 +140,7 @@ class RunningCursor(Cursor):
     def is_locked(self) -> bool:
         return False
 
-    def get_locked_cursor(self, **props: Any) -> LockedCursor:
+    def get_locked_cursor(self, transitive: bool, **props: Any) -> LockedCursor:
         locked_cursor = LockedCursor(
             root_container=self._root_container,
             parent_path=self._parent_path,
@@ -148,7 +148,8 @@ class RunningCursor(Cursor):
             **props,
         )
 
-        self._index += 1
+        if not transitive:
+            self._index += 1
 
         return locked_cursor
 
@@ -201,7 +202,7 @@ class LockedCursor(Cursor):
     def is_locked(self) -> bool:
         return True
 
-    def get_locked_cursor(self, **props: Any) -> LockedCursor:
+    def get_locked_cursor(self, transitive: bool, **props: Any) -> LockedCursor:  # noqa: ARG002
         self._props = props
         return self
 
