@@ -37,37 +37,33 @@ MARKDOWN_HORIZONTAL_RULE_EXPRESSION: Final = "---"
 
 
 def _has_code_content(markdown_text: str) -> bool:
-    """Detect if markdown contains any form of code that would benefit from wider width.
+    """Detect if markdown contains code blocks that will be syntax highlighted when rendered.
 
     This includes:
     - Fenced code blocks (``` or ~~~ with optional language)
     - Indented code blocks (4+ spaces or 1+ tabs at start of line)
-    - Inline code (backticks)
-    - HTML pre/code blocks (when unsafe_allow_html=True)
+    - HTML code blocks with language class (e.g., <code class="language-python">)
 
     Args:
         markdown_text: The markdown text to analyze
 
     Returns
     -------
-        True if the text contains any form of code content
+        True if the text contains code blocks that will be rendered with syntax highlighting
     """
     # 1. Fenced code blocks (``` or ~~~ with optional language)
     fenced_pattern = r"```[\s\S]*?```|~~~[\s\S]*?~~~"
 
-    # 2. Inline code (backticks)
-    inline_pattern = r"`[^`\n]+`"
-
-    # 3. Indented code blocks (4+ spaces or 1+ tabs at start of line)
+    # 2. Indented code blocks (4+ spaces or 1+ tabs at start of line)
     indented_pattern = r"(?:^|\n)(?:    |\t)+\S.*(?:\n(?:    |\t)+.*)*"
 
-    # 4. HTML pre/code blocks (when unsafe_allow_html=True)
-    html_code_pattern = r"<(?:pre|code)[\s\S]*?</(?:pre|code)>"
+    # 3. HTML code blocks with language class (when unsafe_allow_html=True)
+    # Matches <code class="language-{lang}">...</code> (with or without surrounding <pre>)
+    html_code_pattern = r'<code\s+class=["\']language-\w+["\'][\s\S]*?</code>'
 
     # Check for any of these patterns
     return bool(
         re.search(fenced_pattern, markdown_text)
-        or re.search(inline_pattern, markdown_text)
         or re.search(indented_pattern, markdown_text, re.MULTILINE)
         or re.search(html_code_pattern, markdown_text, re.IGNORECASE)
     )
@@ -81,7 +77,7 @@ class MarkdownMixin:
         unsafe_allow_html: bool = False,
         *,  # keyword-only arguments:
         help: str | None = None,
-        width: Width = "content",
+        width: Width | Literal["auto"] = "auto",
     ) -> DeltaGenerator:
         r"""Display string formatted as Markdown.
 
@@ -194,12 +190,16 @@ class MarkdownMixin:
         if clean_text_body == MARKDOWN_HORIZONTAL_RULE_EXPRESSION:
             # Use st.divider here for styling reasons. Don't use content width
             # when the markdown is just a horizontal rule.
-            return self.divider(width=width if width != "content" else "stretch")
+            return self.divider(
+                width=width if width not in ["content", "auto"] else "stretch"
+            )
 
-        # Override width to "stretch" when markdown contains code and width is "content"
+        # Override width to "stretch" when markdown contains code and width is "auto"
         effective_width = width
-        if width == "content" and _has_code_content(clean_text_body):
+        if width == "auto" and _has_code_content(clean_text_body):
             effective_width = "stretch"
+        elif width == "auto":
+            effective_width = "content"
 
         markdown_proto = MarkdownProto()
 
