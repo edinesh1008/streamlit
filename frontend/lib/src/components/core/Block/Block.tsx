@@ -416,14 +416,9 @@ const BlockNodeRenderer = (props: BlockPropsWithoutWidth): ReactElement => {
   }
 
   if (containerElement) {
-    const userKey = getKeyFromId(node.deltaBlock.id)
-
     return (
       <StyledLayoutWrapper
-        className={classNames(
-          "stLayoutWrapper",
-          convertKeyToClassName(userKey)
-        )}
+        className={classNames("stLayoutWrapper")}
         data-testid="stLayoutWrapper"
         {...styles}
       >
