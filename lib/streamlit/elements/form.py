@@ -236,7 +236,7 @@ class FormMixin:
             # in the future. This might require including more form
             # parameters in the ID calculation.
             block_proto.id = compute_and_register_element_id(
-                "form", user_key=key, form_id=None
+                "form", user_key=key, dg=None
             )
 
         block_dg = self.dg._block(block_proto)
