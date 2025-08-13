@@ -329,3 +329,39 @@ with st.expander("Badge Width Examples", expanded=True):
         st.badge("Fixed 100px badge", width=100)
 
         st.badge("Stretch badge", width="stretch")
+
+with st.container(border=True):
+    st.markdown("---")
+    st.write("---")
+
+with st.container(border=True, horizontal_alignment="center"):
+    st.markdown("""
+        Here is some code:
+
+        ```python
+        abc = 123
+        ```
+
+        And here is some more:
+
+        ```python
+        abc = 123
+        ```
+    """)
+
+with st.container(border=True, horizontal=True):
+    st.markdown("""
+        Here is some code:
+
+        ```python
+        abc = 123
+        ```
+
+        And here is some more:
+
+        ```python
+        abc = 123
+        ```
+    """)
+    st.title("Test")
+    st.write("The markdown has a code block.")
