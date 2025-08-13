@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # isort: skip_file
-# ruff: noqa: E402, PLC0414, A001
+# ruff: noqa: E402, A001
 
 """Streamlit.
 
@@ -212,6 +212,7 @@ metric = _main.metric
 multiselect = _main.multiselect
 number_input = _main.number_input
 page_link = _main.page_link
+pdf = _main.pdf
 pills = _main.pills
 plotly_chart = _main.plotly_chart
 popover = _main.popover
