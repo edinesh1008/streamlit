@@ -89,6 +89,19 @@ export function useThemeManager(): [ThemeManager, object[]] {
         setFontFaces(themeInfo.fontFaces as object[])
       }
 
+      // If font sources are set, we need to add them to the index.html head
+      if (themeInfo.fontSources) {
+        themeInfo.fontSources.forEach(fontSource => {
+          if (fontSource.sourceUrl) {
+            // It should never be the case that sourceUrl is empty
+            const link = document.createElement("link")
+            link.rel = "stylesheet"
+            link.href = fontSource.sourceUrl
+            document.head.appendChild(link)
+          }
+        })
+      }
+
       const themeConfigProto = new CustomThemeConfig(themeInfo)
       const customTheme = createTheme(CUSTOM_THEME_NAME, themeConfigProto)
       updateTheme(customTheme)
