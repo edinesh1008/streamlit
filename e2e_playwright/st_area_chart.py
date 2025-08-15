@@ -97,6 +97,7 @@ for i, category in enumerate(categories):
         stacked_data.append(
             {
                 "time": t,
+                # This line advances the seed, so need to reset for the next chart
                 "value": 5 + 3 * np.sin(t * 0.3 + i * 0.5) + np.random.normal(0, 0.5),
                 "category": category,
                 "category_num": i,
@@ -126,6 +127,7 @@ empty_area = st.area_chart(
 )
 
 if st.button("Add data to Area Chart"):
+    np.random.seed(5)  # Ensure consistent random data for testing
     new_data = pd.DataFrame(
         {"Area 1": np.abs(np.random.randn(10)), "Area 2": np.abs(np.random.randn(10))}
     )

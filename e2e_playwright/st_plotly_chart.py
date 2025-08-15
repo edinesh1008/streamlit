@@ -267,3 +267,20 @@ st.plotly_chart(fig, use_container_width=False, theme=None)
 
 # uses container width when use_container_width flag is True
 st.plotly_chart(fig, use_container_width=True, theme=None)
+
+# Test for custom sequential colors
+sequential_data = pd.DataFrame(
+    {
+        "x": np.random.normal(0, 1, 100),
+        "y": np.random.normal(0, 1, 100),
+        "temperature": np.random.uniform(0, 100, 100),  # 0-100 temperature scale
+    }
+)
+
+fig_sequential = px.scatter(sequential_data, x="x", y="y", color="temperature")
+fig_sequential.update_layout(
+    coloraxis_colorbar=dict(
+        orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5, len=1
+    )
+)
+st.plotly_chart(fig_sequential, use_container_width=True)

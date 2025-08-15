@@ -20,6 +20,8 @@ from e2e_playwright.conftest import ImageCompareFunction, wait_for_app_loaded
 from e2e_playwright.shared.app_utils import check_top_level_class
 from e2e_playwright.shared.theme_utils import apply_theme_via_window
 
+TOTAL_PLOTLY_CHARTS = 17
+
 
 # Only do chromium as this can create a lot of screenshots
 # there should be no differences between chrome and safari and firefox
@@ -42,7 +44,9 @@ def test_plotly_has_consistent_visuals(
         "st_plotly_chart-template_customization",
         "st_plotly_chart-histogram_chart",
     ]
-    expect(themed_app.get_by_test_id("stPlotlyChart")).to_have_count(16)
+    expect(themed_app.get_by_test_id("stPlotlyChart")).to_have_count(
+        TOTAL_PLOTLY_CHARTS
+    )
     for i, name in enumerate(snapshot_names):
         assert_snapshot(
             themed_app.get_by_test_id("stPlotlyChart").nth(i),
@@ -187,6 +191,19 @@ def test_plotly_with_custom_theme(app: Page, assert_snapshot: ImageCompareFuncti
             "#bcbd22",
             "#17becf",
         ],
+        chartSequentialColors=[
+            "#482575",
+            "#414487",
+            "#35608d",
+            "#2a788e",
+            "#21918d",
+            "#22a884",
+            "#43bf71",
+            "#7ad151",
+            "#bcdf27",
+            "#000000",  # This is the 10th color, #7fc97f (11th) should be ignored
+            "#7fc97f",
+        ],
     )
 
     # Reload to apply the theme
@@ -194,8 +211,15 @@ def test_plotly_with_custom_theme(app: Page, assert_snapshot: ImageCompareFuncti
     wait_for_app_loaded(app)
 
     plotly_elements = app.get_by_test_id("stPlotlyChart")
-    expect(plotly_elements).to_have_count(16)
+    expect(plotly_elements).to_have_count(TOTAL_PLOTLY_CHARTS)
 
     # Take a snapshot of the single mark chart, shows it applies the first color
     # from chartCategoricalColors (orange):
     assert_snapshot(plotly_elements.nth(6), name="st_plotly_chart-custom-theme")
+
+    # Take a snapshot of the sequential chart, shows it works & applies only the first 10 colors
+    plotly_sequential_chart = plotly_elements.last
+    expect(plotly_sequential_chart).to_be_visible()
+    assert_snapshot(
+        plotly_sequential_chart, name="st_plotly_chart-sequential_colors_over_10"
+    )
