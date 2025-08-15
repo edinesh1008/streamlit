@@ -1479,6 +1479,44 @@ describe("createEmotionTheme", () => {
     }
   )
 
+  it("logs an error and returns an empty array if no valid colors are provided", () => {
+    const logErrorSpy = vi.spyOn(LOG, "error")
+    const themeInput: Partial<CustomThemeConfig> = {
+      // Check edge case where each of the 10 colors is invalid
+      chartSequentialColors: [
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+        "Z34FF9",
+      ],
+    }
+    const theme = createEmotionTheme(themeInput)
+    expect(theme.colors.chartSequentialColors).toEqual(
+      // Default sequential colors
+      [
+        "#e4f5ff",
+        "#c7ebff",
+        "#a6dcff",
+        "#83c9ff",
+        "#60b4ff",
+        "#3d9df3",
+        "#1c83e1",
+        "#0068c9",
+        "#0054a3",
+        "#004280",
+      ]
+    )
+    expect(logErrorSpy).toHaveBeenCalledWith(
+      `chartSequentialColors must have 10 colors. No valid colors provided. Falling back to default sequential colors.`
+    )
+  })
+
   it("showSidebarBorder config is set to false by default", () => {
     const theme = createEmotionTheme({})
     expect(theme.showSidebarBorder).toBe(false)

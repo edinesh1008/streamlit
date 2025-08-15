@@ -473,10 +473,15 @@ const validateChartColors = (
     return validatedColors
   }
 
-  // For sequential colors, we need to check the valid colors length is 10
+  // For sequential colors, we need to ensure exactly 10 colors
   // BE already handles initial check, and truncates colors passed to FE to no more than 10
-  // Only need to check if less than 10 to repeat colors if needed
-  if (validatedColors.length < 10) {
+  // But for window-injected themes, we need to handle both cases: < 10 and > 10
+  if (validatedColors.length === 0) {
+    LOG.error(
+      `chartSequentialColors must have 10 colors. No valid colors provided. Falling back to default sequential colors.`
+    )
+    return []
+  } else if (validatedColors.length < 10) {
     LOG.error(
       `chartSequentialColors must have 10 colors. ${validatedColors.length} valid colors provided: ${validatedColors.toString()}. Repeating valid colors to make 10.`
     )
@@ -488,6 +493,11 @@ const validateChartColors = (
       )
     }
     return repeatedColors
+  } else if (validatedColors.length > 10) {
+    LOG.error(
+      `chartSequentialColors must have 10 colors. ${validatedColors.length} valid colors provided: ${validatedColors.toString()}. Truncating to first 10 colors.`
+    )
+    return validatedColors.slice(0, 10)
   }
 
   return validatedColors
@@ -623,7 +633,8 @@ export const createEmotionTheme = (
       chartSequentialColors
     )
 
-    if (validatedSequentialColors.length === 10) {
+    // Set the validated colors if non-empty array
+    if (validatedSequentialColors.length > 0) {
       conditionalOverrides.colors.chartSequentialColors =
         validatedSequentialColors
     }
