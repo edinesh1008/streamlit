@@ -462,13 +462,35 @@ const validateChartColors = (
   configName: string,
   colors: string[]
 ): string[] => {
-  return (
-    colors
-      // parseColor returns undefined for invalid colors
-      .map(color => parseColor(color, configName))
-      // Filter any invalid colors
-      .filter((color): color is string => color !== undefined)
-  )
+  const validatedColors = colors
+    // parseColor returns undefined for invalid colors
+    .map(color => parseColor(color, configName))
+    // Filter any invalid colors
+    .filter((color): color is string => color !== undefined)
+
+  // For categorical colors, we don't need to check the length
+  if (configName === "chartCategoricalColors") {
+    return validatedColors
+  }
+
+  // For sequential colors, we need to check the valid colors length is 10
+  // BE already handles initial check, and truncates colors passed to FE to no more than 10
+  // Only need to check if less than 10 to repeat colors if needed
+  if (validatedColors.length < 10) {
+    LOG.error(
+      `chartSequentialColors must have 10 colors. ${validatedColors.length} valid colors provided: ${validatedColors.toString()}. Repeating valid colors to make 10.`
+    )
+
+    const repeatedColors = [...validatedColors]
+    while (repeatedColors.length < 10) {
+      repeatedColors.push(
+        validatedColors[repeatedColors.length % validatedColors.length]
+      )
+    }
+    return repeatedColors
+  }
+
+  return validatedColors
 }
 
 export const createEmotionTheme = (
@@ -600,15 +622,10 @@ export const createEmotionTheme = (
       "chartSequentialColors",
       chartSequentialColors
     )
-    // Set the validated colors, sequential colors should be an array of length 10
-    // Also checked length on BE, but check here that all of the entries passed as valid colors
+
     if (validatedSequentialColors.length === 10) {
       conditionalOverrides.colors.chartSequentialColors =
         validatedSequentialColors
-    } else {
-      LOG.error(
-        `Invalid chartSequentialColors: ${chartSequentialColors.toString()}. Falling back to default chartSequentialColors.`
-      )
     }
   }
 

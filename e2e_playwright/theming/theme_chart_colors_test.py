@@ -99,7 +99,6 @@ def test_custom_chart_colors_sidebar(app: Page, assert_snapshot: ImageCompareFun
     assert_snapshot(sidebar_content, name="custom_chart_colors-sidebar")
 
 
-@pytest.mark.usefixtures("configure_custom_chart_colors")
 def test_sequential_custom_colors_under_10(
     app: Page, assert_snapshot: ImageCompareFunction
 ):
@@ -140,7 +139,6 @@ def test_sequential_custom_colors_under_10(
     )
 
 
-@pytest.mark.usefixtures("configure_custom_chart_colors")
 def test_sequential_custom_colors_over_10(
     app: Page, assert_snapshot: ImageCompareFunction
 ):

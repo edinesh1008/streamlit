@@ -1413,16 +1413,16 @@ describe("createEmotionTheme", () => {
         "invalid",
       ],
       [
-        "#e4f5ff",
-        "#c7ebff",
-        "#a6dcff",
-        "#83c9ff",
-        "#60b4ff",
-        "#3d9df3",
-        "#1c83e1",
-        "#0068c9",
-        "#0054a3",
-        "#004280",
+        "red",
+        "orange",
+        "yellow",
+        "green",
+        "blue",
+        "purple",
+        "pink",
+        "gray",
+        "black",
+        "red",
       ],
     ],
     [
@@ -1441,16 +1441,16 @@ describe("createEmotionTheme", () => {
         "#Z34FF9",
       ],
       [
-        "#e4f5ff",
-        "#c7ebff",
-        "#a6dcff",
-        "#83c9ff",
-        "#60b4ff",
-        "#3d9df3",
-        "#1c83e1",
-        "#0068c9",
-        "#0054a3",
-        "#004280",
+        "#482575",
+        "#414487",
+        "#35608d",
+        "#2a788e",
+        "#21918d",
+        "#22a884",
+        "#43bf71",
+        "#7ad151",
+        "#bcdf27",
+        "#482575",
       ],
     ],
   ])(
@@ -1468,9 +1468,10 @@ describe("createEmotionTheme", () => {
       expect(logWarningSpy).toHaveBeenCalledWith(
         `Invalid color passed for chartSequentialColors in theme: "${invalidColor}"`
       )
+      const validColors = chartSequentialColors.slice(0, -1)
       // Error log from validateChartColors (<10 colors)
       expect(logErrorSpy).toHaveBeenCalledWith(
-        `Invalid chartSequentialColors: ${chartSequentialColors.toString()}. Falling back to default chartSequentialColors.`
+        `chartSequentialColors must have 10 colors. 9 valid colors provided: ${validColors.toString()}. Repeating valid colors to make 10.`
       )
       expect(theme.colors.chartSequentialColors).toEqual(
         expectedSequentialColors
