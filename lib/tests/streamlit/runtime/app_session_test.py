@@ -1608,6 +1608,107 @@ class PopulateCustomThemeMsgTest(unittest.TestCase):
 
         patched_logger.warning.assert_called_once()
 
+    @patch("streamlit.runtime.app_session._LOGGER")
+    @patch("streamlit.runtime.app_session.config")
+    def test_handles_sequential_colors_by_repeating(
+        self, patched_config, patched_logger
+    ):
+        """Test that if the config has fewer than 10 colors, we repeat the colors to get to 10 values
+        and log a warning"""
+        patched_config.get_options_for_section.side_effect = (
+            _mock_get_options_for_section(
+                {
+                    # 8 colors, so we should repeat the first 2 colors to get to 10
+                    "chartSequentialColors": [
+                        "#dffde9",
+                        "#c0fcd3",
+                        "#9ef6bb",
+                        "#7defa1",
+                        "#5ce488",
+                        "#3dd56d",
+                        "#21c354",
+                        "#09ab3b",
+                    ],
+                }
+            )
+        )
+
+        msg = ForwardMsg()
+        new_session_msg = msg.new_session
+        app_session._populate_theme_msg(new_session_msg.custom_theme)
+
+        patched_logger.warning.assert_called_once_with(
+            "Config theme.chartSequentialColors should have 10 color values, but got %s. %s",
+            8,
+            "Repeating configured colors to make 10.",
+        )
+
+        assert new_session_msg.custom_theme.chart_sequential_colors == [
+            "#dffde9",
+            "#c0fcd3",
+            "#9ef6bb",
+            "#7defa1",
+            "#5ce488",
+            "#3dd56d",
+            "#21c354",
+            "#09ab3b",
+            "#dffde9",
+            "#c0fcd3",
+        ]
+
+    @patch("streamlit.runtime.app_session._LOGGER")
+    @patch("streamlit.runtime.app_session.config")
+    def test_handles_sequential_colors_by_truncating(
+        self, patched_config, patched_logger
+    ):
+        """Test that if the config has more than 10 colors, we truncate the list to 10 values
+        and log a warning"""
+        patched_config.get_options_for_section.side_effect = (
+            _mock_get_options_for_section(
+                {
+                    "chartSequentialColors": [
+                        # 13 colors, so we should truncate the list to first 10 values
+                        "#dffde9",
+                        "#c0fcd3",
+                        "#9ef6bb",
+                        "#7defa1",
+                        "#5ce488",
+                        "#3dd56d",
+                        "#21c354",
+                        "#09ab3b",
+                        "#158237",
+                        "#177233",
+                        "#19622f",
+                        "#1b522b",
+                        "#1d4227",
+                    ],
+                }
+            )
+        )
+
+        msg = ForwardMsg()
+        new_session_msg = msg.new_session
+        app_session._populate_theme_msg(new_session_msg.custom_theme)
+
+        patched_logger.warning.assert_called_once_with(
+            "Config theme.chartSequentialColors should have 10 color values, but got %s. %s",
+            13,
+            "Truncating configured colors to 10.",
+        )
+
+        assert new_session_msg.custom_theme.chart_sequential_colors == [
+            "#dffde9",
+            "#c0fcd3",
+            "#9ef6bb",
+            "#7defa1",
+            "#5ce488",
+            "#3dd56d",
+            "#21c354",
+            "#09ab3b",
+            "#158237",
+            "#177233",
+        ]
+
 
 @patch.object(
     PagesManager,

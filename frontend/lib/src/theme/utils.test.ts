@@ -1396,8 +1396,10 @@ describe("createEmotionTheme", () => {
   )
 
   it.each([
-    // Test invalid color values
+    // Backend ensures 10 colors from config - so need to test invalid
+    // colors within the 10 provided color values
     [
+      "invalid",
       [
         "red",
         "orange",
@@ -1424,8 +1426,20 @@ describe("createEmotionTheme", () => {
       ],
     ],
     [
-      // When the array doesn't contain 10 colors, returns default colors
-      ["invalid"],
+      "#Z34FF9",
+      [
+        "#482575",
+        "#414487",
+        "#35608d",
+        "#2a788e",
+        "#21918d",
+        "#22a884",
+        "#43bf71",
+        "#7ad151",
+        "#bcdf27",
+        // Invalid hex color
+        "#Z34FF9",
+      ],
       [
         "#e4f5ff",
         "#c7ebff",
@@ -1441,8 +1455,9 @@ describe("createEmotionTheme", () => {
     ],
   ])(
     "logs a warning and removes any invalid sequential color configs '%s'",
-    (chartSequentialColors, expectedSequentialColors) => {
+    (invalidColor, chartSequentialColors, expectedSequentialColors) => {
       const logWarningSpy = vi.spyOn(LOG, "warn")
+      const logErrorSpy = vi.spyOn(LOG, "error")
       const themeInput: Partial<CustomThemeConfig> = {
         chartSequentialColors,
       }
@@ -1451,10 +1466,10 @@ describe("createEmotionTheme", () => {
 
       // Error log from parseColor (invalid color)
       expect(logWarningSpy).toHaveBeenCalledWith(
-        `Invalid color passed for chartSequentialColors in theme: "invalid"`
+        `Invalid color passed for chartSequentialColors in theme: "${invalidColor}"`
       )
       // Error log from validateChartColors (<10 colors)
-      expect(logWarningSpy).toHaveBeenCalledWith(
+      expect(logErrorSpy).toHaveBeenCalledWith(
         `Invalid chartSequentialColors: ${chartSequentialColors.toString()}. Falling back to default chartSequentialColors.`
       )
       expect(theme.colors.chartSequentialColors).toEqual(

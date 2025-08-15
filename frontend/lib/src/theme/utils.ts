@@ -601,12 +601,12 @@ export const createEmotionTheme = (
       chartSequentialColors
     )
     // Set the validated colors, sequential colors should be an array of length 10
-    // Also checked on BE, but check here again in case one of the entries is not a valid color
+    // Also checked length on BE, but check here that all of the entries passed as valid colors
     if (validatedSequentialColors.length === 10) {
       conditionalOverrides.colors.chartSequentialColors =
         validatedSequentialColors
     } else {
-      LOG.warn(
+      LOG.error(
         `Invalid chartSequentialColors: ${chartSequentialColors.toString()}. Falling back to default chartSequentialColors.`
       )
     }

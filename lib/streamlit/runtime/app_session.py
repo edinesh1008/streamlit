@@ -1134,11 +1134,25 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
     if chart_sequential_colors is not None:
         # Check that the list has 10 color values
         if len(chart_sequential_colors) != 10:
-            _LOGGER.error(
-                "Config theme.chartSequentialColors should have 10 color values, "
-                "but got %s. Defaulting to Streamlit's default colors.",
-                len(chart_sequential_colors),
+            # Log a warning that the list has been repeated/truncated
+            message = (
+                "Repeating configured colors to make 10."
+                if len(chart_sequential_colors) < 10
+                else "Truncating configured colors to 10."
             )
+            _LOGGER.warning(
+                "Config theme.chartSequentialColors should have 10 color values, "
+                "but got %s. %s",
+                len(chart_sequential_colors),
+                message,
+            )
+
+        # Ensure chartSequentialColors has 10 color values: if 10, pass through. If fewer than 10,
+        # repeat the provided colors until we have 10 values, If greater than 10, only pass first 10.
+        chart_sequential_colors = _ensure_ten_sequential_color_values(
+            chart_sequential_colors
+        )
+
         for color in chart_sequential_colors:
             try:
                 msg.chart_sequential_colors.append(color)
@@ -1148,6 +1162,30 @@ def _populate_theme_msg(msg: CustomThemeConfig, section: str = "theme") -> None:
                     color,
                     exc_info=e,
                 )
+
+
+def _ensure_ten_sequential_color_values(config_colors: list[str]) -> list[str]:
+    """
+    Ensures the chartSequentialColors config has exactly 10 values. If necessary,
+    repeats color values from the beginning if the input list has fewer than 10 elements,
+    or truncates the list if it has more than 10 color values.
+
+    Args:
+        config_colors: The list to process.
+
+    Returns
+    -------
+        The new colors list with exactly 10 values.
+    """
+    if len(config_colors) >= 10:
+        return config_colors[:10]
+
+    result_list = config_colors.copy()
+    elements_to_add = 10 - len(result_list)
+    for i in range(elements_to_add):
+        result_list.append(config_colors[i % len(config_colors)])
+
+    return result_list
 
 
 def _populate_user_info_msg(msg: UserInfo) -> None:
