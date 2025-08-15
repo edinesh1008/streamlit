@@ -18,13 +18,12 @@ import os
 import pytest
 from playwright.sync_api import Page, expect
 
-from e2e_playwright.conftest import ImageCompareFunction, wait_for_app_loaded
+from e2e_playwright.conftest import ImageCompareFunction
 from e2e_playwright.shared.app_utils import (
     expand_sidebar,
     expect_no_skeletons,
     reset_hovering,
 )
-from e2e_playwright.shared.theme_utils import apply_theme_via_window
 
 
 @pytest.fixture(scope="module")
@@ -97,87 +96,3 @@ def test_custom_chart_colors_sidebar(app: Page, assert_snapshot: ImageCompareFun
     sidebar_content = app.get_by_test_id("stSidebarContent")
     expect(sidebar_content).to_be_visible()
     assert_snapshot(sidebar_content, name="custom_chart_colors-sidebar")
-
-
-def test_sequential_custom_colors_under_10(
-    app: Page, assert_snapshot: ImageCompareFunction
-):
-    """Test that when less than 10 sequential custom colors are provided, they are repeated."""
-    # Apply custom theme using window injection
-    apply_theme_via_window(
-        app,
-        base="light",
-        chartSequentialColors=[
-            "#482575",
-            "#414487",
-            "#35608d",
-            "#2a788e",
-            "#21918d",
-            "#22a884",
-            "#43bf71",
-            "#7ad151",
-        ],
-    )
-    # Reload to apply the theme
-    app.reload()
-    # Set bigger viewport to better show the charts
-    app.set_viewport_size({"width": 1280, "height": 1000})
-    wait_for_app_loaded(app)
-
-    # Make sure that all elements are rendered and no skeletons are shown:
-    expect_no_skeletons(app, timeout=25000)
-    # Reset hovering to avoid flakiness from plotly toolbar
-    reset_hovering(app)
-    # Add some additional timeout to ensure that charts can load without
-    # creating flakiness:
-    app.wait_for_timeout(10000)
-
-    area_chart_sequential = app.get_by_test_id("stVegaLiteChart").nth(3)
-    expect(area_chart_sequential).to_be_visible()
-    assert_snapshot(
-        area_chart_sequential, name="custom_chart_colors-sequential_under_10"
-    )
-
-
-def test_sequential_custom_colors_over_10(
-    app: Page, assert_snapshot: ImageCompareFunction
-):
-    """Test that when 11 sequential custom colors are provided, only the first 10 are used."""
-    # Apply custom theme using window injection
-    apply_theme_via_window(
-        app,
-        base="light",
-        chartSequentialColors=[
-            "#482575",
-            "#414487",
-            "#35608d",
-            "#2a788e",
-            "#21918d",
-            "#22a884",
-            "#43bf71",
-            "#7ad151",
-            "#bcdf27",
-            "#000000",
-            "#7fc97f",
-        ],
-    )
-
-    # Reload to apply the theme
-    app.reload()
-    # Set bigger viewport to better show the charts
-    app.set_viewport_size({"width": 1280, "height": 1000})
-    wait_for_app_loaded(app)
-
-    # Make sure that all elements are rendered and no skeletons are shown:
-    expect_no_skeletons(app, timeout=25000)
-    # Reset hovering to avoid flakiness from plotly toolbar
-    reset_hovering(app)
-    # Add some additional timeout to ensure that charts can load without
-    # creating flakiness:
-    app.wait_for_timeout(10000)
-
-    area_chart_sequential = app.get_by_test_id("stVegaLiteChart").nth(3)
-    expect(area_chart_sequential).to_be_visible()
-    assert_snapshot(
-        area_chart_sequential, name="custom_chart_colors-sequential_over_10"
-    )

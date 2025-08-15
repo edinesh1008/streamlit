@@ -14,14 +14,23 @@
 
 from playwright.sync_api import Page, expect
 
-from e2e_playwright.conftest import ImageCompareFunction, wait_for_app_run
-from e2e_playwright.shared.app_utils import check_top_level_class
+from e2e_playwright.conftest import (
+    ImageCompareFunction,
+    wait_for_app_loaded,
+    wait_for_app_run,
+)
+from e2e_playwright.shared.app_utils import (
+    check_top_level_class,
+    expect_no_skeletons,
+    reset_hovering,
+)
+from e2e_playwright.shared.theme_utils import apply_theme_via_window
 from e2e_playwright.shared.vega_utils import (
     assert_vega_chart_height,
     assert_vega_chart_width,
 )
 
-TOTAL_AREA_CHARTS = 16
+TOTAL_AREA_CHARTS = 17
 
 
 def test_area_chart_rendering(app: Page, assert_snapshot: ImageCompareFunction):
@@ -60,7 +69,8 @@ def test_area_chart_rendering(app: Page, assert_snapshot: ImageCompareFunction):
     assert_snapshot(area_chart_elements.nth(12), name="st_area_chart-stacked_true")
     assert_snapshot(area_chart_elements.nth(13), name="st_area_chart-stacked_normalize")
     assert_snapshot(area_chart_elements.nth(14), name="st_area_chart-stacked_center")
-    # The add_rows chart (index 15) is tested separately in test_add_rows_preserves_styling
+    # The custom theme chart (index 15) is tested separately
+    # The add_rows chart (index 16) is tested separately in test_add_rows_preserves_styling
 
 
 def test_themed_area_chart_rendering(
@@ -89,7 +99,7 @@ def test_add_rows_preserves_styling(app: Page, assert_snapshot: ImageCompareFunc
     """Test that add_rows preserves the original styling params (color, width, height,
     use_container_width, stack).
     """
-    add_rows_chart = app.get_by_test_id("stVegaLiteChart").nth(15)
+    add_rows_chart = app.get_by_test_id("stVegaLiteChart").nth(16)
     expect(add_rows_chart).to_be_visible()
 
     # Click the button to add data to the chart
@@ -105,3 +115,87 @@ def test_add_rows_preserves_styling(app: Page, assert_snapshot: ImageCompareFunc
     assert_vega_chart_height(add_rows_chart, 300)
 
     assert_snapshot(add_rows_chart, name="st_area_chart-add_rows_preserves_styling")
+
+
+def test_sequential_custom_colors_under_10(
+    app: Page, assert_snapshot: ImageCompareFunction
+):
+    """Test that when less than 10 sequential custom colors are provided, they are repeated."""
+    # Apply custom theme using window injection
+    apply_theme_via_window(
+        app,
+        base="light",
+        chartSequentialColors=[
+            "#482575",
+            "#414487",
+            "#35608d",
+            "#2a788e",
+            "#21918d",
+            "#22a884",
+            "#43bf71",
+            "#7ad151",
+        ],
+    )
+    # Reload to apply the theme
+    app.reload()
+    # Set bigger viewport to better show the charts
+    app.set_viewport_size({"width": 1280, "height": 1000})
+    wait_for_app_loaded(app)
+
+    # Make sure that all elements are rendered and no skeletons are shown:
+    expect_no_skeletons(app, timeout=25000)
+    # Reset hovering to avoid flakiness from plotly toolbar
+    reset_hovering(app)
+    # Add some additional timeout to ensure that charts can load without
+    # creating flakiness:
+    app.wait_for_timeout(10000)
+
+    area_chart_sequential = app.get_by_test_id("stVegaLiteChart").nth(3)
+    expect(area_chart_sequential).to_be_visible()
+    assert_snapshot(
+        area_chart_sequential, name="custom_chart_colors-sequential_under_10"
+    )
+
+
+def test_sequential_custom_colors_over_10(
+    app: Page, assert_snapshot: ImageCompareFunction
+):
+    """Test that when 11 sequential custom colors are provided, only the first 10 are used."""
+    # Apply custom theme using window injection
+    apply_theme_via_window(
+        app,
+        base="light",
+        chartSequentialColors=[
+            "#482575",
+            "#414487",
+            "#35608d",
+            "#2a788e",
+            "#21918d",
+            "#22a884",
+            "#43bf71",
+            "#7ad151",
+            "#bcdf27",
+            "#000000",
+            "#7fc97f",
+        ],
+    )
+
+    # Reload to apply the theme
+    app.reload()
+    # Set bigger viewport to better show the charts
+    app.set_viewport_size({"width": 1280, "height": 1000})
+    wait_for_app_loaded(app)
+
+    # Make sure that all elements are rendered and no skeletons are shown:
+    expect_no_skeletons(app, timeout=25000)
+    # Reset hovering to avoid flakiness from plotly toolbar
+    reset_hovering(app)
+    # Add some additional timeout to ensure that charts can load without
+    # creating flakiness:
+    app.wait_for_timeout(10000)
+
+    area_chart_sequential = app.get_by_test_id("stVegaLiteChart").nth(3)
+    expect(area_chart_sequential).to_be_visible()
+    assert_snapshot(
+        area_chart_sequential, name="custom_chart_colors-sequential_over_10"
+    )

@@ -80,6 +80,37 @@ st.area_chart(source, x="date", y="count", color="series", stack=True)
 st.area_chart(source, x="date", y="count", color="series", stack="normalize")
 st.area_chart(source, x="date", y="count", color="series", stack="center")
 
+# Test that sequential custom colors are applied correctly
+st.write("**Sequential: `st.area_chart`**")
+stacked_data = []
+categories = [
+    "Category A",
+    "Category B",
+    "Category C",
+    "Category D",
+    "Category E",
+]
+time_points = np.arange(20)
+
+for i, category in enumerate(categories):
+    for t in time_points:
+        stacked_data.append(
+            {
+                "time": t,
+                "value": 5 + 3 * np.sin(t * 0.3 + i * 0.5) + np.random.normal(0, 0.5),
+                "category": category,
+                "category_num": i,
+            }
+        )
+
+st.area_chart(
+    pd.DataFrame(stacked_data),
+    x="time",
+    y="value",
+    color="category_num",
+    use_container_width=True,
+)
+
 # Test that add_rows maintains original styling params:
 # color, width, height, use_container_width, horizontal, stack
 area_data = pd.DataFrame({"Area 1": [], "Area 2": []})
