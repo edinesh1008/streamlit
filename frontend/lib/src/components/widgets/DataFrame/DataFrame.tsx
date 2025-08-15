@@ -1175,8 +1175,8 @@ function DataFrame({
               kind: "checkbox-visible",
               checkboxStyle: "square",
               theme: {
-                bgCell: gridTheme.glideTheme.bgHeader,
-                bgCellMedium: gridTheme.glideTheme.bgHeader,
+                bgCell: gridTheme.glideTheme.bgCell,
+                bgCellMedium: gridTheme.glideTheme.bgCell,
                 // Use a lighter color for the checkboxes in the row markers column,
                 // otherwise its a bit too prominent:
                 textMedium: gridTheme.glideTheme.textLight,
@@ -1242,8 +1242,8 @@ function DataFrame({
                 kind: "checkbox",
                 checkboxStyle: "square",
                 theme: {
-                  bgCell: gridTheme.glideTheme.bgHeader,
-                  bgCellMedium: gridTheme.glideTheme.bgHeader,
+                  bgCell: gridTheme.glideTheme.bgCell,
+                  bgCellMedium: gridTheme.glideTheme.bgCell,
                 },
               },
               rowSelectionMode: "multi",
