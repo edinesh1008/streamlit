@@ -68,8 +68,8 @@ def test_area_chart_rendering(app: Page, assert_snapshot: ImageCompareFunction):
     assert_snapshot(area_chart_elements.nth(12), name="st_area_chart-stacked_true")
     assert_snapshot(area_chart_elements.nth(13), name="st_area_chart-stacked_normalize")
     assert_snapshot(area_chart_elements.nth(14), name="st_area_chart-stacked_center")
-    # The add_rows chart (index 15) is tested separately in test_add_rows_preserves_styling
-    # The custom sequential colors chart (index 16) is tested separately
+    # The custom sequential colors chart (index 15) is tested separately
+    # The add_rows chart (index 16) is tested separately in test_add_rows_preserves_styling
 
 
 def test_themed_area_chart_rendering(
@@ -98,7 +98,7 @@ def test_add_rows_preserves_styling(app: Page, assert_snapshot: ImageCompareFunc
     """Test that add_rows preserves the original styling params (color, width, height,
     use_container_width, stack).
     """
-    add_rows_chart = app.get_by_test_id("stVegaLiteChart").nth(15)
+    add_rows_chart = app.get_by_test_id("stVegaLiteChart").nth(16)
     expect(add_rows_chart).to_be_visible()
 
     # Click the button to add data to the chart
@@ -143,7 +143,7 @@ def test_sequential_custom_colors_under_10(
     # Make sure that all elements are rendered and no skeletons are shown:
     expect_no_skeletons(app, timeout=25000)
 
-    area_chart_sequential = app.get_by_test_id("stVegaLiteChart").nth(16)
+    area_chart_sequential = app.get_by_test_id("stVegaLiteChart").nth(15)
     expect(area_chart_sequential).to_be_visible()
     assert_snapshot(
         area_chart_sequential, name="st_area_chart-sequential_colors_under_10"
