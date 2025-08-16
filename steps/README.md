@@ -21,6 +21,7 @@ Not every change requires a STEP. However, having an approved STEP increases the
 3. Approval requires at least two approvals from core maintainers.
    - If approved: Maintainers will assign the final number, rename the file, update the Status to Approved, merge the STEP PR and link the STEP document in related issues.
    - If rejected: The PR is closed with an explanation.
+   - Note: The PR might be kept open for a while. E.g. if the feature is blocked by other enhancements.
 
 ## STEP Lifecycle
 
