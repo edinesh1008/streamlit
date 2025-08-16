@@ -16,7 +16,6 @@
 
 import React, { useCallback, useMemo } from "react"
 
-import groupBy from "lodash/groupBy"
 import Overflow from "rc-overflow"
 
 import { StreamlitEndpoints } from "@streamlit/connection"
@@ -28,6 +27,7 @@ import {
   StyledTopNavLinkContainer,
 } from "./styled-components"
 import TopNavSection from "./TopNavSection"
+import { groupPagesBySection, processNavigationStructure } from "./utils"
 
 import { SidebarNavLink } from "./index"
 
@@ -46,24 +46,24 @@ const TopNav: React.FC<Props> = ({
   appPages,
   onPageChange,
 }) => {
-  const navSections = useMemo(() => {
-    return groupBy(appPages, p => p.sectionHeader)
+  const { data, itemKey } = useMemo(() => {
+    const navSections = groupPagesBySection(appPages)
+    const processed = processNavigationStructure(navSections)
+    
+    // Combine individual pages and sections for the overflow component
+    const combinedData: (IAppPage | IAppPage[])[] = [
+      ...processed.individualPages,
+      ...Object.values(processed.sections),
+    ]
+
+    const keyFn = (item: IAppPage | IAppPage[]) => {
+      return Array.isArray(item)
+        ? (item[0]?.sectionHeader ?? "")
+        : (item.pageScriptHash ?? "")
+    }
+
+    return { data: combinedData, itemKey: keyFn }
   }, [appPages])
-
-  // Check if there are ANY sections (including single sections)
-  const hasSections = Object.keys(navSections).some(
-    key => key !== "undefined" && key !== ""
-  )
-
-  const data = hasSections
-    ? Object.values(navSections)
-    : Object.values(navSections).flat()
-
-  const itemKey = useCallback((item: IAppPage | IAppPage[]) => {
-    return Array.isArray(item)
-      ? (item[0]?.sectionHeader ?? "")
-      : (item.pageScriptHash ?? "")
-  }, [])
 
   const renderItem = useCallback(
     (item: IAppPage | IAppPage[], _info: unknown) => {
@@ -110,23 +110,15 @@ const TopNav: React.FC<Props> = ({
       const totalNumPages = items.flat().length
       const title = `${totalNumPages} more`
 
-      if (Array.isArray(items[0])) {
-        return (
-          <TopNavSection
-            hideChevron={true}
-            sections={items as IAppPage[][]}
-            title={title}
-            handlePageChange={onPageChange}
-            endpoints={endpoints}
-            pageLinkBaseUrl={pageLinkBaseUrl}
-            currentPageScriptHash={currentPageScriptHash}
-          />
-        )
-      }
+      // Convert all items to sections format for the overflow menu
+      const sections: IAppPage[][] = items.map(item =>
+        Array.isArray(item) ? item : [item]
+      )
+
       return (
         <TopNavSection
           hideChevron={true}
-          sections={[items as IAppPage[]]}
+          sections={sections}
           title={title}
           handlePageChange={onPageChange}
           endpoints={endpoints}
