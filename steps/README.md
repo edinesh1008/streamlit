@@ -4,7 +4,7 @@ This directory contains Streamlit Enhancement Proposals (STEP). STEPs are docume
 
 ## When to write a STEP?
 
-Not every change requires a STEP. However, having an approved STEP increases the likelihood that an enhancement PR gets merged. Changes that might not require a spec (case by case):
+Not every change requires a STEP. However, having an approved STEP increases the likelihood that an enhancement PR gets merged. Changes that might not require a STEP (case by case):
 
 - Non‑user‑facing features
 - Bug fixes
@@ -13,7 +13,7 @@ Not every change requires a STEP. However, having an approved STEP increases the
 
 ## How to propose a STEP?
 
-1. Create a PR that copies [specs/0000-template.md](./0000-template.md) and fill it out.
+1. Create a PR that copies [steps/0000-template.md](./0000-template.md) and fill it out.
    - PR title: `[STEP] <short, Title Case name>`, e.g., `[STEP] Datetime widget`
    - Filename: `0000-<kebab-case-slug>.md`, e.g., `0000-datetime-widget.md`. We will assign the correct number before merging.
    - Keep the PR in Draft until it’s ready for discussion.
