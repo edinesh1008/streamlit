@@ -19,7 +19,7 @@ Not every change requires a STEP. However, having an approved STEP increases the
    - Keep the PR in Draft until it’s ready for discussion.
 2. When ready, mark the PR “Ready for review” on GitHub. The PR thread is the canonical place for discussion.
 3. Approval requires at least two approvals from core maintainers.
-   - If approved: Maintainers will assign the final number, rename the file, update the Status to Approved, and merge the STEP PR.
+   - If approved: Maintainers will assign the final number, rename the file, update the Status to Approved, merge the STEP PR and link the STEP document in related issues.
    - If rejected: The PR is closed with an explanation.
 
 ## STEP Lifecycle
