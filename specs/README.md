@@ -1,6 +1,6 @@
-# Streamlit Enhancement Proposals (STEPs)
+# Streamlit Enhancement Proposals (STEP)
 
-This directory contains Streamlit Enhancement Proposals (STEPs). STEPs are documents that describe a new feature or enhancement to Streamlit.
+This directory contains Streamlit Enhancement Proposals (STEP). STEPs are documents that describe a new feature or enhancement to Streamlit.
 
 ## When to write a STEP?
 
