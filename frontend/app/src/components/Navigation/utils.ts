@@ -72,13 +72,15 @@ export function groupPagesBySection(appPages: IAppPage[]): NavigationSections {
  * there are any non-empty section headers.
  */
 export function hasNonEmptySections(navSections: NavigationSections): boolean {
-  return Object.keys(navSections).some(key => key !== "" && key !== "undefined")
+  return Object.keys(navSections).some(
+    key => key !== "" && key !== "undefined"
+  )
 }
 
 /**
  * Processes navigation sections to separate individual pages (those with empty
  * section headers) from sectioned pages when there are mixed sections.
- * 
+ *
  * This ensures consistent behavior between sidebar and top navigation:
  * - Pages with empty section headers ("") are displayed as individual items
  * - Pages with non-empty section headers are grouped into sections
@@ -87,7 +89,7 @@ export function processNavigationStructure(
   navSections: NavigationSections
 ): ProcessedNavigation {
   const hasNamedSections = hasNonEmptySections(navSections)
-  
+
   if (!hasNamedSections) {
     // If there are no named sections, all pages are individual
     return {
@@ -99,7 +101,7 @@ export function processNavigationStructure(
   // If there are named sections, separate empty section pages as individuals
   const individualPages = navSections[""] || []
   const sections: NavigationSections = {}
-  
+
   Object.entries(navSections).forEach(([header, pages]) => {
     if (header !== "" && header !== "undefined") {
       sections[header] = pages
@@ -115,7 +117,9 @@ export function processNavigationStructure(
 /**
  * Helper to get all pages in display order (individuals first, then sections)
  */
-export function getAllPagesInOrder(processed: ProcessedNavigation): IAppPage[] {
+export function getAllPagesInOrder(
+  processed: ProcessedNavigation
+): IAppPage[] {
   return [
     ...processed.individualPages,
     ...Object.values(processed.sections).flat(),

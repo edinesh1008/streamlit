@@ -99,7 +99,7 @@ function generateNavSections(
   currentPageCount: number
 ): ReactNode[] {
   const contents: ReactNode[] = []
-  
+
   Object.entries(sections).forEach(([header, pages]) => {
     // Create a shallow copy to prevent mutations below from affecting
     // the original array.
@@ -166,7 +166,7 @@ const SidebarNav = ({
 
   const numVisiblePages = useMemo(() => {
     const hasSections = Object.keys(navigationStructure.sections).length > 0
-    
+
     if (!hasSections) {
       return appPages.length
     }
@@ -174,12 +174,14 @@ const SidebarNav = ({
     let count = navigationStructure.individualPages.length
 
     // Only count pages in expanded sections
-    Object.entries(navigationStructure.sections).forEach(([sectionName, pages]) => {
-      if (expandedSections && expandedSections[sectionName]) {
-        count += pages.length
+    Object.entries(navigationStructure.sections).forEach(
+      ([sectionName, pages]) => {
+        if (expandedSections && expandedSections[sectionName]) {
+          count += pages.length
+        }
       }
-    })
-    
+    )
+
     return count
   }, [appPages.length, expandedSections, navigationStructure])
 
@@ -306,17 +308,20 @@ const SidebarNav = ({
     numVisiblePages > COLLAPSE_THRESHOLD &&
     !expandSidebarNav
   const needsCollapse = shouldShowViewButton && !expanded
-  
+
   // First, render individual pages (those with empty section headers)
   let currentPageCount = 0
   if (navigationStructure.individualPages.length > 0) {
     const individualPages = needsCollapse
-      ? navigationStructure.individualPages.slice(0, NUM_PAGES_TO_SHOW_WHEN_COLLAPSED)
+      ? navigationStructure.individualPages.slice(
+          0,
+          NUM_PAGES_TO_SHOW_WHEN_COLLAPSED
+        )
       : navigationStructure.individualPages
     contents.push(...individualPages.map(generateNavLink))
     currentPageCount += individualPages.length
   }
-  
+
   // Then, render sections if there are any
   if (Object.keys(navigationStructure.sections).length > 0) {
     const sectionContents = generateNavSections(

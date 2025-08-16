@@ -49,7 +49,7 @@ const TopNav: React.FC<Props> = ({
   const { data, itemKey } = useMemo(() => {
     const navSections = groupPagesBySection(appPages)
     const processed = processNavigationStructure(navSections)
-    
+
     // Combine individual pages and sections for the overflow component
     const combinedData: (IAppPage | IAppPage[])[] = [
       ...processed.individualPages,

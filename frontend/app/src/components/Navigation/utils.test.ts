@@ -147,7 +147,11 @@ describe("groupPagesBySection", () => {
         { pageName: "page2", pageScriptHash: "hash2", sectionHeader: "Admin" },
       ],
       Reports: [
-        { pageName: "page3", pageScriptHash: "hash3", sectionHeader: "Reports" },
+        {
+          pageName: "page3",
+          pageScriptHash: "hash3",
+          sectionHeader: "Reports",
+        },
       ],
       "": [{ pageName: "page4", pageScriptHash: "hash4" }],
     })
