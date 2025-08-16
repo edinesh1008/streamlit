@@ -8,7 +8,8 @@ Status: Draft
 ## Summary
 
 <!--
-A clear and concise description of the feature or enhancement (~2-3 sentences).  -->
+A clear and concise description of the feature or enhancement (~2-3 sentences).
+-->
 
 ## Motivation
 
