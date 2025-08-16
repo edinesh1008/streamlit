@@ -22,10 +22,13 @@ this feature proposal. Also reference all relevant issues here.
 
 <!--
 Please outline the proposed solution to the problem.
-If this is an API change, please list all relevant details:
-e.g. conmmand name, new parameters, types etc.
 
-For visual changes, please include a screenshot or mockups.
+If API changes, include:
+- command names, parameters, types
+- default values, error cases
+- examples or brief UX description
+
+If visual changes, add screenshots or mockups.
 -->
 
 ## Checklist
@@ -36,6 +39,7 @@ Check the boxes or add a comment with the reason it cannot be checked.
 
 - [ ] Backwards compatible
 - [ ] No new dependencies
-- [ ] No known risks or drawbacks
 - [ ] Works across deployment platforms
+- [ ] Supports metrics
+- [ ] No known risks or drawbacks
 - [ ] No open questions
