@@ -18,7 +18,7 @@ Not every change requires a STEP. However, having an approved STEP increases the
    - Filename: `0000-<kebab-case-slug>.md`, e.g., `0000-datetime-widget.md`. We will assign the correct number before merging.
    - Keep the PR in Draft until it’s ready for discussion.
 2. When ready, mark the PR “Ready for review” on GitHub. The PR thread is the canonical place for discussion.
-3. Approval requires at least two approvals from core maintainers. After approval:
+3. Approval requires at least two approvals from core maintainers.
    - If approved: Maintainers will assign the final number, rename the file, update the Status to Approved, and merge the STEP PR.
    - If rejected: The PR is closed with an explanation.
 
