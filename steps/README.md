@@ -9,7 +9,7 @@ Not every change requires a STEP. However, having an approved STEP increases the
 - Non‑user‑facing features
 - Bug fixes
 - DevOps‑related improvements
-- Small, non‑controversial user‑facing enhancements (e.g., adding a single new parameter)
+- Small, non‑controversial user‑facing enhancements
 
 ## How to propose a STEP?
 
