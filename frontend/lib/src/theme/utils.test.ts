@@ -1396,8 +1396,89 @@ describe("createEmotionTheme", () => {
   )
 
   it.each([
-    // Backend ensures 10 colors from config - so need to test invalid
-    // colors within the 10 provided color values
+    // Check repeat/truncate logic for sequential colors
+    [
+      // Pass 9 valid colors, repeats first color
+      [
+        "#482575",
+        "#414487",
+        "#35608d",
+        "#2a788e",
+        "#21918d",
+        "#22a884",
+        "#43bf71",
+        "#7ad151",
+        "#bcdf27",
+      ],
+      [
+        "#482575",
+        "#414487",
+        "#35608d",
+        "#2a788e",
+        "#21918d",
+        "#22a884",
+        "#43bf71",
+        "#7ad151",
+        "#bcdf27",
+        "#482575",
+      ],
+    ],
+    [
+      // Pass 11 valid colors, truncates to first 10 colors
+      [
+        "#482575",
+        "#414487",
+        "#35608d",
+        "#2a788e",
+        "#21918d",
+        "#22a884",
+        "#43bf71",
+        "#7ad151",
+        "#bcdf27",
+        "#7fc97f",
+        "#beaed4",
+      ],
+      [
+        "#482575",
+        "#414487",
+        "#35608d",
+        "#2a788e",
+        "#21918d",
+        "#22a884",
+        "#43bf71",
+        "#7ad151",
+        "#bcdf27",
+        "#7fc97f",
+      ],
+    ],
+  ])(
+    "correctly handles setting of repeated/truncated sequential color config '%s'",
+    (configSequentialColors, expectedSequentialColors) => {
+      const logErrorSpy = vi.spyOn(LOG, "error")
+      const themeInput: Partial<CustomThemeConfig> = {
+        chartSequentialColors: configSequentialColors,
+      }
+
+      const theme = createEmotionTheme(themeInput)
+
+      if (configSequentialColors.length < 10) {
+        expect(logErrorSpy).toHaveBeenCalledWith(
+          `chartSequentialColors must have 10 colors. ${configSequentialColors.length} valid colors provided: ${configSequentialColors.toString()}. Repeating valid colors to make 10.`
+        )
+      } else if (configSequentialColors.length > 10) {
+        expect(logErrorSpy).toHaveBeenCalledWith(
+          `chartSequentialColors must have 10 colors. ${configSequentialColors.length} valid colors provided: ${configSequentialColors.toString()}. Truncating to first 10 colors.`
+        )
+      }
+
+      expect(theme.colors.chartSequentialColors).toEqual(
+        expectedSequentialColors
+      )
+    }
+  )
+
+  it.each([
+    // Check filtering of invalid colors
     [
       "invalid",
       [
@@ -1454,7 +1535,7 @@ describe("createEmotionTheme", () => {
       ],
     ],
   ])(
-    "logs a warning and removes any invalid sequential color configs '%s'",
+    "logs a warning/error and removes any invalid chart color configs '%s'",
     (invalidColor, chartSequentialColors, expectedSequentialColors) => {
       const logWarningSpy = vi.spyOn(LOG, "warn")
       const logErrorSpy = vi.spyOn(LOG, "error")

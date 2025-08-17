@@ -474,8 +474,7 @@ const validateChartColors = (
   }
 
   // For sequential colors, we need to ensure exactly 10 colors
-  // BE already handles initial check, and truncates colors passed to FE to no more than 10
-  // But for window-injected themes, we need to handle both cases: < 10 and > 10
+  // Handle all theme config specification methods (config.toml, CLI, env, window injection)
   if (validatedColors.length === 0) {
     LOG.error(
       `chartSequentialColors must have 10 colors. No valid colors provided. Falling back to default sequential colors.`
