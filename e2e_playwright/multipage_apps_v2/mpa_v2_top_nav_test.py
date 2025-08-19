@@ -502,10 +502,11 @@ def test_empty_section_mixed_with_named_sections(app: Page):
     # - Dropdown sections for "Admin" and "Reports"
 
     # Get all top nav elements
+    # Use stTopNavLink for top-level individual links only
     nav_links = app.get_by_test_id("stTopNavLink")
     nav_sections = app.get_by_test_id("stTopNavSection")
 
-    # Should have 2 individual links (Home, Dashboard)
+    # Should have 2 individual top-level links (Home, Dashboard)
     expect(nav_links).to_have_count(2)
     expect(nav_links.nth(0)).to_contain_text("Home")
     expect(nav_links.nth(1)).to_contain_text("Dashboard")
@@ -515,7 +516,11 @@ def test_empty_section_mixed_with_named_sections(app: Page):
     expect(nav_sections.nth(0)).to_contain_text("Admin")
     expect(nav_sections.nth(1)).to_contain_text("Reports")
 
-    # Click on an individual link to verify it works
+    # The key test: verify that only individual pages show as top-level nav links
+    # and that pages inside sections are NOT counted as top-level links
+    # This verifies the fix for issue #12243
+
+    # Click on an individual top-level link to verify it works
     nav_links.nth(0).click()  # Click "Home"
     wait_for_app_run(app)
     expect(app.get_by_test_id("stHeading").filter(has_text="Page 1")).to_be_visible()
@@ -526,14 +531,14 @@ def test_empty_section_mixed_with_named_sections(app: Page):
     # Verify dropdown contains Settings and Users
     # Wait for dropdown links to be visible
     expect(
-        app.get_by_test_id("stSidebarNavLink").filter(has_text="Settings")
+        app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Settings")
     ).to_be_visible()
     expect(
-        app.get_by_test_id("stSidebarNavLink").filter(has_text="Users")
+        app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Users")
     ).to_be_visible()
 
     # Click Settings from dropdown
-    app.get_by_test_id("stSidebarNavLink").filter(has_text="Settings").click()
+    app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Settings").click()
     wait_for_app_run(app)
     expect(app.get_by_test_id("stHeading").filter(has_text="Page 3")).to_be_visible()
 

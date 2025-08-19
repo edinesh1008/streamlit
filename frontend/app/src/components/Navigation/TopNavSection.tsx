@@ -102,7 +102,8 @@ const TopNavSection = ({
                     <SidebarNavLink
                       {...item}
                       icon={item.icon || null}
-                      isTopNav={false}
+                      isTopNav={true}
+                      isInDropdown={true}
                       isActive={currentPageScriptHash === item.pageScriptHash}
                       onClick={handleClick}
                       pageUrl={endpoints.buildAppPageURL(
