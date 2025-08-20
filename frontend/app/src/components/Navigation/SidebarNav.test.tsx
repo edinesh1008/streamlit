@@ -143,7 +143,6 @@ const getProps = (props: Partial<Props> = {}): Props => ({
   hasSidebarElements: false,
   endpoints: mockEndpoints(),
   onPageChange: vi.fn(),
-  navSections: [],
   currentPageScriptHash: "",
   expandSidebarNav: false,
   ...props,
@@ -155,7 +154,6 @@ function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
     pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),
-    navSections: [],
     appPages: [],
     appLogo: null,
     sidebarChevronDownshift: 0,
@@ -388,7 +386,6 @@ describe("SidebarNav", () => {
       <SidebarNav
         {...getProps({
           hasSidebarElements: true,
-          navSections: ["section 1", "section 2"],
           appPages: generateAppPages(14, {
             sectionHeaders: ["section 1", "section 2"],
           }),
@@ -438,7 +435,6 @@ describe("SidebarNav", () => {
       <SidebarNav
         {...getProps({
           hasSidebarElements: true,
-          navSections: ["section 1", "section 2"],
           appPages: generateAppPages(14, {
             sectionHeaders: ["section 1", "section 2"],
           }),
@@ -512,7 +508,6 @@ describe("SidebarNav", () => {
       <SidebarNav
         {...getProps({
           hasSidebarElements: true,
-          navSections: ["section 1", "section 2", "section 3"],
           appPages: generateAppPages(14, {
             sectionHeaders: ["section 1", "section 2", "section 3"],
           }),
