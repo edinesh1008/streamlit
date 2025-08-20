@@ -256,8 +256,8 @@ def test_top_nav_visual_regression(app: Page, assert_snapshot: ImageCompareFunct
     section_a.click()
 
     # Wait for popover to appear using proper expect
-    # The dropdown should contain sidebar nav links
-    page1_link = app.get_by_test_id("stSidebarNavLink").filter(has_text="Page 1")
+    # The dropdown should contain top nav dropdown links
+    page1_link = app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Page 1")
     expect(page1_link).to_be_visible()
     # For snapshot, take a screenshot of the whole page since popover positioning is complex
     assert_snapshot(app, name="st_navigation-top_nav_section_popover")
@@ -493,6 +493,9 @@ def test_empty_section_mixed_with_named_sections(app: Page):
     should appear as individual navigation items when mixed with named sections,
     not in an unlabeled dropdown.
     """
+    # Use a large viewport to ensure everything fits without overflow
+    app.set_viewport_size({"width": 1600, "height": 800})
+
     # Enable the mixed sections test case
     click_checkbox(app, "Test Mixed Empty/Named Sections")
     wait_for_app_run(app)
@@ -502,11 +505,14 @@ def test_empty_section_mixed_with_named_sections(app: Page):
     # - Dropdown sections for "Admin" and "Reports"
 
     # Get all top nav elements
-    # Use stTopNavLink for top-level individual links only
+    # Note: With a 1280px viewport, all items should be visible
+    # If the overflow component is working correctly, we should see:
+    # - 2 individual nav links for empty section pages
+    # - 2 section dropdowns for named sections
     nav_links = app.get_by_test_id("stTopNavLink")
     nav_sections = app.get_by_test_id("stTopNavSection")
 
-    # Should have 2 individual top-level links (Home, Dashboard)
+    # Should have 2 individual top-level links visible (Home, Dashboard)
     expect(nav_links).to_have_count(2)
     expect(nav_links.nth(0)).to_contain_text("Home")
     expect(nav_links.nth(1)).to_contain_text("Dashboard")
