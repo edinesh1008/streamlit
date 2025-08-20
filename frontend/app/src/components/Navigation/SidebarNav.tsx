@@ -49,7 +49,6 @@ export interface Props {
   collapseSidebar: () => void
   hasSidebarElements: boolean
   onPageChange: (pageName: string) => void
-  navSections: string[]
   currentPageScriptHash: string
   expandSidebarNav: boolean
 }
@@ -146,7 +145,6 @@ const SidebarNav = ({
   collapseSidebar,
   hasSidebarElements,
   onPageChange,
-  navSections,
   currentPageScriptHash,
   expandSidebarNav,
 }: Props): ReactElement | null => {
@@ -160,8 +158,7 @@ const SidebarNav = ({
   > | null>(null)
 
   const navigationStructure = useMemo(() => {
-    const navSections = groupPagesBySection(appPages)
-    return processNavigationStructure(navSections)
+    return processNavigationStructure(groupPagesBySection(appPages))
   }, [appPages])
 
   const numVisiblePages = useMemo(() => {
@@ -302,7 +299,7 @@ const SidebarNav = ({
     return null
   }
 
-  let contents: ReactNode[] = []
+  const contents: ReactNode[] = []
   const shouldShowViewButton =
     hasSidebarElements &&
     numVisiblePages > COLLAPSE_THRESHOLD &&

@@ -46,21 +46,24 @@ const TopNav: React.FC<Props> = ({
   appPages,
   onPageChange,
 }) => {
-  const { data, itemKey } = useMemo(() => {
+  const { data, itemKey } = useMemo((): {
+    data: (IAppPage | IAppPage[])[]
+    itemKey: (item: IAppPage | IAppPage[]) => string
+  } => {
     const navSections = groupPagesBySection(appPages)
     const processed = processNavigationStructure(navSections)
 
     // Combine individual pages and sections for the overflow component
+    // Each section's pages should be kept as an array
     const combinedData: (IAppPage | IAppPage[])[] = [
       ...processed.individualPages,
-      ...Object.values(processed.sections),
+      ...Object.entries(processed.sections).map(([_, pages]) => pages),
     ]
 
-    const keyFn = (item: IAppPage | IAppPage[]) => {
-      return Array.isArray(item)
+    const keyFn = (item: IAppPage | IAppPage[]): string =>
+      Array.isArray(item)
         ? (item[0]?.sectionHeader ?? "")
         : (item.pageScriptHash ?? "")
-    }
 
     return { data: combinedData, itemKey: keyFn }
   }, [appPages])
