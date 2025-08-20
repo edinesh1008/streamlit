@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
-} from "react"
+import { Dispatch, SetStateAction, useCallback, useEffect } from "react"
 
 import { useFormClearHelper } from "~lib/components/widgets/Form"
-import { isNullOrUndefined } from "~lib/util/utils"
+import { useWidgetManagerValue } from "~lib/hooks/useWidgetManagerValue"
 import { Source, WidgetStateManager } from "~lib/WidgetStateManager"
 
 export type ValueWithSource<T> = {
@@ -83,41 +77,14 @@ export function useBasicWidgetClientState<
   T,
   Dispatch<SetStateAction<ValueWithSource<T> | null>>,
 ] {
-  const [currentValue, setCurrentValue] = useState<T>(() => {
-    // If WidgetStateManager knew a value for this widget, initialize to that.
-    // Otherwise, use the default value.
-    return (
-      getStateFromWidgetMgr(widgetMgr, element) ??
-      getDefaultState(widgetMgr, element)
-    )
-  })
-
-  // This acts as an "event":
-  // - It's null most of the time
-  // - It only has a value the moment when the user calls setValue (internally
-  //   called setNextValueWithSource). And then it's immediately set to null
-  //   internally.
-  const [nextValueWithSource, setNextValueWithSource] =
-    useState<ValueWithSource<T> | null>({
-      value: currentValue,
-      fromUi: false,
-    })
-
-  // When someone calls setNextValueWithSource, update internal state and tell
-  // widget manager to update its state too.
-  useEffect(() => {
-    if (isNullOrUndefined(nextValueWithSource)) return
-    setNextValueWithSource(null) // Clear "event".
-
-    setCurrentValue(nextValueWithSource.value)
-    updateWidgetMgrState(element, widgetMgr, nextValueWithSource, fragmentId)
-  }, [
-    nextValueWithSource,
+  const [currentValue, setNextValueWithSource] = useWidgetManagerValue<T, P>({
+    getInitialValue: (wm, el) =>
+      getStateFromWidgetMgr(wm, el) ?? getDefaultState(wm, el),
     updateWidgetMgrState,
     element,
     widgetMgr,
     fragmentId,
-  ])
+  })
 
   /**
    * If we're part of a clear_on_submit form, this will be called when our
