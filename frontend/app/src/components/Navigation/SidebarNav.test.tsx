@@ -154,6 +154,7 @@ function getContextOutput(context: Partial<AppContextProps>): AppContextProps {
     pageLinkBaseUrl: "",
     currentPageScriptHash: "",
     onPageChange: vi.fn(),
+    navSections: [],
     appPages: [],
     appLogo: null,
     sidebarChevronDownshift: 0,
@@ -458,11 +459,14 @@ describe("SidebarNav", () => {
     const appPages = createAppPagesForSections(sectionPageCounts)
     const navSections = Object.keys(sectionPageCounts)
 
+    vi.spyOn(StreamlitContextProviderModule, "useAppContext").mockReturnValue(
+      getContextOutput({ navSections })
+    )
+
     render(
       <SidebarNav
         {...getProps({
           hasSidebarElements: true,
-          navSections,
           appPages,
         })}
       />
