@@ -96,8 +96,9 @@ function generateNavSections(
   expandedSections: Record<string, boolean>,
   toggleSection: (section: string) => void,
   currentPageCount: number
-): ReactNode[] {
+): { sections: ReactNode[]; updatedPageCount: number } {
   const contents: ReactNode[] = []
+  let pageCount = currentPageCount
 
   Object.entries(sections).forEach(([header, pages]) => {
     // Create a shallow copy to prevent mutations below from affecting
@@ -107,8 +108,7 @@ function generateNavSections(
     const isExpanded = expandedSections[header]
 
     if (needsCollapse) {
-      const availableSlots =
-        NUM_PAGES_TO_SHOW_WHEN_COLLAPSED - currentPageCount
+      const availableSlots = NUM_PAGES_TO_SHOW_WHEN_COLLAPSED - pageCount
       if (availableSlots <= 0) {
         viewablePages = []
       } else if (sectionPages.length > availableSlots) {
@@ -118,7 +118,7 @@ function generateNavSections(
     }
 
     if (isExpanded) {
-      currentPageCount += viewablePages.length
+      pageCount += viewablePages.length
     }
 
     if (viewablePages.length > 0) {
@@ -135,7 +135,7 @@ function generateNavSections(
     }
   })
 
-  return contents
+  return { sections: contents, updatedPageCount: pageCount }
 }
 
 /** Displays a list of navigable app page links for multi-page apps. */
@@ -321,7 +321,7 @@ const SidebarNav = ({
 
   // Then, render sections if there are any
   if (Object.keys(navigationStructure.sections).length > 0) {
-    const sectionContents = generateNavSections(
+    const result = generateNavSections(
       navigationStructure.sections,
       needsCollapse,
       generateNavLink,
@@ -329,7 +329,7 @@ const SidebarNav = ({
       toggleSection,
       currentPageCount
     )
-    contents.push(...sectionContents)
+    contents.push(...result.sections)
   }
 
   return (
