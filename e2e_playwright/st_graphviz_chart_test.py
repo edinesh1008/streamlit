@@ -187,3 +187,39 @@ def test_width_pixels(app: Page, assert_snapshot: ImageCompareFunction):
         width_pixels_chart.locator("svg"),
         name="st_graphviz_chart_width_pixels",
     )
+
+
+def test_height_content(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that it renders correctly with height='content'."""
+    height_content_chart = app.get_by_test_id("stGraphVizChart").nth(10)
+    assert_snapshot(
+        height_content_chart.locator("svg"),
+        name="st_graphviz_chart_height_content",
+    )
+
+
+def test_height_stretch(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that it renders correctly with height='stretch'."""
+    height_stretch_chart = app.get_by_test_id("stGraphVizChart").nth(11)
+    assert_snapshot(
+        height_stretch_chart.locator("svg"),
+        name="st_graphviz_chart_height_stretch",
+    )
+
+
+def test_height_pixels(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that it renders correctly with height=200."""
+    height_pixels_chart = app.get_by_test_id("stGraphVizChart").nth(12)
+    assert_snapshot(
+        height_pixels_chart.locator("svg"),
+        name="st_graphviz_chart_height_pixels",
+    )
+
+
+def test_width_height_combined(app: Page, assert_snapshot: ImageCompareFunction):
+    """Test that it renders correctly with width=300, height=150."""
+    combined_chart = app.get_by_test_id("stGraphVizChart").nth(13)
+    assert_snapshot(
+        combined_chart.locator("svg"),
+        name="st_graphviz_chart_width_height_combined",
+    )
