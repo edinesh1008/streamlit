@@ -47,6 +47,7 @@ import {
   StyledHeader,
   StyledLabel,
 } from "./styled-components"
+import CopyText from "./CopyText"
 import { UserSettings } from "./UserSettings"
 
 export interface Props {
@@ -205,13 +206,14 @@ export const SettingsDialog: FC<Props> = memo(function SettingsDialog({
           {/* Show our version string only if SessionInfo has been created. If Streamlit
           hasn't yet connected to the server, the SessionInfo singleton will be null. */}
           {sessionInfo.isSet && (
-            <div data-testid="stVersionInfo">
-              <StreamlitMarkdown
-                source={`Made with Streamlit ${sessionInfo.current.streamlitVersion}`}
-                allowHTML={false}
-                isCaption
+            <StyledFullRow>
+              <CopyText
+                text={`Made with Streamlit ${sessionInfo.current.streamlitVersion}`}
+                copyText={sessionInfo.current.streamlitVersion}
+                isCaption={true}
+                data-testid="stVersionInfo"
               />
-            </div>
+            </StyledFullRow>
           )}
         </StyledDialogBody>
       </ModalBody>

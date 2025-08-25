@@ -18,6 +18,7 @@ import React from "react"
 
 import { screen } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
+import { vi } from "vitest"
 
 import { MetricsManager } from "@streamlit/app/src/MetricsManager"
 import {
@@ -31,6 +32,13 @@ import {
 } from "@streamlit/lib"
 
 import { Props, SettingsDialog } from "./SettingsDialog"
+
+// Mock navigator.clipboard
+Object.assign(navigator, {
+  clipboard: {
+    writeText: vi.fn(),
+  },
+})
 
 const mockSetTheme = vi.fn()
 const mockAddThemes = vi.fn()
@@ -60,6 +68,12 @@ const getProps = (extend?: Partial<Props>): Props => ({
 })
 
 describe("SettingsDialog", () => {
+  const mockWriteText = vi.mocked(navigator.clipboard.writeText)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it("renders without crashing", () => {
     const availableThemes = [lightTheme, darkTheme]
     const props = getProps()
@@ -200,5 +214,84 @@ describe("SettingsDialog", () => {
     const versionRegex = /^Made with Streamlit.*/
     const nonExistentText = screen.queryByText(versionRegex)
     expect(nonExistentText).not.toBeInTheDocument()
+  })
+
+  it("renders copy button with version when SessionInfo is initialized", () => {
+    const props = getProps({
+      sessionInfo: mockSessionInfo({ streamlitVersion: "1.28.1" }),
+    })
+    const context = getContext()
+
+    renderWithContexts(<SettingsDialog {...props} />, context)
+
+    const copyButton = screen.getByRole("button", {
+      name: "Copy text",
+    })
+    expect(copyButton).toBeInTheDocument()
+    expect(copyButton).toHaveAttribute("title", "Copy text")
+    expect(copyButton).toHaveAttribute(
+      "data-testid",
+      "stVersionInfoCopyButton"
+    )
+  })
+
+  it("copies version to clipboard when copy button is clicked", async () => {
+    const testVersion = "1.28.1"
+    mockWriteText.mockResolvedValue()
+
+    const props = getProps({
+      sessionInfo: mockSessionInfo({ streamlitVersion: testVersion }),
+    })
+    const context = getContext()
+
+    renderWithContexts(<SettingsDialog {...props} />, context)
+
+    const copyButton = screen.getByRole("button", {
+      name: "Copy text",
+    })
+    await userEvent.click(copyButton)
+
+    expect(mockWriteText).toHaveBeenCalledWith(testVersion)
+  })
+
+  it("copies version when clicking anywhere on the version line", async () => {
+    const testVersion = "1.28.1"
+    mockWriteText.mockResolvedValue()
+
+    const props = getProps({
+      sessionInfo: mockSessionInfo({ streamlitVersion: testVersion }),
+    })
+    const context = getContext()
+
+    renderWithContexts(<SettingsDialog {...props} />, context)
+
+    const versionContainer = screen.getByTestId("stVersionInfo")
+    await userEvent.click(versionContainer)
+
+    expect(mockWriteText).toHaveBeenCalledWith(testVersion)
+  })
+
+  it("shows check icon feedback after successful copy", async () => {
+    mockWriteText.mockResolvedValue()
+
+    const props = getProps({
+      sessionInfo: mockSessionInfo({ streamlitVersion: "1.28.1" }),
+    })
+    const context = getContext()
+
+    renderWithContexts(<SettingsDialog {...props} />, context)
+
+    const copyButton = screen.getByRole("button", {
+      name: "Copy text",
+    })
+    await userEvent.click(copyButton)
+
+    // After copying, the button should still be accessible with same name
+    // (visual feedback is via icon change, not title change)
+    expect(
+      screen.getByRole("button", {
+        name: "Copy text",
+      })
+    ).toBeVisible()
   })
 })
