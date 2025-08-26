@@ -218,6 +218,7 @@ const Selectbox: React.FC<Props> = ({
             style: () => ({
               lineHeight: theme.lineHeights.inputWidget,
               fontWeight: theme.fontWeights.normal,
+              fontSize: theme.fontSizes.sm,
             }),
           },
           Dropdown: { component: VirtualDropdown },
@@ -268,6 +269,7 @@ const Selectbox: React.FC<Props> = ({
               paddingLeft: theme.spacing.md,
               paddingBottom: theme.spacing.sm,
               paddingTop: theme.spacing.sm,
+              fontSize: theme.fontSizes.sm,
             }),
           },
           Input: {
@@ -282,6 +284,7 @@ const Selectbox: React.FC<Props> = ({
             },
             style: () => ({
               lineHeight: theme.lineHeights.inputWidget,
+              fontSize: theme.fontSizes.sm,
             }),
           },
           // Nudge the dropdown menu by 1px so the focus state doesn't get cut off
@@ -301,6 +304,7 @@ const Selectbox: React.FC<Props> = ({
             style: () => ({
               // remove margin from select value so that there is no jumpb, e.g. when pressing backspace on a selected option and removing a character.
               marginLeft: theme.spacing.none,
+              fontSize: theme.fontSizes.sm,
             }),
           },
           SelectArrow: {

@@ -19,7 +19,7 @@ import styled, { CSSObject } from "@emotion/styled"
 import { EmotionTheme } from "~lib/theme"
 
 export const StyledTableContainer = styled.div(({ theme }) => ({
-  fontSize: theme.fontSizes.md,
+  fontSize: theme.fontSizes.sm,
   fontFamily: theme.genericFonts.bodyFont,
   lineHeight: theme.lineHeights.small,
   captionSide: "bottom",
