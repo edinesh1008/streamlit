@@ -20,36 +20,46 @@ import { getDividerColors, hasLightBackgroundColor } from "./getColors"
 
 describe("getDividerColors", () => {
   describe("light theme", () => {
-    it("returns correct default divider colors for light theme", () => {
+    it("returns correct default divider primitive colors for light theme", () => {
       expect(hasLightBackgroundColor(lightTheme.emotion)).toBe(true)
       const result = getDividerColors(lightTheme.emotion)
 
-      expect(result).toEqual({
-        red: "#ff4b4b",
-        orange: "#ffa421",
-        yellow: "#faca2b",
-        blue: "#1c83e1",
-        green: "#21c354",
-        violet: "#803df5",
-        gray: "#d5dae5",
-        grey: "#d5dae5",
-        rainbow:
-          "linear-gradient(to right, #ff4b4b, #ffa421, #faca2b, #21c354, #1c83e1, #803df5)",
-      })
+      // colors.red70
+      expect(result.red).toBe("#ff4b4b")
+      // colors.orange70
+      expect(result.orange).toBe("#ffa421")
+      // colors.yellow80
+      expect(result.yellow).toBe("#faca2b")
+      // colors.blue70
+      expect(result.blue).toBe("#1c83e1")
+      // colors.green70
+      expect(result.green).toBe("#21c354")
+      // colors.purple70
+      expect(result.violet).toBe("#803df5")
+      // colors.gray40
+      expect(result.gray).toBe("#d5dae5")
+      // colors.gray40
+      expect(result.grey).toBe("#d5dae5")
+      expect(result.rainbow).toBe(
+        "linear-gradient(to right, #ff4b4b, #ffa421, #faca2b, #21c354, #1c83e1, #803df5)"
+      )
     })
 
-    it("has all required color properties", () => {
+    it("matches the default theme colors", () => {
       const result = getDividerColors(lightTheme.emotion)
+      const colors = lightTheme.emotion.colors
 
-      expect(result).toHaveProperty("red")
-      expect(result).toHaveProperty("orange")
-      expect(result).toHaveProperty("yellow")
-      expect(result).toHaveProperty("blue")
-      expect(result).toHaveProperty("green")
-      expect(result).toHaveProperty("violet")
-      expect(result).toHaveProperty("gray")
-      expect(result).toHaveProperty("grey")
-      expect(result).toHaveProperty("rainbow")
+      expect(result.red).toBe(colors.redColor)
+      expect(result.orange).toBe(colors.orangeColor)
+      expect(result.yellow).toBe(colors.yellowColor)
+      expect(result.blue).toBe(colors.blueColor)
+      expect(result.green).toBe(colors.greenColor)
+      expect(result.violet).toBe(colors.violetColor)
+      expect(result.gray).toBe(colors.grayColor)
+      expect(result.grey).toBe(colors.grayColor)
+      expect(result.rainbow).toBe(
+        `linear-gradient(to right,${colors.redColor},${colors.orangeColor},${colors.yellowColor},${colors.greenColor},${colors.blueColor},${colors.violetColor})`
+      )
 
       // Verify all colors are valid hex strings
       Object.entries(result).forEach(([key, value]) => {
@@ -78,32 +88,42 @@ describe("getDividerColors", () => {
       expect(hasLightBackgroundColor(darkTheme.emotion)).toBe(false)
       const result = getDividerColors(darkTheme.emotion)
 
-      expect(result).toEqual({
-        red: "#ff2b2b",
-        orange: "#ff8700",
-        yellow: "#ffe312",
-        blue: "#0068c9",
-        green: "#09ab3b",
-        violet: "#803df5",
-        gray: "#555867",
-        grey: "#555867",
-        rainbow:
-          "linear-gradient(to right, #ff2b2b, #ff8700, #ffe312, #09ab3b, #0068c9, #803df5)",
-      })
+      // colors.red80
+      expect(result.red).toBe("#ff2b2b")
+      // colors.orange80
+      expect(result.orange).toBe("#ff8700")
+      // colors.yellow70
+      expect(result.yellow).toBe("#ffe312")
+      // colors.blue80
+      expect(result.blue).toBe("#0068c9")
+      // colors.green80
+      expect(result.green).toBe("#09ab3b")
+      // colors.purple70
+      expect(result.violet).toBe("#803df5")
+      // colors.gray80
+      expect(result.gray).toBe("#555867")
+      // colors.gray80
+      expect(result.grey).toBe("#555867")
+      expect(result.rainbow).toBe(
+        "linear-gradient(to right, #ff2b2b, #ff8700, #ffe312, #09ab3b, #0068c9, #803df5)"
+      )
     })
 
     it("has all required color properties", () => {
       const result = getDividerColors(darkTheme.emotion)
+      const colors = darkTheme.emotion.colors
 
-      expect(result).toHaveProperty("red")
-      expect(result).toHaveProperty("orange")
-      expect(result).toHaveProperty("yellow")
-      expect(result).toHaveProperty("blue")
-      expect(result).toHaveProperty("green")
-      expect(result).toHaveProperty("violet")
-      expect(result).toHaveProperty("gray")
-      expect(result).toHaveProperty("grey")
-      expect(result).toHaveProperty("rainbow")
+      expect(result.red).toBe(colors.redColor)
+      expect(result.orange).toBe(colors.orangeColor)
+      expect(result.yellow).toBe(colors.yellowColor)
+      expect(result.blue).toBe(colors.blueColor)
+      expect(result.green).toBe(colors.greenColor)
+      expect(result.violet).toBe(colors.violetColor)
+      expect(result.gray).toBe(colors.grayColor)
+      expect(result.grey).toBe(colors.grayColor)
+      expect(result.rainbow).toBe(
+        `linear-gradient(to right,${colors.redColor},${colors.orangeColor},${colors.yellowColor},${colors.greenColor},${colors.blueColor},${colors.violetColor})`
+      )
 
       // Verify all colors are valid hex strings
       Object.entries(result).forEach(([key, value]) => {
