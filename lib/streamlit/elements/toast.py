@@ -95,7 +95,8 @@ class ToastMixin:
 
         >>> import streamlit as st
         >>>
-        >>> st.toast("Your edited image was saved!", icon="😍")
+        >>> if st.button("Save"):
+        >>>     st.toast("Your edited image was saved!", icon="😍")
 
         .. output::
             https://doc-status-toast.streamlit.app

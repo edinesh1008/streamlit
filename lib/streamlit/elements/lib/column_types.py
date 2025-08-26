@@ -1471,7 +1471,7 @@ def ListColumn(
     ``st.data_editor``.
 
     .. Note::
-        Editing for non-string or mixed type lists can cause issues with Arrow
+        Editing for non-string or mixed-type lists can cause issues with Arrow
         serialization. We recommend you disable editing for these columns or
         convert of all list values to strings.
 

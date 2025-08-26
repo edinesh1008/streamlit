@@ -615,6 +615,11 @@ class VegaChartsMixin:
         data : Anything supported by st.dataframe
             Data to be plotted.
 
+            All data within this parameter will be accessible to users through
+            the "Show data" button in the chart's toolbar, even if the data
+            isn't plotted. For best performance, only include the data you want
+            to display.
+
         x : str or None
             Column name or key associated to the x-axis data. If ``x`` is
             ``None`` (default), Streamlit uses the data index for the x-axis
@@ -830,6 +835,11 @@ class VegaChartsMixin:
         ----------
         data : Anything supported by st.dataframe
             Data to be plotted.
+
+            All data within this parameter will be accessible to users through
+            the "Show data" button in the chart's toolbar, even if the data
+            isn't plotted. For best performance, only include the data you want
+            to display.
 
         x : str or None
             Column name or key associated to the x-axis data. If ``x`` is
@@ -1101,6 +1111,11 @@ class VegaChartsMixin:
         ----------
         data : Anything supported by st.dataframe
             Data to be plotted.
+
+            All data within this parameter will be accessible to users through
+            the "Show data" button in the chart's toolbar, even if the data
+            isn't plotted. For best performance, only include the data you want
+            to display.
 
         x : str or None
             Column name or key associated to the x-axis data. If ``x`` is
@@ -1398,6 +1413,11 @@ class VegaChartsMixin:
         data : Anything supported by st.dataframe
             Data to be plotted.
 
+            All data within this parameter will be accessible to users through
+            the "Show data" button in the chart's toolbar, even if the data
+            isn't plotted. For best performance, only include the data you want
+            to display.
+
         x : str or None
             Column name or key associated to the x-axis data. If ``x`` is
             ``None`` (default), Streamlit uses the data index for the x-axis
@@ -1648,6 +1668,11 @@ class VegaChartsMixin:
             https://altair-viz.github.io/gallery/ for examples of graph
             descriptions.
 
+            All data within the chart object will be accessible to users
+            through the "Show data" button in the chart's toolbar, even if the
+            data isn't plotted. For best performance, only include the data you
+            want to display.
+
         use_container_width : bool or None
             Whether to override the chart's native width with the width of
             the parent container. This can be one of the following:
@@ -1814,6 +1839,11 @@ class VegaChartsMixin:
         data : Anything supported by st.dataframe
             Either the data to be plotted or a Vega-Lite spec containing the
             data (which more closely follows the Vega-Lite API).
+
+            All data within this parameter will be accessible to users through
+            the "Show data" button in the chart's toolbar, even if the data
+            isn't plotted. For best performance, only include the data you want
+            to display.
 
         spec : dict or None
             The Vega-Lite spec for the chart. If ``spec`` is ``None`` (default),
