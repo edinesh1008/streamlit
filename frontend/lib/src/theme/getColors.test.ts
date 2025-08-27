@@ -20,7 +20,7 @@ import { getDividerColors, hasLightBackgroundColor } from "./getColors"
 
 describe("getDividerColors", () => {
   describe("light theme", () => {
-    it("returns correct default divider primitive colors for light theme", () => {
+    it("returns correct divider primitive colors for light theme", () => {
       expect(hasLightBackgroundColor(lightTheme.emotion)).toBe(true)
       const result = getDividerColors(lightTheme.emotion)
 
@@ -58,7 +58,7 @@ describe("getDividerColors", () => {
       expect(result.gray).toBe(colors.grayColor)
       expect(result.grey).toBe(colors.grayColor)
       expect(result.rainbow).toBe(
-        `linear-gradient(to right,${colors.redColor},${colors.orangeColor},${colors.yellowColor},${colors.greenColor},${colors.blueColor},${colors.violetColor})`
+        `linear-gradient(to right, ${colors.redColor}, ${colors.orangeColor}, ${colors.yellowColor}, ${colors.greenColor}, ${colors.blueColor}, ${colors.violetColor})`
       )
 
       // Verify all colors are valid hex strings
@@ -74,17 +74,27 @@ describe("getDividerColors", () => {
       expect(result.gray).toBe(result.grey)
     })
 
-    it("rainbow gradient contains all color values", () => {
+    it("rainbow gradient contains all colors in consistent order", () => {
       const result = getDividerColors(lightTheme.emotion)
+      const expectedOrder = [
+        result.red,
+        result.orange,
+        result.yellow,
+        result.green,
+        result.blue,
+        result.violet,
+      ]
 
       expect(result.rainbow).toBe(
         "linear-gradient(to right, #ff4b4b, #ffa421, #faca2b, #21c354, #1c83e1, #803df5)"
       )
+      const gradientColors = result.rainbow.match(/#[0-9a-fA-F]{6}/g)
+      expect(gradientColors).toEqual(expectedOrder)
     })
   })
 
   describe("dark theme", () => {
-    it("returns correct default divider colors for dark theme", () => {
+    it("returns correct divider primitive colors for dark theme", () => {
       expect(hasLightBackgroundColor(darkTheme.emotion)).toBe(false)
       const result = getDividerColors(darkTheme.emotion)
 
@@ -109,7 +119,7 @@ describe("getDividerColors", () => {
       )
     })
 
-    it("has all required color properties", () => {
+    it("matches the default theme colors", () => {
       const result = getDividerColors(darkTheme.emotion)
       const colors = darkTheme.emotion.colors
 
@@ -122,7 +132,7 @@ describe("getDividerColors", () => {
       expect(result.gray).toBe(colors.grayColor)
       expect(result.grey).toBe(colors.grayColor)
       expect(result.rainbow).toBe(
-        `linear-gradient(to right,${colors.redColor},${colors.orangeColor},${colors.yellowColor},${colors.greenColor},${colors.blueColor},${colors.violetColor})`
+        `linear-gradient(to right, ${colors.redColor}, ${colors.orangeColor}, ${colors.yellowColor}, ${colors.greenColor}, ${colors.blueColor}, ${colors.violetColor})`
       )
 
       // Verify all colors are valid hex strings
@@ -138,12 +148,22 @@ describe("getDividerColors", () => {
       expect(result.gray).toBe(result.grey)
     })
 
-    it("rainbow gradient contains all color values", () => {
+    it("rainbow gradient contains all colors in consistent order", () => {
       const result = getDividerColors(darkTheme.emotion)
+      const expectedOrder = [
+        result.red,
+        result.orange,
+        result.yellow,
+        result.green,
+        result.blue,
+        result.violet,
+      ]
 
       expect(result.rainbow).toBe(
         "linear-gradient(to right, #ff2b2b, #ff8700, #ffe312, #09ab3b, #0068c9, #803df5)"
       )
+      const gradientColors = result.rainbow.match(/#[0-9a-fA-F]{6}/g)
+      expect(gradientColors).toEqual(expectedOrder)
     })
   })
 })
