@@ -69,7 +69,7 @@ const requiredThemeColors = {
   blueColor: colors.blue70,
   greenColor: colors.green70,
   violetColor: colors.purple70,
-  grayColor: colors.gray40,
+  grayColor: colors.gray60,
 
   // Default background theme colors (light theme)
   redBackgroundColor: transparentize(colors.red80, 0.9),

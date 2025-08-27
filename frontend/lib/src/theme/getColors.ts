@@ -89,7 +89,7 @@ export const createEmotionColors = (
     // line/bar/area top line color. Dislocate these with text color updates.
     metricPositiveDeltaColor: genericColors.greenColor,
     metricNegativeDeltaColor: genericColors.redColor,
-    metricNeutralDeltaColor: derivedColors.fadedText60,
+    metricNeutralDeltaColor: genericColors.grayColor,
 
     // Status element colors
     infoBg: genericColors.blueBackgroundColor,
