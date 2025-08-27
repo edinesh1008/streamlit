@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
+import { transparentize } from "color2k"
+
+import { Metric as MetricProto } from "@streamlit/protobuf"
+
 import { darkTheme, lightTheme } from "~lib/theme/index"
 
-import { getDividerColors, hasLightBackgroundColor } from "./getColors"
+import {
+  getDividerColors,
+  getMarkdownBgColors,
+  getMetricBackgroundColor,
+  hasLightBackgroundColor,
+} from "./getColors"
 
 describe("getDividerColors", () => {
   describe("light theme", () => {
@@ -165,5 +174,79 @@ describe("getDividerColors", () => {
       const gradientColors = result.rainbow.match(/#[0-9a-fA-F]{6}/g)
       expect(gradientColors).toEqual(expectedOrder)
     })
+  })
+})
+
+describe("getMarkdownBgColors", () => {
+  it("returns correct background colors for light theme", () => {
+    const result = getMarkdownBgColors(lightTheme.emotion)
+    const colors = lightTheme.emotion.colors
+
+    expect(result.redbg).toBe(colors.redBackgroundColor)
+    expect(result.orangebg).toBe(colors.orangeBackgroundColor)
+    expect(result.yellowbg).toBe(colors.yellowBackgroundColor)
+    expect(result.bluebg).toBe(colors.blueBackgroundColor)
+    expect(result.greenbg).toBe(colors.greenBackgroundColor)
+    expect(result.violetbg).toBe(colors.violetBackgroundColor)
+    expect(result.graybg).toBe(colors.grayBackgroundColor)
+    expect(result.purplebg).toBe(transparentize(colors.purple90, 0.9))
+    expect(result.primarybg).toBe(transparentize(colors.primary, 0.9))
+  })
+
+  it("returns correct background colors for dark theme", () => {
+    const result = getMarkdownBgColors(darkTheme.emotion)
+    const colors = darkTheme.emotion.colors
+
+    expect(result.redbg).toBe(colors.redBackgroundColor)
+    expect(result.orangebg).toBe(colors.orangeBackgroundColor)
+    expect(result.yellowbg).toBe(colors.yellowBackgroundColor)
+    expect(result.bluebg).toBe(colors.blueBackgroundColor)
+    expect(result.greenbg).toBe(colors.greenBackgroundColor)
+    expect(result.violetbg).toBe(colors.violetBackgroundColor)
+    expect(result.graybg).toBe(colors.grayBackgroundColor)
+    expect(result.purplebg).toBe(transparentize(colors.purple80, 0.7))
+    expect(result.primarybg).toBe(transparentize(colors.primary, 0.7))
+  })
+})
+
+describe("getMetricBackgroundColor", () => {
+  it("returns correct metric background colors for light theme", () => {
+    const colors = lightTheme.emotion.colors
+    const result1 = getMetricBackgroundColor(
+      lightTheme.emotion,
+      MetricProto.MetricColor.RED
+    )
+    const result2 = getMetricBackgroundColor(
+      lightTheme.emotion,
+      MetricProto.MetricColor.GREEN
+    )
+    const result3 = getMetricBackgroundColor(
+      lightTheme.emotion,
+      MetricProto.MetricColor.GRAY
+    )
+
+    expect(result1).toBe(colors.redBackgroundColor)
+    expect(result2).toBe(colors.greenBackgroundColor)
+    expect(result3).toBe(colors.grayBackgroundColor)
+  })
+
+  it("returns correct metric background colors for dark theme", () => {
+    const colors = darkTheme.emotion.colors
+    const result1 = getMetricBackgroundColor(
+      darkTheme.emotion,
+      MetricProto.MetricColor.RED
+    )
+    const result2 = getMetricBackgroundColor(
+      darkTheme.emotion,
+      MetricProto.MetricColor.GREEN
+    )
+    const result3 = getMetricBackgroundColor(
+      darkTheme.emotion,
+      MetricProto.MetricColor.GRAY
+    )
+
+    expect(result1).toBe(colors.redBackgroundColor)
+    expect(result2).toBe(colors.greenBackgroundColor)
+    expect(result3).toBe(colors.grayBackgroundColor)
   })
 })
