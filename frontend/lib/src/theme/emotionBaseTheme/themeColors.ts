@@ -26,12 +26,6 @@ const requiredThemeColors = {
   bodyText: colors.gray85,
   link: colors.blue80,
 
-  // TODO (mgbarnes): Transition each of these to updated text colors
-  warning: colors.yellow110,
-  success: colors.green100,
-  info: colors.blue100,
-  danger: colors.red100,
-
   primary: colors.red70,
   secondary: colors.blue70, // Used in progress bar and spinners
   disabled: colors.gray40,
@@ -39,6 +33,12 @@ const requiredThemeColors = {
   lightGray: colors.gray30,
   gray: colors.gray60,
   darkGray: colors.gray70,
+
+  // TODO (mgbarnes): Transition each of these to updated text colors
+  warning: colors.yellow110,
+  success: colors.green100,
+  info: colors.blue100,
+  danger: colors.red100,
 
   // TODO (mgbarnes): Reduce/remove these colors to avoid
   // confusion with the default main/text/bg theme colors
