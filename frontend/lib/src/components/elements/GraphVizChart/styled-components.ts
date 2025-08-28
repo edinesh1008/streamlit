@@ -40,6 +40,6 @@ export const StyledGraphVizChart = styled.div<StyledGraphVizChartProps>(
       borderRadius: theme.radii.default,
     },
     width: isFullScreen || useContainerWidth ? "100%" : "auto",
-    height: "100%",
+    height: isFullScreen || useContainerHeight ? "100%" : "auto",
   })
 )
