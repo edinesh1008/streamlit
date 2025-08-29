@@ -53,7 +53,7 @@ export default {
   // Default background theme colors (dark theme)
   redBackgroundColor: transparentize(colors.red60, 0.8),
   orangeBackgroundColor: transparentize(colors.orange80, 0.8),
-  yellowBackgroundColor: transparentize("#FFFF12", 0.8),
+  yellowBackgroundColor: transparentize(colors.yellow65, 0.8),
   blueBackgroundColor: transparentize(colors.blue60, 0.8),
   greenBackgroundColor: transparentize(colors.green60, 0.8),
   violetBackgroundColor: transparentize(colors.purple60, 0.8),

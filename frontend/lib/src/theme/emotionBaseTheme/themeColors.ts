@@ -58,8 +58,8 @@ const requiredThemeColors = {
   // Default background theme colors (light theme)
   redBackgroundColor: transparentize(colors.red80, 0.9),
   orangeBackgroundColor: transparentize(colors.orange70, 0.9),
-  yellowBackgroundColor: transparentize("#FFFF12", 0.9),
-  blueBackgroundColor: transparentize("#1C83FF", 0.9),
+  yellowBackgroundColor: transparentize(colors.yellow65, 0.9),
+  blueBackgroundColor: transparentize(colors.blue65, 0.9),
   greenBackgroundColor: transparentize(colors.green70, 0.9),
   violetBackgroundColor: transparentize(colors.purple60, 0.9),
   grayBackgroundColor: transparentize(colors.gray85, 0.9),
