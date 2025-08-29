@@ -16,24 +16,15 @@
 
 import { darken, getLuminance, lighten, mix, transparentize } from "color2k"
 
-import { EmotionTheme } from "./types"
-
-export type DerivedColors = {
-  fadedText05: string
-  fadedText10: string
-  fadedText20: string
-  fadedText40: string
-  fadedText60: string
-
-  bgMix: string
-  darkenedBgMix100: string
-  darkenedBgMix25: string
-  darkenedBgMix15: string
-  lightenedBg05: string
-}
+import {
+  DerivedColors,
+  EmotionTheme,
+  EmotionThemeColors,
+  GenericColors,
+} from "./types"
 
 export const computeDerivedColors = (
-  genericColors: Record<string, string>
+  genericColors: GenericColors
 ): DerivedColors => {
   const { bodyText, secondaryBg, bgColor } = genericColors
 
@@ -78,9 +69,9 @@ export function hasLightBackgroundColor(theme: EmotionTheme): boolean {
   return _isLightBackground(theme.colors.bgColor)
 }
 
-export const createEmotionColors = (genericColors: {
-  [key: string]: string
-}): { [key: string]: string } => {
+export const createEmotionColors = (
+  genericColors: GenericColors
+): EmotionThemeColors => {
   const derivedColors = computeDerivedColors(genericColors)
   const defaultCategoricalColors = defaultCategoricalColorsArray(genericColors)
   const defaultSequentialColors = defaultSequentialColorsArray(genericColors)
@@ -92,47 +83,59 @@ export const createEmotionColors = (genericColors: {
     codeTextColor: genericColors.green,
     codeBackgroundColor: derivedColors.bgMix,
 
-    metricPositiveDeltaColor: genericColors.green,
-    metricNegativeDeltaColor: genericColors.red,
-    metricNeutralDeltaColor: derivedColors.fadedText60,
+    // TODO (mgbarnes): These currently control both the metric delta text and chart
+    // line/bar/area top line color. Dislocate these with text color updates.
+    metricPositiveDeltaColor: genericColors.greenColor,
+    metricNegativeDeltaColor: genericColors.redColor,
+    metricNeutralDeltaColor: genericColors.grayColor,
 
     borderColor: derivedColors.fadedText10,
     borderColorLight: derivedColors.fadedText05,
-    // Used for borders around dataframes and tables
+
     dataframeBorderColor: derivedColors.fadedText05,
-    // Used for dataframe header background
     dataframeHeaderBackgroundColor: derivedColors.bgMix,
 
     headingColor: genericColors.bodyText,
 
-    // @ts-expect-error -- chart colors are a string[] vs. string
     chartCategoricalColors: defaultCategoricalColors,
-    // @ts-expect-error
     chartSequentialColors: defaultSequentialColors,
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
-export function getDividerColors(theme: EmotionTheme): any {
-  const lightTheme = hasLightBackgroundColor(theme)
-  const red = lightTheme ? theme.colors.red60 : theme.colors.red90
-  const orange = lightTheme ? theme.colors.orange60 : theme.colors.orange90
-  const yellow = lightTheme ? theme.colors.yellow80 : theme.colors.yellow70
-  const blue = lightTheme ? theme.colors.blue60 : theme.colors.blue90
-  const green = lightTheme ? theme.colors.green60 : theme.colors.green90
-  const violet = lightTheme ? theme.colors.purple60 : theme.colors.purple80
-  const gray = lightTheme ? theme.colors.gray40 : theme.colors.gray70
+type DividerColors = {
+  red: string
+  orange: string
+  yellow: string
+  blue: string
+  green: string
+  violet: string
+  gray: string
+  grey: string
+  rainbow: string
+}
+
+export function getDividerColors(theme: EmotionTheme): DividerColors {
+  // Handling of defaults based on light/dark theme in emotionBaseTheme/emotionDarkTheme
+  const {
+    redColor,
+    orangeColor,
+    yellowColor,
+    blueColor,
+    greenColor,
+    violetColor,
+    grayColor,
+  } = theme.colors
 
   return {
-    red: red,
-    orange: orange,
-    yellow: yellow,
-    blue: blue,
-    green: green,
-    violet: violet,
-    gray: gray,
-    grey: gray,
-    rainbow: `linear-gradient(to right, ${red}, ${orange}, ${yellow}, ${green}, ${blue}, ${violet})`,
+    red: redColor,
+    orange: orangeColor,
+    yellow: yellowColor,
+    blue: blueColor,
+    green: greenColor,
+    violet: violetColor,
+    gray: grayColor,
+    grey: grayColor,
+    rainbow: `linear-gradient(to right, ${redColor}, ${orangeColor}, ${yellowColor}, ${greenColor}, ${blueColor}, ${violetColor})`,
   }
 }
 
@@ -223,7 +226,7 @@ export function getBlue80(theme: EmotionTheme): string {
     ? theme.colors.blue80
     : theme.colors.blue40
 }
-function getBlueArrayAsc(colors: { [key: string]: string }): string[] {
+function getBlueArrayAsc(colors: GenericColors): string[] {
   return [
     colors.blue10,
     colors.blue20,
@@ -237,7 +240,7 @@ function getBlueArrayAsc(colors: { [key: string]: string }): string[] {
     colors.blue100,
   ]
 }
-function getBlueArrayDesc(colors: { [key: string]: string }): string[] {
+function getBlueArrayDesc(colors: GenericColors): string[] {
   return [
     colors.blue100,
     colors.blue90,
@@ -268,17 +271,15 @@ export function getDivergingColorsArray(theme: EmotionTheme): string[] {
   ]
 }
 
-function defaultSequentialColorsArray(genericColors: {
-  [key: string]: string
-}): string[] {
+function defaultSequentialColorsArray(genericColors: GenericColors): string[] {
   return _isLightBackground(genericColors.bgColor)
     ? getBlueArrayAsc(genericColors)
     : getBlueArrayDesc(genericColors)
 }
 
-function defaultCategoricalColorsArray(genericColors: {
-  [key: string]: string
-}): string[] {
+function defaultCategoricalColorsArray(
+  genericColors: GenericColors
+): string[] {
   return _isLightBackground(genericColors.bgColor)
     ? [
         genericColors.blue80,
