@@ -196,7 +196,6 @@ export function getMarkdownBgColors(theme: EmotionTheme): MarkdownBgColors {
     bluebg: colors.blueBackgroundColor,
     greenbg: colors.greenBackgroundColor,
     violetbg: colors.violetBackgroundColor,
-    // TODO (mgbarnes): Confirm if purple bg color should be unchanged
     purplebg: transparentize(
       colors[lightTheme ? "purple90" : "purple80"],
       lightTheme ? 0.9 : 0.7
