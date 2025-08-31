@@ -78,7 +78,6 @@ import {
 } from "./styled-components"
 
 import "katex/dist/katex.min.css"
-import { transparentize } from "color2k"
 
 export enum Tags {
   H1 = "h1",
