@@ -61,6 +61,7 @@ import { InlineTooltipIcon } from "~lib/components/shared/TooltipIcon"
 import { useCrossOriginAttribute } from "~lib/hooks/useCrossOriginAttribute"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import {
+  blend,
   convertRemToPx,
   EmotionTheme,
   getMarkdownBgColors,
@@ -77,6 +78,7 @@ import {
 } from "./styled-components"
 
 import "katex/dist/katex.min.css"
+import { transparentize } from "color2k"
 
 export enum Tags {
   H1 = "h1",
@@ -752,11 +754,31 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
   )
 
   useEffect(() => {
+    const markdownBgColors = getMarkdownBgColors(theme)
+    const markdownTextColors = getMarkdownTextColors(theme)
+
     mermaid.initialize({
-      // darkMode: true,
-      theme: hasLightBackgroundColor(theme) ? "default" : "dark",
+      darkMode: !hasLightBackgroundColor(theme),
+      theme: "base",
       fontFamily: theme.genericFonts.bodyFont,
       fontSize: convertRemToPx(theme.fontSizes.md),
+      // look: "handDrawn",
+      themeVariables: {
+        darkMode: !hasLightBackgroundColor(theme),
+        primaryColor: blend(markdownBgColors.bluebg, theme.colors.bgColor),
+        primaryTextColor: markdownTextColors.bodyText,
+        secondaryColor: blend(markdownBgColors.greenbg, theme.colors.bgColor),
+        // secondaryTextColor: markdownTextColors.bodyText,
+        tertiaryColor: blend(markdownBgColors.orangebg, theme.colors.bgColor),
+        // tertiaryTextColor: markdownTextColors.bodyText,
+        background: theme.colors.bgColor,
+        fontFamily: theme.genericFonts.bodyFont,
+        fontSize: convertRemToPx(theme.fontSizes.md),
+        lineColor: theme.colors.bodyText,
+        textColor: theme.colors.bodyText,
+        errorBkgColor: blend(markdownBgColors.redbg, theme.colors.bgColor),
+        errorTextColor: theme.colors.redColor,
+      },
     })
   }, [theme])
 
