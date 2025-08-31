@@ -761,7 +761,10 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
   }, [theme])
 
   const rehypePlugins = useMemo<PluggableList>(() => {
-    const plugins: PluggableList = [rehypeKatex, [rehypeMermaid, {}]]
+    const plugins: PluggableList = [
+      rehypeKatex,
+      [rehypeMermaid, { strategy: "inline-svg" }],
+    ]
 
     if (allowHTML) {
       plugins.push(rehypeRaw)
@@ -772,7 +775,7 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
     plugins.push(rehypeSetCodeInlineProperty)
 
     return plugins
-  }, [allowHTML, theme])
+  }, [allowHTML])
 
   const renderers = useMemo(
     () =>
