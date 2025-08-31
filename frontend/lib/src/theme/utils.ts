@@ -133,6 +133,25 @@ export const isColor = (strColor: string): boolean => {
 }
 
 /**
+ * Helper function for theme background colors
+ * If the background color is configured, use it.
+ * If the main color is configured, derive background color from it.
+ * If neither is configured, fallback to default.
+ */
+const resolveBgColor = (
+  configBackground: string | undefined,
+  configMain: string | undefined,
+  isLightTheme: boolean
+): string | undefined => {
+  if (configBackground) return configBackground
+  if (configMain) {
+    const opacity = isLightTheme ? 0.9 : 0.8
+    return transparentize(configMain, opacity)
+  }
+  return undefined
+}
+
+/**
  * Helper function that rounds a font size (in rem) to the nearest eighth of a rem
  * This is used to keep configured font sizes to (generally) round values for dialogs.
  * See `convertFontSizes` in `StreamlitMarkdown/styled-components.ts`
@@ -528,6 +547,57 @@ export const createEmotionTheme = (
     grayColor,
   } = parsedColors
 
+  // Resolve background colors BEFORE creating emotions colors to ensure consistency
+  // This ensures status element colors (infoBg, dangerBg, etc.) use the correct background colors
+  const finalBgColor = bgColor ?? colors.bgColor
+  const isLightTheme = getLuminance(finalBgColor) > 0.5
+
+  // Resolve each background color: use explicit config, derive from main, or fallback to default
+  const resolvedBackgroundColors = {
+    redBackgroundColor:
+      resolveBgColor(
+        parsedColors.redBackgroundColor,
+        redColor,
+        isLightTheme
+      ) ?? colors.redBackgroundColor,
+    orangeBackgroundColor:
+      resolveBgColor(
+        parsedColors.orangeBackgroundColor,
+        orangeColor,
+        isLightTheme
+      ) ?? colors.orangeBackgroundColor,
+    yellowBackgroundColor:
+      resolveBgColor(
+        parsedColors.yellowBackgroundColor,
+        yellowColor,
+        isLightTheme
+      ) ?? colors.yellowBackgroundColor,
+    blueBackgroundColor:
+      resolveBgColor(
+        parsedColors.blueBackgroundColor,
+        blueColor,
+        isLightTheme
+      ) ?? colors.blueBackgroundColor,
+    greenBackgroundColor:
+      resolveBgColor(
+        parsedColors.greenBackgroundColor,
+        greenColor,
+        isLightTheme
+      ) ?? colors.greenBackgroundColor,
+    violetBackgroundColor:
+      resolveBgColor(
+        parsedColors.violetBackgroundColor,
+        violetColor,
+        isLightTheme
+      ) ?? colors.violetBackgroundColor,
+    grayBackgroundColor:
+      resolveBgColor(
+        parsedColors.grayBackgroundColor,
+        grayColor,
+        isLightTheme
+      ) ?? colors.grayBackgroundColor,
+  }
+
   // Create a new generic colors object with configured colors, if they exist.
   // Fallback to the default colors if they are not set. Necessary as createEmotionColors
   // calculates some colors based on the generic colors.
@@ -536,7 +606,7 @@ export const createEmotionTheme = (
     primary: primary ?? colors.primary,
     bodyText: bodyText ?? colors.bodyText,
     secondaryBg: secondaryBg ?? colors.secondaryBg,
-    bgColor: bgColor ?? colors.bgColor,
+    bgColor: finalBgColor,
     link: linkColor ?? colors.link,
     // Main theme colors
     redColor: redColor ?? colors.redColor,
@@ -546,6 +616,8 @@ export const createEmotionTheme = (
     greenColor: greenColor ?? colors.greenColor,
     violetColor: violetColor ?? colors.violetColor,
     grayColor: grayColor ?? colors.grayColor,
+    // Background theme colors (already resolved)
+    ...resolvedBackgroundColors,
     // Secondary color is not yet configurable. Set secondary color to primary color
     // by default for all custom themes.
     secondary: primary ?? colors.primary,
