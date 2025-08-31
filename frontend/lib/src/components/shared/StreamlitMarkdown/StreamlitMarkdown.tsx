@@ -753,7 +753,7 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
 
   useEffect(() => {
     mermaid.initialize({
-      darkMode: true,
+      // darkMode: true,
       theme: hasLightBackgroundColor(theme) ? "default" : "dark",
       fontFamily: theme.genericFonts.bodyFont,
       fontSize: convertRemToPx(theme.fontSizes.md),
