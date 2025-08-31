@@ -35,5 +35,8 @@
     "@vitest/coverage-v8": "^3.2.4",
     "concurrently": "^9.2.0",
     "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "rehype-mermaid": "^3.0.0"
   }
 }

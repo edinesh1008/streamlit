@@ -23,6 +23,7 @@ import React, {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react"
@@ -32,12 +33,15 @@ import { type Element, type Root } from "hast"
 import omit from "lodash/omit"
 import once from "lodash/once"
 import { findAndReplace } from "mdast-util-find-and-replace"
+import mermaid from "mermaid"
 import { Link2 as LinkIcon } from "react-feather"
-import ReactMarkdown, {
+import {
   Components,
+  MarkdownHooks as ReactMarkdown,
   Options as ReactMarkdownProps,
 } from "react-markdown"
 import rehypeKatex from "rehype-katex"
+import rehypeMermaid from "rehype-mermaid"
 import rehypeRaw from "rehype-raw"
 import remarkDirective from "remark-directive"
 import remarkEmoji from "remark-emoji"
@@ -61,6 +65,7 @@ import {
   EmotionTheme,
   getMarkdownBgColors,
   getMarkdownTextColors,
+  hasLightBackgroundColor,
 } from "~lib/theme"
 
 import {
@@ -746,8 +751,17 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
     [theme, colorMapping]
   )
 
+  useEffect(() => {
+    mermaid.initialize({
+      darkMode: true,
+      theme: hasLightBackgroundColor(theme) ? "default" : "dark",
+      fontFamily: theme.genericFonts.bodyFont,
+      fontSize: convertRemToPx(theme.fontSizes.md),
+    })
+  }, [theme])
+
   const rehypePlugins = useMemo<PluggableList>(() => {
-    const plugins: PluggableList = [rehypeKatex]
+    const plugins: PluggableList = [rehypeKatex, [rehypeMermaid, {}]]
 
     if (allowHTML) {
       plugins.push(rehypeRaw)
@@ -758,7 +772,7 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
     plugins.push(rehypeSetCodeInlineProperty)
 
     return plugins
-  }, [allowHTML])
+  }, [allowHTML, theme])
 
   const renderers = useMemo(
     () =>
@@ -790,6 +804,7 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
         disallowedElements={disallowed}
         // unwrap and render children from invalid markdown
         unwrapDisallowed={true}
+        fallback={null}
       >
         {processedSource}
       </ReactMarkdown>
@@ -798,8 +813,7 @@ export const RenderedMarkdown = memo(function RenderedMarkdown({
 })
 
 /**
- * Wraps the <ReactMarkdown> component to include our standard
- * renderers and AST plugins (for syntax highlighting, HTML support, etc).
+ * Wraps the markdown renderer with styling and additional props used across the app.
  */
 const StreamlitMarkdown: FC<Props> = ({
   source,
