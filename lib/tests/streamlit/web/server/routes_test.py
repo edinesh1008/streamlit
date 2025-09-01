@@ -127,10 +127,15 @@ class StaticFileHandlerTest(tornado.testing.AsyncHTTPTestCase):
         self._tmp_css_file = tempfile.NamedTemporaryFile(
             dir=self._tmpdir.name, suffix="stylesheet.css", delete=False
         )
+        self._tmp_mjs_file = tempfile.NamedTemporaryFile(
+            dir=self._tmpdir.name, suffix="module.mjs", delete=False
+        )
+
         self._filename = os.path.basename(self._tmpfile.name)
         self._js_filename = os.path.basename(self._tmp_js_file.name)
         self._html_filename = os.path.basename(self._tmp_html_file.name)
         self._css_filename = os.path.basename(self._tmp_css_file.name)
+        self._mjs_filename = os.path.basename(self._tmp_mjs_file.name)
 
         super().setUp()
 
@@ -195,6 +200,7 @@ class StaticFileHandlerTest(tornado.testing.AsyncHTTPTestCase):
         mimetypes.add_type("custom/html", ".html")
         mimetypes.add_type("custom/js", ".js")
         mimetypes.add_type("custom/css", ".css")
+        mimetypes.add_type("custom/mjs", ".mjs")
 
         r = self.fetch(f"/{self._html_filename}")
         assert r.headers["Content-Type"] == "custom/html"
@@ -204,6 +210,9 @@ class StaticFileHandlerTest(tornado.testing.AsyncHTTPTestCase):
 
         r = self.fetch(f"/{self._css_filename}")
         assert r.headers["Content-Type"] == "custom/css"
+
+        r = self.fetch(f"/{self._mjs_filename}")
+        assert r.headers["Content-Type"] == "custom/mjs"
 
         Server.initialize_mimetypes()
 
@@ -215,6 +224,9 @@ class StaticFileHandlerTest(tornado.testing.AsyncHTTPTestCase):
 
         r = self.fetch(f"/{self._css_filename}")
         assert r.headers["Content-Type"] == "text/css"
+
+        r = self.fetch(f"/{self._mjs_filename}")
+        assert r.headers["Content-Type"] == "application/javascript"
 
 
 class RemoveSlashHandlerTest(tornado.testing.AsyncHTTPTestCase):
