@@ -1,11 +1,232 @@
-# Streamlit Library Rules
+# Streamlit Library Development Guide
 
-<!--
-description:
-globs: e2e_playwright/**/*.py
-alwaysApply: false
--->
+## What is Streamlit?
 
+Streamlit is an open-source Python library that transforms Python scripts into interactive web applications in minutes. It enables data scientists and developers to create and share data apps quickly without requiring frontend development experience. Streamlit apps can include charts, maps, interactive widgets, and custom components, all defined in pure Python.
+
+## Repository Overview
+
+**Repository Type**: Open-source Python library with React/TypeScript frontend  
+**Size**: ~143K lines of Python code, ~17K lines of TypeScript/JavaScript  
+**License**: Apache 2.0  
+**Supported Python**: 3.9-3.13 (excluding 3.9.7 due to typing.Protocol bug)  
+**Node.js**: v22 (see .nvmrc)  
+**Primary Languages**: Python (backend), TypeScript/React (frontend), Protocol Buffers  
+
+### Architecture
+
+- **Backend (`lib/streamlit/`)**: Python library providing the Streamlit API and server
+- **Frontend (`frontend/`)**: React/TypeScript web application using Yarn workspaces
+- **Protocol Buffers (`proto/`)**: Client-server communication definitions  
+- **E2E Tests (`e2e_playwright/`)**: Full-stack testing with Playwright
+- **Components (`component-lib/`)**: Custom component development framework
+
+### Key Dependencies
+
+- **Python**: tornado (web server), altair/plotly (charts), pandas (data), protobuf
+- **Frontend**: React 18, emotion (styling), vite (build), yarn workspaces
+- **Development**: ruff (Python linting), eslint/prettier (JS linting), mypy (typing)
+
+## Build System & Commands
+
+### Prerequisites
+
+**ALWAYS ensure these are installed before building:**
+- Python 3.9+ (3.13.7 currently used)
+- Node.js v22 (specified in .nvmrc)
+- Yarn 4.5.3+ (auto-installed via corepack)
+
+### Essential Command Sequence
+
+**For a clean development setup from scratch:**
+
+```bash
+# 1. Clean any existing artifacts (always safe to run)
+make clean
+
+# 2. Install Python dependencies (~1 minute, may fail with Playwright)
+# If Playwright download fails, use this workaround:
+INSTALL_PLAYWRIGHT=false make python-init
+
+# 3. Install frontend dependencies (~20 seconds, shows peer dependency warnings - these are normal)
+make frontend-init
+
+# 4. Compile protocol buffers (~5 seconds, REQUIRES frontend-init first)
+make protobuf
+
+# 5. Build frontend for development (2-5 minutes)
+make frontend-fast
+```
+
+**Common gotchas:**
+- `make protobuf` will fail if `make frontend-init` hasn't been run first
+- `make init` may fail due to Playwright browser download issues - use `INSTALL_PLAYWRIGHT=false` workaround
+- Yarn shows peer dependency warnings during frontend-init - these are expected and safe to ignore
+
+### Development Commands
+
+```bash
+# Linting & formatting (run frequently)
+make autofix                    # Auto-fix all linting/formatting issues
+make python-lint               # Check Python code style (ruff)
+make frontend-lint             # Check frontend code style (eslint)
+
+# Testing
+make python-tests              # Run Python unit tests (5-10 minutes)
+make frontend-tests            # Run frontend unit tests (vitest)
+make python-types              # Type checking with mypy (~1 minute)
+
+# E2E testing (requires Playwright browsers)
+make run-e2e-test path/to/test.py
+make debug-e2e-test path/to/test.py  # Interactive debugging mode
+
+# Building
+make frontend-fast             # Fast frontend build (2-5 minutes)
+make frontend                  # Full production frontend build
+```
+
+### Test Commands Syntax
+
+```bash
+# Python tests
+PYTHONPATH=lib pytest lib/tests/streamlit/commands/logo_test.py -v
+PYTHONPATH=lib pytest lib/tests/streamlit/commands/ -k "test_specific_function"
+make python-tests  # Run all Python tests
+
+# Frontend tests  
+cd frontend && yarn test
+cd frontend && yarn test lib/src/components/path/Component.test.tsx
+
+# E2E tests (must use make commands)
+make run-e2e-test e2e_playwright/st_button_test.py
+make debug-e2e-test e2e_playwright/st_button_test.py
+```
+
+## Configuration Files
+
+- **Python**: `.ruff.toml` (linting), `mypy.ini` (type checking), `lib/pytest.ini` (testing)
+- **Frontend**: `frontend/eslint.config.mjs`, `frontend/.prettierrc`, `frontend/vitest.config.ts`
+- **Build**: `Makefile` (primary build system), `frontend/package.json` (yarn workspaces)
+- **CI**: `.github/workflows/` (23 workflow files for comprehensive testing)
+
+## CI/CD Pipeline
+
+The repository uses GitHub Actions with 23+ workflow files that run on every PR:
+
+**Pre-commit validation:**
+- `python-tests.yml`: Python unit tests across multiple Python versions
+- `js-tests.yml`: Frontend unit tests with vitest  
+- `playwright.yml`: E2E tests (35 min timeout, 32-core runners)
+- `semgrep.yml`: Security scanning
+- `enforce-pre-commit.yml`: Code style enforcement
+
+**Special validations:**
+- `snapshot-hygiene.yml`: E2E screenshot drift detection
+- `component-template-e2e-tests.yml`: Custom component testing
+- `performance.yml`: Lighthouse performance testing
+
+**To replicate CI locally:**
+```bash
+make autofix              # Matches pre-commit formatting
+make python-tests         # Python validation
+make frontend-tests       # Frontend validation  
+make python-types         # Type checking
+# E2E tests require specific setup, run individual tests only
+```
+
+## Important Notes for Coding Agents
+
+**Trust these instructions:** The build commands and sequences documented above have been validated on this exact codebase. Only explore alternative approaches if these instructions are incomplete or incorrect.
+
+**Command dependencies are strict:** Always follow the documented sequence. For example:
+- `make protobuf` will fail if `make frontend-init` hasn't been run
+- Frontend builds require protobuf compilation to complete first  
+- Python tests require `PYTHONPATH=lib` prefix when run directly with pytest
+
+**Known workarounds:**
+- Playwright browser download often fails in CI environments - use `INSTALL_PLAYWRIGHT=false`
+- Yarn workspace peer dependency warnings during `make frontend-init` are expected and safe
+- If `make init` fails, run the individual steps as documented above instead
+
+**File modification guidelines:**
+- Always run `make autofix` after code changes to ensure consistent formatting
+- Python changes require `make python-lint` and `make python-types` to pass
+- Frontend changes require `make frontend-lint` to pass
+- E2E test changes may require `make frontend-fast` to rebuild the frontend first
+
+## Detailed Project Structure
+
+### Root Directory Files
+```
+.github/           # CI workflows, issue templates, copilot instructions
+.cursor/           # Cursor AI rules (source for these instructions)  
+.devcontainer/     # VS Code development container config
+.ruff.toml         # Python linting configuration
+.nvmrc             # Node.js version specification (v22)
+Makefile           # Primary build system (14KB, 380+ lines)
+mypy.ini           # Python type checking configuration
+proto/             # Protocol buffer definitions for client-server communication
+lib/               # Python backend library and tests
+frontend/          # React/TypeScript frontend with yarn workspaces
+e2e_playwright/    # End-to-end test suite
+component-lib/     # Custom component development framework
+scripts/           # Development and CI/CD utility scripts
+```
+
+### Python Backend (`lib/`)
+```
+streamlit/         # Main Python package
+├── __init__.py    # Public API exports  
+├── elements/      # Widget and display element implementations
+├── commands/      # Streamlit command implementations (st.write, st.button, etc.)
+├── runtime/       # Application runtime, session management, script execution
+├── components/    # Custom component framework
+├── proto/         # Generated protobuf Python files (auto-generated)
+├── static/        # Static web assets (auto-generated from frontend)
+└── config.py      # Configuration management
+
+tests/             # Python unit tests (mirror structure of streamlit/)
+dev-requirements.txt    # Development dependencies
+test-requirements.txt   # Testing dependencies  
+setup.py               # Package definition and dependencies
+```
+
+### Frontend (`frontend/`)
+```
+app/               # Main Streamlit web application
+lib/               # Shared React components and utilities
+connection/        # WebSocket connection management
+protobuf/          # Generated protobuf TypeScript files
+utils/             # Shared frontend utilities
+package.json       # Yarn workspace configuration
+yarn.lock          # Dependency lock file
+```
+
+### Dependencies Not Obvious from Structure
+
+**Python Backend Dependencies:**
+- `tornado` - Web server framework, handles WebSocket connections
+- `altair` + `vega-lite` - Declarative visualization (st.line_chart, etc.)
+- `plotly` - Interactive charts and 3D visualizations  
+- `pydeck` - 3D maps and geospatial visualization
+- `pandas` - Data manipulation (required for many chart types)
+- `numpy` - Numerical operations (required by pandas/charts)
+- `protobuf` - Client-server communication protocol
+
+**Frontend Dependencies:**
+- `@emotion/styled` - CSS-in-JS styling solution
+- `baseui` - Uber's React UI framework (underlying widget system)
+- `deck.gl` - WebGL-powered data visualization framework
+- `plotly.js` - Chart rendering engine
+- `react-virtualized` - Efficient rendering of large datasets
+
+**Hidden Build Dependencies:**
+- Protocol buffer compiler (`protoc`) - must be >= 3.20
+- Yarn workspaces - manages 7 frontend packages
+- UV Python package manager - speeds up pip installations
+- Playwright browsers - for E2E testing (large download)
+
+---
 
 ## Streamlit E2E Tests
 
