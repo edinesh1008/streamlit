@@ -20,6 +20,8 @@ import { DynamicIcon } from "~lib/components/shared/Icon"
 import StreamlitMarkdown from "~lib/components/shared/StreamlitMarkdown"
 import { IconSize } from "~lib/theme"
 
+import { StyledButtonLabel } from "./styled-components"
+
 export interface DynamicButtonLabelProps {
   icon?: string
   label?: string
@@ -34,14 +36,8 @@ export const DynamicButtonLabel = ({
   useSmallerFont = false,
 }: DynamicButtonLabelProps): React.ReactElement | null => {
   return (
-    <>
-      {icon && (
-        <DynamicIcon
-          size={iconSize ?? "lg"}
-          margin={label ? "0 sm 0 0" : "0"}
-          iconValue={icon}
-        />
-      )}
+    <StyledButtonLabel>
+      {icon && <DynamicIcon size={iconSize ?? "lg"} iconValue={icon} />}
       {label && (
         <StreamlitMarkdown
           source={label}
@@ -51,6 +47,6 @@ export const DynamicButtonLabel = ({
           disableLinks
         />
       )}
-    </>
+    </StyledButtonLabel>
   )
 }

@@ -37,10 +37,13 @@ export const StyledSpinnerIcon = styled(Spinner, {
   padding = "",
   theme,
 }) => {
+  // Emojis are rendered 20% smaller to visually match the size of Material icons:
+  const adjustedSpinnerSize = `calc(${theme.iconSizes[size]} * 0.80)`
+
   return {
-    width: theme.iconSizes[size],
-    height: theme.iconSizes[size],
-    fontSize: theme.iconSizes[size],
+    width: adjustedSpinnerSize,
+    height: adjustedSpinnerSize,
+    fontSize: adjustedSpinnerSize,
     justifyContents: "center",
     margin: computeSpacingStyle(margin, theme),
     padding: computeSpacingStyle(padding, theme),

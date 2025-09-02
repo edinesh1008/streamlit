@@ -58,7 +58,6 @@ export const ExpanderIcon = (props: ExpanderIconProps): ReactElement => {
   return icon ? (
     <DynamicIcon
       size="lg"
-      margin="0 sm 0 0"
       iconValue={icon}
       testid={statusIconTestIds[icon] || "stExpanderIcon"}
     />
@@ -240,7 +239,6 @@ const Expander: React.FC<React.PropsWithChildren<ExpanderProps>> = ({
                     : ":material/keyboard_arrow_right:"
                 }
                 size="lg"
-                margin="0 sm 0 0"
               />
             )}
             {showUserIcon && <ExpanderIcon icon={element.icon} />}

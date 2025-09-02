@@ -65,8 +65,6 @@ export function getFilledStarIconSrc(): string {
 export interface DynamicIconProps {
   iconValue: string
   size?: IconSize
-  margin?: string
-  padding?: string
   testid?: string
   color?: string
 }
@@ -77,10 +75,12 @@ const DynamicIconDispatcher = ({
 }: DynamicIconProps): React.ReactElement => {
   if (iconValue === "spinner") {
     return (
-      <StyledSpinnerIcon
-        data-testid={props.testid || "stSpinnerIcon"}
-        {...props}
-      />
+      <StyledDynamicIcon {...props}>
+        <StyledSpinnerIcon
+          data-testid={props.testid || "stSpinnerIcon"}
+          {...props}
+        />
+      </StyledDynamicIcon>
     )
   }
 
