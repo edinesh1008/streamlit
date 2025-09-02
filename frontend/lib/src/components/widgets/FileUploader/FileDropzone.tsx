@@ -23,15 +23,15 @@ import BaseButton, {
   BaseButtonSize,
   DynamicButtonLabel,
 } from "~lib/components/shared/BaseButton"
-import { AcceptFileValue } from "~lib/util/utils"
 import { getUploadDescription } from "~lib/components/widgets/ChatInput/fileUpload/fileUploadUtils"
+import { AcceptFileValue } from "~lib/util/utils"
 
-import { getAccept } from "./utils"
-import FileDropzoneInstructions from "./FileDropzoneInstructions"
 import {
   StyledButtonNoWrapContainer,
   StyledFileDropzoneSection,
 } from "./styled-components"
+import FileDropzoneInstructions from "./FileDropzoneInstructions"
+import { getAccept } from "./utils"
 
 export interface Props {
   disabled: boolean
