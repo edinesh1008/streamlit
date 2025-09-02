@@ -83,7 +83,7 @@ export const StyledFileDropzoneInstructionsSubtext = styled.span<{
   minWidth: 0,
 }))
 
-export const StyledFileDropzoneInstructionsColumn = styled.div(
+export const StyledFileDropzoneInstructionsContent = styled.div(
   ({ theme }) => ({
     display: "flex",
     flexDirection: "row",

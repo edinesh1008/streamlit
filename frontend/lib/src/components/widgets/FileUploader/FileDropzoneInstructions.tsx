@@ -20,7 +20,7 @@ import { FileSize, getSizeDisplay } from "~lib/util/FileHelper"
 
 import {
   StyledFileDropzoneInstructions,
-  StyledFileDropzoneInstructionsColumn,
+  StyledFileDropzoneInstructionsContent,
   StyledFileDropzoneInstructionsSubtext,
   StyledFileDropzoneInstructionsText,
 } from "./styled-components"
@@ -63,7 +63,7 @@ const FileDropzoneInstructions = ({
 
   return (
     <StyledFileDropzoneInstructions data-testid="stFileUploaderDropzoneInstructions">
-      <StyledFileDropzoneInstructionsColumn>
+      <StyledFileDropzoneInstructionsContent>
         <StyledFileDropzoneInstructionsText disabled={disabled}>
           Drag and drop {getContentTypeText()} here
         </StyledFileDropzoneInstructionsText>
@@ -71,7 +71,7 @@ const FileDropzoneInstructions = ({
           {getSizeLimit()}
           {getFileTypeInfo()}
         </StyledFileDropzoneInstructionsSubtext>
-      </StyledFileDropzoneInstructionsColumn>
+      </StyledFileDropzoneInstructionsContent>
     </StyledFileDropzoneInstructions>
   )
 }
