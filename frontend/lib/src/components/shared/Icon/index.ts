@@ -20,4 +20,3 @@ export {
   isMaterialIcon,
 } from "./DynamicIcon"
 export { default, EmojiIcon } from "./Icon"
-export { StyledIcon } from "./styled-components"
