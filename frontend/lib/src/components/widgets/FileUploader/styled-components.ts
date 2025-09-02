@@ -20,11 +20,10 @@ import { convertRemToPx, EmotionTheme } from "~lib/theme"
 
 export interface StyledFileDropzone {
   isDisabled: boolean
-  isDragging?: boolean
 }
 
 export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
-  ({ isDisabled, isDragging, theme }) => ({
+  ({ isDisabled, theme }) => ({
     display: "flex",
     gap: theme.spacing.lg,
     alignItems: "center",
@@ -35,12 +34,6 @@ export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
       ? `${theme.sizes.borderWidth} solid ${theme.colors.widgetBorderColor}`
       : undefined,
     height: theme.sizes.largestElementHeight,
-    ...(isDragging
-      ? {
-          border: `${theme.sizes.borderWidth} solid ${theme.colors.red}`,
-          justifyContent: "center",
-        }
-      : {}),
     ":focus": {
       outline: "none",
     },
@@ -98,11 +91,6 @@ export const StyledFileDropzoneInstructionsContent = styled.div(
 export const StyledButtonNoWrapContainer = styled.span({
   whiteSpace: "nowrap",
 })
-
-export const StyledFileDropzoneDragLabel = styled.div(({ theme }) => ({
-  color: theme.colors.red,
-  fontWeight: theme.fontWeights.bold,
-}))
 
 export const StyledUploadedFiles = styled.div(({ theme }) => ({
   left: 0,
@@ -186,7 +174,7 @@ const compactFileUploader = (theme: EmotionTheme): CSSObject => ({
   },
   // Stack instructions and subtext in compact mode
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
-  [StyledFileDropzoneInstructionsColumn as any]: {
+  [StyledFileDropzoneInstructionsContent as any]: {
     flexDirection: "column",
     gap: 0,
   },

@@ -32,6 +32,7 @@ import {
 import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
 import { Placement } from "~lib/components/shared/Tooltip"
 import TooltipIcon from "~lib/components/shared/TooltipIcon"
+
 import {
   StyledWidgetLabelHelp,
   WidgetLabel,
@@ -139,10 +140,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
 
   public override componentWillUnmount(): void {
     this.formClearHelper.disconnect()
-    // Remove global drag listeners
-    window.removeEventListener("dragover", this.handleDragEnter)
-    window.removeEventListener("drop", this.handleDrop)
-    window.removeEventListener("dragleave", this.handleDragLeave)
+    // Remove global drag listeners (none currently added)
   }
 
   /**
@@ -212,45 +210,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
       )
     }
 
-    // Add global drag listeners to show overlay when dragging files anywhere
-    window.addEventListener("dragover", this.handleDragEnter)
-    window.addEventListener("drop", this.handleDrop)
-    window.addEventListener("dragleave", this.handleDragLeave)
-  }
-
-  private handleDragEnter = (event: DragEvent): void => {
-    event.preventDefault()
-    event.stopPropagation()
-    if (
-      !this.state.fileDragged &&
-      event.dataTransfer?.types.includes("Files")
-    ) {
-      this.setState({ fileDragged: true })
-    }
-  }
-
-  private handleDragLeave = (event: DragEvent): void => {
-    event.preventDefault()
-    event.stopPropagation()
-    if (this.state.fileDragged) {
-      const innerWidth = window.innerWidth
-      const innerHeight = window.innerHeight
-      // Prevent flicker when moving within window; only clear when leaving viewport
-      if (
-        (event.clientX <= 0 && event.clientY <= 0) ||
-        (event.clientX >= innerWidth && event.clientY >= innerHeight)
-      ) {
-        this.setState({ fileDragged: false })
-      }
-    }
-  }
-
-  private handleDrop = (event: DragEvent): void => {
-    event.preventDefault()
-    event.stopPropagation()
-    if (this.state.fileDragged) {
-      this.setState({ fileDragged: false })
-    }
+    // Drag listeners disabled for now
   }
 
   private createWidgetValue(): FileUploaderStateProto {
@@ -668,7 +628,6 @@ class FileUploader extends PureComponent<InnerProps, State> {
           label={element.label}
           disabled={disabled}
           acceptDirectory={Boolean(element.acceptDirectory)}
-          isDragging={this.state.fileDragged}
         />
         {newestToOldestFiles.length > 0 && (
           <UploadedFiles
