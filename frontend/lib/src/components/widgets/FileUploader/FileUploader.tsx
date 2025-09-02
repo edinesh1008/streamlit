@@ -76,8 +76,6 @@ export interface State {
    * rejected files that will not be updated.
    */
   files: UploadFileInfo[]
-  /** Whether a file is being dragged anywhere over the window. */
-  fileDragged: boolean
 }
 
 class FileUploader extends PureComponent<InnerProps, State> {
@@ -107,7 +105,7 @@ class FileUploader extends PureComponent<InnerProps, State> {
   }
 
   get initialValue(): State {
-    const emptyState: State = { files: [], fileDragged: false }
+    const emptyState = { files: [] }
     const { widgetMgr, element } = this.props
 
     const widgetValue = widgetMgr.getFileUploaderStateValue(element)
@@ -121,7 +119,6 @@ class FileUploader extends PureComponent<InnerProps, State> {
     }
 
     return {
-      fileDragged: false,
       files: uploadedFileInfo.map(f => {
         const name = f.name as string
         const size = f.size as number
@@ -140,7 +137,6 @@ class FileUploader extends PureComponent<InnerProps, State> {
 
   public override componentWillUnmount(): void {
     this.formClearHelper.disconnect()
-    // Remove global drag listeners (none currently added)
   }
 
   /**
@@ -209,8 +205,6 @@ class FileUploader extends PureComponent<InnerProps, State> {
         fragmentId
       )
     }
-
-    // Drag listeners disabled for now
   }
 
   private createWidgetValue(): FileUploaderStateProto {
