@@ -64,11 +64,7 @@ function ChatMessageAvatar(
               data-testid="stChatMessageAvatarUser"
               background={theme.colors.redColor}
             >
-              <DynamicIcon
-                size="lg"
-                iconValue=":material/face:"
-                color={theme.colors.bodyText}
-              />
+              <DynamicIcon size="lg" iconValue=":material/face:" />
             </StyledAvatarIcon>
           )
         } else if (avatar === "assistant") {
@@ -77,11 +73,7 @@ function ChatMessageAvatar(
               data-testid="stChatMessageAvatarAssistant"
               background={theme.colors.orangeColor}
             >
-              <DynamicIcon
-                size="lg"
-                iconValue=":material/smart_toy:"
-                color={theme.colors.bodyText}
-              />
+              <DynamicIcon size="lg" iconValue=":material/smart_toy:" />
             </StyledAvatarIcon>
           )
         } else if (avatar.startsWith(":material")) {
