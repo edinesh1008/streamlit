@@ -119,7 +119,7 @@ export const StyledSidebarNavLink = styled.a<StyledSidebarNavLinkProps>(
       display: "flex",
       flexDirection: "row",
       alignItems: "center",
-      gap: theme.spacing.sm,
+      gap: theme.spacing.xs,
       borderRadius: theme.radii.default,
       paddingLeft: theme.spacing.sm,
       paddingRight: theme.spacing.sm,
