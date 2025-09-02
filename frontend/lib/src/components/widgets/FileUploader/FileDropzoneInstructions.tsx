@@ -17,6 +17,8 @@
 import React, { memo } from "react"
 
 import { FileSize, getSizeDisplay } from "~lib/util/FileHelper"
+import { AcceptFileValue } from "~lib/util/utils"
+import { getUploadDescription } from "~lib/components/widgets/ChatInput/fileUpload/fileUploadUtils"
 
 import {
   StyledFileDropzoneInstructions,
@@ -40,13 +42,12 @@ const FileDropzoneInstructions = ({
   acceptDirectory = false,
   disabled,
 }: Props): React.ReactElement => {
-  // Determine what type of content we're accepting
-  const getContentTypeText = (): string => {
-    if (acceptDirectory) {
-      return "directories"
-    }
-    return multiple ? "files" : "file"
-  }
+  // Determine what type of content we're accepting using shared util
+  const acceptFile: AcceptFileValue = acceptDirectory
+    ? AcceptFileValue.Directory
+    : multiple
+      ? AcceptFileValue.Multiple
+      : AcceptFileValue.Single
 
   const getFileTypeInfo = (): string | null => {
     if (acceptedExtensions.length) {
@@ -65,7 +66,7 @@ const FileDropzoneInstructions = ({
     <StyledFileDropzoneInstructions data-testid="stFileUploaderDropzoneInstructions">
       <StyledFileDropzoneInstructionsContent>
         <StyledFileDropzoneInstructionsText disabled={disabled}>
-          Drag and drop {getContentTypeText()} here
+          {`Drag and drop ${getUploadDescription(acceptFile)} here`}
         </StyledFileDropzoneInstructionsText>
         <StyledFileDropzoneInstructionsSubtext disabled={disabled}>
           {getSizeLimit()}
