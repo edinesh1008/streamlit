@@ -20,10 +20,11 @@ import { convertRemToPx, EmotionTheme } from "~lib/theme"
 
 export interface StyledFileDropzone {
   isDisabled: boolean
+  isDragging?: boolean
 }
 
 export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
-  ({ isDisabled, theme }) => ({
+  ({ isDisabled, isDragging, theme }) => ({
     display: "flex",
     gap: theme.spacing.lg,
     alignItems: "center",
@@ -34,6 +35,12 @@ export const StyledFileDropzoneSection = styled.section<StyledFileDropzone>(
       ? `${theme.sizes.borderWidth} solid ${theme.colors.widgetBorderColor}`
       : undefined,
     height: theme.sizes.largestElementHeight,
+    ...(isDragging
+      ? {
+          border: `${theme.sizes.borderWidth} solid ${theme.colors.red}`,
+          justifyContent: "center",
+        }
+      : {}),
     ":focus": {
       outline: "none",
     },
@@ -54,12 +61,6 @@ export const StyledFileDropzoneInstructions = styled.div(({ theme }) => ({
   width: "100%",
 }))
 
-export const StyledFileDropzoneInstructionsFileUploaderIcon = styled.span(
-  ({ theme }) => ({
-    color: theme.colors.darkenedBgMix100,
-  })
-)
-
 export const StyledFileDropzoneInstructionsText = styled.span<{
   disabled?: boolean
 }>(({ theme, disabled }) => ({
@@ -77,19 +78,31 @@ export const StyledFileDropzoneInstructionsSubtext = styled.span<{
   overflow: "hidden",
   whiteSpace: "nowrap",
   maxWidth: "100%",
+  // Allow subtext to shrink in row layout
+  flex: 1,
+  minWidth: 0,
 }))
 
-export const StyledFileDropzoneInstructionsColumn = styled.div({
-  display: "flex",
-  flexDirection: "column",
-  // Allow child text to shrink inside flex layouts for proper ellipsis
-  minWidth: 0,
-  maxWidth: "100%",
-})
+export const StyledFileDropzoneInstructionsColumn = styled.div(
+  ({ theme }) => ({
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: theme.spacing.sm,
+    // Allow child text to shrink inside flex layouts for proper ellipsis
+    minWidth: 0,
+    maxWidth: "100%",
+  })
+)
 
 export const StyledButtonNoWrapContainer = styled.span({
   whiteSpace: "nowrap",
 })
+
+export const StyledFileDropzoneDragLabel = styled.div(({ theme }) => ({
+  color: theme.colors.red,
+  fontWeight: theme.fontWeights.bold,
+}))
 
 export const StyledUploadedFiles = styled.div(({ theme }) => ({
   left: 0,
@@ -115,14 +128,12 @@ export const StyledUploadedFileData = styled.div(({ theme }) => ({
   display: "flex",
   alignItems: "baseline",
   flex: 1,
-  paddingLeft: theme.spacing.lg,
+  gap: theme.spacing.sm,
   overflow: "hidden",
 }))
 
 export const StyledUploadedFileName = styled.div<{ disabled?: boolean }>(
   ({ theme, disabled }) => ({
-    marginRight: theme.spacing.sm,
-    marginBottom: theme.spacing.twoXS,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
@@ -133,7 +144,7 @@ export const StyledUploadedFileName = styled.div<{ disabled?: boolean }>(
 export const StyledUploadedFile = styled.div(({ theme }) => ({
   display: "flex",
   alignItems: "center",
-  marginBottom: theme.spacing.twoXS,
+  gap: theme.spacing.sm,
 }))
 
 export const StyledErrorMessage = styled.span(({ theme }) => ({
@@ -143,8 +154,8 @@ export const StyledErrorMessage = styled.span(({ theme }) => ({
 export const StyledFileIcon = styled.div<{ disabled?: boolean }>(
   ({ theme, disabled }) => ({
     display: "flex",
-    padding: theme.spacing.twoXS,
-    color: disabled ? theme.colors.fadedText40 : theme.colors.darkenedBgMix100,
+    alignItems: "center",
+    color: disabled ? theme.colors.fadedText40 : "inherit",
   })
 )
 
@@ -170,12 +181,14 @@ const compactFileUploader = (theme: EmotionTheme): CSSObject => ({
     gap: theme.spacing.sm,
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
-  [StyledFileDropzoneInstructionsFileUploaderIcon as any]: {
-    display: "none",
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   [StyledFileDropzoneInstructionsText as any]: {
     marginBottom: theme.spacing.twoXS,
+  },
+  // Stack instructions and subtext in compact mode
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
+  [StyledFileDropzoneInstructionsColumn as any]: {
+    flexDirection: "column",
+    gap: 0,
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
   [StyledUploadedFiles as any]: {

@@ -16,15 +16,11 @@
 
 import React, { memo } from "react"
 
-import { CloudUpload } from "@emotion-icons/material-outlined"
-
-import Icon from "~lib/components/shared/Icon"
 import { FileSize, getSizeDisplay } from "~lib/util/FileHelper"
 
 import {
   StyledFileDropzoneInstructions,
   StyledFileDropzoneInstructionsColumn,
-  StyledFileDropzoneInstructionsFileUploaderIcon,
   StyledFileDropzoneInstructionsSubtext,
   StyledFileDropzoneInstructionsText,
 } from "./styled-components"
@@ -62,14 +58,11 @@ const FileDropzoneInstructions = ({
   }
 
   const getSizeLimit = (): string => {
-    return `Limit ${getSizeDisplay(maxSizeBytes, FileSize.Byte, 0)} per file`
+    return `${getSizeDisplay(maxSizeBytes, FileSize.Byte, 0)} per file`
   }
 
   return (
     <StyledFileDropzoneInstructions data-testid="stFileUploaderDropzoneInstructions">
-      <StyledFileDropzoneInstructionsFileUploaderIcon>
-        <Icon content={CloudUpload} size="threeXL" />
-      </StyledFileDropzoneInstructionsFileUploaderIcon>
       <StyledFileDropzoneInstructionsColumn>
         <StyledFileDropzoneInstructionsText disabled={disabled}>
           Drag and drop {getContentTypeText()} here

@@ -21,14 +21,18 @@ import Dropzone, { FileRejection } from "react-dropzone"
 import BaseButton, {
   BaseButtonKind,
   BaseButtonSize,
+  DynamicButtonLabel,
 } from "~lib/components/shared/BaseButton"
 
 import FileDropzoneInstructions from "./FileDropzoneInstructions"
 import {
   StyledButtonNoWrapContainer,
   StyledFileDropzoneSection,
+  StyledFileDropzoneDragLabel,
 } from "./styled-components"
 import { getAccept } from "./utils"
+import { AcceptFileValue } from "~lib/util/utils"
+import { getUploadDescription } from "~lib/components/widgets/ChatInput/fileUpload/fileUploadUtils"
 
 export interface Props {
   disabled: boolean
@@ -38,6 +42,7 @@ export interface Props {
   maxSizeBytes: number
   label: string
   acceptDirectory?: boolean
+  isDragging?: boolean
 }
 
 const FileDropzone = ({
@@ -48,6 +53,7 @@ const FileDropzone = ({
   disabled,
   label,
   acceptDirectory = false,
+  isDragging,
 }: Props): React.ReactElement => (
   <Dropzone
     onDrop={onDrop}
@@ -64,11 +70,18 @@ const FileDropzone = ({
         multiple: multiple || !!acceptDirectory,
       })
 
+      const acceptFile: AcceptFileValue = acceptDirectory
+        ? AcceptFileValue.Directory
+        : multiple
+          ? AcceptFileValue.Multiple
+          : AcceptFileValue.Single
+
       return (
         <StyledFileDropzoneSection
           {...getRootProps()}
           data-testid="stFileUploaderDropzone"
           isDisabled={disabled}
+          isDragging={Boolean(isDragging)}
           aria-label={label}
           aria-disabled={disabled}
         >
@@ -77,22 +90,34 @@ const FileDropzone = ({
             {...inputProps}
             {...(acceptDirectory && { webkitdirectory: "" })}
           />
-          <FileDropzoneInstructions
-            multiple={multiple}
-            acceptedExtensions={acceptedExtensions}
-            maxSizeBytes={maxSizeBytes}
-            acceptDirectory={acceptDirectory}
-            disabled={disabled}
-          />
-          <StyledButtonNoWrapContainer>
-            <BaseButton
-              kind={BaseButtonKind.SECONDARY}
-              disabled={disabled}
-              size={BaseButtonSize.SMALL}
-            >
-              {acceptDirectory ? "Browse directories" : "Browse files"}
-            </BaseButton>
-          </StyledButtonNoWrapContainer>
+          {isDragging ? (
+            <StyledFileDropzoneDragLabel>
+              {`Drag and drop ${getUploadDescription(acceptFile)} here`}
+            </StyledFileDropzoneDragLabel>
+          ) : (
+            <>
+              <FileDropzoneInstructions
+                multiple={multiple}
+                acceptedExtensions={acceptedExtensions}
+                maxSizeBytes={maxSizeBytes}
+                acceptDirectory={acceptDirectory}
+                disabled={disabled}
+              />
+              <StyledButtonNoWrapContainer>
+                <BaseButton
+                  kind={BaseButtonKind.SECONDARY}
+                  disabled={disabled}
+                  size={BaseButtonSize.SMALL}
+                >
+                  <DynamicButtonLabel
+                    icon=":material/upload:"
+                    iconSize="lg"
+                    label={`Upload ${getUploadDescription(acceptFile)}`}
+                  />
+                </BaseButton>
+              </StyledButtonNoWrapContainer>
+            </>
+          )}
         </StyledFileDropzoneSection>
       )
     }}
