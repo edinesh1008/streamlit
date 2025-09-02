@@ -33,7 +33,10 @@ import { useCalculatedDimensions } from "~lib/hooks/useCalculatedDimensions"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { hasLightBackgroundColor } from "~lib/theme"
 
-import { StyledPopoverLabelContainer } from "./styled-components"
+import {
+  StyledPopoverExpansionIcon,
+  StyledPopoverLabelContainer,
+} from "./styled-components"
 
 export interface PopoverProps {
   element: BlockProto.Popover
@@ -148,12 +151,16 @@ const Popover: React.FC<React.PropsWithChildren<PopoverProps>> = ({
                   icon={element.icon}
                   label={element.label}
                 />
-                <DynamicIcon
-                  iconValue={
-                    open ? ":material/expand_less:" : ":material/expand_more:"
-                  }
-                  size="lg"
-                />
+                <StyledPopoverExpansionIcon>
+                  <DynamicIcon
+                    iconValue={
+                      open
+                        ? ":material/expand_less:"
+                        : ":material/expand_more:"
+                    }
+                    size="lg"
+                  />
+                </StyledPopoverExpansionIcon>
               </StyledPopoverLabelContainer>
             </BaseButton>
           </BaseButtonTooltip>

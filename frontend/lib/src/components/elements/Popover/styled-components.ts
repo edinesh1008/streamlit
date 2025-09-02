@@ -31,3 +31,9 @@ export const StyledPopoverLabelContainer = styled.div(({ theme }) => ({
   // The SVG icon we are using seems to have an internal padding of around 25%.
   marginRight: `calc(-${theme.iconSizes.lg} * 0.25)`,
 }))
+
+export const StyledPopoverExpansionIcon = styled.div(({ theme }) => ({
+  display: "inline-flex",
+  // Small hack to better align the expansion icon with the label.
+  marginTop: theme.spacing.threeXS,
+}))
