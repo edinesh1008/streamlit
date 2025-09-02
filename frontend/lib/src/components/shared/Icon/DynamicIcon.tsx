@@ -20,7 +20,11 @@ import { IconSize } from "~lib/theme"
 
 import { EmojiIcon } from "./Icon"
 import MaterialFontIcon from "./Material/MaterialFontIcon"
-import { StyledDynamicIcon, StyledImageIcon } from "./styled-components"
+import {
+  StyledDynamicIcon,
+  StyledImageIcon,
+  StyledSpinnerIcon,
+} from "./styled-components"
 
 interface IconPackEntry {
   pack: string
@@ -68,6 +72,15 @@ const DynamicIconDispatcher = ({
   iconValue,
   ...props
 }: DynamicIconProps): React.ReactElement => {
+  if (iconValue === "spinner") {
+    return (
+      <StyledSpinnerIcon
+        data-testid={props.testid || "stSpinnerIcon"}
+        {...props}
+      />
+    )
+  }
+
   const { pack, icon } = parseIconPackEntry(iconValue)
   switch (pack) {
     case "material":

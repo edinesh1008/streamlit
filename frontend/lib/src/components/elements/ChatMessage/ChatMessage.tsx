@@ -16,11 +16,9 @@
 
 import React, { memo, ReactElement } from "react"
 
-import { Face, SmartToy } from "@emotion-icons/material-outlined"
-
 import { Block as BlockProto } from "@streamlit/protobuf"
 
-import Icon, { DynamicIcon } from "~lib/components/shared/Icon"
+import { DynamicIcon } from "~lib/components/shared/Icon"
 import { useCrossOriginAttribute } from "~lib/hooks/useCrossOriginAttribute"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import { StreamlitEndpoints } from "~lib/StreamlitEndpoints"
@@ -66,7 +64,11 @@ function ChatMessageAvatar(
               data-testid="stChatMessageAvatarUser"
               background={theme.colors.redColor}
             >
-              <Icon content={Face} size="lg" />
+              <DynamicIcon
+                size="lg"
+                iconValue=":material/face:"
+                color={theme.colors.bodyText}
+              />
             </StyledAvatarIcon>
           )
         } else if (avatar === "assistant") {
@@ -75,7 +77,11 @@ function ChatMessageAvatar(
               data-testid="stChatMessageAvatarAssistant"
               background={theme.colors.orangeColor}
             >
-              <Icon content={SmartToy} size="lg" />
+              <DynamicIcon
+                size="lg"
+                iconValue=":material/smart_toy:"
+                color={theme.colors.bodyText}
+              />
             </StyledAvatarIcon>
           )
         } else if (avatar.startsWith(":material")) {

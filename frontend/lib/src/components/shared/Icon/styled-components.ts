@@ -14,23 +14,29 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line import/order
+import { EmotionIcon } from "@emotion-icons/emotion-icon"
 import isPropValid from "@emotion/is-prop-valid"
 import styled from "@emotion/styled"
-import { EmotionIcon } from "@emotion-icons/emotion-icon"
 import { Spinner } from "baseui/spinner"
 
 import { computeSpacingStyle, IconSize } from "~lib/theme"
 
 export interface StyledSpinnerIconProps {
-  size: IconSize
-  margin: string
-  padding: string
+  size?: IconSize
+  margin?: string
+  padding?: string
 }
 
 export const StyledSpinnerIcon = styled(Spinner, {
   shouldForwardProp: (prop: string) =>
     isPropValid(prop) && !["size"].includes(prop),
-})<StyledSpinnerIconProps>(({ size, margin, padding, theme }) => {
+})<StyledSpinnerIconProps>(({
+  size = "lg",
+  margin = "",
+  padding = "",
+  theme,
+}) => {
   return {
     width: theme.iconSizes[size],
     height: theme.iconSizes[size],
@@ -110,13 +116,15 @@ interface StyledEmojiIconProps {
 
 export const StyledEmojiIcon = styled.span<StyledEmojiIconProps>(
   ({ size, margin, padding, theme, color }) => {
+    // Emojis are rendered 20% smaller to visually match the size of Material icons:
+    const adjustedIconSize = `calc(${theme.iconSizes[size]} * 0.8)`
     return {
       display: "inline-flex",
       alignItems: "center",
       justifyContents: "center",
-      fontSize: theme.iconSizes[size],
-      width: theme.iconSizes[size],
-      height: theme.iconSizes[size],
+      fontSize: adjustedIconSize,
+      width: adjustedIconSize,
+      height: adjustedIconSize,
       margin: computeSpacingStyle(margin, theme),
       padding: computeSpacingStyle(padding, theme),
       color: color,
