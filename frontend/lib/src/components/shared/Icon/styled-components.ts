@@ -116,8 +116,8 @@ interface StyledEmojiIconProps {
 
 export const StyledEmojiIcon = styled.span<StyledEmojiIconProps>(
   ({ size, margin, padding, theme, color }) => {
-    // Emojis are rendered 20% smaller to visually match the size of Material icons:
-    const adjustedIconSize = `calc(${theme.iconSizes[size]} * 0.8)`
+    // Emojis are rendered 15% smaller to visually match the size of Material icons:
+    const adjustedIconSize = `calc(${theme.iconSizes[size]} * 0.85)`
     return {
       display: "inline-flex",
       alignItems: "center",
