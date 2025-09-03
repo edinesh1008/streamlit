@@ -70,7 +70,7 @@ from streamlit.runtime.state import (
     WidgetKwargs,
     register_widget,
 )
-from streamlit.type_util import is_type
+from streamlit.type_util import is_list_like, is_type
 from streamlit.util import calc_md5
 
 if TYPE_CHECKING:
@@ -180,14 +180,14 @@ class DataEditorSerde:
 
 
 def _parse_value(
-    value: str | int | float | bool | None,
+    value: str | int | float | bool | list[str] | None,
     column_data_kind: ColumnDataKind,
 ) -> Any:
     """Convert a value to the correct type.
 
     Parameters
     ----------
-    value : str | int | float | bool | None
+    value : str | int | float | bool | list[str] | None
         The value to convert.
 
     column_data_kind : ColumnDataKind
@@ -204,8 +204,19 @@ def _parse_value(
     import pandas as pd
 
     try:
+        if column_data_kind == ColumnDataKind.LIST:
+            return list(value) if is_list_like(value) else [value]  # ty: ignore
+
         if column_data_kind == ColumnDataKind.STRING:
             return str(value)
+
+        # List values aren't supported for anything else than list column data kind.
+        # To make the type checker happy, we raise a TypeError here. However,
+        # This isn't expected to happen.
+        if isinstance(value, list):
+            raise TypeError(  # noqa: TRY301
+                "List values are only supported by list and string columns."
+            )
 
         if column_data_kind == ColumnDataKind.INTEGER:
             return int(value)
@@ -244,7 +255,7 @@ def _parse_value(
             if column_data_kind == ColumnDataKind.TIME:
                 return datetime_value.time()
 
-    except (ValueError, pd.errors.ParserError) as ex:
+    except (ValueError, pd.errors.ParserError, TypeError) as ex:
         _LOGGER.warning(
             "Failed to parse value %s as %s.",
             value,
@@ -257,7 +268,9 @@ def _parse_value(
 
 def _apply_cell_edits(
     df: pd.DataFrame,
-    edited_rows: Mapping[int, Mapping[str, str | int | float | bool | None]],
+    edited_rows: Mapping[
+        int, Mapping[str, str | int | float | bool | list[str] | None]
+    ],
     dataframe_schema: DataframeSchema,
 ) -> None:
     """Apply cell edits to the provided dataframe (inplace).
@@ -288,7 +301,7 @@ def _apply_cell_edits(
                 )
             else:
                 col_pos = df.columns.get_loc(col_name)
-                df.iloc[row_pos, col_pos] = _parse_value(
+                df.iat[row_pos, col_pos] = _parse_value(
                     value, dataframe_schema[col_name]
                 )
 
@@ -659,7 +672,7 @@ class DataEditorMixin:
                   precedence over text and number formatting from ``pandas.Styler``.
                 - Mixing data types within a column can make the column uneditable.
                 - Additionally, the following data types are not yet supported for editing:
-                  ``complex``, ``list``, ``tuple``, ``bytes``, ``bytearray``,
+                  ``complex``, ``tuple``, ``bytes``, ``bytearray``,
                   ``memoryview``, ``dict``, ``set``, ``frozenset``,
                   ``fractions.Fraction``, ``pandas.Interval``, and
                   ``pandas.Period``.
@@ -668,30 +681,30 @@ class DataEditorMixin:
                   default to uneditable, but this can be changed through column
                   configuration.
 
-        width : int, "stretch", or "content"
-            Desired width of the data editor. If ``"stretch"`` (default),
-            Streamlit sets the width of the data editor to match the width of
-            the parent container. If ``"content"``, Streamlit sets the width
-            of the data editor to fit its contents up to the width of the parent
-            container. If an integer, Streamlit sets the width of the data editor
-            to the specified number of pixels. If the specified width is greater
-            than the width of the parent container, Streamlit sets the data editor
-            width to match the width of the parent container.
+        width : "stretch", "content", or int
+            The width of the data editor. This can be one of the following:
+
+            - ``"stretch"`` (default): The width of the editor matches the
+              width of the parent container.
+            - ``"content"``: The width of the editor matches the width of its
+              content, but doesn't exceed the width of the parent container.
+            - An integer specifying the width in pixels: The editor has a
+              fixed width. If the specified width is greater than the width of
+              the parent container, the width of the editor matches the width
+              of the parent container.
 
         height : int or "auto"
-            Desired height of the data editor. If ``"auto"`` (default),
-            Streamlit sets the height to show at most ten rows. Vertical
-            scrolling within the data editor is enabled when the height
-            does not accommodate all rows. If an
-            integer, Streamlit sets the height of the data editor to the
-            specified number of pixels.
+            The height of the data editor. This can be one of the following:
+
+            - ``"auto"`` (default): Streamlit sets the height to show at most
+              ten rows.
+            - An integer specifying the height in pixels: The editor has a
+              fixed height.
+
+            Vertical scrolling within the data editor is enabled when the
+            height does not accommodate all rows.
 
         use_container_width : bool
-            .. deprecated::
-                The ``use_container_width`` parameter is deprecated and will be removed
-                in a future version. Use the ``width`` parameter
-                with ``width="stretch"`` instead.
-
             Whether to override ``width`` with the width of the parent
             container. If this is ``True`` (default), Streamlit sets the width
             of the data editor to match the width of the parent container. If
@@ -779,6 +792,11 @@ class DataEditorMixin:
             The height of each row in the data editor in pixels. If ``row_height``
             is ``None`` (default), Streamlit will use a default row height,
             which fits one line of text.
+
+        .. deprecated::
+            ``use_container_width`` is deprecated and will be removed in a
+            future release. For ``use_container_width=True``, use
+            ``width="stretch"``.
 
         Returns
         -------
@@ -1010,6 +1028,7 @@ class DataEditorMixin:
         element_id = compute_and_register_element_id(
             "data_editor",
             user_key=key,
+            key_as_main_identity=False,
             dg=self.dg,
             data=arrow_bytes,
             width=width,

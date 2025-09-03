@@ -189,6 +189,7 @@ st.data_editor(
             disabled=False,
             default=True,
             options=[1, 2, 3, 4, 5],
+            format_func=lambda x: f"Option {x}",
         ),
         "col_1": st.column_config.SelectboxColumn(options=["a", "b", "c", "d"]),
     },
@@ -379,7 +380,11 @@ st.data_editor(
             width="medium",
             help="This is a list column",
         ),
-        "col_1": st.column_config.ListColumn(),
+        "col_1": st.column_config.ListColumn(
+            disabled=False,
+            required=True,
+            default=["a", "b", "c"],
+        ),
     },
     width="content",
     hide_index=True,
@@ -455,3 +460,46 @@ st.data_editor(
     width="content",
     hide_index=True,
 )
+
+st.header("Multiselect column:")
+
+result = st.data_editor(
+    pd.DataFrame(
+        {
+            "col_0": [
+                ["exploration", "visualization"],
+                ["llm", "visualization", "finance"],
+                [],
+                None,
+            ],
+            "col_1": ["a,b", "b,c,d", "", None],
+            "col_2": [[1], [2, 3], [], None],
+        }
+    ),
+    column_config={
+        "col_0": st.column_config.MultiselectColumn(
+            "Multiselect column",
+            width="medium",
+            help="This is a multi-select column",
+            required=True,
+            disabled=False,
+            default=["exploration", "visualization"],
+            accept_new_options=False,
+            options=["exploration", "visualization", "llm", "finance", "geography"],
+            color=["green", "blue", "red", "#19747E", "orange"],
+            format_func=lambda x: x.capitalize(),
+        ),
+        "col_1": st.column_config.MultiselectColumn(
+            width="medium",
+            options=["a", "b", "c", "d", "e"],
+            color="primary",
+            accept_new_options=True,
+            format_func=lambda x: f"Option {x}",
+        ),
+        "col_2": st.column_config.MultiselectColumn("Unsupported values"),
+    },
+    width="content",
+    hide_index=True,
+)
+
+st.write("Multiselect column return:", str(result))

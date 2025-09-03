@@ -961,7 +961,10 @@ _create_option(
 
         The server may choose to clean up session state, uploaded files, etc
         for a given session with no active websocket connection at any point
-        after this time has passed.
+        after this time has passed. If you are using load balancing or
+        replication in your deployment, you must enable session stickiness
+        in your proxy to guarantee reconnection to the existing session. For
+        more information, see https://docs.streamlit.io/replication.
     """,
     default_val=120,
     type_=int,
@@ -1189,6 +1192,76 @@ _create_theme_options(
     categories=["theme", CustomThemeCategories.SIDEBAR],
     description="""
         Color used for almost all text.
+    """,
+)
+
+_create_theme_options(
+    "redColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Color used as main red color.
+
+        By default, this is #ff4b4b for light theme and #ff2b2b for dark theme.
+    """,
+)
+
+_create_theme_options(
+    "orangeColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Color used as main orange color.
+
+        By default, this is #ffa421 for light theme and #ff8700 for dark theme.
+    """,
+)
+
+_create_theme_options(
+    "yellowColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Color used as main yellow color.
+
+        By default, this is #faca2b for light theme and #ffe312 for dark theme.
+    """,
+)
+
+_create_theme_options(
+    "blueColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Color used as main blue color.
+
+        By default, this is #1c83e1 for light theme and #0068c9 for dark theme.
+    """,
+)
+
+_create_theme_options(
+    "greenColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Color used as main green color.
+
+        By default, this is #21c354 for light theme and #09ab3b for dark theme.
+    """,
+)
+
+_create_theme_options(
+    "violetColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Color used as main violet color.
+
+        By default, this is #803df5 for both light and dark themes.
+    """,
+)
+
+_create_theme_options(
+    "grayColor",
+    categories=["theme", CustomThemeCategories.SIDEBAR],
+    description="""
+        Color used as main gray color.
+
+        By default, this is #a3a8b8 for light theme and #555867 for dark theme.
     """,
 )
 

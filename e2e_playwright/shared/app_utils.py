@@ -27,6 +27,48 @@ from e2e_playwright.conftest import wait_for_app_loaded, wait_for_app_run
 COMMAND_KEY = "Meta" if platform.system() == "Darwin" else "Control"  # ty: ignore[unresolved-attribute]
 
 
+def get_time_input(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
+    """Get a time input with the given label.
+
+    Parameters
+    ----------
+    locator : Locator
+        The locator to search for the element.
+
+    label : str or Pattern[str]
+        The label of the element to get.
+
+    Returns
+    -------
+    Locator
+        The element.
+    """
+    element = locator.get_by_test_id("stTimeInput").filter(has_text=label)
+    expect(element).to_be_visible()
+    return element
+
+
+def get_color_picker(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
+    """Get a color picker with the given label.
+
+    Parameters
+    ----------
+    locator : Locator | Page
+        The locator to search for the element.
+
+    label : str or Pattern[str]
+        The label of the element to get.
+
+    Returns
+    -------
+    Locator
+        The element.
+    """
+    element = locator.get_by_test_id("stColorPicker").filter(has_text=label)
+    expect(element).to_be_visible()
+    return element
+
+
 def get_text_input(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
     """Get a text input with the given label.
 
@@ -120,8 +162,57 @@ def get_multiselect(locator: Locator | Page, label: str | Pattern[str]) -> Locat
     return element
 
 
+def get_date_input(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
+    """Get a date input with the given label.
+
+    Parameters
+    ----------
+    locator : Locator | Page
+        The locator to search for the element.
+
+    label : str or Pattern[str]
+        The label of the element to get.
+
+    Returns
+    -------
+    Locator
+        The element.
+    """
+    if isinstance(label, Pattern):
+        label_locator = locator.get_by_test_id("stWidgetLabel").filter(has_text=label)
+    else:
+        label_locator = locator.get_by_test_id("stWidgetLabel").get_by_text(
+            label, exact=True
+        )
+
+    element = locator.get_by_test_id("stDateInput").filter(has=label_locator)
+    expect(element).to_be_visible()
+    return element
+
+
 def get_checkbox(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
     """Get a checkbox widget with the given label.
+
+    Parameters
+    ----------
+    locator : Locator
+        The locator to search for the element.
+
+    label : str or Pattern[str]
+        The label of the element to get.
+
+    Returns
+    -------
+    Locator
+        The element.
+    """
+    element = locator.get_by_test_id("stCheckbox").filter(has_text=label)
+    expect(element).to_be_visible()
+    return element
+
+
+def get_toggle(locator: Locator | Page, label: str | Pattern[str]) -> Locator:
+    """Get a toggle widget with the given label.
 
     Parameters
     ----------
@@ -519,8 +610,8 @@ def click_checkbox(
         The label of the button to click.
     """
     checkbox_element = get_checkbox(page, label)
-    #  Click the checkbox label to be more reliable
-    checkbox_element.locator("label").click()
+    # Click the checkbox label to be more reliable:
+    checkbox_element.locator('label[data-baseweb="checkbox"]').first.click()
     wait_for_app_run(page)
 
 
@@ -688,6 +779,12 @@ def reset_hovering(locator: Locator | Page) -> None:
     page.get_by_test_id("stApp").hover(
         position={"x": 0, "y": 0}, no_wait_after=True, force=True
     )
+
+
+def reset_focus(locator: Locator | Page) -> None:
+    """Reset the focus of the app."""
+    page = locator.page if isinstance(locator, Locator) else locator
+    page.get_by_test_id("stApp").click(position={"x": 0, "y": 0}, force=True)
 
 
 def expect_script_state(

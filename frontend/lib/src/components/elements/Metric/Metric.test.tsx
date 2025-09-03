@@ -137,10 +137,10 @@ describe("Metric element", () => {
     })
     render(<Metric {...props} />)
     expect(screen.getByTestId("stMetricDelta")).toHaveStyle(
-      "color: rgba(49, 51, 63, 0.6);"
+      "color: rgb(163, 168, 184);"
     )
     expect(screen.getByTestId("stMetricDelta")).toHaveStyle(
-      "background-color: rgba(128, 132, 149, 0.1);"
+      "background-color: rgba(49, 51, 63, 0.1);"
     )
   })
 
@@ -151,7 +151,7 @@ describe("Metric element", () => {
     })
     render(<Metric {...props} />)
     expect(screen.getByTestId("stMetricDelta")).toHaveStyle(
-      "color: rgb(21, 130, 55);"
+      "color: rgb(33, 195, 84);"
     )
     expect(screen.getByTestId("stMetricDelta")).toHaveStyle(
       "background-color: rgba(33, 195, 84, 0.1);"
@@ -162,7 +162,7 @@ describe("Metric element", () => {
     const props = getProps()
     render(<Metric {...props} />)
     expect(screen.getByTestId("stMetricDelta")).toHaveStyle(
-      "color: rgb(255, 43, 43);"
+      "color: rgb(255, 75, 75);"
     )
     expect(screen.getByTestId("stMetricDelta")).toHaveStyle(
       "background-color: rgba(255, 43, 43, 0.1);"
@@ -412,7 +412,7 @@ describe("Metric element", () => {
           expect.objectContaining({
             mark: expect.objectContaining({
               type: "area",
-              opacity: 0.2,
+              opacity: 1,
               line: expect.objectContaining({
                 strokeWidth: 2,
                 strokeCap: "round",
