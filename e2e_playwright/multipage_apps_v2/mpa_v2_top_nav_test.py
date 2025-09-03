@@ -260,11 +260,9 @@ def test_top_nav_visual_regression(app: Page, assert_snapshot: ImageCompareFunct
     dropdown_link = app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Page 1")
     expect(dropdown_link).to_be_visible()
 
-    # Get the popover container using a more robust selector
-    # Find the ancestor element with PopoverContent class
-    popover = dropdown_link.locator(
-        "xpath=ancestor::*[contains(@class, 'PopoverContent')]"
-    ).first
+    # Get the visible popover container by its test ID
+    # There are multiple popovers (one per section), so we need the visible one
+    popover = app.get_by_test_id("stTopNavPopover").locator("visible=true")
     assert_snapshot(popover, name="st_navigation-top_nav_section_popover")
 
     # Test single section
@@ -296,11 +294,9 @@ def test_top_nav_visual_regression(app: Page, assert_snapshot: ImageCompareFunct
     )
     expect(dropdown_link_in_single).to_be_visible()
 
-    # Get the popover container using a more robust selector
-    # Find the ancestor element with PopoverContent class
-    single_section_popover = dropdown_link_in_single.locator(
-        "xpath=ancestor::*[contains(@class, 'PopoverContent')]"
-    ).first
+    # Get the popover container by its test ID
+    # For single section there's only one popover but we use .first for consistency
+    single_section_popover = app.get_by_test_id("stTopNavPopover").first
     assert_snapshot(
         single_section_popover, name="st_navigation-top_nav_single_section_popover"
     )
