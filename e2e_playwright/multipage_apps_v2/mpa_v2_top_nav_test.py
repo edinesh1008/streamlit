@@ -259,8 +259,12 @@ def test_top_nav_visual_regression(app: Page, assert_snapshot: ImageCompareFunct
     # The dropdown should contain top nav dropdown links
     page1_link = app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Page 1")
     expect(page1_link).to_be_visible()
-    # For snapshot, take a screenshot of the whole page since popover positioning is complex
-    assert_snapshot(app, name="st_navigation-top_nav_section_popover")
+
+    # Get the popover element by finding the parent container that has role="tooltip"
+    # BaseUI popovers use role="tooltip" for their body
+    popover = app.locator('[role="tooltip"]').filter(has=page1_link)
+    expect(popover).to_be_visible()
+    assert_snapshot(popover, name="st_navigation-top_nav_section_popover")
 
     # Test single section
     # First uncheck the Test Sections checkbox
@@ -285,8 +289,14 @@ def test_top_nav_visual_regression(app: Page, assert_snapshot: ImageCompareFunct
     expect(page3_in_popover).to_be_visible()
 
     # Take screenshot of single section popover
-    # For snapshot, take a screenshot of the whole page since popover positioning is complex
-    assert_snapshot(app, name="st_navigation-top_nav_single_section_popover")
+    # Get the popover by finding the container with role="tooltip" that contains Page 3
+    single_section_popover = app.locator('[role="tooltip"]').filter(
+        has=page3_in_popover
+    )
+    expect(single_section_popover).to_be_visible()
+    assert_snapshot(
+        single_section_popover, name="st_navigation-top_nav_single_section_popover"
+    )
 
 
 def test_mobile_sidebar_overlay_visual(
