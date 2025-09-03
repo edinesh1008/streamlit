@@ -82,6 +82,8 @@ export const createEmotionColors = (
     ...genericColors,
     ...derivedColors,
 
+    link: genericColors.blueTextColor,
+
     codeTextColor: genericColors.greenTextColor,
     codeBackgroundColor: derivedColors.bgMix,
 

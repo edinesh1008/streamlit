@@ -537,7 +537,6 @@ export const createEmotionTheme = (
     bodyText: bodyText ?? colors.bodyText,
     secondaryBg: secondaryBg ?? colors.secondaryBg,
     bgColor: bgColor ?? colors.bgColor,
-    link: linkColor ?? colors.link,
     // Main theme colors
     redColor: redColor ?? colors.redColor,
     orangeColor: orangeColor ?? colors.orangeColor,
@@ -574,6 +573,8 @@ export const createEmotionTheme = (
   }
 
   // Conditional Overrides - Colors
+
+  conditionalOverrides.colors.link = linkColor ?? colors.link
 
   conditionalOverrides.colors.codeBackgroundColor =
     codeBackgroundColor ?? colors.codeBackgroundColor

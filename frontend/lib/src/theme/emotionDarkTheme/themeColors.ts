@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { lighten, transparentize } from "color2k"
+import { transparentize } from "color2k"
 
 import { colors } from "~lib/theme/primitives/colors"
 
@@ -22,8 +22,6 @@ export default {
   ...colors,
   bgColor: colors.gray100,
   bodyText: colors.gray10,
-  // Brighten link color a bit so they're easier to read:
-  link: lighten(colors.blue80, 0.2),
 
   primary: colors.red70,
   secondaryBg: colors.gray90,
@@ -44,15 +42,6 @@ export default {
   violetColor: colors.purple70,
   grayColor: colors.gray80,
 
-  // Default text theme colors (dark theme)
-  redTextColor: colors.red60,
-  orangeTextColor: colors.orange60,
-  yellowTextColor: colors.yellow20,
-  blueTextColor: colors.blue60,
-  greenTextColor: colors.green50,
-  violetTextColor: colors.purple50,
-  grayTextColor: transparentize(colors.gray10, 0.4),
-
   // Default background theme colors (dark theme)
   redBackgroundColor: transparentize(colors.red60, 0.8),
   orangeBackgroundColor: transparentize(colors.orange80, 0.8),
@@ -61,4 +50,13 @@ export default {
   greenBackgroundColor: transparentize(colors.green60, 0.8),
   violetBackgroundColor: transparentize(colors.purple60, 0.8),
   grayBackgroundColor: transparentize(colors.gray70, 0.8),
+
+  // Default text theme colors (dark theme)
+  redTextColor: colors.red60,
+  orangeTextColor: colors.orange60,
+  yellowTextColor: colors.yellow20,
+  blueTextColor: colors.blue60,
+  greenTextColor: colors.green50,
+  violetTextColor: colors.purple50,
+  grayTextColor: transparentize(colors.gray10, 0.4),
 }
