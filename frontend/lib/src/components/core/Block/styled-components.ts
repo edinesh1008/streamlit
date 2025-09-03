@@ -257,7 +257,7 @@ export const StyledFlexContainerBlock =
         ...(shadow && {
           boxShadow: lightTheme
             ? `0 ${theme.spacing.px} ${theme.spacing.twoXS} rgba(0,0,0,0.15)`
-            : `0 ${theme.spacing.threeXS} ${theme.spacing.xs} rgba(0,0,0,0.5)`,
+            : `0 ${theme.spacing.threeXS} ${theme.spacing.xs} rgba(0,0,0,0.4)`,
           borderRadius: theme.radii.default,
           padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
         }),
