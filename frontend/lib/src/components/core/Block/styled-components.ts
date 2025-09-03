@@ -21,7 +21,11 @@ import styled from "@emotion/styled"
 import { Block as BlockProto, streamlit } from "@streamlit/protobuf"
 
 import { StyledCheckbox } from "~lib/components/widgets/Checkbox/styled-components"
-import { EmotionTheme, STALE_STYLES } from "~lib/theme"
+import {
+  EmotionTheme,
+  hasLightBackgroundColor,
+  STALE_STYLES,
+} from "~lib/theme"
 import { assertNever } from "~lib/util/assertNever"
 
 function translateGapWidth(
@@ -232,7 +236,7 @@ export const StyledFlexContainerBlock =
       if (gap !== undefined) {
         gapWidth = translateGapWidth(gap, theme)
       }
-
+      const lightTheme = hasLightBackgroundColor(theme)
       return {
         display: "flex",
         gap: gapWidth,
@@ -251,7 +255,11 @@ export const StyledFlexContainerBlock =
           padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
         }),
         ...(shadow && {
-          boxShadow: `0 ${theme.spacing.threeXS} ${theme.spacing.xs} rgba(0,0,0,0.15)`,
+          boxShadow: lightTheme
+            ? `0 ${theme.spacing.px} ${theme.spacing.twoXS} rgba(0,0,0,0.15)`
+            : `0 ${theme.spacing.threeXS} ${theme.spacing.xs} rgba(0,0,0,0.5)`,
+          borderRadius: theme.radii.default,
+          padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
         }),
         ...(border && {
           border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
