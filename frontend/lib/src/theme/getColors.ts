@@ -152,6 +152,54 @@ export function getMetricColor(
   }
 }
 
+type MarkdownBgColors = {
+  redbg: string
+  orangebg: string
+  yellowbg: string
+  bluebg: string
+  greenbg: string
+  violetbg: string
+  purplebg: string
+  graybg: string
+  primarybg: string
+}
+
+export function getMarkdownBgColors(theme: EmotionTheme): MarkdownBgColors {
+  const lightTheme = hasLightBackgroundColor(theme)
+  const colors = theme.colors
+
+  return {
+    redbg: colors.redBackgroundColor,
+    orangebg: colors.orangeBackgroundColor,
+    yellowbg: colors.yellowBackgroundColor,
+    bluebg: colors.blueBackgroundColor,
+    greenbg: colors.greenBackgroundColor,
+    violetbg: colors.violetBackgroundColor,
+    purplebg: transparentize(
+      colors[lightTheme ? "purple90" : "purple80"],
+      lightTheme ? 0.9 : 0.7
+    ),
+    graybg: colors.grayBackgroundColor,
+    primarybg: transparentize(colors.primary, lightTheme ? 0.9 : 0.7),
+  }
+}
+
+// Metric delta uses the same background colors as Markdown bg colors.
+export function getMetricBackgroundColor(
+  theme: EmotionTheme,
+  color: MetricProto.MetricColor
+): string {
+  switch (color) {
+    case MetricProto.MetricColor.RED:
+      return theme.colors.redBackgroundColor
+    case MetricProto.MetricColor.GREEN:
+      return theme.colors.greenBackgroundColor
+    // this must be grey
+    default:
+      return theme.colors.grayBackgroundColor
+  }
+}
+
 type MarkdownTextColors = {
   red: string
   orange: string
@@ -206,54 +254,6 @@ export function getMetricTextColor(
     // this must be grey
     default:
       return theme.colors.grayTextColor
-  }
-}
-
-type MarkdownBgColors = {
-  redbg: string
-  orangebg: string
-  yellowbg: string
-  bluebg: string
-  greenbg: string
-  violetbg: string
-  purplebg: string
-  graybg: string
-  primarybg: string
-}
-
-export function getMarkdownBgColors(theme: EmotionTheme): MarkdownBgColors {
-  const lightTheme = hasLightBackgroundColor(theme)
-  const colors = theme.colors
-
-  return {
-    redbg: colors.redBackgroundColor,
-    orangebg: colors.orangeBackgroundColor,
-    yellowbg: colors.yellowBackgroundColor,
-    bluebg: colors.blueBackgroundColor,
-    greenbg: colors.greenBackgroundColor,
-    violetbg: colors.violetBackgroundColor,
-    purplebg: transparentize(
-      colors[lightTheme ? "purple90" : "purple80"],
-      lightTheme ? 0.9 : 0.7
-    ),
-    graybg: colors.grayBackgroundColor,
-    primarybg: transparentize(colors.primary, lightTheme ? 0.9 : 0.7),
-  }
-}
-
-// Metric delta uses the same background colors as Markdown bg colors.
-export function getMetricBackgroundColor(
-  theme: EmotionTheme,
-  color: MetricProto.MetricColor
-): string {
-  switch (color) {
-    case MetricProto.MetricColor.RED:
-      return theme.colors.redBackgroundColor
-    case MetricProto.MetricColor.GREEN:
-      return theme.colors.greenBackgroundColor
-    // this must be grey
-    default:
-      return theme.colors.grayBackgroundColor
   }
 }
 

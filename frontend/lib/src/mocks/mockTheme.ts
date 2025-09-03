@@ -41,7 +41,6 @@ const requiredThemeColors = {
   bgColor: colors.white,
   secondaryBg: colors.gray20,
   bodyText: colors.gray85,
-  link: colors.blue80,
 
   primary: colors.red70,
   secondary: colors.blue70,
