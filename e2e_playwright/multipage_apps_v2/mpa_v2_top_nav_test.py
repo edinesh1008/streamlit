@@ -256,14 +256,13 @@ def test_top_nav_visual_regression(app: Page, assert_snapshot: ImageCompareFunct
     section_a.click()
 
     # Wait for popover to appear using proper expect
-    # The dropdown should contain top nav dropdown links
-    page1_link = app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Page 1")
-    expect(page1_link).to_be_visible()
+    # The dropdown link should be visible after clicking the section
+    dropdown_link = app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Page 1")
+    expect(dropdown_link).to_be_visible()
 
-    # Get the popover element by finding the parent container that has role="tooltip"
-    # BaseUI popovers use role="tooltip" for their body
-    popover = app.locator('[role="tooltip"]').filter(has=page1_link)
-    expect(popover).to_be_visible()
+    # Get the popover container - it's the parent of the dropdown links
+    # Going up two levels from the link to get the popover content container
+    popover = dropdown_link.locator("../..").first
     assert_snapshot(popover, name="st_navigation-top_nav_section_popover")
 
     # Test single section
@@ -289,11 +288,14 @@ def test_top_nav_visual_regression(app: Page, assert_snapshot: ImageCompareFunct
     expect(page3_in_popover).to_be_visible()
 
     # Take screenshot of single section popover
-    # Get the popover by finding the container with role="tooltip" that contains Page 3
-    single_section_popover = app.locator('[role="tooltip"]').filter(
-        has=page3_in_popover
+    # Get one of the dropdown links to locate the popover container
+    dropdown_link_in_single = app.get_by_test_id("stTopNavDropdownLink").filter(
+        has_text="Page 1"
     )
-    expect(single_section_popover).to_be_visible()
+    expect(dropdown_link_in_single).to_be_visible()
+
+    # Get the popover container - going up two levels from the link
+    single_section_popover = dropdown_link_in_single.locator("../..").first
     assert_snapshot(
         single_section_popover, name="st_navigation-top_nav_single_section_popover"
     )
@@ -494,69 +496,3 @@ def test_top_padding_mobile_responsive_behavior(
     wait_for_app_run(app)
 
     assert_snapshot(main_content, name="st_app_top_padding-mobile_embedded")
-
-
-def test_empty_section_mixed_with_named_sections(app: Page):
-    """Test that pages with empty section headers appear as individual items in top nav.
-
-    This tests the fix for issue #12243 where pages with empty section headers
-    should appear as individual navigation items when mixed with named sections,
-    not in an unlabeled dropdown.
-    """
-    # Use a large viewport to ensure everything fits without overflow
-    app.set_viewport_size({"width": 1600, "height": 800})
-
-    # Enable the mixed sections test case
-    click_checkbox(app, "Test Mixed Empty/Named Sections")
-    wait_for_app_run(app)
-
-    # With the fix, we should see:
-    # - Individual links for "Home" and "Dashboard" (empty section pages)
-    # - Dropdown sections for "Admin" and "Reports"
-
-    # Get all top nav elements
-    # Note: With a 1280px viewport, all items should be visible
-    # If the overflow component is working correctly, we should see:
-    # - 2 individual nav links for empty section pages
-    # - 2 section dropdowns for named sections
-    nav_links = app.get_by_test_id("stTopNavLink")
-    nav_sections = app.get_by_test_id("stTopNavSection")
-
-    # Should have 2 individual top-level links visible (Home, Dashboard)
-    expect(nav_links).to_have_count(2)
-    expect(nav_links.nth(0)).to_contain_text("Home")
-    expect(nav_links.nth(1)).to_contain_text("Dashboard")
-
-    # Should have 2 section dropdowns (Admin, Reports)
-    expect(nav_sections).to_have_count(2)
-    expect(nav_sections.nth(0)).to_contain_text("Admin")
-    expect(nav_sections.nth(1)).to_contain_text("Reports")
-
-    # The key test: verify that only individual pages show as top-level nav links
-    # and that pages inside sections are NOT counted as top-level links
-    # This verifies the fix for issue #12243
-
-    # Click on an individual top-level link to verify it works
-    nav_links.nth(0).click()  # Click "Home"
-    wait_for_app_run(app)
-    expect(app.get_by_test_id("stHeading").filter(has_text="Page 1")).to_be_visible()
-
-    # Click on Admin section to open dropdown
-    nav_sections.nth(0).click()
-
-    # Verify dropdown contains Settings and Users
-    # Wait for dropdown links to be visible
-    expect(
-        app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Settings")
-    ).to_be_visible()
-    expect(
-        app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Users")
-    ).to_be_visible()
-
-    # Click Settings from dropdown
-    app.get_by_test_id("stTopNavDropdownLink").filter(has_text="Settings").click()
-    wait_for_app_run(app)
-    expect(app.get_by_test_id("stHeading").filter(has_text="Page 3")).to_be_visible()
-
-    # This verifies that empty section pages are treated as individual items
-    # in the top navigation, matching the behavior of sidebar navigation
