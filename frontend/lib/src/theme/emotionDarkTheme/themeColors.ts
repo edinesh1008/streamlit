@@ -29,12 +29,6 @@ export default {
   secondaryBg: colors.gray90,
   disabled: colors.gray70,
 
-  // TODO (mgbarnes): Transition each of these to updated text colors
-  warning: colors.yellow20,
-  success: colors.green10,
-  info: colors.blue20,
-  danger: colors.red20,
-
   // TODO (mgbarnes): Reduce/remove these colors to avoid
   // confusion with the default main/text/bg theme colors
   red: colors.red70,
@@ -49,6 +43,15 @@ export default {
   greenColor: colors.green80,
   violetColor: colors.purple70,
   grayColor: colors.gray80,
+
+  // Default text theme colors (dark theme)
+  redTextColor: colors.red60,
+  orangeTextColor: colors.orange60,
+  yellowTextColor: colors.yellow20,
+  blueTextColor: colors.blue60,
+  greenTextColor: colors.green50,
+  violetTextColor: colors.purple50,
+  grayTextColor: transparentize(colors.gray10, 0.4),
 
   // Default background theme colors (dark theme)
   redBackgroundColor: transparentize(colors.red60, 0.8),
