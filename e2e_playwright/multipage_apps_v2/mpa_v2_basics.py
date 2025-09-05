@@ -121,7 +121,7 @@ else:
     }
 
 pg = st.navigation(
-    pages_config,  # type: ignore
+    pages_config,
     position="hidden" if hide_sidebar else "sidebar",
     expanded=expanded,
 )
