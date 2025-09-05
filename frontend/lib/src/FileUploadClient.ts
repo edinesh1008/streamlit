@@ -79,6 +79,9 @@ export class FileUploadClient {
     PromiseWithResolvers<IFileURLs[]>
   >()
 
+  /** Timeout for waiting on file URL responses (2 minutes in ms). */
+  private readonly fileUrlResponseTimeoutMs: number = 2 * 60 * 1000
+
   public constructor(props: Props) {
     this.sessionInfo = props.sessionInfo
     this.endpoints = props.endpoints
@@ -152,7 +155,22 @@ export class FileUploadClient {
     this.pendingFileURLsRequests.set(requestId, resolver)
     this.requestFileURLs(requestId, files)
 
-    return resolver.promise
+    // Add a timeout guard to avoid hanging forever if we never reconnect.
+    const timeoutId = globalThis.setTimeout(() => {
+      const pending = this.pendingFileURLsRequests.get(requestId)
+      if (pending) {
+        pending.reject(
+          new Error(
+            "Timed out waiting for upload URLs. Please check your connection and try again."
+          )
+        )
+        this.pendingFileURLsRequests.delete(requestId)
+      }
+    }, this.fileUrlResponseTimeoutMs)
+
+    return resolver.promise.finally(() => {
+      globalThis.clearTimeout(timeoutId)
+    })
   }
 
   /**

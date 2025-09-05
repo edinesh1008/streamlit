@@ -2788,6 +2788,101 @@ describe("App", () => {
 
       expect(connectionManager.sendMessage).not.toBeCalled()
     })
+
+    it("queues when disconnected and flushes on reconnect", () => {
+      renderApp(getProps())
+
+      const sessionInfo = getStoredValue<SessionInfo>(SessionInfo)
+      sessionInfo.setCurrent(mockSessionInfoProps())
+
+      const fileUploadClient =
+        getStoredValue<FileUploadClient>(FileUploadClient)
+
+      // Request while disconnected → should not send immediately
+      // @ts-expect-error - requestFileURLs is private
+      fileUploadClient.requestFileURLs("queuedReq", [
+        new File([""], "delayed.txt"),
+      ])
+
+      const connectionManager = getMockConnectionManager()
+      const sendSpy = vi.spyOn(connectionManager, "sendMessage")
+      expect(sendSpy).not.toBeCalled()
+
+      // Reconnect → queued request should be flushed and sent once
+      act(() =>
+        // @ts-expect-error - connectionManager.props is private
+        connectionManager.props.connectionStateChanged(
+          ConnectionState.CONNECTED
+        )
+      )
+
+      // Ensure exactly one fileUrlsRequest was sent (ignore other messages like reruns)
+      const sent = sendSpy.mock.calls.map(call => call[0].toJSON())
+      const fileUrlCalls = sent.filter(m => m.fileUrlsRequest)
+      expect(fileUrlCalls).toHaveLength(1)
+      expect(fileUrlCalls[0]).toStrictEqual({
+        fileUrlsRequest: {
+          fileNames: ["delayed.txt"],
+          requestId: "queuedReq",
+          sessionId: "mockSessionId",
+        },
+      })
+    })
+
+    it("requeues in-flight requests on disconnect before response", () => {
+      renderApp(getProps())
+
+      const sessionInfo = getStoredValue<SessionInfo>(SessionInfo)
+      sessionInfo.setCurrent(mockSessionInfoProps())
+
+      const connectionManager = getMockConnectionManager(true)
+      const sendSpy = vi.spyOn(connectionManager, "sendMessage")
+      const fileUploadClient =
+        getStoredValue<FileUploadClient>(FileUploadClient)
+
+      // Mark app as connected for correct disconnect handling
+      act(() =>
+        // @ts-expect-error - connectionManager.props is private
+        connectionManager.props.connectionStateChanged(
+          ConnectionState.CONNECTED
+        )
+      )
+
+      // Send while connected → one send
+      // @ts-expect-error - requestFileURLs is private
+      fileUploadClient.requestFileURLs("inFlightReq", [
+        new File([""], "file.txt"),
+      ])
+      const sentInitially = sendSpy.mock.calls.map(call => call[0].toJSON())
+      const initialFileUrlCalls = sentInitially.filter(
+        m => m.fileUrlsRequest && m.fileUrlsRequest.requestId === "inFlightReq"
+      )
+      expect(initialFileUrlCalls).toHaveLength(1)
+
+      // Disconnect from CONNECTED → moves in-flight back to queue (no send yet)
+      act(() =>
+        // @ts-expect-error - connectionManager.props is private
+        connectionManager.props.connectionStateChanged(
+          ConnectionState.PINGING_SERVER
+        )
+      )
+
+      // Reconnect → queued in-flight should be re-sent
+      act(() =>
+        // @ts-expect-error - connectionManager.props is private
+        connectionManager.props.connectionStateChanged(
+          ConnectionState.CONNECTED
+        )
+      )
+
+      const sentAfterReconnect = sendSpy.mock.calls.map(call =>
+        call[0].toJSON()
+      )
+      const fileUrlCalls = sentAfterReconnect.filter(
+        m => m.fileUrlsRequest && m.fileUrlsRequest.requestId === "inFlightReq"
+      )
+      expect(fileUrlCalls).toHaveLength(2)
+    })
   })
 
   describe("Test Main Menu shortcut functionality", () => {

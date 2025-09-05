@@ -262,6 +262,27 @@ export class App extends PureComponent<Props, State> {
   // This will allow us to ignore finished messages from previous script runs.
   private hasReceivedNewSession: boolean = false
 
+  /**
+   * Queue for file URL requests made while disconnected. Entries are flushed
+   * after reconnection, or rejected if they exceed a TTL.
+   */
+  private readonly pendingFileUrlRequests = new Map<
+    string,
+    { fileNames: string[]; enqueuedAt: number }
+  >()
+
+  /**
+   * In-flight file URL requests that have been sent but not yet acknowledged
+   * by a fileUrlsResponse. On disconnect, we move them back to the pending queue.
+   */
+  private readonly inFlightFileUrlRequests = new Map<
+    string,
+    { fileNames: string[]; enqueuedAt: number }
+  >()
+
+  /** TTL for queued file URL requests before they are rejected (2 minutes in ms). */
+  private readonly fileUrlRequestTtlMs: number = 2 * 60 * 1000
+
   public constructor(props: Props) {
     super(props)
 
@@ -767,6 +788,46 @@ export class App extends PureComponent<Props, State> {
         this.setState({ dialog: null })
       }
 
+      // Flush any queued file URL requests now that we're connected again.
+      if (this.pendingFileUrlRequests.size > 0) {
+        const now = Date.now()
+
+        for (const entry of this.pendingFileUrlRequests) {
+          const [requestId, { fileNames, enqueuedAt }] = entry
+          const isExpired = now - enqueuedAt > this.fileUrlRequestTtlMs
+
+          if (isExpired) {
+            // Reject the pending resolver so the UI can recover.
+            this.uploadClient.onFileURLsResponse(
+              FileURLsResponse.create({
+                responseId: requestId,
+                errorMsg:
+                  "Timed out while waiting for connection to request upload URLs. Please try again.",
+              })
+            )
+            this.pendingFileUrlRequests.delete(requestId)
+            continue
+          }
+
+          const backMsg = new BackMsg({
+            fileUrlsRequest: {
+              requestId,
+              fileNames,
+              sessionId: this.sessionInfo.current.sessionId,
+            },
+          })
+          backMsg.type = "fileUrlsRequest"
+          this.sendBackMsg(backMsg)
+
+          // Move to in-flight until we receive the response or disconnect again
+          this.inFlightFileUrlRequests.set(requestId, {
+            fileNames,
+            enqueuedAt,
+          })
+          this.pendingFileUrlRequests.delete(requestId)
+        }
+      }
+
       this.hostCommunicationMgr.sendMessageToHost({
         type: "WEBSOCKET_CONNECTED",
       })
@@ -779,6 +840,20 @@ export class App extends PureComponent<Props, State> {
           attemptingToReconnect:
             newState !== ConnectionState.DISCONNECTED_FOREVER,
         })
+
+        // Requeue any in-flight requests so they can be sent on reconnect.
+        if (this.inFlightFileUrlRequests.size > 0) {
+          for (const entry of this.inFlightFileUrlRequests) {
+            const [requestId, { fileNames, enqueuedAt }] = entry
+            this.pendingFileUrlRequests.set(requestId, {
+              fileNames,
+              // Preserve original enqueue time for TTL computation
+              enqueuedAt,
+            })
+          }
+
+          this.inFlightFileUrlRequests.clear()
+        }
       }
 
       if (this.sessionInfo.isSet) {
@@ -866,8 +941,14 @@ export class App extends PureComponent<Props, State> {
         pageProfile: (pageProfile: PageProfile) =>
           this.handlePageProfileMsg(pageProfile),
         autoRerun: (autoRerun: AutoRerun) => this.handleAutoRerun(autoRerun),
-        fileUrlsResponse: (fileURLsResponse: FileURLsResponse) =>
-          this.uploadClient.onFileURLsResponse(fileURLsResponse),
+        fileUrlsResponse: (fileURLsResponse: FileURLsResponse) => {
+          // Mark in-flight request as completed.
+          const responseId = fileURLsResponse.responseId
+          if (responseId) {
+            this.inFlightFileUrlRequests.delete(responseId)
+          }
+          this.uploadClient.onFileURLsResponse(fileURLsResponse)
+        },
         parentMessage: (parentMessage: ParentMessage) =>
           this.handleCustomParentMessage(parentMessage),
         logo: (logo: Logo) =>
@@ -2053,9 +2134,20 @@ export class App extends PureComponent<Props, State> {
       })
       backMsg.type = "fileUrlsRequest"
       this.sendBackMsg(backMsg)
+      // Track as in-flight so we can requeue if we disconnect before response
+      this.inFlightFileUrlRequests.set(requestId, {
+        fileNames: files.map(f => f.name),
+        enqueuedAt: Date.now(),
+      })
     } else {
+      // Queue the request to be sent on reconnect, and let the pending
+      // resolver in FileUploadClient await the eventual response.
+      this.pendingFileUrlRequests.set(requestId, {
+        fileNames: files.map(f => f.name),
+        enqueuedAt: Date.now(),
+      })
       LOG.warn(
-        `Cannot request file URLs (isServerConnected: ${isConnected}, isSessionInfoSet: ${isSessionInfoSet})`
+        `Queued file URLs request until reconnected (isServerConnected: ${isConnected}, isSessionInfoSet: ${isSessionInfoSet})`
       )
     }
   }
