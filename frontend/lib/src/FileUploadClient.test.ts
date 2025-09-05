@@ -132,7 +132,7 @@ describe("FileUploadClient Upload", () => {
     expect(formsWithPendingRequestsChanged).toHaveBeenLastCalledWith(new Set())
   })
 
-  it("fetchFileURLs calls requestFileURLs and returns a promise", () => {
+  it("fetchFileURLs calls requestFileURLs and returns a promise", async () => {
     const fileURLsPromise = uploader.fetchFileURLs([])
     expect(requestFileURLs).toHaveBeenCalledTimes(1)
 
@@ -142,39 +142,45 @@ describe("FileUploadClient Upload", () => {
 
     const reqId = pendingReqs.keys().next().value as string
 
-    expect(pendingReqs.get(reqId)?.promise).toBe(fileURLsPromise)
+    expect(fileURLsPromise).toBeInstanceOf(Promise)
+
+    // Resolve the request and ensure the returned promise settles accordingly
+    uploader.onFileURLsResponse({
+      responseId: reqId,
+      fileUrls: [],
+    })
+
+    await expect(fileURLsPromise).resolves.toEqual([])
   })
 
   it("onFileURLsResponse rejects promise on errorMsg", async () => {
-    void uploader.fetchFileURLs([])
+    const fileURLsPromise = uploader.fetchFileURLs([])
 
     // @ts-expect-error
     const pendingReqs = uploader.pendingFileURLsRequests
     const reqId = pendingReqs.keys().next().value as string
-    const promise = pendingReqs.get(reqId)?.promise
 
     uploader.onFileURLsResponse({
       responseId: reqId,
       errorMsg: "kaboom",
     })
 
-    await expect(promise).rejects.toBe("kaboom")
+    await expect(fileURLsPromise).rejects.toBe("kaboom")
   })
 
   it("onFileURLsResponse resolves promise on success", async () => {
-    void uploader.fetchFileURLs([])
+    const fileURLsPromise = uploader.fetchFileURLs([])
 
     // @ts-expect-error
     const pendingReqs = uploader.pendingFileURLsRequests
     const reqId = pendingReqs.keys().next().value as string
-    const promise = pendingReqs.get(reqId)?.promise
 
     uploader.onFileURLsResponse({
       responseId: reqId,
       fileUrls: [],
     })
 
-    await expect(promise).resolves.toEqual([])
+    await expect(fileURLsPromise).resolves.toEqual([])
   })
 
   it("onFileURLsResponse does not error when given an invalid responseId", () => {
