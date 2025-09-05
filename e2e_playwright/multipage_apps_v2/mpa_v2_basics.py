@@ -109,7 +109,7 @@ elif test_empty_middle:
         "Section C": [page8, page9],
     }
 elif dynamic_nav:
-    pages_config = [page2, page3, page5, page9]
+    pages_config = [page2, page3, page5, page9]  # type: ignore
 else:
     pages_config = {
         "Section 1 - long title that should be truncated": [page2, page3],
@@ -121,7 +121,7 @@ else:
     }
 
 pg = st.navigation(
-    pages_config,
+    pages_config,  # type: ignore
     position="hidden" if hide_sidebar else "sidebar",
     expanded=expanded,
 )
