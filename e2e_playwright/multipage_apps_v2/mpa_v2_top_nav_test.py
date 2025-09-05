@@ -367,7 +367,12 @@ def test_mixed_empty_and_named_sections(app: Page):
 def test_mixed_sections_visual_regression(
     app: Page, assert_snapshot: ImageCompareFunction
 ):
-    """Visual regression test for mixed empty and named sections navigation."""
+    """Visual regression test for mixed empty and named sections navigation.
+
+    Verifies the visual appearance of top navigation when configuration includes
+    both empty sections (pages at top level) and named sections (with dropdowns).
+    Tests navigation bar rendering, dropdown popovers, and hover states.
+    """
     app.set_viewport_size({"width": 1280, "height": 800})
 
     # Enable mixed sections test mode
