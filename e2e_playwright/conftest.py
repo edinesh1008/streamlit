@@ -758,7 +758,7 @@ def assert_snapshot(
         nonlocal snapshot_file_suffix
 
         if isinstance(element, Locator):
-            element = element.element_handle()
+            expect(element).to_be_visible()
 
         if not isinstance(element, Page):
             element.scroll_into_view_if_needed()
