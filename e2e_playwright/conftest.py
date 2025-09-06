@@ -757,6 +757,12 @@ def assert_snapshot(
         nonlocal module_snapshot_failures_dir
         nonlocal snapshot_file_suffix
 
+        if isinstance(element, Locator):
+            element = element.element_handle()
+
+        if not isinstance(element, Page):
+            element.scroll_into_view_if_needed()
+
         if file_type == "jpg":
             file_extension = ".jpg"
             img_bytes = element.screenshot(
