@@ -16,6 +16,7 @@
 
 import React, { memo, ReactElement, useEffect } from "react"
 
+import { select } from "d3"
 import { Engine, graphviz } from "d3-graphviz"
 import { getLogger } from "loglevel"
 
@@ -33,6 +34,7 @@ import { withFullScreenWrapper } from "~lib/components/shared/FullScreenWrapper"
 import Toolbar, {
   StyledToolbarElementContainer,
 } from "~lib/components/shared/Toolbar"
+import { useCalculatedDimensions } from "~lib/hooks/useCalculatedDimensions"
 import { useRequiredContext } from "~lib/hooks/useRequiredContext"
 
 import { StyledGraphVizChart } from "./styled-components"
@@ -54,6 +56,12 @@ function GraphVizChart({
   const chartId = `st-graphviz-chart-${element.elementId}`
 
   const {
+    width: containerWidth,
+    height: containerHeight,
+    elementRef,
+  } = useCalculatedDimensions()
+
+  const {
     expanded: isFullScreen,
     width,
     height: fullScreenHeight,
@@ -71,6 +79,8 @@ function GraphVizChart({
     try {
       graphviz(`#${chartId}`)
         .zoom(false)
+        .width(containerWidth)
+        .height(containerHeight)
         .fit(true)
         .scale(1)
         .engine(element.engine as Engine)
@@ -82,8 +92,8 @@ function GraphVizChart({
     chartId,
     element.engine,
     element.spec,
-    shouldUseContainerWidth,
-    shouldUseContainerHeight,
+    containerWidth,
+    containerHeight,
     isFullScreen,
   ])
 
@@ -112,6 +122,7 @@ function GraphVizChart({
         isFullScreen={isFullScreen}
         useContainerWidth={shouldUseContainerWidth}
         useContainerHeight={shouldUseContainerHeight}
+        ref={elementRef}
       />
     </StyledToolbarElementContainer>
   )
