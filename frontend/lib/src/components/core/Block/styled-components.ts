@@ -208,6 +208,7 @@ export interface StyledFlexContainerBlockProps {
   align?: BlockProto.FlexContainer.Align | null
   justify?: BlockProto.FlexContainer.Justify | null
   overflow?: React.CSSProperties["overflow"]
+  backgroundColor?: string | null
 }
 
 export const StyledFlexContainerBlock =
@@ -223,6 +224,7 @@ export const StyledFlexContainerBlock =
       align,
       justify,
       overflow,
+      backgroundColor,
     }) => {
       let gapWidth
       if (gap !== undefined) {
@@ -245,6 +247,9 @@ export const StyledFlexContainerBlock =
           border: `${theme.sizes.borderWidth} solid ${theme.colors.borderColor}`,
           borderRadius: theme.radii.default,
           padding: `calc(${theme.spacing.lg} - ${theme.sizes.borderWidth})`,
+        }),
+        ...(backgroundColor && {
+          backgroundColor,
         }),
         overflow,
       }

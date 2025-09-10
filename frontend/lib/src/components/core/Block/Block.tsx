@@ -241,6 +241,7 @@ export const FlexBoxContainer = (
     flex: "1",
     align: props.node.deltaBlock.flexContainer?.align,
     justify: props.node.deltaBlock.flexContainer?.justify,
+    backgroundColor: props.node.deltaBlock.flexContainer?.backgroundColor,
   }
 
   const userKey = getKeyFromId(props.node.deltaBlock.id)

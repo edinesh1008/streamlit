@@ -70,6 +70,7 @@ class LayoutsMixin:
         horizontal_alignment: HorizontalAlignment = "left",
         vertical_alignment: VerticalAlignment = "top",
         gap: Gap | None = "small",
+        background_color: str | None = None,
     ) -> DeltaGenerator:
         """Insert a multi-element container.
 
@@ -183,6 +184,16 @@ class LayoutsMixin:
             between the elements. Elements may have larger gaps in one
             direction if you use a distributed horizontal alignment or fixed
             height.
+
+        background_color : str or None
+            A CSS color string to use as the background color for the container.
+            If this is ``None`` (default), no background color is applied.
+            You can use any valid CSS color format, such as:
+
+            - Hex colors: ``"#ff0000"``, ``"#f00"``
+            - RGB colors: ``"rgb(255, 0, 0)"``
+            - Named colors: ``"red"``, ``"blue"``
+            - HSL colors: ``"hsl(0, 100%, 50%)"``
 
         Examples
         --------
@@ -315,6 +326,9 @@ class LayoutsMixin:
 
         validate_height(height, allow_content=True)
         block_proto.height_config.CopyFrom(get_height_config(height))
+
+        if background_color is not None:
+            block_proto.flex_container.background_color = background_color
 
         if key:
             # At the moment, the ID is only used for extracting the
