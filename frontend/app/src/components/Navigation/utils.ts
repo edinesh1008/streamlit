@@ -72,9 +72,7 @@ export function groupPagesBySection(appPages: IAppPage[]): NavigationSections {
  * there are any non-empty section headers.
  */
 export function hasNonEmptySections(navSections: NavigationSections): boolean {
-  return Object.keys(navSections).some(
-    key => key !== "" && key !== "undefined"
-  )
+  return Object.keys(navSections).some(key => key !== "")
 }
 
 /**
