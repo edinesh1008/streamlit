@@ -24,8 +24,8 @@ import { ConnectionState } from "./ConnectionState"
 import {
   CORS_ERROR_MESSAGE_DOCUMENTATION_LINK,
   MAX_RETRIES_BEFORE_CLIENT_ERROR,
-  PING_MINIMUM_RETRY_PERIOD_MS,
   PING_MAXIMUM_RETRY_PERIOD_MS,
+  PING_MINIMUM_RETRY_PERIOD_MS,
 } from "./constants"
 import {
   AsyncPingRequest,
@@ -959,7 +959,7 @@ If you are trying to access a Streamlit app running on another server, this coul
         pingRequest.cancel()
         try {
           await pingRequest.promise
-        } catch (e) {
+        } catch {
           // Expected cancellation error - ignore it
         }
         pingRequest = undefined
@@ -1004,7 +1004,7 @@ If you are trying to access a Streamlit app running on another server, this coul
 
       const retryTimeouts: number[] = []
       const onRetry = vi.fn(
-        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+        (_totalTries: number, _errorMsg: string, retryTimeout: number) => {
           retryTimeouts.push(retryTimeout)
         }
       )
@@ -1068,7 +1068,7 @@ describe("WebsocketConnection", () => {
       await vi.runAllTimersAsync()
       vi.clearAllTimers()
       vi.useRealTimers()
-    } catch (e) {
+    } catch {
       // Ignore timer errors if timers weren't mocked in this test
     }
   })
@@ -1182,7 +1182,7 @@ describe("WebsocketConnection", () => {
     it("grows exponentially up to 60-second maximum", async () => {
       const retryTimeouts: number[] = []
       const onRetry = vi.fn(
-        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+        (_totalTries: number, _errorMsg: string, retryTimeout: number) => {
           retryTimeouts.push(retryTimeout)
         }
       )
@@ -1217,7 +1217,7 @@ describe("WebsocketConnection", () => {
     })
 
     it("calculates specific retry intervals correctly", () => {
-      const calculateRetryDelay = (totalTries: number) => {
+      const calculateRetryDelay = (totalTries: number): number => {
         const timeoutMs =
           totalTries === 1
             ? PING_MINIMUM_RETRY_PERIOD_MS
@@ -1244,7 +1244,7 @@ describe("WebsocketConnection", () => {
     it("solves VPN disconnect spam with longer intervals", async () => {
       const retryTimeouts: number[] = []
       const onRetry = vi.fn(
-        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+        (_totalTries: number, _errorMsg: string, retryTimeout: number) => {
           retryTimeouts.push(retryTimeout)
         }
       )
@@ -1256,7 +1256,7 @@ describe("WebsocketConnection", () => {
         onConnectionStateChange: vi.fn(),
         onRetry,
         onMessage: vi.fn(),
-        claimHostAuthToken: async () => undefined,
+        claimHostAuthToken: () => Promise.resolve(undefined),
         resetHostAuthToken: vi.fn(),
         sendClientError: vi.fn(),
         onHostConfigResp: vi.fn(),
@@ -1284,7 +1284,7 @@ describe("WebsocketConnection", () => {
     it("handles very large retry counts gracefully", async () => {
       const retryTimeouts: number[] = []
       const onRetry = vi.fn(
-        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+        (_totalTries: number, _errorMsg: string, retryTimeout: number) => {
           retryTimeouts.push(retryTimeout)
         }
       )
