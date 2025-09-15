@@ -83,6 +83,7 @@ export const createEmotionColors = (
     ...genericColors,
     ...derivedColors,
 
+    // Colors added below must also be added to SpecialEmotionColors type
     link: genericColors.blueTextColor,
 
     codeTextColor: genericColors.greenTextColor,
@@ -98,7 +99,6 @@ export const createEmotionColors = (
 
     chartCategoricalColors: defaultCategoricalColors,
     chartSequentialColors: defaultSequentialColors,
-    // @ts-expect-error
     chartDivergingColors: defaultDivergingColors,
   }
 }
@@ -312,9 +312,7 @@ function getBlueArrayDesc(colors: GenericColors): string[] {
   ]
 }
 
-function defaultDivergingColorsArray(genericColors: {
-  [key: string]: string
-}): string[] {
+function defaultDivergingColorsArray(genericColors: GenericColors): string[] {
   return [
     genericColors.red100,
     genericColors.red90,
