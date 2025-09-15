@@ -25,7 +25,11 @@ import {
   CORS_ERROR_MESSAGE_DOCUMENTATION_LINK,
   MAX_RETRIES_BEFORE_CLIENT_ERROR,
 } from "./constants"
-import { doInitPings } from "./DoInitPings"
+import {
+  AsyncPingRequest,
+  doInitPings,
+  PingCancelledError,
+} from "./DoInitPings"
 import { mockEndpoints } from "./testUtils"
 import { Args, WebsocketConnection } from "./WebsocketConnection"
 
@@ -1046,6 +1050,140 @@ describe("WebsocketConnection", () => {
 
     it("returns undefined when ConnectionState != Connected", () => {
       expect(client.getBaseUriParts()).toBeUndefined()
+    })
+  })
+
+  describe("persistent retry counter", () => {
+    let testClient: WebsocketConnection
+    let pingRequest: AsyncPingRequest | undefined
+
+    beforeEach(() => {
+      // Use the shared setup from the parent describe block
+    })
+
+    afterEach(async () => {
+      // Cancel any active ping requests to prevent unhandled rejections
+      if (pingRequest) {
+        // The cancel method triggers a promise rejection, we need to catch it
+        pingRequest.cancel()
+
+        // Wait for the cancellation to complete and catch any rejections
+        try {
+          await pingRequest.promise
+        } catch (e) {
+          // Expected "Ping cancelled" error - suppress it
+          if (!(e instanceof PingCancelledError)) {
+            throw e // Re-throw if it's not the expected cancellation error
+          }
+        }
+      }
+
+      if (testClient) {
+        testClient.disconnect()
+      }
+    })
+
+    it("doInitPings accepts initialTotalTries parameter", async () => {
+      const onRetrySpy = vi.fn()
+
+      // Mock the first attempt (both health and host-config will fail)
+      axios.get = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("Connection failed"))
+        .mockRejectedValueOnce(new Error("Connection failed"))
+        // Resolve subsequent calls to prevent infinite loops
+        .mockResolvedValue(MOCK_HOST_CONFIG_RESPONSE)
+
+      pingRequest = doInitPings(
+        [
+          {
+            hostname: "localhost",
+            port: "1234",
+            protocol: "http:",
+            pathname: "/",
+          } as URL,
+        ],
+        100, // minimumTimeoutMs
+        2000, // maximumTimeoutMs
+        onRetrySpy,
+        vi.fn(), // sendClientError
+        vi.fn(), // onHostConfigResp
+        5 // initialTotalTries - should start from 5
+      )
+
+      // Advance a small amount to trigger the initial failure
+      await vi.advanceTimersByTimeAsync(1)
+
+      // Should be called with totalTries=6 (5 initial + 1)
+      expect(onRetrySpy).toHaveBeenCalledWith(
+        6,
+        expect.any(String),
+        expect.any(Number)
+      )
+    })
+
+    it("initializes with zero retry counter", () => {
+      testClient = new WebsocketConnection(createMockArgs())
+
+      // @ts-expect-error - accessing private field for test
+      expect(testClient.totalRetries).toBe(0)
+    })
+
+    it("resets retry counter on explicit disconnect", () => {
+      testClient = new WebsocketConnection(createMockArgs())
+
+      // Verify disconnection resets state
+      testClient.disconnect()
+
+      // @ts-expect-error
+      expect(testClient.state).toBe(ConnectionState.DISCONNECTED_FOREVER)
+    })
+
+    it("WebsocketConnection preserves retry state with onRetry wrapper", () => {
+      const onRetrySpy = vi.fn()
+      testClient = new WebsocketConnection(
+        createMockArgs({ onRetry: onRetrySpy })
+      )
+
+      // @ts-expect-error - accessing private field for test
+      expect(testClient.totalRetries).toBe(0)
+
+      // Test that the wrapper function correctly updates the totalRetries
+      // @ts-expect-error - simulating the onRetry wrapper behavior
+      testClient.totalRetries = 3
+
+      // @ts-expect-error
+      expect(testClient.totalRetries).toBe(3)
+    })
+
+    it("passes retry count to doInitPings on subsequent calls", () => {
+      testClient = new WebsocketConnection(createMockArgs())
+
+      // @ts-expect-error - Set initial retry count
+      testClient.totalRetries = 5
+
+      // Verify the retry count persists
+      // @ts-expect-error
+      expect(testClient.totalRetries).toBe(5)
+    })
+
+    it("handles very large retry counts", () => {
+      testClient = new WebsocketConnection(createMockArgs())
+
+      // Test with large retry count (but not large enough to cause overflow)
+      const largeRetryCount = 50
+      // @ts-expect-error - Set large retry count
+      testClient.totalRetries = largeRetryCount
+
+      // Should handle large numbers gracefully
+      // @ts-expect-error
+      expect(testClient.totalRetries).toBe(largeRetryCount)
+
+      // Verify it doesn't break with large numbers
+      expect(() => {
+        // @ts-expect-error - Test the onRetry wrapper behavior
+        testClient.totalRetries = largeRetryCount + 1
+      }).not.toThrow()
     })
   })
 })

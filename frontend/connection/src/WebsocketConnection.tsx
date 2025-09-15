@@ -185,6 +185,12 @@ export class WebsocketConnection {
   private pingRequest?: AsyncPingRequest
 
   /**
+   * Persistent retry counter that maintains state across connection attempts.
+   * Gets reset only on successful connections or explicit disconnections.
+   */
+  private totalRetries = 0
+
+  /**
    * WebSocket objects don't support retries, so we have to implement them
    * ourselves. We use setTimeout to wait for a connection and retry once the
    * timeout fires. This field stores the timer ID from setTimeout, so we can
@@ -239,6 +245,8 @@ export class WebsocketConnection {
         break
 
       case ConnectionState.DISCONNECTED_FOREVER:
+        // Reset retry counter on explicit disconnection
+        this.totalRetries = 0
         this.closeConnection()
         break
 
@@ -290,6 +298,8 @@ export class WebsocketConnection {
 
       case ConnectionState.CONNECTING:
         if (event === "CONNECTION_SUCCEEDED") {
+          // Reset retry counter on successful WebSocket connection
+          this.totalRetries = 0
           this.setFsmState(ConnectionState.CONNECTED)
           return
         }
@@ -339,18 +349,31 @@ export class WebsocketConnection {
   }
 
   private async pingServer(): Promise<void> {
+    // Wrap the onRetry callback to capture the updated totalTries
+    const onRetryWrapper = (
+      totalTries: number,
+      errorMarkdown: string,
+      retryTimeout: number
+    ): void => {
+      this.totalRetries = totalTries
+      this.args.onRetry(totalTries, errorMarkdown, retryTimeout)
+    }
+
     this.pingRequest = doInitPings(
       this.args.baseUriPartsList,
       PING_MINIMUM_RETRY_PERIOD_MS,
       PING_MAXIMUM_RETRY_PERIOD_MS,
-      this.args.onRetry,
+      onRetryWrapper,
       this.args.sendClientError,
-      this.args.onHostConfigResp
+      this.args.onHostConfigResp,
+      this.totalRetries
     )
 
     try {
       this.uriIndex = await this.pingRequest.promise
       this.pingRequest = undefined
+      // Reset retry counter on successful ping
+      this.totalRetries = 0
       this.stepFsm("SERVER_PING_SUCCEEDED")
     } catch (e) {
       if (e instanceof PingCancelledError) {

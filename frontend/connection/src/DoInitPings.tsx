@@ -59,10 +59,11 @@ export function doInitPings(
     message: string,
     source: string
   ) => void,
-  onHostConfigResp: (resp: IHostConfigResponse) => void
+  onHostConfigResp: (resp: IHostConfigResponse) => void,
+  initialTotalTries = 0
 ): AsyncPingRequest {
   const { promise, resolve, reject } = Promise.withResolvers<number>()
-  let totalTries = 0
+  let totalTries = initialTotalTries
   let uriNumber = 0
   let timeout: NodeJS.Timeout | number | undefined
 
