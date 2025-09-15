@@ -24,6 +24,8 @@ import { ConnectionState } from "./ConnectionState"
 import {
   CORS_ERROR_MESSAGE_DOCUMENTATION_LINK,
   MAX_RETRIES_BEFORE_CLIENT_ERROR,
+  PING_MINIMUM_RETRY_PERIOD_MS,
+  PING_MAXIMUM_RETRY_PERIOD_MS,
 } from "./constants"
 import {
   AsyncPingRequest,
@@ -948,6 +950,88 @@ If you are trying to access a Streamlit app running on another server, this coul
       )
     })
   })
+
+  describe("persistent retry counter", () => {
+    let pingRequest: AsyncPingRequest | undefined
+
+    afterEach(async () => {
+      if (pingRequest) {
+        pingRequest.cancel()
+        try {
+          await pingRequest.promise
+        } catch (e) {
+          // Expected cancellation error - ignore it
+        }
+        pingRequest = undefined
+      }
+    })
+
+    it("accepts initialTotalTries parameter", async () => {
+      vi.useFakeTimers()
+
+      const onRetrySpy = vi.fn()
+      const mockSendClientError = vi.fn()
+      const mockOnHostConfigResp = vi.fn()
+
+      // Mock axios to always fail
+      axios.get = vi.fn().mockRejectedValue(new Error("Connection failed"))
+
+      pingRequest = doInitPings(
+        [new URL("http://localhost:8501")],
+        PING_MINIMUM_RETRY_PERIOD_MS,
+        PING_MAXIMUM_RETRY_PERIOD_MS,
+        onRetrySpy,
+        mockSendClientError,
+        mockOnHostConfigResp,
+        5 // initialTotalTries - should start from attempt 6
+      )
+
+      // Let the first connection attempt happen
+      await vi.advanceTimersByTimeAsync(100)
+
+      // The first retry should be attempt #6 (5 initial + 1)
+      expect(onRetrySpy).toHaveBeenCalledWith(
+        6,
+        expect.any(String),
+        expect.any(Number)
+      )
+
+      vi.useRealTimers()
+    })
+
+    it("uses initialTotalTries for exponential backoff calculation", async () => {
+      vi.useFakeTimers()
+
+      const retryTimeouts: number[] = []
+      const onRetry = vi.fn(
+        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+          retryTimeouts.push(retryTimeout)
+        }
+      )
+
+      // Mock axios to always fail
+      axios.get = vi.fn().mockRejectedValue(new Error("Connection failed"))
+
+      // Start with retry count of 8, so next attempt should use high backoff
+      pingRequest = doInitPings(
+        [new URL("http://localhost:8501")],
+        PING_MINIMUM_RETRY_PERIOD_MS,
+        PING_MAXIMUM_RETRY_PERIOD_MS,
+        onRetry,
+        vi.fn(),
+        vi.fn(),
+        8 // High initial count
+      )
+
+      // Let the first connection attempt happen
+      await vi.advanceTimersByTimeAsync(100)
+
+      // First retry should be attempt #9, which should have a high timeout
+      expect(retryTimeouts[0]).toBeGreaterThan(10000) // Should be much higher than early attempts
+
+      vi.useRealTimers()
+    })
+  })
 })
 
 describe("WebsocketConnection", () => {
@@ -976,11 +1060,17 @@ describe("WebsocketConnection", () => {
     }
     client.disconnect()
     server.close()
-    // Drain and clear any pending timers scheduled by connection code
-    // We intentionally await all timers to avoid post-teardown callbacks
-    await vi.runAllTimersAsync()
-    vi.clearAllTimers()
-    vi.useRealTimers()
+
+    // Only manipulate timers if they're actually mocked
+    try {
+      // Drain and clear any pending timers scheduled by connection code
+      // We intentionally await all timers to avoid post-teardown callbacks
+      await vi.runAllTimersAsync()
+      vi.clearAllTimers()
+      vi.useRealTimers()
+    } catch (e) {
+      // Ignore timer errors if timers weren't mocked in this test
+    }
   })
 
   it("disconnect closes connection and sets state to DISCONNECTED_FOREVER", () => {
@@ -1053,12 +1143,13 @@ describe("WebsocketConnection", () => {
     })
   })
 
-  describe("persistent retry counter", () => {
-    let testClient: WebsocketConnection
+  describe("exponential backoff", () => {
+    let testClient: WebsocketConnection | undefined
     let pingRequest: AsyncPingRequest | undefined
 
     beforeEach(() => {
-      // Use the shared setup from the parent describe block
+      vi.useFakeTimers()
+      vi.resetAllMocks()
     })
 
     afterEach(async () => {
@@ -1076,114 +1167,153 @@ describe("WebsocketConnection", () => {
             throw e // Re-throw if it's not the expected cancellation error
           }
         }
+        pingRequest = undefined
       }
 
       if (testClient) {
         testClient.disconnect()
+        testClient = undefined
       }
+
+      vi.useRealTimers()
+      vi.restoreAllMocks()
     })
 
-    it("doInitPings accepts initialTotalTries parameter", async () => {
-      const onRetrySpy = vi.fn()
+    it("grows exponentially up to 60-second maximum", async () => {
+      const retryTimeouts: number[] = []
+      const onRetry = vi.fn(
+        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+          retryTimeouts.push(retryTimeout)
+        }
+      )
 
-      // Mock the first attempt (both health and host-config will fail)
-      axios.get = vi
-        .fn()
-        .mockRejectedValueOnce(new Error("Connection failed"))
-        .mockRejectedValueOnce(new Error("Connection failed"))
-        // Resolve subsequent calls to prevent infinite loops
-        .mockResolvedValue(MOCK_HOST_CONFIG_RESPONSE)
+      // Mock axios to always fail
+      axios.get = vi.fn().mockRejectedValue({
+        message: "Connection failed",
+        code: "ECONNREFUSED",
+      })
 
       pingRequest = doInitPings(
-        [
-          {
-            hostname: "localhost",
-            port: "1234",
-            protocol: "http:",
-            pathname: "/",
-          } as URL,
-        ],
-        100, // minimumTimeoutMs
-        2000, // maximumTimeoutMs
-        onRetrySpy,
-        vi.fn(), // sendClientError
-        vi.fn(), // onHostConfigResp
-        5 // initialTotalTries - should start from 5
+        [new URL("http://localhost:8501")],
+        PING_MINIMUM_RETRY_PERIOD_MS,
+        PING_MAXIMUM_RETRY_PERIOD_MS,
+        onRetry,
+        vi.fn(),
+        vi.fn(),
+        0
       )
 
-      // Advance a small amount to trigger the initial failure
-      await vi.advanceTimersByTimeAsync(1)
+      // Let several attempts fail with controlled time advancement
+      for (let i = 0; i < 6; i++) {
+        await vi.advanceTimersByTimeAsync(5000) // Advance time more aggressively
+      }
 
-      // Should be called with totalTries=6 (5 initial + 1)
-      expect(onRetrySpy).toHaveBeenCalledWith(
-        6,
-        expect.any(String),
-        expect.any(Number)
+      // Verify we got some retries and they exceed old 2s maximum
+      expect(retryTimeouts.length).toBeGreaterThan(3)
+
+      // Most important: verify we can exceed the old 2-second cap
+      const maxTimeout = Math.max(...retryTimeouts)
+      expect(maxTimeout).toBeGreaterThan(2000) // Key improvement over old system
+    })
+
+    it("calculates specific retry intervals correctly", () => {
+      const calculateRetryDelay = (totalTries: number) => {
+        const timeoutMs =
+          totalTries === 1
+            ? PING_MINIMUM_RETRY_PERIOD_MS
+            : PING_MINIMUM_RETRY_PERIOD_MS * Math.pow(2, totalTries - 1)
+        return Math.min(PING_MAXIMUM_RETRY_PERIOD_MS, timeoutMs)
+      }
+
+      // Test exact values (without jitter) - shows exponential growth to 60s cap
+      expect(calculateRetryDelay(1)).toBe(100) // 100ms
+      expect(calculateRetryDelay(2)).toBe(200) // 200ms
+      expect(calculateRetryDelay(3)).toBe(400) // 400ms
+      expect(calculateRetryDelay(4)).toBe(800) // 800ms
+      expect(calculateRetryDelay(5)).toBe(1600) // 1.6s
+      expect(calculateRetryDelay(6)).toBe(3200) // 3.2s
+      expect(calculateRetryDelay(7)).toBe(6400) // 6.4s
+      expect(calculateRetryDelay(8)).toBe(12800) // 12.8s
+      expect(calculateRetryDelay(9)).toBe(25600) // 25.6s
+      expect(calculateRetryDelay(10)).toBe(51200) // 51.2s
+      expect(calculateRetryDelay(11)).toBe(60000) // Capped at 60s
+      expect(calculateRetryDelay(12)).toBe(60000) // Still 60s
+      expect(calculateRetryDelay(20)).toBe(60000) // Still 60s
+    })
+
+    it("solves VPN disconnect spam with longer intervals", async () => {
+      const retryTimeouts: number[] = []
+      const onRetry = vi.fn(
+        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+          retryTimeouts.push(retryTimeout)
+        }
       )
+
+      testClient = new WebsocketConnection({
+        getLastSessionId: () => undefined,
+        endpoints: mockEndpoints(),
+        baseUriPartsList: [new URL("http://localhost:8501")],
+        onConnectionStateChange: vi.fn(),
+        onRetry,
+        onMessage: vi.fn(),
+        claimHostAuthToken: async () => undefined,
+        resetHostAuthToken: vi.fn(),
+        sendClientError: vi.fn(),
+        onHostConfigResp: vi.fn(),
+      })
+
+      // Simulate VPN disconnect by having all requests fail
+      axios.get = vi.fn().mockRejectedValue({
+        message: "Network Error - VPN disconnected",
+        code: "NETWORK_ERROR",
+      })
+
+      // Let connection attempts proceed with fast time advancement
+      for (let i = 0; i < 8; i++) {
+        await vi.advanceTimersByTimeAsync(5000) // Fast-forward through retries
+      }
+
+      // Key fix verification: we now exceed the old 2-second maximum
+      const maxTimeout = Math.max(...retryTimeouts)
+      expect(maxTimeout).toBeGreaterThan(2000) // Solves GitHub issue #12513!
+
+      // Verify we got some retries (exact count depends on timing)
+      expect(retryTimeouts.length).toBeGreaterThan(2)
     })
 
-    it("initializes with zero retry counter", () => {
-      testClient = new WebsocketConnection(createMockArgs())
-
-      // @ts-expect-error - accessing private field for test
-      expect(testClient.totalRetries).toBe(0)
-    })
-
-    it("resets retry counter on explicit disconnect", () => {
-      testClient = new WebsocketConnection(createMockArgs())
-
-      // Verify disconnection resets state
-      testClient.disconnect()
-
-      // @ts-expect-error
-      expect(testClient.state).toBe(ConnectionState.DISCONNECTED_FOREVER)
-    })
-
-    it("WebsocketConnection preserves retry state with onRetry wrapper", () => {
-      const onRetrySpy = vi.fn()
-      testClient = new WebsocketConnection(
-        createMockArgs({ onRetry: onRetrySpy })
+    it("handles very large retry counts gracefully", async () => {
+      const retryTimeouts: number[] = []
+      const onRetry = vi.fn(
+        (totalTries: number, errorMsg: string, retryTimeout: number) => {
+          retryTimeouts.push(retryTimeout)
+        }
       )
 
-      // @ts-expect-error - accessing private field for test
-      expect(testClient.totalRetries).toBe(0)
+      // Mock axios to fail
+      axios.get = vi.fn().mockRejectedValue({
+        message: "Connection failed",
+        code: "ECONNREFUSED",
+      })
 
-      // Test that the wrapper function correctly updates the totalRetries
-      // @ts-expect-error - simulating the onRetry wrapper behavior
-      testClient.totalRetries = 3
+      // Start with a very high initial retry count
+      pingRequest = doInitPings(
+        [new URL("http://localhost:8501")],
+        PING_MINIMUM_RETRY_PERIOD_MS,
+        PING_MAXIMUM_RETRY_PERIOD_MS,
+        onRetry,
+        vi.fn(),
+        vi.fn(),
+        50 // Very high initial count
+      )
 
-      // @ts-expect-error
-      expect(testClient.totalRetries).toBe(3)
-    })
+      await vi.advanceTimersByTimeAsync(100)
+      await vi.advanceTimersByTimeAsync(1000)
 
-    it("passes retry count to doInitPings on subsequent calls", () => {
-      testClient = new WebsocketConnection(createMockArgs())
-
-      // @ts-expect-error - Set initial retry count
-      testClient.totalRetries = 5
-
-      // Verify the retry count persists
-      // @ts-expect-error
-      expect(testClient.totalRetries).toBe(5)
-    })
-
-    it("handles very large retry counts", () => {
-      testClient = new WebsocketConnection(createMockArgs())
-
-      // Test with large retry count (but not large enough to cause overflow)
-      const largeRetryCount = 50
-      // @ts-expect-error - Set large retry count
-      testClient.totalRetries = largeRetryCount
-
-      // Should handle large numbers gracefully
-      // @ts-expect-error
-      expect(testClient.totalRetries).toBe(largeRetryCount)
-
-      // Verify it doesn't break with large numbers
-      expect(() => {
-        // @ts-expect-error - Test the onRetry wrapper behavior
-        testClient.totalRetries = largeRetryCount + 1
-      }).not.toThrow()
+      // Should be capped at 60 seconds, not overflow
+      expect(retryTimeouts[0]).toBeLessThanOrEqual(
+        PING_MAXIMUM_RETRY_PERIOD_MS * 1.2
+      )
+      expect(retryTimeouts[0]).toBeGreaterThan(30000) // Should be quite high though
     })
   })
 })

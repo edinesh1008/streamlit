@@ -38,9 +38,11 @@ export const HOST_CONFIG_PATH = "_stcore/host-config"
 
 /**
  * Min and max wait time between pings in millis.
+ * Maximum increased to 60 seconds to allow proper exponential backoff
+ * during extended network outages (e.g., VPN disconnections).
  */
 export const PING_MINIMUM_RETRY_PERIOD_MS = 100
-export const PING_MAXIMUM_RETRY_PERIOD_MS = 2000
+export const PING_MAXIMUM_RETRY_PERIOD_MS = 60000
 
 /**
  * Max number of times we retry pinging the server before we show an error.
