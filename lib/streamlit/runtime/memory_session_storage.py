@@ -14,22 +14,105 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import threading
+from typing import Callable
 
 from cachetools import TTLCache
 
+from streamlit.logger import get_logger
 from streamlit.runtime.session_manager import SessionInfo, SessionStorage
 
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
+_LOGGER = get_logger(__name__)
+
+
+class CleanupTTLCache:
+    """TTL cache that calls cleanup callbacks when items expire.
+
+    This implementation solves the memory leak by detecting when items
+    are removed by TTLCache and calling cleanup callbacks for them.
+    The key insight is to store items separately so we can access them
+    even after TTLCache has removed them.
+    """
+
+    def __init__(
+        self,
+        maxsize: int,
+        ttl: float,
+        cleanup_callback: Callable[[str, SessionInfo], None] | None = None,
+    ):
+        self._cache: TTLCache[str, SessionInfo] = TTLCache(maxsize=maxsize, ttl=ttl)
+        self._cleanup_callback = cleanup_callback
+        self._lock = threading.RLock()
+        # Store original items so we can clean them up even after TTLCache removes them
+        self._stored_items: dict[str, SessionInfo] = {}
+
+    def get(self, key: str) -> SessionInfo | None:
+        with self._lock:
+            # First check if item exists in TTLCache
+            result = self._cache.get(key)
+
+            # If item is gone from cache but we had it stored, it expired - clean it up
+            if result is None and key in self._stored_items:
+                if self._cleanup_callback:
+                    try:
+                        self._cleanup_callback(key, self._stored_items[key])
+                        _LOGGER.debug("Cleaned up expired session: %s", key)
+                    except Exception as e:
+                        _LOGGER.warning(
+                            "Error during session cleanup for %s: %s", key, e
+                        )
+
+                # Remove from our storage
+                del self._stored_items[key]
+
+            return result
+
+    def __setitem__(self, key: str, value: SessionInfo) -> None:
+        with self._lock:
+            self._cache[key] = value
+            self._stored_items[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        with self._lock:
+            # Call cleanup callback before removing
+            if key in self._stored_items and self._cleanup_callback:
+                try:
+                    self._cleanup_callback(key, self._stored_items[key])
+                    _LOGGER.debug("Cleaned up explicitly deleted session: %s", key)
+                except Exception as e:
+                    _LOGGER.warning("Error during session cleanup for %s: %s", key, e)
+
+            # Remove from both caches
+            if key in self._cache:
+                del self._cache[key]
+            if key in self._stored_items:
+                del self._stored_items[key]
+
+    def __contains__(self, key: str) -> bool:
+        with self._lock:
+            # This will trigger cleanup via get() if item expired
+            return self.get(key) is not None
+
+    def values(self) -> list[SessionInfo]:
+        with self._lock:
+            # Check all stored items to trigger cleanup of any that expired
+            keys_to_check = list(self._stored_items.keys())
+            for key in keys_to_check:
+                self.get(key)  # This will clean up if expired
+
+            # Return remaining values
+            return list(self._cache.values())
 
 
 class MemorySessionStorage(SessionStorage):
-    """A SessionStorage that stores sessions in memory.
+    """A SessionStorage that stores sessions in memory with proper TTL cleanup.
 
-    At most maxsize sessions are stored with a TTL of ttl seconds. This class is really
-    just a thin wrapper around cachetools.TTLCache that complies with the SessionStorage
-    protocol.
+    This fixes the memory leak issue by ensuring that when sessions expire
+    from the TTL cache, their shutdown() method is called to properly clean
+    up session state and other resources.
+
+    At most maxsize sessions are stored with a TTL of ttl seconds. When sessions
+    expire or are evicted, their shutdown() method is called to prevent memory leaks.
     """
 
     # NOTE: The defaults for maxsize and ttl are chosen arbitrarily for now. These
@@ -43,7 +126,7 @@ class MemorySessionStorage(SessionStorage):
         maxsize: int = 128,
         ttl_seconds: int = 2 * 60,  # 2 minutes
     ) -> None:
-        """Instantiate a new MemorySessionStorage.
+        """Instantiate a new MemorySessionStorage with cleanup callbacks.
 
         Parameters
         ----------
@@ -57,21 +140,47 @@ class MemorySessionStorage(SessionStorage):
         ttl_seconds
             The time in seconds for an entry added to a MemorySessionStorage to live.
             After this amount of time has passed for a given entry, it becomes
-            inaccessible and will be removed eventually.
+            inaccessible and will be removed. IMPORTANTLY: The session's shutdown()
+            method will be called to properly clean up resources.
         """
 
-        self._cache: MutableMapping[str, SessionInfo] = TTLCache(
-            maxsize=maxsize, ttl=ttl_seconds
+        self._cache = CleanupTTLCache(
+            maxsize=maxsize,
+            ttl=ttl_seconds,
+            cleanup_callback=self._cleanup_expired_session,
         )
 
+        _LOGGER.debug(
+            "MemorySessionStorage initialized with TTL cleanup (maxsize=%s, ttl=%ss)",
+            maxsize,
+            ttl_seconds,
+        )
+
+    def _cleanup_expired_session(
+        self, session_id: str, session_info: SessionInfo
+    ) -> None:
+        """Called when a session expires from the cache.
+
+        This is the critical fix - we call shutdown() to properly clean up
+        session state, uploaded files, and other resources.
+        """
+        _LOGGER.debug("Cleaning up expired session: %s", session_id)
+        try:
+            # THIS IS THE FIX - call shutdown to clear session state and resources
+            session_info.session.shutdown()
+            _LOGGER.debug("Successfully cleaned up session: %s", session_id)
+        except Exception as e:
+            _LOGGER.warning("Error shutting down session %s: %s", session_id, e)
+
     def get(self, session_id: str) -> SessionInfo | None:
-        return self._cache.get(session_id, None)
+        return self._cache.get(session_id)
 
     def save(self, session_info: SessionInfo) -> None:
         self._cache[session_info.session.id] = session_info
 
     def delete(self, session_id: str) -> None:
-        del self._cache[session_id]
+        if session_id in self._cache:
+            del self._cache[session_id]
 
     def list(self) -> list[SessionInfo]:
-        return list(self._cache.values())
+        return self._cache.values()
