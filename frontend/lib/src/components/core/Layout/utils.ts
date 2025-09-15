@@ -21,6 +21,8 @@ export enum Direction {
   VERTICAL = "column",
 }
 
+export type MinFlexElementWidth = "fit-content" | "14rem" | "8rem" | undefined
+
 export function getDirectionOfBlock(block: BlockProto): Direction {
   if (block.flexContainer) {
     return block.flexContainer.direction ==
@@ -37,10 +39,16 @@ export function getDirectionOfBlock(block: BlockProto): Direction {
   return Direction.VERTICAL
 }
 
-export function shouldChildrenStretch(
+export function shouldWidthStretch(
   widthConfig: streamlit.IWidthConfig | undefined | null
 ): boolean {
   // Some elements (e.g. ButtonGroup) need styles applied to the element itself, to support
   // the width configuration.
   return !!(widthConfig?.useStretch || widthConfig?.pixelWidth)
+}
+
+export function shouldHeightStretch(
+  heightConfig: streamlit.IHeightConfig | undefined | null
+): boolean {
+  return !!(heightConfig?.useStretch || heightConfig?.pixelHeight)
 }

@@ -27,41 +27,41 @@ import React, {
   useState,
 } from "react"
 
-import { type Element, type Root } from "hast"
-import xxhash from "xxhashjs"
 import slugify from "@sindresorhus/slugify"
-import { visit } from "unist-util-visit"
+import { type Element, type Root } from "hast"
+import omit from "lodash/omit"
+import once from "lodash/once"
+import { findAndReplace } from "mdast-util-find-and-replace"
+import { Link2 as LinkIcon } from "react-feather"
 import ReactMarkdown, {
   Components,
   Options as ReactMarkdownProps,
 } from "react-markdown"
-import { PluggableList } from "unified"
-import once from "lodash/once"
-import omit from "lodash/omit"
-import remarkDirective from "remark-directive"
-import remarkMathPlugin from "remark-math"
-import rehypeRaw from "rehype-raw"
 import rehypeKatex from "rehype-katex"
-import { Link2 as LinkIcon } from "react-feather"
+import rehypeRaw from "rehype-raw"
+import remarkDirective from "remark-directive"
 import remarkEmoji from "remark-emoji"
 import remarkGfm from "remark-gfm"
-import { findAndReplace } from "mdast-util-find-and-replace"
+import remarkMathPlugin from "remark-math"
+import { PluggableList } from "unified"
+import { visit } from "unist-util-visit"
+import xxhash from "xxhashjs"
 
-import { LibContext } from "~lib/components/core/LibContext"
-import StreamlitSyntaxHighlighter from "~lib/components/elements/CodeBlock/StreamlitSyntaxHighlighter"
-import { StyledInlineCode } from "~lib/components/elements/CodeBlock/styled-components"
+import streamlitLogo from "~lib/assets/img/streamlit-logo/streamlit-mark-color.svg"
 import IsDialogContext from "~lib/components/core/IsDialogContext"
 import IsSidebarContext from "~lib/components/core/IsSidebarContext"
+import StreamlitSyntaxHighlighter from "~lib/components/elements/CodeBlock/StreamlitSyntaxHighlighter"
+import { StyledInlineCode } from "~lib/components/elements/CodeBlock/styled-components"
 import ErrorBoundary from "~lib/components/shared/ErrorBoundary"
 import { InlineTooltipIcon } from "~lib/components/shared/TooltipIcon"
+import { useCrossOriginAttribute } from "~lib/hooks/useCrossOriginAttribute"
+import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 import {
   convertRemToPx,
   EmotionTheme,
   getMarkdownBgColors,
   getMarkdownTextColors,
 } from "~lib/theme"
-import streamlitLogo from "~lib/assets/img/streamlit-logo/streamlit-mark-color.svg"
-import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
 
 import {
   StyledHeadingActionElements,
@@ -353,7 +353,7 @@ export const CustomCodeTag: FC<CustomCodeTagProps> = ({
 
   const codeText = String(children).replace(/^\n/, "").replace(/\n$/, "")
 
-  const language = (match && match[1]) || ""
+  const language = match?.[1] || ""
   return !inline ? (
     <StreamlitSyntaxHighlighter language={language} showLineNumbers={false}>
       {codeText}
@@ -378,12 +378,12 @@ export const CustomMediaTag: FC<
   JSX.IntrinsicElements["img" | "video" | "audio"] &
     ReactMarkdownProps & { node: Element }
 > = ({ node, ...props }) => {
-  const { libConfig } = useContext(LibContext)
-
+  const crossOrigin = useCrossOriginAttribute(props.src)
   const Tag = node.tagName
+
   const attributes = {
     ...props,
-    crossOrigin: libConfig.resourceCrossOriginMode,
+    crossOrigin,
   }
   return <Tag {...attributes} />
 }
@@ -425,10 +425,11 @@ function createColorMapping(theme: EmotionTheme): Map<string, string> {
   return new Map(
     Object.entries({
       red: `color: ${red}`,
+      orange: `color: ${orange}`,
+      yellow: `color: ${yellow}`,
       blue: `color: ${blue}`,
       green: `color: ${green}`,
       violet: `color: ${violet}`,
-      orange: `color: ${orange}`,
       gray: `color: ${gray}`,
       grey: `color: ${gray}`,
       primary: `color: ${primary}`,
@@ -436,10 +437,11 @@ function createColorMapping(theme: EmotionTheme): Map<string, string> {
       rainbow: `color: transparent; background-clip: text; -webkit-background-clip: text; background-image: linear-gradient(to right,
         ${red}, ${orange}, ${yellow}, ${green}, ${blue}, ${violet}, ${purple});`,
       "red-background": `background-color: ${redbg}`,
+      "orange-background": `background-color: ${orangebg}`,
+      "yellow-background": `background-color: ${yellowbg}`,
       "blue-background": `background-color: ${bluebg}`,
       "green-background": `background-color: ${greenbg}`,
       "violet-background": `background-color: ${violetbg}`,
-      "orange-background": `background-color: ${orangebg}`,
       "gray-background": `background-color: ${graybg}`,
       "grey-background": `background-color: ${graybg}`,
       "primary-background": `background-color: ${primarybg}`,
@@ -705,7 +707,7 @@ interface LinkProps {
 export function LinkWithTargetBlank(props: LinkProps): ReactElement {
   // if it's a #hash link, don't open in new tab
   const { href } = props
-  if (href && href.startsWith("#")) {
+  if (href?.startsWith("#")) {
     const { children, ...rest } = props
     return <a {...omit(rest, "node")}>{children}</a>
   }

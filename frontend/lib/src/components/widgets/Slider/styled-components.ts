@@ -17,14 +17,15 @@
 import styled from "@emotion/styled"
 import { transparentize } from "color2k"
 
-export interface StyledSliderProps {
+export interface StyledThumbProps {
   disabled: boolean
+  isDragged: boolean
 }
 
-export const StyledThumb = styled.div<StyledSliderProps>(
-  ({ disabled, theme }) => ({
+export const StyledThumb = styled.div<StyledThumbProps>(
+  ({ disabled, theme, isDragged }) => ({
     alignItems: "center",
-    backgroundColor: disabled ? theme.colors.gray : theme.colors.primary,
+    backgroundColor: disabled ? theme.colors.gray60 : theme.colors.primary,
     borderTopLeftRadius: "100%",
     borderTopRightRadius: "100%",
     borderBottomLeftRadius: "100%",
@@ -33,11 +34,13 @@ export const StyledThumb = styled.div<StyledSliderProps>(
     borderBottomStyle: "none",
     borderRightStyle: "none",
     borderLeftStyle: "none",
-    boxShadow: "none",
     display: "flex",
     justifyContent: "center",
     height: theme.sizes.sliderThumb,
     width: theme.sizes.sliderThumb,
+    boxShadow: isDragged
+      ? `0 0 0 0.2rem ${transparentize(theme.colors.primary, 0.5)}`
+      : "none",
     ":focus": {
       outline: "none",
     },
@@ -47,11 +50,15 @@ export const StyledThumb = styled.div<StyledSliderProps>(
   })
 )
 
+export interface StyledSliderProps {
+  disabled: boolean
+}
+
 export const StyledThumbValue = styled.div<StyledSliderProps>(
   ({ disabled, theme }) => ({
     fontFamily: theme.genericFonts.bodyFont,
     fontSize: theme.fontSizes.sm,
-    color: disabled ? theme.colors.gray : theme.colors.primary,
+    color: disabled ? theme.colors.gray60 : theme.colors.primary,
     top: "-1.6em",
     position: "absolute",
     whiteSpace: "nowrap",

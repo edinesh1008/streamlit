@@ -25,31 +25,29 @@ import React, {
   useState,
 } from "react"
 
-import pick from "lodash/pick"
 import { type StyleProps, Slider as UISlider } from "baseui/slider"
-import { sprintf } from "sprintf-js"
+import pick from "lodash/pick"
 import moment from "moment"
+import { sprintf } from "sprintf-js"
 
 import { Slider as SliderProto } from "@streamlit/protobuf"
 
-import { WidgetStateManager } from "~lib/WidgetStateManager"
-import {
-  useBasicWidgetState,
-  ValueWithSource,
-} from "~lib/hooks/useBasicWidgetState"
-import { debounce, labelVisibilityProtoValueToEnum } from "~lib/util/utils"
+import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
+import { Placement } from "~lib/components/shared/Tooltip"
+import TooltipIcon from "~lib/components/shared/TooltipIcon"
 import {
   StyledWidgetLabelHelp,
   WidgetLabel,
 } from "~lib/components/widgets/BaseWidget"
-import TooltipIcon from "~lib/components/shared/TooltipIcon"
-import { Placement } from "~lib/components/shared/Tooltip"
-import { withCalculatedWidth } from "~lib/components/core/Layout/withCalculatedWidth"
+import {
+  useBasicWidgetState,
+  ValueWithSource,
+} from "~lib/hooks/useBasicWidgetState"
 import { useEmotionTheme } from "~lib/hooks/useEmotionTheme"
+import { labelVisibilityProtoValueToEnum } from "~lib/util/utils"
+import { WidgetStateManager } from "~lib/WidgetStateManager"
 
 import { StyledThumb, StyledThumbValue } from "./styled-components"
-
-const DEBOUNCE_TIME_MS = 200
 
 export interface Props {
   disabled: boolean
@@ -78,9 +76,10 @@ function Slider({
     fragmentId,
   })
 
-  // We tie the UI to `uiValue` rather than `value` because `value` only updates
-  // every DEBOUNCE_TIME_MS. If we tied the UI to `value` then the UI would only
-  // update every DEBOUNCE_TIME_MS as well. So this keeps the UI smooth.
+  // We tie the UI to `uiValue` rather than `value` because `value` only
+  // updates when the user is done interacting with the slider. If we tied
+  // the UI to `value` then the UI would only update when the user is done
+  // interacting. So this keeps the UI smooth.
   const [uiValue, setUiValue] = useState(value)
 
   const sliderRef = useRef<HTMLDivElement | null>(null)
@@ -102,22 +101,18 @@ function Slider({
     setUiValue(value)
   }, [value])
 
-  // TODO: Update to match React best practices
-  // eslint-disable-next-line react-hooks/react-compiler
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSetValueWithSource = useCallback(
-    debounce(DEBOUNCE_TIME_MS, (valueArg: number[]): void => {
+  const handleFinalChange = useCallback(
+    ({ value: valueArg }: { value: number[] }): void => {
       setValueWithSource({ value: valueArg, fromUi: true })
-    }) as (value: number[]) => void,
-    []
+    },
+    [setValueWithSource]
   )
 
   const handleChange = useCallback(
     ({ value: valueArg }: { value: number[] }): void => {
       setUiValue(valueArg)
-      debouncedSetValueWithSource(valueArg)
     },
-    [debouncedSetValueWithSource]
+    []
   )
 
   // TODO: Update to match React best practices
@@ -154,6 +149,7 @@ function Slider({
         <StyledThumb
           {...passThrough}
           disabled={props.$disabled === true}
+          isDragged={props.$isDragged === true}
           ref={thumbRefs[thumbIndex]}
           aria-valuetext={formattedValue}
           aria-label={thumbAriaLabel}
@@ -239,6 +235,7 @@ function Slider({
         step={element.step}
         value={getValueAsArray(uiValue, element)}
         onChange={handleChange}
+        onFinalChange={handleFinalChange}
         disabled={disabled}
         overrides={{
           Thumb: renderThumb,

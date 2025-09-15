@@ -17,13 +17,7 @@
 import merge from "lodash/merge"
 import mergeWith from "lodash/mergeWith"
 
-import {
-  convertRemToPx,
-  EmotionTheme,
-  getBlue80,
-  getGray30,
-  getGray70,
-} from "~lib/theme"
+import { convertRemToPx, EmotionTheme, getGray30, getGray70 } from "~lib/theme"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: Replace 'any' with a more specific type.
 export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
@@ -120,7 +114,7 @@ export function applyStreamlitTheme(config: any, theme: EmotionTheme): any {
     },
     mark: {
       tooltip: { content: "encoding" },
-      color: getBlue80(theme),
+      color: theme.colors.chartCategoricalColors[0],
     },
     bar: {
       binSpacing: convertRemToPx(theme.spacing.twoXS),
