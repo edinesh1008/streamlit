@@ -13,7 +13,7 @@ We aim for high unit test coverage (90% or higher) of our Python code in `lib/st
 - For every new test function, please add a brief docstring comment (numpydoc style).
 - New tests should be fully annotated with types.
 - Skip tests (via `pytest.mark.skipif`) requiring CI secrets if the environment variables are not set.
-- Parameterized Tests: Use `@parameterized.expand` whenever its possible to combine tests with varying inputs.
+- Parameterized Tests: Use `@parameterized.expand` whenever its possible to combine overlapping tests with varying inputs.
 
 ## Running tests
 
