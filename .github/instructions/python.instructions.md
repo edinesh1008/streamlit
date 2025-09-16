@@ -37,3 +37,12 @@ applyTo: "**/*.py"
 - Add typing annotations to every new function, method or class member.
 - Use `typing_extensions` for back-porting newer typing features.
 - Use future annotations via `from __future__ import annotations`.
+
+## Relevant `make` commands
+
+Run from the repo root:
+
+- `make python-lint`: Lint and check formatting of Python files (ruff).
+- `make python-tests`: Run all Python unit tests (pytest).
+- `make python-types`: Run the Python type checker (mypy & ty).
+- `make python-format`: Format Python files (ruff).

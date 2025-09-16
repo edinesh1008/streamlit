@@ -54,12 +54,14 @@ alwaysApply: false
 
 ## Relevant `make` commands
 
-- `frontend-fast`: Build the frontend (vite).
-- `frontend-dev`: Start the frontend development server (hot-reload).
-- `frontend-lint`: Lint and check formatting of frontend files (eslint).
-- `frontend-types`: Run the TypeScript type checker (tsc).
-- `frontend-format`: Format frontend files (eslint).
-- `frontend-tests`: Run all frontend unit tests (vitest).
+Run from the repo root:
+
+- `make frontend-fast`: Build the frontend (vite).
+- `make frontend-dev`: Start the frontend development server (hot-reload).
+- `make frontend-lint`: Lint and check formatting of frontend files (eslint).
+- `make frontend-types`: Run the TypeScript type checker (tsc).
+- `make frontend-format`: Format frontend files (eslint).
+- `make frontend-tests`: Run all frontend unit tests (vitest).
 
 ## TypeScript Test Guide
 
