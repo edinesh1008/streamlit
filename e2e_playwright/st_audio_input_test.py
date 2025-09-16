@@ -38,6 +38,29 @@ def try_to_grant_microphone_permissions(page: Page) -> None:
         pass
 
 
+def start_recording(audio_input: Locator):
+    """Start recording audio."""
+    audio_input.get_by_role("button", name="Record").click()
+
+
+def stop_recording(audio_input: Locator, app: Page, wait_for_run: bool = True):
+    """Stop recording audio and wait for the recording to complete."""
+    audio_input.get_by_role("button", name="Stop recording").click()
+    # Wait for the recording to be processed and the UI to update
+    if wait_for_run:
+        wait_for_app_run(app)
+
+
+def ensure_recording_exists(audio_input: Locator):
+    """Ensure that a recording exists (waveform is visible)."""
+    expect(audio_input.get_by_test_id("stAudioInputWaveSurfer")).to_be_visible()
+
+
+def ensure_no_recording(audio_input: Locator):
+    """Ensure that no recording exists (waveform is not visible)."""
+    expect(audio_input.get_by_test_id("stAudioInputWaveSurfer")).not_to_be_visible()
+
+
 def test_audio_input_renders(app: Page):
     """Test that audio input renders correctly."""
     audio_inputs = app.get_by_test_id("stAudioInput")
@@ -81,19 +104,17 @@ def test_audio_input_recording(app: Page):
 
     # Start recording
     expect(record_button).to_be_visible()
-    record_button.click()
+    start_recording(audio_input)
 
     # Record for 1.5 seconds
     app.wait_for_timeout(1500)
 
     # Stop recording
-    stop_button = audio_input.get_by_role("button", name="Stop recording")
-    stop_button.click()
-    wait_for_app_run(app)
+    stop_recording(audio_input, app)
 
     # Verify recording was created
     expect(app.get_by_text("Audio Input 1: True")).to_be_visible()
-    expect(audio_input.get_by_test_id("stAudioInputWaveSurfer")).to_be_visible()
+    ensure_recording_exists(audio_input)
 
     # Verify WAV analysis
     expect(app.get_by_text("Channels:")).to_be_visible()
@@ -108,10 +129,9 @@ def test_audio_input_clear(app: Page):
     audio_input = app.get_by_test_id("stAudioInput").first
 
     # Record something first
-    audio_input.get_by_role("button", name="Record").click()
+    start_recording(audio_input)
     app.wait_for_timeout(1000)
-    audio_input.get_by_role("button", name="Stop recording").click()
-    wait_for_app_run(app)
+    stop_recording(audio_input, app)
 
     # Clear the recording
     audio_input.hover()
@@ -121,7 +141,38 @@ def test_audio_input_clear(app: Page):
 
     # Verify cleared
     expect(app.get_by_text("Audio Input 1: False")).to_be_visible()
-    expect(audio_input.get_by_test_id("stAudioInputWaveSurfer")).not_to_be_visible()
+    ensure_no_recording(audio_input)
+
+
+def test_audio_input_re_recording(app: Page):
+    """Test re-recording flow - clicking record with existing recording should clear and start fresh."""
+    try_to_grant_microphone_permissions(app)
+
+    audio_input = app.get_by_test_id("stAudioInput").first
+
+    # Record initial audio
+    start_recording(audio_input)
+    app.wait_for_timeout(1000)
+    stop_recording(audio_input, app)
+
+    # Verify first recording exists
+    expect(app.get_by_text("Audio Input 1: True")).to_be_visible()
+    ensure_recording_exists(audio_input)
+
+    # Start re-recording - should clear existing recording
+    audio_input.get_by_role("button", name="Record").click()
+
+    # Verify existing recording is cleared during new recording
+    ensure_no_recording(audio_input)
+    expect(app.get_by_text("Audio Input 1: False")).to_be_visible()
+
+    # Complete new recording
+    app.wait_for_timeout(1500)
+    stop_recording(audio_input, app)
+
+    # Verify new recording is present
+    expect(app.get_by_text("Audio Input 1: True")).to_be_visible()
+    ensure_recording_exists(audio_input)
 
 
 def test_audio_input_callback(app: Page):
@@ -131,10 +182,9 @@ def test_audio_input_callback(app: Page):
     expect(app.get_by_text("Audio Input Changed: False")).to_be_visible()
 
     audio_input = app.get_by_test_id("stAudioInput").nth(5)
-    audio_input.get_by_role("button", name="Record").click()
+    start_recording(audio_input)
     app.wait_for_timeout(1000)
-    audio_input.get_by_role("button", name="Stop recording").click()
-    wait_for_app_run(app)
+    stop_recording(audio_input, app)
 
     expect(app.get_by_text("Audio Input Changed: True")).to_be_visible()
 
@@ -147,10 +197,9 @@ def test_audio_input_remount(app: Page):
 
     audio_input = app.get_by_test_id("stAudioInput").nth(6)
     audio_input.scroll_into_view_if_needed()
-    audio_input.get_by_role("button", name="Record").click()
+    start_recording(audio_input)
     app.wait_for_timeout(1000)
-    audio_input.get_by_role("button", name="Stop recording").click()
-    wait_for_app_run(app)
+    stop_recording(audio_input, app)
 
     expect(app.get_by_text("audio_input-after-sleep: True")).to_be_visible()
 
@@ -169,19 +218,19 @@ def test_audio_input_form(app: Page):
     form_input = app.get_by_test_id("stAudioInput").nth(1)
 
     # Record audio in form
-    form_input.get_by_role("button", name="Record").click()
+    start_recording(form_input)
     app.wait_for_timeout(1000)
-    form_input.get_by_role("button", name="Stop recording").click()
+    stop_recording(form_input, app, wait_for_run=False)
 
     # Verify recording is visible in form
-    expect(form_input.get_by_test_id("stAudioInputWaveSurfer")).to_be_visible()
+    ensure_recording_exists(form_input)
 
     # Submit form (should clear due to clear_on_submit=True)
     click_form_button(app, "Submit")
     wait_for_app_run(app)
 
     # Form should be cleared after submit
-    expect(form_input.get_by_test_id("stAudioInputWaveSurfer")).not_to_be_visible()
+    ensure_no_recording(form_input)
 
 
 def test_audio_input_fragment(app: Page):
@@ -192,10 +241,9 @@ def test_audio_input_fragment(app: Page):
     expect(app.get_by_text("Runs: 1")).to_be_visible()
 
     fragment_input = app.get_by_test_id("stAudioInput").nth(2)
-    fragment_input.get_by_role("button", name="Record").click()
+    start_recording(fragment_input)
     app.wait_for_timeout(1000)
-    fragment_input.get_by_role("button", name="Stop recording").click()
-    wait_for_app_run(app)
+    stop_recording(fragment_input, app)
 
     # Fragment should update without full rerun
     expect(app.get_by_text("Audio Input in Fragment:")).not_to_have_text("None")
@@ -212,17 +260,16 @@ def test_audio_input_disabled(app: Page):
 def _test_download_audio_file(app: Page, locator: FrameLocator | Locator):
     """Helper function to test audio file download in both regular and iframe contexts."""
     audio_input = locator.get_by_test_id("stAudioInput").nth(1)
-    audio_input.get_by_role("button", name="Record").click()
+    start_recording(audio_input)
     app.wait_for_timeout(1500)
 
     # Stop recording
-    audio_input.get_by_role("button", name="Stop recording").click()
-
-    # For iframe context, we can't use wait_for_app_run, so just wait
+    # For iframe context, we can't use wait_for_app_run
     if isinstance(locator, FrameLocator):
+        audio_input.get_by_role("button", name="Stop recording").click()
         app.wait_for_timeout(2000)
     else:
-        wait_for_app_run(app)
+        stop_recording(audio_input, app)
 
     with app.expect_download() as download_info:
         download_button = audio_input.get_by_role("button", name="Download as WAV")
@@ -255,10 +302,9 @@ def test_audio_input_sample_rates(app: Page):
     # Test 48 kHz recording
     high_quality_input = app.get_by_test_id("stAudioInput").nth(8)
     high_quality_input.scroll_into_view_if_needed()
-    high_quality_input.get_by_role("button", name="Record").click()
+    start_recording(high_quality_input)
     app.wait_for_timeout(2000)
-    high_quality_input.get_by_role("button", name="Stop recording").click()
-    wait_for_app_run(app)
+    stop_recording(high_quality_input, app)
 
     expect(app.get_by_text("48 kHz recorded")).to_be_visible()
 
@@ -305,9 +351,9 @@ def test_audio_input_error_state(app: Page, assert_snapshot: ImageCompareFunctio
 
     app.route("**/_stcore/upload_file/**", handle_route)
 
-    audio_input.get_by_role("button", name="Record").click()
+    start_recording(audio_input)
     app.wait_for_timeout(1500)
-    audio_input.get_by_role("button", name="Stop recording").click()
+    stop_recording(audio_input, app, wait_for_run=False)
     app.wait_for_timeout(1000)  # Wait for error to appear
 
     expect(
