@@ -42,6 +42,7 @@ if audio_input is not None:
         st.error(f"Error loading WAV file: {e}")
 
 # Form integration
+form_audio = None
 with st.form(key="my_form", clear_on_submit=True):
     form_audio = st.audio_input(label="Audio Input in Form")
     st.form_submit_button("Submit")
