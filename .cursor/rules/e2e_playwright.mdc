@@ -49,6 +49,7 @@ Import from from `conftest.py`:
 - Take a look at other tests in `e2e_playwright/` as inspiration.
 - e2e tests are expensive, please test every aspect only one time.
 - Make use of shared `app_utils` methods (import from `e2e_playwright.shared.app_utils`) if applicable.
+- Make sure that the tests mix different ways of interactions (e.g. fill and type for input fields) for increased coverage.
 
 ## Writing Tests & Common Scenarios
 
