@@ -47,6 +47,7 @@ Import from from `conftest.py`:
 - Naming convention for command-related snapshots: `st_command-test_description`
 - Take a look at other tests in `e2e_playwright/` as inspiration.
 - e2e tests are expensive, please test every aspect only one time.
+- Make use of shared `app_utils` methods (import from `e2e_playwright.shared.app_utils`) if applicable.
 
 ## Writing Tests & Common Scenarios
 
