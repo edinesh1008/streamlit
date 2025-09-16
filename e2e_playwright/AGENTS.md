@@ -28,15 +28,16 @@ Import from from `conftest.py`:
 ## Best Practices
 
 - As a guiding principle, tests should resemble how users interact with the UI.
-- Use `expect` for assertions, not `assert` (reduces flakiness)
+- Use `expect` for auto-wait assertions, not `assert` (reduces flakiness)
+- If `expect` is insufficient, use the `wait_until` utility. Never use `wait_for_timeout`.
 - Prefer label- or key-based locators over index-based access (e.g. `get_by_test_id().nth(0)`). The recommended order of priority is:
   1. get elements by label (see `app_utils` methods, e.g. `get_text_input`).
   2. elements that don't support `label` but support `key`: get elements by a unique key (`get_element_by_key`).
   3. If the element doesn't support key or label, you can wrap it with an `st.container(key="my_key")` to better target it via `get_element_by_key`. E.g. `get_element_by_key("my_key").get_by_test_id("stComponent")`.
-- Use `get_by_test_id` to locate elements preferentially. Use `.locator` only when necessary.
-- If `expect` is insufficient, use the `wait_until` utility. Never use `wait_for_timeout`.
+- Prefer stable locators like `get_by_test_id`, `get_by_text` or `get_by_role` over CSS / XPath selectors via `.locator`.
 - Group related tests into single, logical test files (e.g., by widget or feature) for CI efficiency.
 - Minimize screenshot surface area; screenshot specific elements, not the whole page unless necessary.
+- Use descriptive test names.
 - Ensure elements screenshotted are under 640px height to avoid clipping by the header.
 - Naming convention for command-related snapshots: `st_command-test_description`
 - Take a look at other tests in `e2e_playwright/` as inspiration.
@@ -57,11 +58,12 @@ When adding or modifying tests for an element, ensure the following are covered:
   - The element cannot be interacted with when `disabled=True`.
   - If the element uses the `help` parameter, verify the tooltip appears correctly on hover.
   - If the element uses the `key` parameter, verify a corresponding CSS class or attribute is set.
+  - If the the element is a widget, make sure to test that the idenity is kept stable when `key` is provided.
 - **Custom Config:** Use module-scoped fixtures with `@pytest.mark.early` for tests requiring specific Streamlit configuration options.
 
 ## Running tests
 
 - Single test: `make run-e2e-test e2e_playwright/name_of_the_test.py`
-- Debug test: `make debug-e2e-test e2e_playwright/name_of_the_test.py`
+- Debug test (needs manual interactions): `make debug-e2e-test e2e_playwright/name_of_the_test.py`
 - If frontend logic was changed, it will require running `make frontend-fast` to update the frontend.
 - You can ignore missing or mismatched snapshot errors. These need to be updated manually.
