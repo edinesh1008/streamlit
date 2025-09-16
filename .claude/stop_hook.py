@@ -23,6 +23,24 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from typing import Final
+
+# Constants
+TIMEOUT_SECONDS: Final = 60  # Frontend commands take longer
+SEPARATOR: Final = "=" * 60
+
+# Keywords for filtering relevant error lines
+PYTHON_ERROR_KEYWORDS: Final = ["error", "would reformat", "failed", "***", ".py:"]
+FRONTEND_ERROR_KEYWORDS: Final = [
+    "error",
+    "failed",
+    "***",
+    ".ts:",
+    ".tsx:",
+    ".js:",
+    ".jsx:",
+]
+NODE_MODULES_KEYWORDS: Final = ["node_modules", "findpackagelocation"]
 
 
 def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
@@ -34,7 +52,7 @@ def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
             capture_output=True,
             text=True,
             cwd=cwd,
-            timeout=60,  # 60 second timeout per command (frontend takes longer)
+            timeout=TIMEOUT_SECONDS,
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
@@ -43,51 +61,71 @@ def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
         return 1, "", str(e)
 
 
+def filter_relevant_lines(output: str, keywords: list[str]) -> list[str]:
+    """Filter output lines that contain any of the specified keywords."""
+    lines = output.split("\n")
+    return [
+        line for line in lines if any(keyword in line.lower() for keyword in keywords)
+    ]
+
+
+def format_check_result(
+    exit_code: int,
+    stdout: str,
+    stderr: str,
+    check_name: str,
+    error_keywords: list[str],
+    make_command: str,
+) -> str | None:
+    """
+    Format the result of a quality check command.
+
+    Returns None if check passed, error message string if failed.
+    """
+    if exit_code == 0:
+        return None
+
+    output = (stdout + "\n" + stderr).strip()
+    relevant_lines = filter_relevant_lines(output, error_keywords)
+
+    if relevant_lines:
+        # Check for specific error types
+        if "would reformat" in output.lower():
+            return f"{check_name} formatting issues found:\n" + "\n".join(
+                relevant_lines
+            )
+        return f"{check_name} failed:\n" + "\n".join(relevant_lines)
+
+    return f"{check_name} failed (run '{make_command}' for details)"
+
+
 def check_python_quality() -> list[str]:
-    """Run Python linting."""
+    """Run Python linting and type checking."""
     issues = []
 
-    # Run Python linting using make command
+    # Python linting (includes formatting check via ruff format --check)
     exit_code, stdout, stderr = run_command(["make", "python-lint"])
-    if exit_code != 0:
-        # Combine stdout and stderr for better error reporting
-        output = (stdout + "\n" + stderr).strip()
-        # Keep only the most relevant lines
-        lines = output.split("\n")
-        relevant_lines = [
-            line
-            for line in lines
-            if any(
-                keyword in line.lower()
-                for keyword in ["error", "would reformat", "failed", "***"]
-            )
-        ]
-        if relevant_lines:
-            issues.append("Python linting failed:\n" + "\n".join(relevant_lines))
-        else:
-            issues.append("Python linting failed (run 'make python-lint' for details)")
+    if issue := format_check_result(
+        exit_code,
+        stdout,
+        stderr,
+        "Python linting/formatting",
+        PYTHON_ERROR_KEYWORDS,
+        "make python-lint",
+    ):
+        issues.append(issue)
 
-    # Run Python type checking using make command
+    # Python type checking
     exit_code, stdout, stderr = run_command(["make", "python-types"])
-    if exit_code != 0:
-        # Combine stdout and stderr for better error reporting
-        output = (stdout + "\n" + stderr).strip()
-        # Keep only the most relevant lines
-        lines = output.split("\n")
-        relevant_lines = [
-            line
-            for line in lines
-            if any(
-                keyword in line.lower()
-                for keyword in ["error", "failed", "***", ".py:"]
-            )
-        ]
-        if relevant_lines:
-            issues.append("Python type checking failed:\n" + "\n".join(relevant_lines))
-        else:
-            issues.append(
-                "Python type checking failed (run 'make python-types' for details)"
-            )
+    if issue := format_check_result(
+        exit_code,
+        stdout,
+        stderr,
+        "Python type checking",
+        PYTHON_ERROR_KEYWORDS,
+        "make python-types",
+    ):
+        issues.append(issue)
 
     return issues
 
@@ -96,79 +134,58 @@ def check_frontend_quality() -> list[str]:
     """Run frontend linting and type checking."""
     issues = []
 
-    # Run frontend linting
-    exit_code, stdout, stderr = run_command(["make", "frontend-lint"])
-    if exit_code != 0:
-        # Combine stdout and stderr for better error reporting
-        output = (stdout + "\n" + stderr).strip()
+    # Check each frontend command
+    commands = [
+        ("frontend-lint", "Frontend linting/formatting"),
+        ("frontend-types", "Frontend type checking"),
+    ]
 
-        # Check if this is a missing node_modules issue
-        if "node_modules" in output.lower() or "findpackagelocation" in output.lower():
-            # Skip frontend checks if dependencies aren't installed
-            print(  # noqa: T201
-                "⚠️  Skipping frontend checks - node_modules not installed",
-                file=sys.stderr,
-            )
-            return []
+    for make_target, check_name in commands:
+        exit_code, stdout, stderr = run_command(["make", make_target])
 
-        # Keep only the most relevant lines
-        lines = output.split("\n")
-        relevant_lines = [
-            line
-            for line in lines
-            if any(
-                keyword in line.lower()
-                for keyword in [
-                    "error",
-                    "failed",
-                    "***",
-                    ".ts:",
-                    ".tsx:",
-                    ".js:",
-                    ".jsx:",
-                ]
-            )
-        ]
-        if relevant_lines:
-            issues.append("Frontend linting failed:\n" + "\n".join(relevant_lines))
-        else:
-            issues.append(
-                "Frontend linting failed (run 'make frontend-lint' for details)"
-            )
+        if exit_code != 0:
+            output = (stdout + "\n" + stderr).strip()
 
-    # Run frontend type checking
-    exit_code, stdout, stderr = run_command(["make", "frontend-types"])
-    if exit_code != 0:
-        # Combine stdout and stderr for better error reporting
-        output = (stdout + "\n" + stderr).strip()
-        # Keep only the most relevant lines
-        lines = output.split("\n")
-        relevant_lines = [
-            line
-            for line in lines
-            if any(
-                keyword in line.lower()
-                for keyword in [
-                    "error",
-                    "failed",
-                    "***",
-                    ".ts:",
-                    ".tsx:",
-                    ".js:",
-                    ".jsx:",
-                ]
-            )
-        ]
-        if relevant_lines:
-            issues.append(
-                "Frontend type checking failed:\n" + "\n".join(relevant_lines)
-            )
-        else:
-            issues.append(
-                "Frontend type checking failed (run 'make frontend-types' for details)"
-            )
+            # Skip if node_modules is missing
+            if any(keyword in output.lower() for keyword in NODE_MODULES_KEYWORDS):
+                print(  # noqa: T201
+                    "⚠️  Skipping frontend checks - node_modules not installed",
+                    file=sys.stderr,
+                )
+                return []
+
+            if issue := format_check_result(
+                exit_code,
+                stdout,
+                stderr,
+                check_name,
+                FRONTEND_ERROR_KEYWORDS,
+                f"make {make_target}",
+            ):
+                issues.append(issue)
 
     return issues
+
+
+def print_results(issues: list[str]) -> None:
+    """Print the results of all quality checks to stderr."""
+    if issues:
+        print(  # noqa: T201
+            "❌ Quality checks failed! Please fix the following issues:",
+            file=sys.stderr,
+        )
+        print(SEPARATOR, file=sys.stderr)  # noqa: T201
+
+        for issue in issues:
+            print(f"\n{issue}", file=sys.stderr)  # noqa: T201
+
+        print(SEPARATOR, file=sys.stderr)  # noqa: T201
+        print(  # noqa: T201
+            "\n💡 Run 'make autofix' to automatically fix formatting issues",
+            file=sys.stderr,
+        )
+    else:
+        print("✅ All quality checks passed!", file=sys.stderr)  # noqa: T201
 
 
 def main():
@@ -185,36 +202,14 @@ def main():
         # Already in a stop hook, allow normal stoppage
         sys.exit(0)
 
+    # Run all quality checks
     all_issues = []
+    all_issues.extend(check_python_quality())
+    all_issues.extend(check_frontend_quality())
 
-    # Run quality checks
-    python_issues = check_python_quality()
-    all_issues.extend(python_issues)
-
-    frontend_issues = check_frontend_quality()
-    all_issues.extend(frontend_issues)
-
-    # Decide whether to block
-    if all_issues:
-        # Output to stderr for user feedback
-        print(  # noqa: T201
-            "❌ Quality checks failed! Please fix the following issues:",
-            file=sys.stderr,
-        )
-        print("=" * 60, file=sys.stderr)  # noqa: T201
-        for issue in all_issues:
-            print(f"\n{issue}", file=sys.stderr)  # noqa: T201
-        print("=" * 60, file=sys.stderr)  # noqa: T201
-        print(  # noqa: T201
-            "\n💡 Run 'make autofix' to automatically fix formatting issues",
-            file=sys.stderr,
-        )
-
-        sys.exit(2)  # Exit code 2 blocks stoppage
-    else:
-        # Everything passed
-        print("✅ All quality checks passed!", file=sys.stderr)  # noqa: T201
-        sys.exit(0)
+    # Print results and exit with appropriate code
+    print_results(all_issues)
+    sys.exit(2 if all_issues else 0)  # Exit code 2 blocks stoppage
 
 
 if __name__ == "__main__":
