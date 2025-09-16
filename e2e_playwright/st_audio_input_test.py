@@ -29,6 +29,15 @@ from e2e_playwright.shared.app_utils import (
 )
 
 
+def try_to_grant_microphone_permissions(page: Page) -> None:
+    """Try to grant microphone permissions. Silently fails for browsers that don't support it."""
+    try:
+        page.context.grant_permissions(["microphone"])
+    except Exception:
+        # Some browsers (like webkit in CI) don't support microphone permission
+        pass
+
+
 def test_audio_input_renders(app: Page):
     """Test that audio input renders correctly."""
     audio_inputs = app.get_by_test_id("stAudioInput")
@@ -65,6 +74,8 @@ def test_audio_input_snapshots(app: Page, assert_snapshot: ImageCompareFunction)
 
 def test_audio_input_recording(app: Page):
     """Test basic recording functionality."""
+    try_to_grant_microphone_permissions(app)
+
     audio_input = app.get_by_test_id("stAudioInput").first
     record_button = audio_input.get_by_role("button", name="Record")
 
@@ -92,6 +103,8 @@ def test_audio_input_recording(app: Page):
 
 def test_audio_input_clear(app: Page):
     """Test clearing a recording."""
+    try_to_grant_microphone_permissions(app)
+
     audio_input = app.get_by_test_id("stAudioInput").first
 
     # Record something first
@@ -113,6 +126,8 @@ def test_audio_input_clear(app: Page):
 
 def test_audio_input_callback(app: Page):
     """Test on_change callback."""
+    try_to_grant_microphone_permissions(app)
+
     expect(app.get_by_text("Audio Input Changed: False")).to_be_visible()
 
     audio_input = app.get_by_test_id("stAudioInput").nth(5)
@@ -126,6 +141,8 @@ def test_audio_input_callback(app: Page):
 
 def test_audio_input_remount(app: Page):
     """Test value persistence across remount."""
+    try_to_grant_microphone_permissions(app)
+
     expect(app.get_by_text("audio_input-after-sleep: False")).to_be_visible()
 
     audio_input = app.get_by_test_id("stAudioInput").nth(6)
@@ -147,6 +164,8 @@ def test_audio_input_remount(app: Page):
 
 def test_audio_input_form(app: Page):
     """Test audio input in forms."""
+    try_to_grant_microphone_permissions(app)
+
     form_input = app.get_by_test_id("stAudioInput").nth(1)
 
     # Record audio in form
@@ -167,6 +186,8 @@ def test_audio_input_form(app: Page):
 
 def test_audio_input_fragment(app: Page):
     """Test audio input in fragments."""
+    try_to_grant_microphone_permissions(app)
+
     expect(app.get_by_text("Audio Input in Fragment: None")).to_be_visible()
     expect(app.get_by_text("Runs: 1")).to_be_visible()
 
@@ -215,20 +236,22 @@ def _test_download_audio_file(app: Page, locator: FrameLocator | Locator):
 
 def test_audio_input_file_download(app: Page):
     """Test that the audio input file can be downloaded."""
-    app.context.grant_permissions(["microphone"])
+    try_to_grant_microphone_permissions(app)
     _test_download_audio_file(app, app.locator("body"))
 
 
 def test_audio_input_file_download_in_iframe(iframed_app: IframedPage):
     """Test that the audio input file can be downloaded within an iframe."""
     page: Page = iframed_app.page
-    page.context.grant_permissions(["microphone"])
+    try_to_grant_microphone_permissions(page)
     frame_locator: FrameLocator = iframed_app.open_app(None)
     _test_download_audio_file(page, frame_locator)
 
 
 def test_audio_input_sample_rates(app: Page):
     """Test different sample rate configurations."""
+    try_to_grant_microphone_permissions(app)
+
     # Test 48 kHz recording
     high_quality_input = app.get_by_test_id("stAudioInput").nth(8)
     high_quality_input.scroll_into_view_if_needed()
@@ -267,23 +290,29 @@ def test_audio_input_widths(app: Page, assert_snapshot: ImageCompareFunction):
     assert_snapshot(width_fixed, name="st_audio_input-width_300px")
 
 
-def test_audio_input_error_state(app: Page):
+def test_audio_input_error_state(app: Page, assert_snapshot: ImageCompareFunction):
     """Test error state handling."""
+    try_to_grant_microphone_permissions(app)
+
     audio_input = app.get_by_test_id("stAudioInput").first
 
-    # Mock permission denied
+    # Mock file upload error
     def handle_route(route: Route):
-        if "getUserMedia" in str(route.request):
+        if "upload_file" in route.request.url:
             route.abort("failed")
         else:
             route.continue_()
 
-    app.route("**/*", handle_route)
+    app.route("**/_stcore/upload_file/**", handle_route)
 
     audio_input.get_by_role("button", name="Record").click()
     app.wait_for_timeout(1500)
     audio_input.get_by_role("button", name="Stop recording").click()
+    app.wait_for_timeout(1000)  # Wait for error to appear
 
     expect(
         audio_input.get_by_text("An error has occurred, please try again.")
     ).to_be_visible()
+
+    # Take snapshot of error state
+    assert_snapshot(audio_input, name="st_audio_input-error_state")
