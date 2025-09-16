@@ -28,6 +28,24 @@
 - Docstrings are meant for users of a function, not developers who may be edit the internals of that function in the future. If you want to talk to future developers, use comments.
 - All modules that we expect users to interact with must have top-level docstrings. If a user is not meant to interact with a module, docstrings are optional.
 
+## Package Structure
+
+- `streamlit/`: The main Streamlit library package.
+- `streamlit/elements`: Backend code of elements and widgets.
+- `streamlit/runtime`: App runtime and execution logic.
+- `streamlit/web`: Web server and CLI implementation
+- `streamlit/commands`: `st` commands that don't add UI elements.
+- `streamlit/components`: Backend-implementation of custom components.
+- `streamlit/hello`: `streamlit hello` app implementation.
+- `streamlit/navigation`: Multi-page app implementation.
+- `streamlit/proto`: Generated protobuf definitions for client-server communication.
+- `streamlit/testing`: AppTest v1 implementation.
+- `streamlit/vendor`: Vendored dependencies.
+- `streamlit/watcher`: File-watcher implementations.
+- `streamlit/__init__.py`: Defines all commands in the `st` namespace.
+- `setup.py`: Setup configuration of the Streamlit library.
+- `tests`: Python unit tests (pytest).
+
 ## Typing
 
 - Add typing annotations to every new function, method or class member.
