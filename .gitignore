@@ -85,7 +85,7 @@ coverage/
 !e2e_playwright/.streamlit/
 lib/streamlit/static
 streamlit-storage
-# Directory for temporary files (can be used by agents)
+# Directory for temporary files (can be used by agents):
 work-tmp
 
 # Data Files

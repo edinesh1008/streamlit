@@ -4,7 +4,7 @@ applyTo: "**/*.proto"
 
 # Protobuf
 
-Protobuf messages are used for communication between the backend and frontend via WebSocket connections.
+Protobuf messages are used for communication between the Streamlit backend and frontend via WebSocket connections.
 
 ## Protobuf Compatibility
 
@@ -22,7 +22,7 @@ Typical incompatible changes are:
 
 ## Compile Protobuf
 
-If you ever modify our protobufs, you'll need to run the command below (in the repo root) to compile the
+If you ever modify the protobufs, you'll need to run the command below (from the repo root) to compile the
 protos into libraries that can be used in Python and JS:
 
 ```bash
