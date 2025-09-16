@@ -33,7 +33,7 @@ Import from from `conftest.py`:
 
 - As a guiding principle, tests should resemble how users interact with the UI.
 - Use `expect` for assertions, not `assert` (reduces flakiness)
-- Prefer label- or key-based locators over index-based access, e.g. `get_by_test_id().nth(0)`. The recommended order of priority is:
+- Prefer label- or key-based locators over index-based access (e.g. `get_by_test_id().nth(0)`). The recommended order of priority is:
   1. get elements by label (see `app_utils` methods, e.g. `get_text_input`).
   2. elements that don't support `label` but support `key`: get elements by a unique key (`get_element_by_key`).
   3. If the element doesn't support key or label, you can wrap it with an `st.container(key="my_key")` to better target it via `get_element_by_key`. E.g. `get_element_by_key("my_key").get_by_test_id("stComponent")`.
