@@ -26,7 +26,15 @@ import sys
 from typing import Final
 
 # Constants
-TIMEOUT_SECONDS: Final = 60  # Frontend commands take longer
+# Total hook timeout is 150s (set in settings.json)
+# TODO: Optimize these checks to only run on changed files to reduce execution time
+# This will be addressed in a follow-up PR
+# We have 4 checks total: python-lint, python-types, frontend-lint, frontend-types
+# Give each command a reasonable timeout, but fast ones get less
+PYTHON_COMMAND_TIMEOUT: Final = 10  # Python checks are fast
+FRONTEND_COMMAND_TIMEOUT: Final = (
+    70  # Frontend checks are slower (can take 50+ seconds)
+)
 SEPARATOR: Final = "=" * 60
 
 # Keywords for filtering relevant error lines
@@ -43,7 +51,9 @@ FRONTEND_ERROR_KEYWORDS: Final = [
 NODE_MODULES_KEYWORDS: Final = ["node_modules", "findpackagelocation"]
 
 
-def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
+def run_command(
+    cmd: list[str], timeout: int = 10, cwd: str | None = None
+) -> tuple[int, str, str]:
     """Run a command and return exit code, stdout, and stderr."""
     try:
         result = subprocess.run(  # noqa: S603
@@ -52,11 +62,11 @@ def run_command(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
             capture_output=True,
             text=True,
             cwd=cwd,
-            timeout=TIMEOUT_SECONDS,
+            timeout=timeout,
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
-        return 1, "", f"Command timed out: {' '.join(cmd)}"
+        return 1, "", f"Command timed out after {timeout}s: {' '.join(cmd)}"
     except Exception as e:
         return 1, "", str(e)
 
@@ -100,11 +110,17 @@ def format_check_result(
 
 
 def check_python_quality() -> list[str]:
-    """Run Python linting and type checking."""
+    """Run Python linting and type checking.
+
+    TODO: Optimize to only check modified files to reduce execution time.
+    This will be addressed in a follow-up PR.
+    """
     issues = []
 
     # Python linting (includes formatting check via ruff format --check)
-    exit_code, stdout, stderr = run_command(["make", "python-lint"])
+    exit_code, stdout, stderr = run_command(
+        ["make", "python-lint"], timeout=PYTHON_COMMAND_TIMEOUT
+    )
     if issue := format_check_result(
         exit_code,
         stdout,
@@ -116,7 +132,9 @@ def check_python_quality() -> list[str]:
         issues.append(issue)
 
     # Python type checking
-    exit_code, stdout, stderr = run_command(["make", "python-types"])
+    exit_code, stdout, stderr = run_command(
+        ["make", "python-types"], timeout=PYTHON_COMMAND_TIMEOUT
+    )
     if issue := format_check_result(
         exit_code,
         stdout,
@@ -131,7 +149,11 @@ def check_python_quality() -> list[str]:
 
 
 def check_frontend_quality() -> list[str]:
-    """Run frontend linting and type checking."""
+    """Run frontend linting and type checking.
+
+    TODO: Optimize to only check modified files to reduce execution time.
+    This will be addressed in a follow-up PR.
+    """
     issues = []
 
     # Check each frontend command
@@ -141,7 +163,9 @@ def check_frontend_quality() -> list[str]:
     ]
 
     for make_target, check_name in commands:
-        exit_code, stdout, stderr = run_command(["make", make_target])
+        exit_code, stdout, stderr = run_command(
+            ["make", make_target], timeout=FRONTEND_COMMAND_TIMEOUT
+        )
 
         if exit_code != 0:
             output = (stdout + "\n" + stderr).strip()
