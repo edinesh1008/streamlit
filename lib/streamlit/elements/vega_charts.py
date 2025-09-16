@@ -2201,7 +2201,7 @@ class VegaChartsMixin:
         if width is not None:
             validate_width(width, allow_content=True)
         if height is not None:
-            validate_height(height)
+            validate_height(height, allow_content=True)
 
         # Handle layout config for width/height parameters
         if width is not None or height is not None:
