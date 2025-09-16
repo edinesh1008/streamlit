@@ -10,6 +10,7 @@ applyTo: "**/*.ts, **/*.tsx"
 - Framework: React v18
 - Styling: @emotion/styled v11
 - Build tool: vite v6
+- Testing: vitest v3 & react testing library v16
 - Package manager: yarn v4 with workspaces
 
 ## Key TypeScript Principles
@@ -34,12 +35,29 @@ applyTo: "**/*.ts, **/*.tsx"
   - Avoid the need to target other components.
 - When using BaseWeb, be sure to import our theme via `useEmotionTheme` and use those values in overrides.
 - Use the following pattern for naming custom CSS classes and test IDs: `stComponentSubcomponent`, for example: `stTextInputIcon`.
+- Avoid using pixel sizes for styling, always use rem, em, percentage, or other relative units.
 
 ## Yarn Workspaces
 
 - Project Structure: Monorepo managed with Yarn Workspaces.
-- Packages: `app, connection, lib, protobuf, typescript-config, utils`
+- Packages:
+  - `app` - Main application UI.
+  - `connection` - WebSocket handling
+  - `lib` - Shared UI components.
+  - `utils` - Shared TypeScript utilities.
+  - `protobuf` - Generated Protocol definitions.
+  - `typescript-config` - Configuration for TypeScript.
+  - `eslint-plugin-streamlit-custom` - ESLint plugin with custom rules.
 - Package-specific scripts are executed within their respective directories.
+
+## Relevant `make` commands
+
+- `frontend-fast`: Build the frontend (vite).
+- `frontend-dev`: Start the frontend development server (hot-reload).
+- `frontend-lint`: Lint and check formatting of frontend files (eslint).
+- `frontend-types`: Run the TypeScript type checker (tsc).
+- `frontend-format`: Format frontend files (eslint).
+- `frontend-tests`: Run all frontend unit tests (vitest).
 
 ## TypeScript Test Guide
 

@@ -1,5 +1,7 @@
 # Protobuf
 
+Protobuf messages are used for communication between the Streamlit backend and frontend via WebSocket connections.
+
 ## Protobuf Compatibility
 
 Always keep Streamlit's protobuf messages backwards compatible. New versions of the protobuf messages must work with
@@ -16,9 +18,17 @@ Typical incompatible changes are:
 
 ## Compile Protobuf
 
-If you ever modify our protobufs, you'll need to run the command below to compile the
+If you ever modify the protobufs, you'll need to run the command below (from the repo root) to compile the
 protos into libraries that can be used in Python and JS:
 
 ```bash
 make protobuf
 ```
+
+## Important Files
+
+- `ForwardMsg.proto`: Root message used to sent information from the server to the frontend/browser.
+- `BackMsg.proto`: Root message sent from the browser to the server, e.g. script rerun requests.
+- `NewSession.proto`: First message that is sent to the browser on every rerun.
+- `Block.proto`: Contains all block types. A block is a layout container for elements (e.g. columns, tabs, popovers, etc.).
+- `Element.proto`: Contains all element types. An element is a UI component.

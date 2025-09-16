@@ -33,7 +33,12 @@ Import from from `conftest.py`:
 
 ## Best Practices
 
+- As a guiding principle, tests should resemble how users interact with the UI.
 - Use `expect` for assertions, not `assert` (reduces flakiness)
+- Prefer label- or key-based locators over index-based access, e.g. `get_by_test_id().nth(0)`. The recommended order of priority is:
+  1. get elements by label (see `app_utils` methods, e.g. `get_text_input`).
+  2. elements that don't support `label` but support `key`: get elements by a unique key (`get_element_by_key`).
+  3. If the element doesn't support key or label, you can wrap it with an `st.container(key="my_key")` to better target it via `get_element_by_key`. E.g. `get_element_by_key("my_key").get_by_test_id("stComponent")`.
 - Use `get_by_test_id` to locate elements preferentially. Use `.locator` only when necessary.
 - If `expect` is insufficient, use the `wait_until` utility. Never use `wait_for_timeout`.
 - Group related tests into single, logical test files (e.g., by widget or feature) for CI efficiency.
@@ -64,4 +69,14 @@ When adding or modifying tests for an element, ensure the following are covered:
 - Single test: `make run-e2e-test e2e_playwright/name_of_the_test.py`
 - Debug test: `make debug-e2e-test e2e_playwright/name_of_the_test.py`
 - If frontend logic was changed, it will require running `make frontend-fast` to update the frontend.
-- Use `make update-snapshots` script to retrieve updated snapshots from GitHub workflow.
+- You can ignore missing or mismatched snapshot errors. These need to be updated manually.
+
+- As a guiding principle, tests should resemble how users interact with the UI.
+- Don't use index based (e.g. `get_by_test_id().nth(0)`). The recommended order of priority is:
+
+  1. get elements by label (see `app_utils` methods, e.g. `get_text_input`). If necessary, please refactor the e2e script so that all the elements have a unique label.
+  2. elements that don't support label but support key: get elements by a unique key (`get_element_by_key`). If the element doesn't yet have a key, please add one. But only add a unique key if the element actually needs to be targeted via key (and not via label as descibed above).
+  3. If the element doesn't support key or label, you can wrap it with an `st.container(key="my_key")` to better target it via `get_element_by_key`. E.g. `get_element_by_key("my_key").get_by_test_id("stComponent")`
+
+- Please replace `expect(app.get_by_test_id("stMarkdown")).to_have_text("text")` with `expect_markdown(app, "text")`.
+- Please check if additional aspect can be easily replaced by using methods from `app_utils`.

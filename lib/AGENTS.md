@@ -1,10 +1,11 @@
 # Python Development Guide
 
 - Supported Python versions: 3.9 - 3.13
-- Linter: Ruff 0.x
-- Formatter: Ruff 0.x
-- Type Checker: mypy 1.x
-- Testing: pytest 8.x
+- Docstrings: Numpy style
+- Linter: Ruff 0.x (`.ruff.toml`)
+- Formatter: Ruff 0.x (`.ruff.toml`)
+- Type Checker: mypy 1.x (`mypy.ini`)
+- Testing: pytest 8.x (`lib/pytest.ini`)
 
 ## Key Principles
 
