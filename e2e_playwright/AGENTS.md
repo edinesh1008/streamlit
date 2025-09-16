@@ -58,7 +58,7 @@ When adding or modifying tests for an element, ensure the following are covered:
   - The element cannot be interacted with when `disabled=True`.
   - If the element uses the `help` parameter, verify the tooltip appears correctly on hover.
   - If the element uses the `key` parameter, verify a corresponding CSS class or attribute is set.
-  - If the the element is a widget, make sure to test that the idenity is kept stable when `key` is provided.
+  - If the element is a widget, make sure to test that the identity is kept stable when `key` is provided.
 - **Custom Config:** Use module-scoped fixtures with `@pytest.mark.early` for tests requiring specific Streamlit configuration options.
 
 ## Running tests
