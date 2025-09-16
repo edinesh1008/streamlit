@@ -14,7 +14,7 @@ that would not work with an older Streamlit version are incompatible and should 
 
 Typical incompatible changes are:
 
-- Removing a field → instead add a `// DEPRECATED` comment and mark is as `[deprecated=true]`
+- Removing a field → instead add a `// DEPRECATED` comment and mark it as `[deprecated=true]`
 - Renaming a field → instead deprecate it and introduce a new field with a *new* number
 - Changing the number of a field -> all field numbers must be kept as is.
 - Adding or removing the `optional` keyword -> deprecate field and add a new one.

@@ -11,11 +11,11 @@ We use playwright with pytest to e2e test Streamlit library. E2E tests verify th
 - If the test is specific to a Streamlit element, prefix the filename with `st_<element_name>`
 - Tests can use screenshot comparisons for visual verification
 - Screenshots are stored in `e2e_playwright/__snapshots__/<os>/`
-- Other tests results are stored in `e2e_playwright/test_results/`
+- Other test results are stored in `e2e_playwright/test_results/`
 
 ## Key Fixtures and Utilities
 
-Import from from `conftest.py`:
+Import from `conftest.py`:
 
 - `app: Page` - Light mode app fixture
 - `themed_app: Page` - Light & dark mode app fixture
