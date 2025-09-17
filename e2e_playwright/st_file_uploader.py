@@ -118,13 +118,13 @@ def file_uploader_on_change():
 
 
 st.file_uploader(
-    "Drop a file:",
+    "Drop a file (with callback):",
     type=["txt"],
     key="on_change_file_uploader_key",
     on_change=file_uploader_on_change,
 )
 
-st.text(st.session_state.counter)
+st.text(f"Uploader counter: {st.session_state.counter}")
 
 
 @st.fragment
@@ -135,7 +135,10 @@ def test_file_fragment():
 
 test_file_fragment()
 
-st.file_uploader(":material/check: :rainbow[Fancy] _**markdown** `label` _support_")
+st.file_uploader(
+    ":material/check: :rainbow[Fancy] _**markdown** `label` _support_",
+    key="file_uploader_markdown_label",
+)
 
 col1, col2 = st.columns([0.35, 0.65])
 with col1:
