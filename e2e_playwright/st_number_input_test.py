@@ -137,7 +137,8 @@ def test_number_input_shows_instructions_when_dirty(
 ):
     """Test that st.number_input shows the instructions correctly when dirty."""
     number_input_el = get_number_input(app, "number input 1 (default)")
-    number_input_el.locator("input").first.fill("10")
+    input_field = number_input_el.locator("input").first
+    input_field.fill("10")
     assert_snapshot(number_input_el, name="st_number_input-input_instructions")
 
 
@@ -218,7 +219,7 @@ def test_number_input_typing_decimal_via_keyboard(app: Page):
 
 # Regression test for issue #12526: tab selects full existing value
 # with non-integer values
-def test_numebr_input_tab_focus_behavior(
+def test_number_input_tab_focus_behavior(
     app: Page, assert_snapshot: ImageCompareFunction
 ):
     """Test that st.number_input tab focus behavior works correctly."""
@@ -240,6 +241,7 @@ def test_empty_number_input_behaves_correctly(
     # Enter 10 in the first empty input:
     empty_number_input = get_number_input(app, "number input 11 (value=None)")
     empty_number_input_field = empty_number_input.locator("input").first
+    empty_number_input_field.click()
     empty_number_input_field.fill("10")
     empty_number_input_field.press("Enter")
 

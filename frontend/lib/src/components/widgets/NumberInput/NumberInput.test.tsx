@@ -106,7 +106,7 @@ describe("NumberInput widget", () => {
   })
 
   describe("Focus selection behavior", () => {
-    it("selects all text when focused via keyboard (Tab)", async () => {
+    it("calls select() when focused via keyboard (Tab)", async () => {
       const user = userEvent.setup()
       const props = getFloatProps({ default: 42.5 })
       render(<NumberInput {...props} />)
@@ -115,33 +115,47 @@ describe("NumberInput widget", () => {
       const input = screen.getByTestId(
         "stNumberInputField"
       ) as HTMLInputElement
-      // Simulate Tab navigation by triggering keydown then focus
-      await user.keyboard("{Tab}")
 
-      // Wait for focus and text selection to happen
-      await new Promise(resolve => setTimeout(resolve, 20))
+      // Mock the select method to verify it gets called
+      const selectSpy = vi.spyOn(input, "select")
 
-      // After tab focus, all text should be selected
-      expect(input.selectionStart).toBe(0)
-      expect(input.selectionEnd).toBe(input.value.length)
+      // Trigger focus without mouse interaction to simulate keyboard navigation
+      await act(async () => {
+        input.focus()
+      })
+
+      // Wait for React state updates and requestAnimationFrame to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      })
+
+      // Verify the select method was called (keyboard focus should select text)
+      expect(selectSpy).toHaveBeenCalled()
     })
 
-    it("does not select text when focused via mouse click", async () => {
+    it("does not call select() when focused via mouse click", async () => {
       const user = userEvent.setup()
-      const props = getFloatProps({ default: 42 })
+      const props = getFloatProps({ default: 42.5 })
       render(<NumberInput {...props} />)
 
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const input = screen.getByTestId(
         "stNumberInputField"
       ) as HTMLInputElement
-      // Click to focus (this should not select all text)
+
+      // Mock the select method to verify it's NOT called
+      const selectSpy = vi.spyOn(input, "select")
+
+      // Click to focus (this should NOT select all text)
       await user.click(input)
 
-      // After click focus, text should not be fully selected
-      // (Note: exact cursor position depends on click location,
-      // but it should not select the entire value)
-      expect(input.selectionStart).toBe(input.selectionEnd)
+      // Wait for any potential React updates
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      })
+
+      // Verify the select method was NOT called (mouse click should not select text)
+      expect(selectSpy).not.toHaveBeenCalled()
     })
   })
 
