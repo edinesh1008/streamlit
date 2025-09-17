@@ -2150,6 +2150,11 @@ class VegaChartsMixin:
             vega_lite_proto.use_container_width = use_container_width
         vega_lite_proto.theme = theme or ""
 
+        if width is not None:
+            validate_width(width, allow_content=True)
+        if height is not None:
+            validate_height(height, allow_content=True)
+
         if is_selection_activated:
             # Load the stabilized spec again as a dict:
             final_spec = json.loads(vega_lite_proto.spec)
@@ -2191,17 +2196,21 @@ class VegaChartsMixin:
                 value_type="string_value",
             )
 
-            self.dg._enqueue(
-                "arrow_vega_lite_chart",
-                vega_lite_proto,
-                add_rows_metadata=add_rows_metadata,
-            )
+            if width is not None or height is not None:
+                layout_config = LayoutConfig(width=width, height=height)
+                self.dg._enqueue(
+                    "arrow_vega_lite_chart",
+                    vega_lite_proto,
+                    add_rows_metadata=add_rows_metadata,
+                    layout_config=layout_config,
+                )
+            else:
+                self.dg._enqueue(
+                    "arrow_vega_lite_chart",
+                    vega_lite_proto,
+                    add_rows_metadata=add_rows_metadata,
+                )
             return widget_state.value
-
-        if width is not None:
-            validate_width(width, allow_content=True)
-        if height is not None:
-            validate_height(height, allow_content=True)
 
         # Handle layout config for width/height parameters
         if width is not None or height is not None:
