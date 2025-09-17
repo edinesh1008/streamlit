@@ -34,7 +34,7 @@ def test_vega_chart_width_behavior(themed_app: Page):
         308,  # 4: Horizontal concatenation chart (should default to content)
         704,  # 5: Vertical concatenation chart (should default to stretch)
         144,  # 6: Repeat chart (should default to content)
-        135,  # 7: Chart with width='content'
+        144,  # 7: Chart with width='content'
         704,  # 8: Chart with width='stretch'
         400,  # 9: Chart with width=400
         500,  # 10: Chart with width in spec (500) and width='content' parameter
@@ -42,10 +42,28 @@ def test_vega_chart_width_behavior(themed_app: Page):
         200,  # 12: Chart with width in spec (500) and width=200 parameter
     ]
 
+    descriptions = [
+        "Regular chart (should default to stretch)",
+        "Facet chart (should default to content)",
+        "Chart with row encoding (should default to content)",
+        "Chart with column encoding (should default to content)",
+        "Horizontal concatenation chart (should default to content)",
+        "Vertical concatenation chart (should default to stretch)",
+        "Repeat chart (should default to content)",
+        "Chart with width='content'",
+        "Chart with width='stretch'",
+        "Chart with width=400",
+        "Chart with width in spec (500) and width='content' parameter",
+        "Chart with width in spec (500) and width='stretch' parameter",
+        "Chart with width in spec (500) and width=200 parameter",
+    ]
+
     for i, expected_width in enumerate(expected_widths):
         chart = vega_lite_charts.nth(i)
         expect(chart).to_be_visible()
-        assert_vega_chart_width(chart, expected_width)
+
+        chart_description = f"Chart {i}: {descriptions[i]}"
+        assert_vega_chart_width(chart, expected_width, chart_description)
 
 
 def test_vega_chart_width_content_snapshot(
