@@ -42,7 +42,6 @@ st.plotly_chart(fig_bubble, theme=None)
 
 # Bubble Chart
 # Tests Discrete coloring with streamlit theme
-# uses container width when use_container_width flag is True
 fig_bubble.update_layout(height=300, width=300)
 st.plotly_chart(
     fig_bubble,
@@ -276,7 +275,6 @@ large_fig.add_trace(
     go.Scatter(x=[1, 2, 3, 4, 5, 6], y=[10, 15, 13, 17, 20, 18], name="Large Chart")
 )
 large_fig.update_layout(
-    height=200, width=1000, title="Chart with figure width=1000 and width='content':"
+    height=400, width=1000, title="Chart with figure width=1000 and width='content':"
 )
-
 st.plotly_chart(large_fig, width="content", theme="streamlit")
