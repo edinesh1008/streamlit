@@ -194,8 +194,22 @@ const NumberInput: React.FC<Props> = ({
     setIsFocused(false)
   }, [dirty, value, commitValue])
 
+  // Track if focus came from a mouse click
+  const mouseDownRef = useRef(false)
+
   const onFocus = useCallback((): void => {
     setIsFocused(true)
+
+    // Only select text if focus did NOT come from a mouse click
+    if (!mouseDownRef.current && inputRef.current) {
+      // Wait for React to update displayValue, then select text
+      requestAnimationFrame(() => {
+        inputRef.current?.select()
+      })
+    }
+
+    // Reset the mouse flag
+    mouseDownRef.current = false
   }, [])
 
   const updateFromProtobuf = useCallback((): void => {
@@ -277,19 +291,42 @@ const NumberInput: React.FC<Props> = ({
     }
   }
 
+  // Helper function to handle precise step arithmetic
+  const preciseStepArithmetic = useCallback(
+    (currentValue: number, operation: "add" | "subtract"): number => {
+      // Scale-based arithmetic to avoid floating point errors
+      const stepStr = step.toString()
+      const decimalPlaces = (stepStr.split(".")[1] || "").length
+      const scale = Math.pow(10, decimalPlaces)
+
+      return operation === "add"
+        ? (Math.round(currentValue * scale) + Math.round(step * scale)) / scale
+        : (Math.round(currentValue * scale) - Math.round(step * scale)) / scale
+    },
+    [step]
+  )
+
   const increment = useCallback(() => {
     if (canInc) {
       setDirty(true)
-      commitValue({ value: (value ?? min) + step, source: { fromUi: true } })
+      const currentValue = value ?? min
+      const newValue = preciseStepArithmetic(currentValue, "add")
+      commitValue({ value: newValue, source: { fromUi: true } })
     }
-  }, [value, min, step, canInc])
+  }, [value, min, canInc, preciseStepArithmetic, commitValue])
 
   const decrement = useCallback(() => {
     if (canDec) {
       setDirty(true)
-      commitValue({ value: (value ?? max) - step, source: { fromUi: true } })
+      const currentValue = value ?? max
+      const newValue = preciseStepArithmetic(currentValue, "subtract")
+      commitValue({ value: newValue, source: { fromUi: true } })
     }
-  }, [value, max, step, canDec])
+  }, [value, max, canDec, preciseStepArithmetic, commitValue])
+
+  const onMouseDown = useCallback((): void => {
+    mouseDownRef.current = true
+  }, [])
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
@@ -425,6 +462,7 @@ const NumberInput: React.FC<Props> = ({
                 // and for "decimal" / "numeric" IOS shows keyboard without a minus sign.
                 type: "number",
                 inputMode: "",
+                onMouseDown: onMouseDown,
               },
               style: {
                 fontWeight: theme.fontWeights.normal,

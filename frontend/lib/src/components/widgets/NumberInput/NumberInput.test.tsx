@@ -105,6 +105,46 @@ describe("NumberInput widget", () => {
     )
   })
 
+  describe("Focus selection behavior", () => {
+    it("selects all text when focused via keyboard (Tab)", async () => {
+      const user = userEvent.setup()
+      const props = getFloatProps({ default: 42.5 })
+      render(<NumberInput {...props} />)
+
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const input = screen.getByTestId(
+        "stNumberInputField"
+      ) as HTMLInputElement
+      // Simulate Tab navigation by triggering keydown then focus
+      await user.keyboard("{Tab}")
+
+      // Wait for focus and text selection to happen
+      await new Promise(resolve => setTimeout(resolve, 20))
+
+      // After tab focus, all text should be selected
+      expect(input.selectionStart).toBe(0)
+      expect(input.selectionEnd).toBe(input.value.length)
+    })
+
+    it("does not select text when focused via mouse click", async () => {
+      const user = userEvent.setup()
+      const props = getFloatProps({ default: 42 })
+      render(<NumberInput {...props} />)
+
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+      const input = screen.getByTestId(
+        "stNumberInputField"
+      ) as HTMLInputElement
+      // Click to focus (this should not select all text)
+      await user.click(input)
+
+      // After click focus, text should not be fully selected
+      // (Note: exact cursor position depends on click location,
+      // but it should not select the entire value)
+      expect(input.selectionStart).toBe(input.selectionEnd)
+    })
+  })
+
   it("handles malformed format strings without crashing", () => {
     // This format string is malformed (it should be %0.2f)
     const props = getFloatProps({
@@ -946,6 +986,138 @@ describe("NumberInput widget", () => {
         await user.type(input, "{arrowup}")
 
         expect(input).toHaveDisplayValue("10.5")
+      })
+    })
+
+    describe("Floating point precision", () => {
+      it("handles precise decimal arithmetic with step buttons", async () => {
+        const user = userEvent.setup()
+        const props = getFloatProps({
+          default: 0.1,
+          step: 0.01,
+          min: 0,
+          max: 1,
+        })
+        render(<NumberInput {...props} />)
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const input = screen.getByTestId(
+          "stNumberInputField"
+        ) as HTMLInputElement
+        const stepUpButton = screen.getByTestId("stNumberInputStepUp")
+
+        // Click increment twice: 0.1 + 0.01 + 0.01 = 0.12
+        await user.click(stepUpButton)
+        await user.click(stepUpButton)
+
+        // Should be exactly 0.12, not 0.11999999999999998
+        expect(input).toHaveValue(0.12)
+        expect(input.value).toBe("0.12")
+      })
+
+      it("handles precise decimal arithmetic with arrow keys", async () => {
+        const user = userEvent.setup()
+        const props = getFloatProps({
+          default: 0.1,
+          step: 0.01,
+          min: 0,
+          max: 1,
+        })
+        render(<NumberInput {...props} />)
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const input = screen.getByTestId(
+          "stNumberInputField"
+        ) as HTMLInputElement
+        // Use arrow up twice: 0.1 + 0.01 + 0.01 = 0.12
+        await user.type(input, "{arrowup}{arrowup}")
+
+        // Should be exactly 0.12, not 0.11999999999999998
+        expect(input).toHaveValue(0.12)
+        expect(input.value).toBe("0.12")
+      })
+
+      it("handles precise decimal subtraction to avoid floating point errors", async () => {
+        const user = userEvent.setup()
+        const props = getFloatProps({
+          default: 0.3,
+          step: 0.1,
+          min: 0,
+          max: 1,
+        })
+        render(<NumberInput {...props} />)
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const input = screen.getByTestId(
+          "stNumberInputField"
+        ) as HTMLInputElement
+        const stepDownButton = screen.getByTestId("stNumberInputStepDown")
+
+        // Click decrement: 0.3 - 0.1 = 0.2
+        await user.click(stepDownButton)
+
+        // Should be exactly 0.2, not 0.19999999999999998
+        expect(input).toHaveValue(0.2)
+        expect(input.value).toBe("0.2")
+      })
+
+      it.each([
+        { step: 0.1, iterations: 3, expected: 0.3 },
+        { step: 0.01, iterations: 5, expected: 0.05 },
+        { step: 0.001, iterations: 7, expected: 0.007 },
+      ])(
+        "maintains precision with step $step over $iterations iterations",
+        async ({ step, iterations, expected }) => {
+          const user = userEvent.setup()
+          const props = getFloatProps({
+            default: 0.0,
+            step,
+            min: 0,
+            max: 1,
+          })
+          render(<NumberInput {...props} />)
+
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+          const input = screen.getByTestId(
+            "stNumberInputField"
+          ) as HTMLInputElement
+          const stepUpButton = screen.getByTestId("stNumberInputStepUp")
+
+          // Click increment multiple times
+          for (let i = 0; i < iterations; i++) {
+            await user.click(stepUpButton)
+          }
+
+          // Should be exactly the expected value
+          expect(input).toHaveValue(expected)
+          expect(Number(input.value)).toBe(expected)
+        }
+      )
+
+      it("handles mixed increment and decrement operations precisely", async () => {
+        const user = userEvent.setup()
+        const props = getFloatProps({
+          default: 0.5,
+          step: 0.01,
+          min: 0,
+          max: 1,
+        })
+        render(<NumberInput {...props} />)
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        const input = screen.getByTestId(
+          "stNumberInputField"
+        ) as HTMLInputElement
+        const stepUpButton = screen.getByTestId("stNumberInputStepUp")
+        const stepDownButton = screen.getByTestId("stNumberInputStepDown")
+
+        // Complex sequence: +0.01, +0.01, -0.01 = 0.5 + 0.01 = 0.51
+        await user.click(stepUpButton) // 0.51
+        await user.click(stepUpButton) // 0.52
+        await user.click(stepDownButton) // 0.51
+
+        expect(input).toHaveValue(0.51)
+        expect(input.value).toBe("0.51")
       })
     })
 
