@@ -46,6 +46,7 @@ from streamlit.elements.lib.streamlit_plotly_theme import (
 )
 from streamlit.elements.lib.utils import Key, compute_and_register_element_id, to_key
 from streamlit.errors import StreamlitAPIException
+from streamlit.logger import get_logger
 from streamlit.proto.PlotlyChart_pb2 import PlotlyChart as PlotlyChartProto
 from streamlit.runtime.metrics_util import gather_metrics
 from streamlit.runtime.scriptrunner_utils.script_run_context import get_script_run_ctx
@@ -81,6 +82,8 @@ FigureOrData: TypeAlias = Union[
 
 SelectionMode: TypeAlias = Literal["lasso", "points", "box"]
 _SELECTION_MODES: Final[set[SelectionMode]] = {"lasso", "points", "box"}
+
+_LOGGER: Final = get_logger(__name__)
 
 
 class PlotlySelectionState(TypedDict, total=False):
@@ -307,7 +310,7 @@ def _resolve_content_width(width: Width, figure: Any) -> Width:
         try:
             figure_width = figure.layout.width
         except (AttributeError, TypeError):
-            pass
+            _LOGGER.debug("Could not parse width from figure")
 
     if (
         figure_width is not None
