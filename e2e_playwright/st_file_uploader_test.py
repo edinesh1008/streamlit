@@ -603,11 +603,11 @@ def test_does_not_call_callback_when_not_changed(app: Page):
     wait_for_app_run(app)
 
     # Make sure callback called
-    expect_text(app, "Uploader counter: 1")
+    expect_text(app, "Rerun counter: 1")
     rerun_app(app)
 
     # Counter should be still equal 1
-    expect_text(app, "Uploader counter: 1")
+    expect_text(app, "Rerun counter: 1")
 
 
 def test_works_inside_form(app: Page):

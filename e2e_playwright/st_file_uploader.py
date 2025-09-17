@@ -124,7 +124,7 @@ st.file_uploader(
     on_change=file_uploader_on_change,
 )
 
-st.text(f"Uploader counter: {st.session_state.counter}")
+st.text(f"Rerun counter: {st.session_state.counter}")
 
 
 @st.fragment
