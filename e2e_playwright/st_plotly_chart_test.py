@@ -42,7 +42,7 @@ def test_plotly_has_consistent_visuals(
         "st_plotly_chart-template_customization",
         "st_plotly_chart-histogram_chart",
     ]
-    expect(themed_app.get_by_test_id("stPlotlyChart")).to_have_count(16)
+    expect(themed_app.get_by_test_id("stPlotlyChart")).to_have_count(18)
     for i, name in enumerate(snapshot_names):
         assert_snapshot(
             themed_app.get_by_test_id("stPlotlyChart").nth(i),
@@ -194,8 +194,22 @@ def test_plotly_with_custom_theme(app: Page, assert_snapshot: ImageCompareFuncti
     wait_for_app_loaded(app)
 
     plotly_elements = app.get_by_test_id("stPlotlyChart")
-    expect(plotly_elements).to_have_count(16)
+    expect(plotly_elements).to_have_count(18)
 
     # Take a snapshot of the single mark chart, shows it applies the first color
     # from chartCategoricalColors (orange):
     assert_snapshot(plotly_elements.nth(6), name="st_plotly_chart-custom-theme")
+
+
+@pytest.mark.skip_browser("firefox")
+def test_plotly_width_parameter(app: Page, assert_snapshot: ImageCompareFunction):
+    """Tests that width parameter works correctly."""
+    plotly_elements = app.get_by_test_id("stPlotlyChart")
+    expect(plotly_elements).to_have_count(18)
+
+    assert_snapshot(plotly_elements.nth(14), name="st_plotly_chart-width_content")
+    assert_snapshot(plotly_elements.nth(15), name="st_plotly_chart-width_stretch")
+    assert_snapshot(plotly_elements.nth(16), name="st_plotly_chart-width_400px")
+    assert_snapshot(
+        plotly_elements.nth(17), name="st_plotly_chart-width_1000px_content"
+    )
