@@ -38,6 +38,7 @@ def configure_custom_theme():
     os.environ["STREAMLIT_THEME_DATAFRAME_HEADER_BACKGROUND_COLOR"] = "#70aec1"
     os.environ["STREAMLIT_THEME_SHOW_WIDGET_BORDER"] = "True"
     os.environ["STREAMLIT_THEME_LINK_COLOR"] = "#2EC163"
+    os.environ["STREAMLIT_THEME_CODE_TEXT_COLOR"] = "#301934"
     os.environ["STREAMLIT_THEME_CODE_FONT_SIZE"] = "15px"
     os.environ["STREAMLIT_THEME_CODE_BACKGROUND_COLOR"] = "#29361e"
     os.environ["STREAMLIT_THEME_SHOW_SIDEBAR_BORDER"] = "True"
@@ -56,6 +57,7 @@ def configure_custom_theme():
     del os.environ["STREAMLIT_THEME_DATAFRAME_HEADER_BACKGROUND_COLOR"]
     del os.environ["STREAMLIT_THEME_SHOW_WIDGET_BORDER"]
     del os.environ["STREAMLIT_THEME_LINK_COLOR"]
+    del os.environ["STREAMLIT_THEME_CODE_TEXT_COLOR"]
     del os.environ["STREAMLIT_THEME_CODE_FONT_SIZE"]
     del os.environ["STREAMLIT_THEME_CODE_BACKGROUND_COLOR"]
     del os.environ["STREAMLIT_THEME_SHOW_SIDEBAR_BORDER"]
