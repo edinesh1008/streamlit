@@ -107,7 +107,6 @@ describe("NumberInput widget", () => {
 
   describe("Focus selection behavior", () => {
     it("calls select() when focused via keyboard (Tab)", async () => {
-      const user = userEvent.setup()
       const props = getFloatProps({ default: 42.5 })
       render(<NumberInput {...props} />)
 
@@ -120,7 +119,7 @@ describe("NumberInput widget", () => {
       const selectSpy = vi.spyOn(input, "select")
 
       // Trigger focus without mouse interaction to simulate keyboard navigation
-      await act(async () => {
+      act(() => {
         input.focus()
       })
 

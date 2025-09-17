@@ -138,6 +138,7 @@ def test_number_input_shows_instructions_when_dirty(
     """Test that st.number_input shows the instructions correctly when dirty."""
     number_input_el = get_number_input(app, "number input 1 (default)")
     input_field = number_input_el.locator("input").first
+    input_field.click()
     input_field.fill("10")
     assert_snapshot(number_input_el, name="st_number_input-input_instructions")
 
