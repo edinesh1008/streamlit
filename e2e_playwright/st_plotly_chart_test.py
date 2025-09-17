@@ -201,7 +201,6 @@ def test_plotly_with_custom_theme(app: Page, assert_snapshot: ImageCompareFuncti
     assert_snapshot(plotly_elements.nth(6), name="st_plotly_chart-custom-theme")
 
 
-@pytest.mark.skip_browser("firefox")
 def test_plotly_width_parameter(app: Page, assert_snapshot: ImageCompareFunction):
     """Tests that width parameter works correctly."""
     plotly_elements = app.get_by_test_id("stPlotlyChart")
