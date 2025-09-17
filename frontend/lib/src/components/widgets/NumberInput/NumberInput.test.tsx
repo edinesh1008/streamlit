@@ -106,7 +106,21 @@ describe("NumberInput widget", () => {
   })
 
   describe("Focus selection behavior", () => {
-    it("calls select() when focused via keyboard (Tab)", async () => {
+    beforeEach(() => {
+      // Mock requestAnimationFrame to make it synchronous for testing
+      vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation(
+        callback => {
+          callback(0)
+          return 0
+        }
+      )
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it("calls select() when focused via keyboard (Tab)", () => {
       const props = getFloatProps({ default: 42.5 })
       render(<NumberInput {...props} />)
 
@@ -121,11 +135,6 @@ describe("NumberInput widget", () => {
       // Trigger focus without mouse interaction to simulate keyboard navigation
       act(() => {
         input.focus()
-      })
-
-      // Wait for React state updates and requestAnimationFrame to complete
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100))
       })
 
       // Verify the select method was called (keyboard focus should select text)
@@ -147,11 +156,6 @@ describe("NumberInput widget", () => {
 
       // Click to focus (this should NOT select all text)
       await user.click(input)
-
-      // Wait for any potential React updates
-      await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100))
-      })
 
       // Verify the select method was NOT called (mouse click should not select text)
       expect(selectSpy).not.toHaveBeenCalled()

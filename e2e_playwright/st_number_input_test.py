@@ -230,7 +230,7 @@ def test_number_input_tab_focus_behavior(
     fifth_number_input_field.click()
     fifth_number_input_field.press("Tab")
 
-    # seventh numebr input has hidden label, so can't use get_by_label
+    # seventh number input has hidden label, so can't use get_by_label
     seventh_number_input_field = app.get_by_test_id("stNumberInput").nth(6)
     assert_snapshot(seventh_number_input_field, name="st_number_input-tab_focus")
 
