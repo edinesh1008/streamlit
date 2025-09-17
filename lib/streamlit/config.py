@@ -1790,6 +1790,85 @@ def _update_config_with_toml(raw_toml: str, where_defined: str) -> None:
         process_section(section, options)
 
 
+def _get_valid_theme_options() -> set[str]:
+    """Get the set of all valid theme configuration options.
+
+    This function automatically extracts valid theme options from the existing
+    config option definitions, ensuring it stays in sync with the actual
+    theme options defined via _create_theme_options() calls.
+
+    Returns
+    -------
+    set[str]
+        Set of valid theme option names (without the "theme." prefix)
+    """
+    valid_options = set()
+
+    # Extract theme options from the config template
+    for option_key in _config_options_template:
+        if option_key.startswith("theme."):
+            # Extract the option name after "theme."
+            parts = option_key.split(".")
+            if len(parts) == 2:
+                # Direct theme option like "theme.primaryColor"
+                _, option_name = parts
+                valid_options.add(option_name)
+            elif len(parts) == 3:
+                # Subsection option like "theme.sidebar.primaryColor"
+                _, subsection, option_name = parts
+                # Add the option name (it's valid in both main theme and subsections)
+                valid_options.add(option_name)
+
+    return valid_options
+
+
+def _validate_theme_file_content(
+    theme_content: dict[str, Any], file_path_or_url: str
+) -> None:
+    """Validate that a theme file contains only valid theme options.
+
+    Parameters
+    ----------
+    theme_content : dict[str, Any]
+        The parsed theme file content
+    file_path_or_url : str
+        The path or URL to the theme file (for error messages)
+
+    Raises
+    ------
+    StreamlitAPIException
+        If the theme file contains invalid options
+    """
+    valid_options = _get_valid_theme_options()
+    valid_subsections = {"sidebar"}
+
+    theme_section = theme_content.get("theme", {})
+
+    # Validate theme section options
+    for option_name in theme_section:
+        if isinstance(theme_section[option_name], dict):
+            # It's a subsection (like sidebar)
+            if option_name not in valid_subsections:
+                raise StreamlitAPIException(
+                    f"Theme file {file_path_or_url} contains invalid theme subsection: '{option_name}'. "
+                    f"Valid subsections are: {sorted(valid_subsections)}"
+                )
+            # Validate options within the subsection
+            for sub_option in theme_section[option_name]:
+                if sub_option not in valid_options:
+                    raise StreamlitAPIException(
+                        f"Theme file {file_path_or_url} contains invalid theme option: "
+                        f"'theme.{option_name}.{sub_option}'. "
+                        f"Valid theme options are: {sorted(valid_options)}"
+                    )
+        # It's a direct theme option
+        elif option_name not in valid_options:
+            raise StreamlitAPIException(
+                f"Theme file {file_path_or_url} contains invalid theme option: 'theme.{option_name}'. "
+                f"Valid theme options are: {sorted(valid_options)}"
+            )
+
+
 def _load_theme_file(file_path_or_url: str) -> dict[str, Any]:
     """Load and parse a theme TOML file from a local path or URL.
 
@@ -1806,7 +1885,9 @@ def _load_theme_file(file_path_or_url: str) -> dict[str, Any]:
     Raises
     ------
     StreamlitAPIException
-        If the file cannot be found, read, or parsed
+        If the file cannot be found, read, parsed, or contains invalid theme options
+    FileNotFoundError
+        If the specified theme file cannot be found
     """
 
     def _raise_missing_toml() -> None:
@@ -1864,10 +1945,14 @@ def _load_theme_file(file_path_or_url: str) -> dict[str, Any]:
         if "theme" not in parsed_theme:
             _raise_missing_theme_section()
 
+        # Validate that the theme file contains only valid theme options
+        _validate_theme_file_content(parsed_theme, file_path_or_url)
+
         return parsed_theme
 
-    except FileNotFoundError as e:
-        raise StreamlitAPIException(f"Theme file not found: {file_path_or_url}") from e
+    except (StreamlitAPIException, FileNotFoundError):
+        # Re-raise these specific exceptions
+        raise
     except urllib.error.URLError as e:
         raise StreamlitAPIException(
             f"Could not load theme file from URL {file_path_or_url}: {e}"
@@ -2027,14 +2112,16 @@ def _process_theme_inheritance() -> None:
                     f"theme file: {base_value}",
                 )
 
-    except Exception:
+    except Exception as e:
         # Import logger locally to prevent circular references
         from streamlit.logger import get_logger
 
         logger: Final = get_logger(__name__)
         logger.exception("Error processing theme inheritance")
-        # Don't raise the exception to prevent breaking the config loading process
-        # Just log the error and continue with the original config
+        # Re-raise the exception to ensure theme file errors are not silent
+        raise StreamlitAPIException(
+            f"Failed to process theme inheritance from {base_value}: {e}"
+        ) from e
 
 
 def _maybe_read_env_variable(value: Any) -> Any:
