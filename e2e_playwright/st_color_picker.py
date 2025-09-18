@@ -86,7 +86,7 @@ if st.toggle("Update color picker props"):
     dyn_val = st.color_picker(
         "Updated dynamic color picker",
         value="#00ff00",
-        width=200,
+        width="stretch",
         help="updated help",
         key="dynamic_color_picker_with_key",
         on_change=lambda a, param: print(
