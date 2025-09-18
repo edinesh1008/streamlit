@@ -23,6 +23,8 @@ import { useHandleJsContent } from "~lib/components/widgets/BidiComponent/hooks/
 import { handleError } from "~lib/components/widgets/BidiComponent/utils/error"
 import { useRequiredContext } from "~lib/hooks/useRequiredContext"
 
+import { StyledBidiComponentWrapper } from "./styled-components"
+
 export const IsolatedComponent: FC = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null)
   const shadowRootRef = useRef<ShadowRoot | null>(null)
@@ -69,5 +71,10 @@ export const IsolatedComponent: FC = memo(() => {
     )
   }
 
-  return <div ref={containerRef} data-testid="stBidiComponent-isolated" />
+  return (
+    <StyledBidiComponentWrapper
+      ref={containerRef}
+      data-testid="stBidiComponent-isolated"
+    />
+  )
 })

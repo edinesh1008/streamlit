@@ -33,3 +33,12 @@ export const StyledThemeCssProvider = styled.div(
     display: "contents",
   })
 )
+
+/**
+ * Used to propagate the width and height of the StyledElementContainer to the
+ * custom component instance.
+ */
+export const StyledBidiComponentWrapper = styled.div({
+  width: "100%",
+  height: "100%",
+})

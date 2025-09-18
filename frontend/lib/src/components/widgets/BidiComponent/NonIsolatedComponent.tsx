@@ -20,6 +20,8 @@ import ErrorElement from "~lib/components/shared/ErrorElement"
 import { useHandleHtmlAndCssContent } from "~lib/components/widgets/BidiComponent/hooks/useHandleHtmlAndCssContent"
 import { useHandleJsContent } from "~lib/components/widgets/BidiComponent/hooks/useHandleJsContent"
 
+import { StyledBidiComponentWrapper } from "./styled-components"
+
 export const NonIsolatedComponent: FC = memo(() => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<Error | null>(null)
@@ -39,5 +41,10 @@ export const NonIsolatedComponent: FC = memo(() => {
     )
   }
 
-  return <div ref={containerRef} data-testid="stBidiComponent-regular" />
+  return (
+    <StyledBidiComponentWrapper
+      ref={containerRef}
+      data-testid="stBidiComponent-regular"
+    />
+  )
 })
