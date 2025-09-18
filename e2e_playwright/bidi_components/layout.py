@@ -134,6 +134,8 @@ box(key="box_basic", width=width, height=height, show_text=True, text=basic_text
 
 
 # Container demos
+st.divider()
+
 st.subheader("2) Content-driven height")
 st.caption(
     "Toggle inner content to observe how height='content' adapts. With no content, "
@@ -192,6 +194,8 @@ box(
     show_text=cd_show_text,
     text=cd_text,
 )
+st.divider()
+
 st.subheader("3) Containers and flex properties")
 st.caption(
     "Place multiple components alongside other elements and adjust container flex "
@@ -278,6 +282,8 @@ with st.container(
 
     st.caption("Other content after boxes (inside container)")
 
+
+st.divider()
 
 st.subheader("4) Columns grid demo")
 st.caption(
