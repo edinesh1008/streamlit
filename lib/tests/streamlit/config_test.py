@@ -1991,3 +1991,367 @@ class ThemeInheritanceIntegrationTest(unittest.TestCase):
                     assert config.get_option("theme.sidebar.textColor") == "#dddddd"
         finally:
             os.unlink(theme_file)
+
+    def test_theme_inheritance_with_base_env_var(self):
+        """Test theme inheritance when theme.base is passed via environment variable (simulated as Click would do)."""
+        theme_content = """
+        [theme]
+        base = "dark"
+        primaryColor = "#00ff00"
+        backgroundColor = "#000000"
+        textColor = "#ffffff"
+        """
+
+        theme_file = self._create_theme_file(theme_content)
+
+        try:
+            # Simulate what Click does: environment variables become flag options
+            options_from_flags = {"theme.base": theme_file}
+
+            with patch("streamlit.config.os.path.exists") as mock_exists:
+                mock_exists.side_effect = lambda path: path == theme_file
+
+                config.get_config_options(
+                    force_reparse=True, options_from_flags=options_from_flags
+                )
+
+                # Verify that theme inheritance worked with env var (via Click)
+                assert config.get_option("theme.base") == "dark"
+                assert config.get_option("theme.primaryColor") == "#00ff00"
+                assert config.get_option("theme.backgroundColor") == "#000000"
+                assert "theme file:" in config.get_where_defined("theme.primaryColor")
+
+        finally:
+            os.unlink(theme_file)
+
+    def test_theme_inheritance_with_base_command_flag(self):
+        """Test theme inheritance when theme.base is passed via command line flag."""
+        theme_content = """
+        [theme]
+        base = "light"
+        primaryColor = "#ff0000"
+        backgroundColor = "#ffffff"
+        font = "serif"
+        """
+
+        theme_file = self._create_theme_file(theme_content)
+
+        try:
+            # Simulate command line flag - theme.base gets processed, then inheritance loads the theme
+            options_from_flags = {
+                "theme.base": theme_file,
+            }
+
+            with patch("streamlit.config.os.path.exists") as mock_exists:
+                mock_exists.side_effect = lambda path: path == theme_file
+
+                config.get_config_options(
+                    force_reparse=True, options_from_flags=options_from_flags
+                )
+
+                # Theme file values are loaded via inheritance
+                assert config.get_option("theme.base") == "light"  # From theme file
+                assert (
+                    config.get_option("theme.primaryColor") == "#ff0000"
+                )  # From theme file
+                assert (
+                    config.get_option("theme.backgroundColor") == "#ffffff"
+                )  # From theme file
+                assert config.get_option("theme.font") == "serif"  # From theme file
+                assert "theme file:" in config.get_where_defined("theme.primaryColor")
+
+        finally:
+            os.unlink(theme_file)
+
+    def test_theme_inheritance_timing_with_flags(self):
+        """Test that theme inheritance happens after flag processing (correct timing)."""
+        theme_content = """
+        [theme]
+        base = "dark"
+        primaryColor = "#0066cc"
+        backgroundColor = "#000000"
+        textColor = "#cccccc"
+        """
+
+        theme_file = self._create_theme_file(theme_content)
+
+        try:
+            # Test correct timing: flags set theme.base, then inheritance processes it
+            options_from_flags = {
+                "theme.base": theme_file,
+            }
+
+            with patch("streamlit.config.os.path.exists") as mock_exists:
+                mock_exists.side_effect = lambda path: path == theme_file
+
+                config.get_config_options(
+                    force_reparse=True, options_from_flags=options_from_flags
+                )
+
+                # Verify theme inheritance worked (flag set theme.base, inheritance loaded theme)
+                assert config.get_option("theme.base") == "dark"  # From theme file
+                assert (
+                    config.get_option("theme.primaryColor") == "#0066cc"
+                )  # From theme file
+                assert (
+                    config.get_option("theme.backgroundColor") == "#000000"
+                )  # From theme file
+                assert (
+                    config.get_option("theme.textColor") == "#cccccc"
+                )  # From theme file
+
+                # All theme options should show they came from theme file
+                assert "theme file:" in config.get_where_defined("theme.primaryColor")
+                assert "theme file:" in config.get_where_defined("theme.textColor")
+                assert "theme file:" in config.get_where_defined(
+                    "theme.backgroundColor"
+                )
+
+        finally:
+            os.unlink(theme_file)
+
+    def test_theme_inheritance_complex_precedence(self):
+        """Test complex precedence scenarios with multiple sources and overrides."""
+        # Create a base theme file
+        base_theme_content = """
+        [theme]
+        base = "dark"
+        primaryColor = "#ff0000"
+        backgroundColor = "#000000"
+        textColor = "#ffffff"
+        font = "serif"
+        borderColor = "#333333"
+
+        [theme.sidebar]
+        primaryColor = "#ff4444"
+        backgroundColor = "#111111"
+        """
+
+        base_theme_file = self._create_theme_file(base_theme_content, "base_theme.toml")
+
+        try:
+            # Config file references the base theme but overrides some values
+            config_toml = f"""
+            [theme]
+            base = "{base_theme_file}"
+            primaryColor = "#00ff00"
+            # backgroundColor should come from base theme
+            textColor = "#cccccc"
+
+            [theme.sidebar]
+            backgroundColor = "#222222"
+            # primaryColor should come from base theme
+            """
+
+            with patch("streamlit.config.open", mock_open(read_data=config_toml)):
+                with patch("streamlit.config.os.path.exists") as mock_exists:
+                    mock_exists.side_effect = (
+                        lambda path: path == base_theme_file
+                        or path == os.path.join(os.getcwd(), ".streamlit/config.toml")
+                    )
+
+                    config.get_config_options(force_reparse=True)
+
+                    # Verify complex precedence: theme file < config overrides
+                    assert config.get_option("theme.base") == "dark"  # From base theme
+                    assert (
+                        config.get_option("theme.primaryColor") == "#00ff00"
+                    )  # Config overrides base
+                    assert (
+                        config.get_option("theme.backgroundColor") == "#000000"
+                    )  # From base theme (no override)
+                    assert (
+                        config.get_option("theme.textColor") == "#cccccc"
+                    )  # Config overrides base
+                    assert (
+                        config.get_option("theme.font") == "serif"
+                    )  # From base theme (no config override)
+                    assert (
+                        config.get_option("theme.borderColor") == "#333333"
+                    )  # From base theme (no override)
+
+                    # Sidebar precedence
+                    assert (
+                        config.get_option("theme.sidebar.primaryColor") == "#ff4444"
+                    )  # From base theme (no config override)
+                    assert (
+                        config.get_option("theme.sidebar.backgroundColor") == "#222222"
+                    )  # Config override
+
+                    # Verify where_defined is correct
+                    assert "theme file:" in config.get_where_defined(
+                        "theme.backgroundColor"
+                    )
+                    assert "theme file:" in config.get_where_defined("theme.textColor")
+
+        finally:
+            os.unlink(base_theme_file)
+
+    def test_theme_inheritance_production_pattern(self):
+        """Test a production-like pattern with environment-specific themes."""
+        # Corporate base theme
+        corporate_theme_content = """
+        [theme]
+        base = "light"
+        primaryColor = "#0066cc"
+        backgroundColor = "#ffffff"
+        textColor = "#333333"
+        font = "Inter"
+        borderColor = "#e0e0e0"
+
+        [theme.sidebar]
+        backgroundColor = "#f8f9fa"
+        primaryColor = "#0066cc"
+        """
+
+        corporate_theme_file = self._create_theme_file(
+            corporate_theme_content, "corporate.toml"
+        )
+
+        try:
+            # Application config references corporate theme
+            config_toml = f"""
+            [theme]
+            base = "{corporate_theme_file}"
+            # App-specific overrides
+            primaryColor = "#ff0000"
+            """
+
+            # Environment-specific overrides (simulating STREAMLIT_THEME_TEXT_COLOR)
+            options_from_flags = {
+                "theme.textColor": "#666666",  # Environment override
+                "theme.sidebar.backgroundColor": "#f0f0f0",  # Environment override
+            }
+
+            with patch("streamlit.config.open", mock_open(read_data=config_toml)):
+                with patch("streamlit.config.os.path.exists") as mock_exists:
+                    mock_exists.side_effect = (
+                        lambda path: path == corporate_theme_file
+                        or path == os.path.join(os.getcwd(), ".streamlit/config.toml")
+                    )
+
+                    config.get_config_options(
+                        force_reparse=True, options_from_flags=options_from_flags
+                    )
+
+                    # Verify production-like inheritance
+                    assert (
+                        config.get_option("theme.base") == "light"
+                    )  # From corporate theme
+                    assert (
+                        config.get_option("theme.primaryColor") == "#ff0000"
+                    )  # App override
+                    assert (
+                        config.get_option("theme.backgroundColor") == "#ffffff"
+                    )  # From corporate theme
+                    assert (
+                        config.get_option("theme.textColor") == "#666666"
+                    )  # Environment override
+                    assert (
+                        config.get_option("theme.font") == "Inter"
+                    )  # From corporate theme
+                    assert (
+                        config.get_option("theme.borderColor") == "#e0e0e0"
+                    )  # From corporate theme
+
+                    # Sidebar inheritance
+                    assert (
+                        config.get_option("theme.sidebar.backgroundColor") == "#f0f0f0"
+                    )  # Environment override
+                    assert (
+                        config.get_option("theme.sidebar.primaryColor") == "#0066cc"
+                    )  # From corporate theme
+
+        finally:
+            os.unlink(corporate_theme_file)
+
+    def test_theme_inheritance_malformed_scenarios(self):
+        """Test various malformed theme file scenarios."""
+        # Test: Theme file with invalid TOML syntax
+        malformed_theme_content = """
+        [theme
+        primaryColor = "#ff0000"
+        """
+
+        malformed_theme_file = self._create_theme_file(
+            malformed_theme_content, "malformed.toml"
+        )
+
+        try:
+            config_toml = f"""
+            [theme]
+            base = "{malformed_theme_file}"
+            """
+
+            with patch("streamlit.config.open", mock_open(read_data=config_toml)):
+                with patch("streamlit.config.os.path.exists") as mock_exists:
+                    mock_exists.side_effect = (
+                        lambda path: path == malformed_theme_file
+                        or path == os.path.join(os.getcwd(), ".streamlit/config.toml")
+                    )
+
+                    with pytest.raises(StreamlitAPIException) as cm:
+                        config.get_config_options()
+
+                    assert "Error loading theme file" in str(cm.value)
+
+        finally:
+            os.unlink(malformed_theme_file)
+
+    def test_theme_inheritance_empty_theme_file(self):
+        """Test theme file that is completely empty."""
+        empty_theme_file = self._create_theme_file("", "empty.toml")
+
+        try:
+            config_toml = f"""
+            [theme]
+            base = "{empty_theme_file}"
+            primaryColor = "#ff0000"
+            """
+
+            with patch("streamlit.config.open", mock_open(read_data=config_toml)):
+                with patch("streamlit.config.os.path.exists") as mock_exists:
+                    mock_exists.side_effect = (
+                        lambda path: path == empty_theme_file
+                        or path == os.path.join(os.getcwd(), ".streamlit/config.toml")
+                    )
+
+                    with pytest.raises(StreamlitAPIException) as cm:
+                        config.get_config_options()
+
+                    assert "must contain a [theme] section" in str(cm.value)
+
+        finally:
+            os.unlink(empty_theme_file)
+
+    def test_theme_inheritance_circular_reference_prevention(self):
+        """Test that circular references between theme files are prevented."""
+        # Theme A references another theme file (which would be circular)
+        theme_a_content = """
+        [theme]
+        base = "theme_b.toml"
+        primaryColor = "#ff0000"
+        """
+
+        theme_a_file = self._create_theme_file(theme_a_content, "theme_a.toml")
+
+        try:
+            config_toml = f"""
+            [theme]
+            base = "{theme_a_file}"
+            """
+
+            with patch("streamlit.config.open", mock_open(read_data=config_toml)):
+                with patch("streamlit.config.os.path.exists") as mock_exists:
+                    mock_exists.side_effect = (
+                        lambda path: path == theme_a_file
+                        or path == os.path.join(os.getcwd(), ".streamlit/config.toml")
+                    )
+
+                    with pytest.raises(StreamlitAPIException) as cm:
+                        config.get_config_options()
+
+                    assert "cannot reference another theme file" in str(cm.value)
+
+        finally:
+            os.unlink(theme_a_file)

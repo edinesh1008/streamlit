@@ -688,3 +688,208 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
 
         # Primary color should be the merged result (config override wins)
         assert set_calls_dict.get("theme.primaryColor") == "#override"
+
+    def test_validate_color_value_valid_colors(self):
+        """Test validate_color_value with various valid color formats."""
+        # Valid hex colors
+        assert (
+            config_util.validate_color_value("#ffffff", "theme.primaryColor")
+            == "#ffffff"
+        )
+        assert config_util.validate_color_value("#000", "theme.primaryColor") == "#000"
+        assert (
+            config_util.validate_color_value("#FF0000", "theme.primaryColor")
+            == "#FF0000"
+        )
+        assert (
+            config_util.validate_color_value("  #ff0000  ", "theme.primaryColor")
+            == "#ff0000"
+        )
+
+    def test_validate_color_value_invalid_colors(self):
+        """Test validate_color_value with invalid color formats."""
+        with pytest.raises(StreamlitAPIException) as cm:
+            config_util.validate_color_value("#invalid", "theme.primaryColor")
+        assert "invalid hex color format" in str(cm.value)
+
+        with pytest.raises(StreamlitAPIException) as cm:
+            config_util.validate_color_value("#ff", "theme.primaryColor")
+        assert "invalid hex color format" in str(cm.value)
+
+        # Empty string should raise error
+        with pytest.raises(StreamlitAPIException) as cm:
+            config_util.validate_color_value("", "theme.primaryColor")
+        assert "cannot be empty" in str(cm.value)
+
+        # Non-string value should raise error
+        with pytest.raises(StreamlitAPIException) as cm:
+            config_util.validate_color_value(123, "theme.primaryColor")
+        assert "must be a string" in str(cm.value)
+
+    def test_validate_theme_value_type_valid_types(self):
+        """Test validate_theme_value_type with valid data types."""
+        # String values
+        assert (
+            config_util.validate_theme_value_type("serif", "theme.font", str) == "serif"
+        )
+        assert (
+            config_util.validate_theme_value_type("12px", "theme.codeFontSize", str)
+            == "12px"
+        )
+
+        # Integer values
+        assert (
+            config_util.validate_theme_value_type(400, "theme.codeFontWeight", int)
+            == 400
+        )
+        assert (
+            config_util.validate_theme_value_type(14, "theme.baseFontSize", int) == 14
+        )
+
+        # Boolean values
+        assert (
+            config_util.validate_theme_value_type(True, "theme.showWidgetBorder", bool)
+            is True
+        )
+        assert (
+            config_util.validate_theme_value_type(False, "theme.linkUnderline", bool)
+            is False
+        )
+
+    def test_validate_theme_value_type_invalid_types(self):
+        """Test validate_theme_value_type with invalid data types."""
+        with pytest.raises(StreamlitAPIException) as cm:
+            config_util.validate_theme_value_type(123, "theme.font", str)
+        assert "must be str" in str(cm.value)
+
+        with pytest.raises(StreamlitAPIException) as cm:
+            config_util.validate_theme_value_type(
+                "invalid", "theme.codeFontWeight", int
+            )
+        assert "must be int" in str(cm.value)
+
+        with pytest.raises(StreamlitAPIException) as cm:
+            config_util.validate_theme_value_type(
+                "invalid", "theme.showWidgetBorder", bool
+            )
+        assert "must be bool" in str(cm.value)
+
+    def test_iter_theme_config_options(self):
+        """Test iter_theme_config_options extracts theme options correctly."""
+        mock_config_options = {
+            "theme.primaryColor": ConfigOption(
+                "theme.primaryColor", description="", default_val="#ff0000"
+            ),
+            "theme.backgroundColor": ConfigOption(
+                "theme.backgroundColor", description="", default_val=None
+            ),  # Should be excluded
+            "server.port": ConfigOption(
+                "server.port", description="", default_val=8501
+            ),  # Should be excluded
+            "theme.font": ConfigOption(
+                "theme.font", description="", default_val="serif"
+            ),
+            "theme.sidebar.primaryColor": ConfigOption(
+                "theme.sidebar.primaryColor", description="", default_val="#00ff00"
+            ),
+        }
+
+        # Set values for some options
+        mock_config_options["theme.primaryColor"].set_value("#ff0000", "test")
+        mock_config_options["theme.font"].set_value("serif", "test")
+        mock_config_options["theme.sidebar.primaryColor"].set_value("#00ff00", "test")
+
+        result = list(config_util.iter_theme_config_options(mock_config_options))
+
+        # Should only include theme options with non-None values (returns full key names)
+        expected_keys = {
+            "theme.primaryColor",
+            "theme.font",
+            "theme.sidebar.primaryColor",
+        }
+        actual_keys = {key for key, value in result}
+
+        assert actual_keys == expected_keys
+
+        # Check values
+        result_dict = dict(result)
+        assert result_dict["theme.primaryColor"] == "#ff0000"
+        assert result_dict["theme.font"] == "serif"
+        assert result_dict["theme.sidebar.primaryColor"] == "#00ff00"
+
+    def test_convert_dot_notation_to_nested(self):
+        """Test convert_dot_notation_to_nested converts flat structure to nested."""
+        flat_options = {
+            "primaryColor": "#ff0000",
+            "backgroundColor": "#000000",
+            "sidebar.primaryColor": "#00ff00",
+            "sidebar.backgroundColor": "#111111",
+            "font": "serif",
+        }
+
+        result = config_util.convert_dot_notation_to_nested(flat_options)
+
+        expected = {
+            "primaryColor": "#ff0000",
+            "backgroundColor": "#000000",
+            "font": "serif",
+            "sidebar": {"primaryColor": "#00ff00", "backgroundColor": "#111111"},
+        }
+
+        assert result == expected
+
+    def test_convert_dot_notation_to_nested_empty(self):
+        """Test convert_dot_notation_to_nested with empty input."""
+        result = config_util.convert_dot_notation_to_nested({})
+        assert result == {}
+
+    def test_extract_current_theme_config(self):
+        """Test extract_current_theme_config extracts theme config correctly."""
+        mock_config_options = {
+            "theme.primaryColor": ConfigOption(
+                "theme.primaryColor", description="", default_val=None
+            ),
+            "theme.backgroundColor": ConfigOption(
+                "theme.backgroundColor", description="", default_val=None
+            ),
+            "theme.sidebar.primaryColor": ConfigOption(
+                "theme.sidebar.primaryColor", description="", default_val=None
+            ),
+            "server.port": ConfigOption(
+                "server.port", description="", default_val=8501
+            ),  # Should be excluded
+        }
+
+        # Set values for theme options
+        mock_config_options["theme.primaryColor"].set_value("#ff0000", "test")
+        mock_config_options["theme.backgroundColor"].set_value("#000000", "test")
+        mock_config_options["theme.sidebar.primaryColor"].set_value("#00ff00", "test")
+        mock_config_options["server.port"].set_value(9000, "test")  # Non-theme option
+
+        result = config_util.extract_current_theme_config(mock_config_options)
+
+        expected = {
+            "primaryColor": "#ff0000",
+            "backgroundColor": "#000000",
+            "sidebar": {"primaryColor": "#00ff00"},
+        }
+
+        assert result == expected
+
+    def test_extract_current_theme_config_no_theme_options(self):
+        """Test extract_current_theme_config with no theme options set."""
+        mock_config_options = {
+            "server.port": ConfigOption(
+                "server.port", description="", default_val=8501
+            ),
+            "theme.primaryColor": ConfigOption(
+                "theme.primaryColor", description="", default_val=None
+            ),  # None value
+        }
+
+        mock_config_options["server.port"].set_value(9000, "test")
+        # Don't set theme.primaryColor value (should remain None)
+
+        result = config_util.extract_current_theme_config(mock_config_options)
+
+        assert result == {}

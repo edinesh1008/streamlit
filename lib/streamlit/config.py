@@ -2268,15 +2268,17 @@ def get_config_options(
 
             _update_config_with_toml(file_contents, filename)
 
-        # Handle theme inheritance if theme.base points to a file
-        config_util.process_theme_inheritance(
-            _config_options, _config_options_template, _set_option
-        )
-
         _update_config_with_sensitive_env_var(_config_options)
 
         for opt_name, opt_val in options_from_flags.items():
             _set_option(opt_name, opt_val, _DEFINED_BY_FLAG)
+
+        # Handle theme inheritance if theme.base points to a file
+        # This happens AFTER all config sources (files, env vars, flags) are processed
+        # so theme.base can be set via any of those
+        config_util.process_theme_inheritance(
+            _config_options, _config_options_template, _set_option
+        )
 
         if old_options and config_util.server_option_changed(
             old_options, _config_options

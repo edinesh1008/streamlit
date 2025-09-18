@@ -17,6 +17,7 @@ from __future__ import annotations
 import copy
 import os
 import re
+import urllib.error
 import urllib.request
 from typing import TYPE_CHECKING, Any, Final
 
