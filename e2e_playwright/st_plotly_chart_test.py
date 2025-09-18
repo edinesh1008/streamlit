@@ -41,6 +41,7 @@ def test_plotly_has_consistent_visuals(
         "st_plotly_chart-layout_customization",
         "st_plotly_chart-template_customization",
         "st_plotly_chart-histogram_chart",
+        "st_plotly_chart-line_chart_specific_height_width",
     ]
     expect(themed_app.get_by_test_id("stPlotlyChart")).to_have_count(18)
     for i, name in enumerate(snapshot_names):
@@ -190,9 +191,6 @@ def test_plotly_dimensions(app: Page, assert_snapshot: ImageCompareFunction):
     plotly_elements = app.get_by_test_id("stPlotlyChart")
     expect(plotly_elements).to_have_count(18)
 
-    assert_snapshot(
-        plotly_elements.nth(13), name="st_plotly_chart-line_chart_specific_height_width"
-    )
     assert_snapshot(plotly_elements.nth(14), name="st_plotly_chart-width_content")
     assert_snapshot(plotly_elements.nth(15), name="st_plotly_chart-width_stretch")
     assert_snapshot(plotly_elements.nth(16), name="st_plotly_chart-width_400px")
