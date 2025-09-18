@@ -18,7 +18,10 @@ import copy
 import os
 import re
 import urllib.request
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 from streamlit import cli_util, url_util
 from streamlit.config_option import ConfigOption
@@ -172,6 +175,165 @@ def show_config(
 # Theme inheritance utility functions
 
 
+def iter_theme_config_options(
+    config_options: dict[str, ConfigOption],
+) -> Iterator[tuple[str, Any]]:
+    """Iterate through theme config options, yielding (option_path, value) pairs.
+
+    Parameters
+    ----------
+    config_options : dict[str, ConfigOption]
+        The config options dictionary
+
+    Yields
+    ------
+    tuple[str, Any]
+        (option_path, value) pairs for theme options with non-None values
+    """
+    for opt_name, opt_val in config_options.items():
+        if opt_name.startswith("theme.") and opt_val.value is not None:
+            yield opt_name, opt_val.value
+
+
+def convert_dot_notation_to_nested(options: dict[str, Any]) -> dict[str, Any]:
+    """Convert dot notation keys to nested dictionary structure.
+
+    Parameters
+    ----------
+    options : dict[str, Any]
+        Dictionary with dot-notation keys (e.g., 'theme.sidebar.primaryColor')
+
+    Returns
+    -------
+    dict[str, Any]
+        Nested dictionary structure
+
+    Example
+    -------
+    >>> convert_dot_notation_to_nested(
+    ...     {
+    ...         "theme.primaryColor": "#ff0000",
+    ...         "theme.sidebar.backgroundColor": "#000000",
+    ...     }
+    ... )
+    {'theme': {'primaryColor': '#ff0000', 'sidebar': {'backgroundColor': '#000000'}}}
+    """
+    result: dict[str, Any] = {}
+    for key, value in options.items():
+        parts = key.split(".")
+        current = result
+        for part in parts[:-1]:
+            if part not in current:
+                current[part] = {}
+            current = current[part]
+        current[parts[-1]] = value
+    return result
+
+
+def extract_current_theme_config(
+    config_options: dict[str, ConfigOption],
+) -> dict[str, Any]:
+    """Extract current theme configuration from config options.
+
+    Parameters
+    ----------
+    config_options : dict[str, ConfigOption]
+        The current config options
+
+    Returns
+    -------
+    dict[str, Any]
+        Current theme options in nested dictionary format
+    """
+    current_theme_options = {}
+
+    for opt_name, opt_value in iter_theme_config_options(config_options):
+        parts = opt_name.split(".")
+        if len(parts) == 2:  # theme.option
+            _, option = parts
+            if option != "base":  # Don't include the base option itself
+                current_theme_options[option] = opt_value
+        elif len(parts) == 3:  # theme.sidebar.option
+            _, section, option = parts
+            if section not in current_theme_options:
+                current_theme_options[section] = {}
+            current_theme_options[section][option] = opt_value
+
+    return current_theme_options
+
+
+def validate_color_value(value: Any, option_name: str) -> str:
+    """Validate that a theme color value is a valid color string.
+
+    Parameters
+    ----------
+    value : Any
+        The value to validate
+    option_name : str
+        Name of the option for error context
+
+    Returns
+    -------
+    str
+        The validated color value
+
+    Raises
+    ------
+    StreamlitAPIException
+        If the value is not a valid color string
+    """
+    if not isinstance(value, str):
+        raise StreamlitAPIException(
+            f"Theme option '{option_name}' must be a string, got {type(value).__name__}: {value}"
+        )
+
+    # Basic validation for color format
+    value = (
+        value.strip()
+    )  # This returns str since value is already validated as str above
+
+    # Check for hex colors
+    if value.startswith("#"):
+        if not re.match(r"^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$", value):
+            raise StreamlitAPIException(
+                f"Theme option '{option_name}' has invalid hex color format: {value}"
+            )
+    elif not value:
+        raise StreamlitAPIException(f"Theme option '{option_name}' cannot be empty")
+
+    return value
+
+
+def validate_theme_value_type(value: Any, option_name: str, expected_type: type) -> Any:
+    """Validate theme value has correct data type.
+
+    Parameters
+    ----------
+    value : Any
+        The value to validate
+    option_name : str
+        Name of the option for error context
+    expected_type : type
+        Expected type for the value
+
+    Returns
+    -------
+    Any
+        The validated value
+
+    Raises
+    ------
+    StreamlitAPIException
+        If the value doesn't match the expected type
+    """
+    if not isinstance(value, expected_type):
+        raise StreamlitAPIException(
+            f"Theme option '{option_name}' must be {expected_type.__name__}, "
+            f"got {type(value).__name__}: {value}"
+        )
+    return value
+
+
 def get_valid_theme_options(
     config_options_template: dict[str, ConfigOption],
 ) -> set[str]:
@@ -238,8 +400,8 @@ def validate_theme_file_content(
     theme_section = theme_content.get("theme", {})
 
     # Validate theme section options
-    for option_name in theme_section:
-        if isinstance(theme_section[option_name], dict):
+    for option_name, option_value in theme_section.items():
+        if isinstance(option_value, dict):
             # It's a subsection (like sidebar)
             if option_name not in valid_subsections:
                 raise StreamlitAPIException(
@@ -247,19 +409,47 @@ def validate_theme_file_content(
                     f"Valid subsections are: {sorted(valid_subsections)}"
                 )
             # Validate options within the subsection
-            for sub_option in theme_section[option_name]:
+            for sub_option, sub_value in option_value.items():
                 if sub_option not in valid_options:
                     raise StreamlitAPIException(
                         f"Theme file {file_path_or_url} contains invalid theme option: "
                         f"'theme.{option_name}.{sub_option}'. "
                         f"Valid theme options are: {sorted(valid_options)}"
                     )
-        # It's a direct theme option
-        elif option_name not in valid_options:
-            raise StreamlitAPIException(
-                f"Theme file {file_path_or_url} contains invalid theme option: 'theme.{option_name}'. "
-                f"Valid theme options are: {sorted(valid_options)}"
-            )
+                # Validate data types for subsection options
+                _validate_option_data_type(
+                    sub_value, f"theme.{option_name}.{sub_option}"
+                )
+        else:
+            # It's a direct theme option
+            if option_name not in valid_options:
+                raise StreamlitAPIException(
+                    f"Theme file {file_path_or_url} contains invalid theme option: 'theme.{option_name}'. "
+                    f"Valid theme options are: {sorted(valid_options)}"
+                )
+            # Validate data types for direct theme options
+            _validate_option_data_type(option_value, f"theme.{option_name}")
+
+
+def _validate_option_data_type(value: Any, option_name: str) -> None:
+    """Validate data type for a theme option value.
+
+    Parameters
+    ----------
+    value : Any
+        The option value to validate
+    option_name : str
+        The full option name for error context (e.g., 'theme.primaryColor')
+    """
+    # Validate color options
+    if "color" in option_name.lower() or "Color" in option_name:
+        # Skip validation for 'base' option which can be "light"/"dark" or file path
+        if not option_name.endswith(".base"):
+            validate_color_value(value, option_name)
+
+    # Validate font options
+    elif any(font_option in option_name for font_option in ["font", "Font"]):
+        validate_theme_value_type(value, option_name, str)
 
 
 def load_theme_file(
@@ -448,21 +638,9 @@ def process_theme_inheritance(
             _raise_invalid_nested_base()
 
         # Get current theme options from config.toml
-        current_theme_options = {}
-        if config_options is not None:
-            for opt_name, opt_val in config_options.items():
-                if opt_name.startswith("theme.") and opt_val.value is not None:
-                    # Convert dot notation back to nested dict
-                    parts = opt_name.split(".")
-                    if len(parts) == 2:  # theme.option
-                        _, option = parts
-                        if option != "base":  # Don't include the base option itself
-                            current_theme_options[option] = opt_val.value
-                    elif len(parts) == 3:  # theme.sidebar.option
-                        _, section, option = parts
-                        if section not in current_theme_options:
-                            current_theme_options[section] = {}
-                        current_theme_options[section][option] = opt_val.value
+        current_theme_options = (
+            extract_current_theme_config(config_options) if config_options else {}
+        )
 
         # Apply inheritance: theme file as base, config.toml as overrides
         merged_theme = apply_theme_inheritance(
