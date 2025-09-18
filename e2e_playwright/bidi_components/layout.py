@@ -44,7 +44,7 @@ def box(
             }
 
             // Toggle a content node to affect content-based sizing
-            const shouldShow = !!(data && data.showText)
+            const shouldShow = !!data?.showText
             let content = box.querySelector('.content')
             if (shouldShow) {
               if (!content) {
@@ -307,3 +307,63 @@ with col_c:
         show_text=True,
         text="C has more text to showcase content height",
     )
+
+st.divider()
+
+st.subheader("5) Edge cases")
+explanation = {
+    "No content + width=content": (
+        "width=content, height=content, no inner content. Intrinsic size is ~0; "
+        "use stretch or px when you need fill."
+    ),
+    "Unbreakable long word": (
+        "A single unbreakable word increases intrinsic width; with width=content, the container "
+        "may grow. Use wrapping strategies if needed."
+    ),
+    "Fixed height overflow": (
+        "Fixed pixel height with more content than space. Container scrolls."
+    ),
+    "Stretch in fixed-height parent": (
+        "Child set to height=stretch inside a fixed-height container expands to available space."
+    ),
+}
+
+case = st.selectbox("Choose an edge case", list(explanation.keys()))
+st.caption(explanation[case])
+
+if case == "No content + width=content":
+    box(
+        key="edge_no_content",
+        width="content",
+        height="content",
+        show_text=False,
+        text="",
+    )
+elif case == "Unbreakable long word":
+    long_word = "A" * 120
+    box(
+        key="edge_long_word",
+        width="content",
+        height="content",
+        show_text=True,
+        text=long_word,
+    )
+elif case == "Fixed height overflow":
+    overflow_text = "Many lines of text to demonstrate vertical overflow.\n" * 10
+    box(
+        key="edge_fixed_h",
+        width=260,
+        height=120,
+        show_text=True,
+        text=overflow_text,
+    )
+elif case == "Stretch in fixed-height parent":
+    with st.container(height=200, border=True):
+        st.caption("Parent container is 200px tall; child is height=stretch")
+        box(
+            key="edge_stretch_parent",
+            width="stretch",
+            height="stretch",
+            show_text=True,
+            text="Child stretches to fill parent height.",
+        )
