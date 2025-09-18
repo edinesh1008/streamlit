@@ -1700,7 +1700,7 @@ describe("createEmotionTheme", () => {
     expect(theme.colors.codeTextColor).toBe("#ff0000") // Should use explicit codeTextColor
   })
 
-  it("handles invalid codeTextColor by logging warning and falling back to defaultgreenTextColor", () => {
+  it("handles invalid codeTextColor by logging warning and falling back to default greenTextColor", () => {
     const logWarningSpy = vi.spyOn(LOG, "warn")
     const themeInput: Partial<ICustomThemeConfig> = {
       codeTextColor: "invalid-color",
