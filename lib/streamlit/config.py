@@ -1157,9 +1157,15 @@ _create_theme_options(
     "base",
     categories=["theme"],
     description="""
-        The preset Streamlit theme that your custom theme inherits from.
+        The preset Streamlit theme that your custom theme inherits from, or a path/URL to a theme file.
 
-        This can be one of the following: "light" or "dark".
+        This can be one of the following:
+        - "light" or "dark" (preset themes)
+        - A local file path to a .toml theme file (e.g., "themes/custom.toml")
+        - A URL to a .toml theme file (e.g., "https://example.com/theme.toml")
+
+        When using a theme file, it should contain a [theme] section with theme options.
+        Any options also set in config.toml will override the theme file values.
     """,
 )
 
@@ -2261,6 +2267,11 @@ def get_config_options(
                 file_contents = file.read()
 
             _update_config_with_toml(file_contents, filename)
+
+        # Handle theme inheritance if theme.base points to a file
+        config_util.process_theme_inheritance(
+            _config_options, _config_options_template, _set_option
+        )
 
         _update_config_with_sensitive_env_var(_config_options)
 

@@ -14,10 +14,15 @@
 
 from __future__ import annotations
 
+import copy
+import os
 import re
+import urllib.request
+from typing import Any, Final
 
-from streamlit import cli_util
+from streamlit import cli_util, url_util
 from streamlit.config_option import ConfigOption
+from streamlit.errors import StreamlitAPIException
 
 
 def server_option_changed(
@@ -162,6 +167,370 @@ def show_config(
             append_setting(toml_setting)
 
     cli_util.print_to_cli("\n".join(out))
+
+
+# Theme inheritance utility functions
+
+
+def get_valid_theme_options(
+    config_options_template: dict[str, ConfigOption],
+) -> set[str]:
+    """Get the set of all valid theme configuration options.
+
+    This function automatically extracts valid theme options from the existing
+    config option definitions, ensuring it stays in sync with the actual
+    theme options defined via _create_theme_options() calls.
+
+    Parameters
+    ----------
+    config_options_template : dict[str, ConfigOption]
+        The config options template to extract theme options from
+
+    Returns
+    -------
+    set[str]
+        Set of valid theme option names (without the "theme." prefix)
+    """
+    valid_options = set()
+
+    # Extract theme options from the config template
+    for option_key in config_options_template:
+        if option_key.startswith("theme."):
+            # Extract the option name after "theme."
+            parts = option_key.split(".")
+            if len(parts) == 2:
+                # Direct theme option like "theme.primaryColor"
+                _, option_name = parts
+                valid_options.add(option_name)
+            elif len(parts) == 3:
+                # Subsection option like "theme.sidebar.primaryColor"
+                _, _, option_name = parts
+                # Add the option name (it's valid in both main theme and subsections)
+                valid_options.add(option_name)
+
+    return valid_options
+
+
+def validate_theme_file_content(
+    theme_content: dict[str, Any],
+    file_path_or_url: str,
+    config_options_template: dict[str, ConfigOption],
+) -> None:
+    """Validate that a theme file contains only valid theme options.
+
+    Parameters
+    ----------
+    theme_content : dict[str, Any]
+        The parsed theme file content
+    file_path_or_url : str
+        The path or URL to the theme file (for error messages)
+    config_options_template : dict[str, ConfigOption]
+        The config options template to validate against
+
+    Raises
+    ------
+    StreamlitAPIException
+        If the theme file contains invalid options
+    """
+    valid_options = get_valid_theme_options(config_options_template)
+    valid_subsections = {"sidebar"}
+
+    theme_section = theme_content.get("theme", {})
+
+    # Validate theme section options
+    for option_name in theme_section:
+        if isinstance(theme_section[option_name], dict):
+            # It's a subsection (like sidebar)
+            if option_name not in valid_subsections:
+                raise StreamlitAPIException(
+                    f"Theme file {file_path_or_url} contains invalid theme subsection: '{option_name}'. "
+                    f"Valid subsections are: {sorted(valid_subsections)}"
+                )
+            # Validate options within the subsection
+            for sub_option in theme_section[option_name]:
+                if sub_option not in valid_options:
+                    raise StreamlitAPIException(
+                        f"Theme file {file_path_or_url} contains invalid theme option: "
+                        f"'theme.{option_name}.{sub_option}'. "
+                        f"Valid theme options are: {sorted(valid_options)}"
+                    )
+        # It's a direct theme option
+        elif option_name not in valid_options:
+            raise StreamlitAPIException(
+                f"Theme file {file_path_or_url} contains invalid theme option: 'theme.{option_name}'. "
+                f"Valid theme options are: {sorted(valid_options)}"
+            )
+
+
+def load_theme_file(
+    file_path_or_url: str, config_options_template: dict[str, ConfigOption]
+) -> dict[str, Any]:
+    """Load and parse a theme TOML file from a local path or URL.
+
+    Parameters
+    ----------
+    file_path_or_url : str
+        The path to a local TOML file or a URL pointing to a TOML file
+    config_options_template : dict[str, ConfigOption]
+        The config options template to validate against
+
+    Returns
+    -------
+    dict[str, Any]
+        The parsed TOML content as a dictionary
+
+    Raises
+    ------
+    StreamlitAPIException
+        If the file cannot be found, read, parsed, or contains invalid theme options
+    FileNotFoundError
+        If the specified theme file cannot be found
+    """
+
+    def _raise_missing_toml() -> None:
+        raise StreamlitAPIException(
+            "The 'toml' package is required to load theme files. "
+            "Please install it with 'pip install toml'."
+        )
+
+    def _raise_file_not_found() -> None:
+        raise FileNotFoundError(f"Theme file not found: {file_path_or_url}")
+
+    def _raise_missing_theme_section() -> None:
+        raise StreamlitAPIException(
+            f"Theme file {file_path_or_url} must contain a [theme] section"
+        )
+
+    try:
+        import toml
+    except ImportError:
+        _raise_missing_toml()
+
+    # Check if it's a URL using the url_util helper (only allow http/https schemes)
+    is_valid_url = url_util.is_url(file_path_or_url, allowed_schemas=("http", "https"))
+
+    try:
+        if is_valid_url:
+            # Load from URL - url_util.is_url already validated http/https schemes
+            with urllib.request.urlopen(file_path_or_url) as response:  # noqa: S310
+                content = response.read().decode("utf-8")
+        else:
+            # Load from local file path
+            # Resolve relative paths from the current working directory
+            if not os.path.isabs(file_path_or_url):
+                file_path_or_url = os.path.join(os.getcwd(), file_path_or_url)
+
+            if not os.path.exists(file_path_or_url):
+                _raise_file_not_found()
+
+            with open(file_path_or_url, encoding="utf-8") as f:
+                content = f.read()
+
+        # Parse the TOML content
+        parsed_theme = toml.loads(content)
+
+        # Validate that the theme file has a theme section
+        if "theme" not in parsed_theme:
+            _raise_missing_theme_section()
+
+        # Validate that the theme file contains only valid theme options
+        validate_theme_file_content(
+            parsed_theme, file_path_or_url, config_options_template
+        )
+
+        return parsed_theme
+
+    except (StreamlitAPIException, FileNotFoundError):
+        # Re-raise these specific exceptions
+        raise
+    except urllib.error.URLError as e:
+        raise StreamlitAPIException(
+            f"Could not load theme file from URL {file_path_or_url}: {e}"
+        ) from e
+    except Exception as e:
+        raise StreamlitAPIException(
+            f"Error loading theme file {file_path_or_url}: {e}"
+        ) from e
+
+
+def apply_theme_inheritance(
+    base_theme: dict[str, Any], override_theme: dict[str, Any]
+) -> dict[str, Any]:
+    """Apply theme inheritance where override_theme values take precedence over base_theme.
+
+    Parameters
+    ----------
+    base_theme : dict[str, Any]
+        The base theme configuration (from theme.toml)
+    override_theme : dict[str, Any]
+        The override theme configuration (from config.toml)
+
+    Returns
+    -------
+    dict[str, Any]
+        The merged theme configuration
+    """
+    # Start with a deep copy of the base theme
+    merged_theme = copy.deepcopy(base_theme)
+
+    # Apply overrides from the config.toml
+    for section_name, section_data in override_theme.items():
+        if section_name not in merged_theme:
+            merged_theme[section_name] = {}
+
+        if isinstance(section_data, dict):
+            # Handle nested sections like theme.sidebar
+            for key, value in section_data.items():
+                if (
+                    isinstance(value, dict)
+                    and key in merged_theme[section_name]
+                    and isinstance(merged_theme[section_name][key], dict)
+                ):
+                    # Merge nested dictionaries (e.g., theme.sidebar)
+                    merged_theme[section_name][key].update(value)
+                else:
+                    # Direct assignment for non-dict values or new keys
+                    merged_theme[section_name][key] = value
+        else:
+            # Handle direct theme options
+            merged_theme[section_name] = section_data
+
+    return merged_theme
+
+
+def process_theme_inheritance(
+    config_options: dict[str, ConfigOption],
+    config_options_template: dict[str, ConfigOption],
+    set_option_func: Any,
+) -> None:
+    """Process theme inheritance if theme.base points to a theme file.
+
+    This function checks if theme.base is set to a file path or URL,
+    loads the theme file, and applies inheritance logic where the
+    current config.toml values override the theme file values.
+
+    Parameters
+    ----------
+    config_options : dict[str, ConfigOption]
+        The current config options
+    config_options_template : dict[str, ConfigOption]
+        The config options template
+    set_option_func : Any
+        Function to set config option values
+    """
+    # Get the current theme.base value
+    if config_options is None:
+        return
+
+    base_option = config_options.get("theme.base")
+    if not base_option or base_option.value is None:
+        return
+
+    base_value = base_option.value
+
+    # Check if it's a file path or URL (not just "light" or "dark")
+    if base_value in ("light", "dark"):
+        return
+
+    def _raise_invalid_nested_base() -> None:
+        raise StreamlitAPIException(
+            f"Theme file {base_value} cannot reference another theme file in its base property. "
+            f"Only 'light' and 'dark' are allowed in theme files."
+        )
+
+    try:
+        # Load the theme file (load_theme_file handles path resolution internally)
+        theme_file_content = load_theme_file(base_value, config_options_template)
+
+        # Validate that the theme file doesn't have nested base references to other files
+        theme_base = theme_file_content.get("theme", {}).get("base")
+        if theme_base and theme_base not in ("light", "dark"):
+            _raise_invalid_nested_base()
+
+        # Get current theme options from config.toml
+        current_theme_options = {}
+        if config_options is not None:
+            for opt_name, opt_val in config_options.items():
+                if opt_name.startswith("theme.") and opt_val.value is not None:
+                    # Convert dot notation back to nested dict
+                    parts = opt_name.split(".")
+                    if len(parts) == 2:  # theme.option
+                        _, option = parts
+                        if option != "base":  # Don't include the base option itself
+                            current_theme_options[option] = opt_val.value
+                    elif len(parts) == 3:  # theme.sidebar.option
+                        _, section, option = parts
+                        if section not in current_theme_options:
+                            current_theme_options[section] = {}
+                        current_theme_options[section][option] = opt_val.value
+
+        # Apply inheritance: theme file as base, config.toml as overrides
+        merged_theme = apply_theme_inheritance(
+            theme_file_content, {"theme": current_theme_options}
+        )
+
+        # Update the config options with the merged theme
+        # First, clear existing theme options (except base)
+        if config_options is not None:
+            theme_options_to_remove = [
+                opt_name
+                for opt_name in config_options
+                if opt_name.startswith("theme.") and opt_name != "theme.base"
+            ]
+            for opt_name in theme_options_to_remove:
+                set_option_func(opt_name, None, "reset for theme inheritance")
+
+        # Set the merged theme options
+        theme_section = merged_theme.get("theme", {})
+        for option_name, option_value in theme_section.items():
+            if option_name == "base":
+                # For base, use the original value from the theme file if it exists,
+                # otherwise keep the current base (which points to our theme file)
+                theme_file_base = theme_file_content.get("theme", {}).get("base")
+                if theme_file_base:
+                    set_option_func(
+                        "theme.base", theme_file_base, f"theme file: {base_value}"
+                    )
+                continue
+
+            if isinstance(option_value, dict):
+                # Handle nested sections like sidebar
+                for sub_option, sub_value in option_value.items():
+                    set_option_func(
+                        f"theme.{option_name}.{sub_option}",
+                        sub_value,
+                        f"theme file: {base_value}",
+                    )
+            else:
+                set_option_func(
+                    f"theme.{option_name}", option_value, f"theme file: {base_value}"
+                )
+
+        # Handle sidebar section if it exists
+        sidebar_section = merged_theme.get("theme.sidebar") or merged_theme.get(
+            "theme", {}
+        ).get("sidebar")
+        if sidebar_section:
+            for option_name, option_value in sidebar_section.items():
+                set_option_func(
+                    f"theme.sidebar.{option_name}",
+                    option_value,
+                    f"theme file: {base_value}",
+                )
+
+    except StreamlitAPIException:
+        # Re-raise StreamlitAPIException as-is to preserve specific error messages
+        raise
+    except Exception as e:
+        # Import logger locally to prevent circular references
+        from streamlit.logger import get_logger
+
+        logger: Final = get_logger(__name__)
+        logger.exception("Error processing theme inheritance")
+        # Only wrap unexpected errors (not our specific validation errors)
+        raise StreamlitAPIException(
+            f"Failed to process theme inheritance from {base_value}: {e}"
+        ) from e
 
 
 def _clean(txt: str) -> str:
