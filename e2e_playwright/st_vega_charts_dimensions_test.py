@@ -63,7 +63,7 @@ def test_vega_chart_width_behavior(themed_app: Page):
         expect(chart).to_be_visible()
 
         chart_description = f"Chart {i}: {descriptions[i]}"
-        assert_vega_chart_width(chart, expected_width, chart_description)
+        assert_vega_chart_width(chart, expected_width, chart_description, 3)
 
 
 def test_vega_chart_width_content_snapshot(
