@@ -372,7 +372,7 @@ def test_download_in_iframe(iframed_app: IframedPage):
     # Manual record/stop for frame (helper uses get_audio_input which expects Page)
     audio_input = frame.get_by_test_id("stAudioInput").nth(FORM)
     audio_input.get_by_role("button", name="Record").click()
-    frame.wait_for_timeout(1500)
+    page.wait_for_timeout(1500)
     audio_input.get_by_role("button", name="Stop recording").click()
     wait_for_app_run(frame)
 
