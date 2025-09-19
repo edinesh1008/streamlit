@@ -173,65 +173,59 @@ def show_config(
     cli_util.print_to_cli("\n".join(out))
 
 
-# Theme inheritance utility functions
+def _clean(txt: str) -> str:
+    """Replace sequences of multiple spaces with a single space, excluding newlines.
+
+    Preserves leading and trailing spaces, and does not modify spaces in between lines.
+    """
+    return re.sub(" +", " ", txt)
 
 
-def iter_theme_config_options(
+def _clean_paragraphs(txt: str) -> list[str]:
+    """Split the text into paragraphs, preserve newlines within the paragraphs."""
+    # Strip both leading and trailing newlines.
+    txt = txt.strip("\n")
+    paragraphs = txt.split("\n\n")
+    return [
+        "\n".join(_clean(line) for line in paragraph.split("\n"))
+        for paragraph in paragraphs
+    ]
+
+
+# Theme validation functions
+
+
+def _validate_color_value(value: Any, option_name: str) -> str:
+    """Validate that a theme color config option value is a valid color string."""
+    if not isinstance(value, str):
+        raise StreamlitAPIException(
+            f"Theme option '{option_name}' must be a string, got {type(value).__name__}: {value}"
+        )
+
+    value_str: str = value.strip()
+
+    # Check for hex colors
+    if value_str.startswith("#"):
+        if not re.match(r"^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$", value_str):
+            raise StreamlitAPIException(
+                f"Theme option '{option_name}' has invalid hex color format: {value_str}"
+            )
+    elif not value_str:
+        raise StreamlitAPIException(f"Theme option '{option_name}' cannot be empty")
+
+    return value_str
+
+
+def _iterate_theme_config_options(
     config_options: dict[str, ConfigOption],
 ) -> Iterator[tuple[str, Any]]:
-    """Iterate through theme config options, yielding (option_path, value) pairs.
-
-    Parameters
-    ----------
-    config_options : dict[str, ConfigOption]
-        The config options dictionary
-
-    Yields
-    ------
-    tuple[str, Any]
-        (option_path, value) pairs for theme options with non-None values
-    """
+    """Iterate through theme config options, yielding (option_path, value) pairs."""
     for opt_name, opt_val in config_options.items():
         if opt_name.startswith("theme.") and opt_val.value is not None:
             yield opt_name, opt_val.value
 
 
-def convert_dot_notation_to_nested(options: dict[str, Any]) -> dict[str, Any]:
-    """Convert dot notation keys to nested dictionary structure.
-
-    Parameters
-    ----------
-    options : dict[str, Any]
-        Dictionary with dot-notation keys (e.g., 'theme.sidebar.primaryColor')
-
-    Returns
-    -------
-    dict[str, Any]
-        Nested dictionary structure
-
-    Example
-    -------
-    >>> convert_dot_notation_to_nested(
-    ...     {
-    ...         "theme.primaryColor": "#ff0000",
-    ...         "theme.sidebar.backgroundColor": "#000000",
-    ...     }
-    ... )
-    {'theme': {'primaryColor': '#ff0000', 'sidebar': {'backgroundColor': '#000000'}}}
-    """
-    result: dict[str, Any] = {}
-    for key, value in options.items():
-        parts = key.split(".")
-        current = result
-        for part in parts[:-1]:
-            if part not in current:
-                current[part] = {}
-            current = current[part]
-        current[parts[-1]] = value
-    return result
-
-
-def extract_current_theme_config(
+def _extract_current_theme_config(
     config_options: dict[str, ConfigOption],
 ) -> dict[str, Any]:
     """Extract current theme configuration from config options.
@@ -248,7 +242,7 @@ def extract_current_theme_config(
     """
     current_theme_options = {}
 
-    for opt_name, opt_value in iter_theme_config_options(config_options):
+    for opt_name, opt_value in _iterate_theme_config_options(config_options):
         parts = opt_name.split(".")
         if len(parts) == 2:  # theme.option
             _, option = parts
@@ -263,79 +257,7 @@ def extract_current_theme_config(
     return current_theme_options
 
 
-def validate_color_value(value: Any, option_name: str) -> str:
-    """Validate that a theme color value is a valid color string.
-
-    Parameters
-    ----------
-    value : Any
-        The value to validate
-    option_name : str
-        Name of the option for error context
-
-    Returns
-    -------
-    str
-        The validated color value
-
-    Raises
-    ------
-    StreamlitAPIException
-        If the value is not a valid color string
-    """
-    if not isinstance(value, str):
-        raise StreamlitAPIException(
-            f"Theme option '{option_name}' must be a string, got {type(value).__name__}: {value}"
-        )
-
-    # Basic validation for color format
-    value = (
-        value.strip()
-    )  # This returns str since value is already validated as str above
-
-    # Check for hex colors
-    if value.startswith("#"):
-        if not re.match(r"^#[0-9A-Fa-f]{6}$|^#[0-9A-Fa-f]{3}$", value):
-            raise StreamlitAPIException(
-                f"Theme option '{option_name}' has invalid hex color format: {value}"
-            )
-    elif not value:
-        raise StreamlitAPIException(f"Theme option '{option_name}' cannot be empty")
-
-    return value
-
-
-def validate_theme_value_type(value: Any, option_name: str, expected_type: type) -> Any:
-    """Validate theme value has correct data type.
-
-    Parameters
-    ----------
-    value : Any
-        The value to validate
-    option_name : str
-        Name of the option for error context
-    expected_type : type
-        Expected type for the value
-
-    Returns
-    -------
-    Any
-        The validated value
-
-    Raises
-    ------
-    StreamlitAPIException
-        If the value doesn't match the expected type
-    """
-    if not isinstance(value, expected_type):
-        raise StreamlitAPIException(
-            f"Theme option '{option_name}' must be {expected_type.__name__}, "
-            f"got {type(value).__name__}: {value}"
-        )
-    return value
-
-
-def get_valid_theme_options(
+def _get_valid_theme_options(
     config_options_template: dict[str, ConfigOption],
 ) -> set[str]:
     """Get the set of all valid theme configuration options.
@@ -374,7 +296,7 @@ def get_valid_theme_options(
     return valid_options
 
 
-def validate_theme_file_content(
+def _validate_theme_file_content(
     theme_content: dict[str, Any],
     file_path_or_url: str,
     config_options_template: dict[str, ConfigOption],
@@ -395,7 +317,7 @@ def validate_theme_file_content(
     StreamlitAPIException
         If the theme file contains invalid options
     """
-    valid_options = get_valid_theme_options(config_options_template)
+    valid_options = _get_valid_theme_options(config_options_template)
     valid_subsections = {"sidebar"}
 
     theme_section = theme_content.get("theme", {})
@@ -417,10 +339,12 @@ def validate_theme_file_content(
                         f"'theme.{option_name}.{sub_option}'. "
                         f"Valid theme options are: {sorted(valid_options)}"
                     )
-                # Validate data types for subsection options
-                _validate_option_data_type(
-                    sub_value, f"theme.{option_name}.{sub_option}"
-                )
+                # Validate color options for subsection
+                full_option_name = f"theme.{option_name}.{sub_option}"
+                if (
+                    "color" in full_option_name.lower() or "Color" in full_option_name
+                ) and not full_option_name.endswith(".base"):
+                    _validate_color_value(sub_value, full_option_name)
         else:
             # It's a direct theme option
             if option_name not in valid_options:
@@ -428,32 +352,15 @@ def validate_theme_file_content(
                     f"Theme file {file_path_or_url} contains invalid theme option: 'theme.{option_name}'. "
                     f"Valid theme options are: {sorted(valid_options)}"
                 )
-            # Validate data types for direct theme options
-            _validate_option_data_type(option_value, f"theme.{option_name}")
+            # Validate color options for direct theme option
+            full_option_name = f"theme.{option_name}"
+            if (
+                "color" in full_option_name.lower() or "Color" in full_option_name
+            ) and not full_option_name.endswith(".base"):
+                _validate_color_value(option_value, full_option_name)
 
 
-def _validate_option_data_type(value: Any, option_name: str) -> None:
-    """Validate data type for a theme option value.
-
-    Parameters
-    ----------
-    value : Any
-        The option value to validate
-    option_name : str
-        The full option name for error context (e.g., 'theme.primaryColor')
-    """
-    # Validate color options
-    if "color" in option_name.lower() or "Color" in option_name:
-        # Skip validation for 'base' option which can be "light"/"dark" or file path
-        if not option_name.endswith(".base"):
-            validate_color_value(value, option_name)
-
-    # Validate font options
-    elif any(font_option in option_name for font_option in ["font", "Font"]):
-        validate_theme_value_type(value, option_name, str)
-
-
-def load_theme_file(
+def _load_theme_file(
     file_path_or_url: str, config_options_template: dict[str, ConfigOption]
 ) -> dict[str, Any]:
     """Load and parse a theme TOML file from a local path or URL.
@@ -525,7 +432,7 @@ def load_theme_file(
             _raise_missing_theme_section()
 
         # Validate that the theme file contains only valid theme options
-        validate_theme_file_content(
+        _validate_theme_file_content(
             parsed_theme, file_path_or_url, config_options_template
         )
 
@@ -544,7 +451,7 @@ def load_theme_file(
         ) from e
 
 
-def apply_theme_inheritance(
+def _apply_theme_inheritance(
     base_theme: dict[str, Any], override_theme: dict[str, Any]
 ) -> dict[str, Any]:
     """Apply theme inheritance where override_theme values take precedence over base_theme.
@@ -590,7 +497,7 @@ def apply_theme_inheritance(
 
 
 def process_theme_inheritance(
-    config_options: dict[str, ConfigOption],
+    config_options: dict[str, ConfigOption] | None,
     config_options_template: dict[str, ConfigOption],
     set_option_func: Any,
 ) -> None:
@@ -626,31 +533,48 @@ def process_theme_inheritance(
     def _raise_invalid_nested_base() -> None:
         raise StreamlitAPIException(
             f"Theme file {base_value} cannot reference another theme file in its base property. "
-            f"Only 'light' and 'dark' are allowed in theme files."
+            f"Only 'light' and 'dark' are allowed in referenced theme files."
         )
 
     try:
         # Load the theme file (load_theme_file handles path resolution internally)
-        theme_file_content = load_theme_file(base_value, config_options_template)
+        theme_file_content = _load_theme_file(base_value, config_options_template)
 
-        # Validate that the theme file doesn't have nested base references to other files
+        # Validate that theme.base of the referenced theme file doesn't reference another file
         theme_base = theme_file_content.get("theme", {}).get("base")
         if theme_base and theme_base not in ("light", "dark"):
             _raise_invalid_nested_base()
 
-        # Get current theme options from config.toml
+        # Get current theme options from main config.toml
         current_theme_options = (
-            extract_current_theme_config(config_options) if config_options else {}
+            _extract_current_theme_config(config_options) if config_options else {}
         )
 
-        # Apply inheritance: theme file as base, config.toml as overrides
-        merged_theme = apply_theme_inheritance(
+        # Apply inheritance: theme file as base, with specified theme options in config.toml as overrides
+        merged_theme = _apply_theme_inheritance(
             theme_file_content, {"theme": current_theme_options}
         )
 
         # Update the config options with the merged theme
-        # First, clear existing theme options (except base)
+        # First, preserve theme options set by env vars and command line flags (higher precedence)
+        high_precedence_theme_options = {}
         if config_options is not None:
+            for opt_name, opt_config in config_options.items():
+                if (
+                    opt_name.startswith("theme.")
+                    and opt_name != "theme.base"
+                    and opt_config.where_defined
+                    in (
+                        "environment variable",
+                        "command-line argument or environment variable",
+                    )
+                ):
+                    high_precedence_theme_options[opt_name] = {
+                        "value": opt_config.value,
+                        "where_defined": opt_config.where_defined,
+                    }
+
+            # Clear existing theme options (except base) to prepare for inheritance
             theme_options_to_remove = [
                 opt_name
                 for opt_name in config_options
@@ -697,6 +621,10 @@ def process_theme_inheritance(
                     f"theme file: {base_value}",
                 )
 
+        # Finally, restore theme options set by env vars and command line flags (highest precedence)
+        for opt_name, opt_data in high_precedence_theme_options.items():
+            set_option_func(opt_name, opt_data["value"], opt_data["where_defined"])
+
     except StreamlitAPIException:
         # Re-raise StreamlitAPIException as-is to preserve specific error messages
         raise
@@ -710,22 +638,3 @@ def process_theme_inheritance(
         raise StreamlitAPIException(
             f"Failed to process theme inheritance from {base_value}: {e}"
         ) from e
-
-
-def _clean(txt: str) -> str:
-    """Replace sequences of multiple spaces with a single space, excluding newlines.
-
-    Preserves leading and trailing spaces, and does not modify spaces in between lines.
-    """
-    return re.sub(" +", " ", txt)
-
-
-def _clean_paragraphs(txt: str) -> list[str]:
-    """Split the text into paragraphs, preserve newlines within the paragraphs."""
-    # Strip both leading and trailing newlines.
-    txt = txt.strip("\n")
-    paragraphs = txt.split("\n\n")
-    return [
-        "\n".join(_clean(line) for line in paragraph.split("\n"))
-        for paragraph in paragraphs
-    ]

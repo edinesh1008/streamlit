@@ -307,8 +307,8 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         self.config_template = CONFIG_OPTIONS_TEMPLATE
 
     def test_get_valid_theme_options(self):
-        """Test that get_valid_theme_options extracts all valid theme options."""
-        valid_options = config_util.get_valid_theme_options(self.config_template)
+        """Test that _get_valid_theme_options extracts all valid theme options."""
+        valid_options = config_util._get_valid_theme_options(self.config_template)
 
         # Test that we get expected core theme options
         expected_options = {
@@ -331,9 +331,9 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
             assert isinstance(option, str)
 
     def test_get_valid_theme_options_empty_template(self):
-        """Test get_valid_theme_options with empty config template."""
+        """Test _get_valid_theme_options with empty config template."""
         empty_template = {}
-        valid_options = config_util.get_valid_theme_options(empty_template)
+        valid_options = config_util._get_valid_theme_options(empty_template)
         assert valid_options == set()
 
     def test_validate_theme_file_content_valid(self):
@@ -348,7 +348,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         }
 
         # Should not raise any exception
-        config_util.validate_theme_file_content(
+        config_util._validate_theme_file_content(
             theme_content, "test_theme.toml", self.config_template
         )
 
@@ -357,7 +357,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         theme_content = {"theme": {"invalidOption": "value", "primaryColor": "#ff0000"}}
 
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_theme_file_content(
+            config_util._validate_theme_file_content(
                 theme_content, "test_theme.toml", self.config_template
             )
 
@@ -374,7 +374,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         }
 
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_theme_file_content(
+            config_util._validate_theme_file_content(
                 theme_content, "test_theme.toml", self.config_template
             )
 
@@ -391,7 +391,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         }
 
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_theme_file_content(
+            config_util._validate_theme_file_content(
                 theme_content, "test_theme.toml", self.config_template
             )
 
@@ -399,22 +399,22 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         assert "invalidSidebarOption" in str(cm.value)
 
     def test_load_theme_file_missing_toml(self):
-        """Test load_theme_file when toml module is missing."""
+        """Test _load_theme_file when toml module is missing."""
 
         # Mock the import toml statement to raise ImportError
         with patch.dict("sys.modules", {"toml": None}):
             with pytest.raises(StreamlitAPIException) as cm:
-                config_util.load_theme_file("theme.toml", self.config_template)
+                config_util._load_theme_file("theme.toml", self.config_template)
 
             assert "toml' package is required" in str(cm.value)
 
     @patch("streamlit.config_util.os.path.exists")
     def test_load_theme_file_missing_file(self, mock_exists):
-        """Test load_theme_file with missing local file."""
+        """Test _load_theme_file with missing local file."""
         mock_exists.return_value = False
 
         with pytest.raises(FileNotFoundError) as cm:
-            config_util.load_theme_file("missing_theme.toml", self.config_template)
+            config_util._load_theme_file("missing_theme.toml", self.config_template)
 
         assert "Theme file not found" in str(cm.value)
 
@@ -435,7 +435,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         mock_response.__enter__.return_value = mock_response
         mock_urlopen.return_value = mock_response
 
-        result = config_util.load_theme_file(
+        result = config_util._load_theme_file(
             "https://example.com/theme.toml", self.config_template
         )
 
@@ -453,7 +453,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         mock_urlopen.side_effect = urllib.error.URLError("Network error")
 
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.load_theme_file(
+            config_util._load_theme_file(
                 "https://example.com/theme.toml", self.config_template
             )
 
@@ -473,7 +473,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
             temp_path = f.name
 
         try:
-            result = config_util.load_theme_file(temp_path, self.config_template)
+            result = config_util._load_theme_file(temp_path, self.config_template)
             assert result["theme"]["base"] == "light"
             assert result["theme"]["primaryColor"] == "#0066cc"
             assert result["theme"]["backgroundColor"] == "#ffffff"
@@ -493,7 +493,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
 
         try:
             with pytest.raises(StreamlitAPIException) as cm:
-                config_util.load_theme_file(temp_path, self.config_template)
+                config_util._load_theme_file(temp_path, self.config_template)
 
             assert "must contain a [theme] section" in str(cm.value)
         finally:
@@ -513,7 +513,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
 
         try:
             with pytest.raises(StreamlitAPIException) as cm:
-                config_util.load_theme_file(temp_path, self.config_template)
+                config_util._load_theme_file(temp_path, self.config_template)
 
             assert "Error loading theme file" in str(cm.value)
         finally:
@@ -536,7 +536,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
             }
         }
 
-        result = config_util.apply_theme_inheritance(base_theme, override_theme)
+        result = config_util._apply_theme_inheritance(base_theme, override_theme)
 
         # Base value should remain
         assert result["theme"]["base"] == "dark"
@@ -563,7 +563,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
             }
         }
 
-        result = config_util.apply_theme_inheritance(base_theme, override_theme)
+        result = config_util._apply_theme_inheritance(base_theme, override_theme)
 
         # Main theme unchanged
         assert result["theme"]["primaryColor"] == "#ff0000"
@@ -580,7 +580,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
 
         override_theme = {"theme": {"sidebar": {"primaryColor": "#00ff00"}}}
 
-        result = config_util.apply_theme_inheritance(base_theme, override_theme)
+        result = config_util._apply_theme_inheritance(base_theme, override_theme)
 
         assert result["theme"]["primaryColor"] == "#ff0000"
         assert result["theme"]["sidebar"]["primaryColor"] == "#00ff00"
@@ -618,7 +618,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
 
         set_option_mock.assert_not_called()
 
-    @patch("streamlit.config_util.load_theme_file")
+    @patch("streamlit.config_util._load_theme_file")
     def test_process_theme_inheritance_nested_base_error(self, mock_load_theme):
         """Test process_theme_inheritance detects nested base references."""
         base_option = ConfigOption("theme.base", description="", default_val=None)
@@ -643,7 +643,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
 
         assert "cannot reference another theme file" in str(cm.value)
 
-    @patch("streamlit.config_util.load_theme_file")
+    @patch("streamlit.config_util._load_theme_file")
     def test_process_theme_inheritance_successful_merge(self, mock_load_theme):
         """Test successful theme inheritance processing."""
         base_option = ConfigOption("theme.base", description="", default_val=None)
@@ -690,92 +690,44 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         assert set_calls_dict.get("theme.primaryColor") == "#override"
 
     def test_validate_color_value_valid_colors(self):
-        """Test validate_color_value with various valid color formats."""
+        """Test _validate_color_value with various valid color formats."""
         # Valid hex colors
         assert (
-            config_util.validate_color_value("#ffffff", "theme.primaryColor")
+            config_util._validate_color_value("#ffffff", "theme.primaryColor")
             == "#ffffff"
         )
-        assert config_util.validate_color_value("#000", "theme.primaryColor") == "#000"
+        assert config_util._validate_color_value("#000", "theme.primaryColor") == "#000"
         assert (
-            config_util.validate_color_value("#FF0000", "theme.primaryColor")
+            config_util._validate_color_value("#FF0000", "theme.primaryColor")
             == "#FF0000"
         )
         assert (
-            config_util.validate_color_value("  #ff0000  ", "theme.primaryColor")
+            config_util._validate_color_value("  #ff0000  ", "theme.primaryColor")
             == "#ff0000"
         )
 
     def test_validate_color_value_invalid_colors(self):
-        """Test validate_color_value with invalid color formats."""
+        """Test _validate_color_value with invalid color formats."""
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_color_value("#invalid", "theme.primaryColor")
+            config_util._validate_color_value("#invalid", "theme.primaryColor")
         assert "invalid hex color format" in str(cm.value)
 
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_color_value("#ff", "theme.primaryColor")
+            config_util._validate_color_value("#ff", "theme.primaryColor")
         assert "invalid hex color format" in str(cm.value)
 
         # Empty string should raise error
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_color_value("", "theme.primaryColor")
+            config_util._validate_color_value("", "theme.primaryColor")
         assert "cannot be empty" in str(cm.value)
 
         # Non-string value should raise error
         with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_color_value(123, "theme.primaryColor")
+            config_util._validate_color_value(123, "theme.primaryColor")
         assert "must be a string" in str(cm.value)
 
-    def test_validate_theme_value_type_valid_types(self):
-        """Test validate_theme_value_type with valid data types."""
-        # String values
-        assert (
-            config_util.validate_theme_value_type("serif", "theme.font", str) == "serif"
-        )
-        assert (
-            config_util.validate_theme_value_type("12px", "theme.codeFontSize", str)
-            == "12px"
-        )
-
-        # Integer values
-        assert (
-            config_util.validate_theme_value_type(400, "theme.codeFontWeight", int)
-            == 400
-        )
-        assert (
-            config_util.validate_theme_value_type(14, "theme.baseFontSize", int) == 14
-        )
-
-        # Boolean values
-        assert (
-            config_util.validate_theme_value_type(True, "theme.showWidgetBorder", bool)
-            is True
-        )
-        assert (
-            config_util.validate_theme_value_type(False, "theme.linkUnderline", bool)
-            is False
-        )
-
-    def test_validate_theme_value_type_invalid_types(self):
-        """Test validate_theme_value_type with invalid data types."""
-        with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_theme_value_type(123, "theme.font", str)
-        assert "must be str" in str(cm.value)
-
-        with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_theme_value_type(
-                "invalid", "theme.codeFontWeight", int
-            )
-        assert "must be int" in str(cm.value)
-
-        with pytest.raises(StreamlitAPIException) as cm:
-            config_util.validate_theme_value_type(
-                "invalid", "theme.showWidgetBorder", bool
-            )
-        assert "must be bool" in str(cm.value)
-
     def test_iter_theme_config_options(self):
-        """Test iter_theme_config_options extracts theme options correctly."""
+        """Test _iterate_theme_config_options extracts theme options correctly."""
         mock_config_options = {
             "theme.primaryColor": ConfigOption(
                 "theme.primaryColor", description="", default_val="#ff0000"
@@ -799,7 +751,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         mock_config_options["theme.font"].set_value("serif", "test")
         mock_config_options["theme.sidebar.primaryColor"].set_value("#00ff00", "test")
 
-        result = list(config_util.iter_theme_config_options(mock_config_options))
+        result = list(config_util._iterate_theme_config_options(mock_config_options))
 
         # Should only include theme options with non-None values (returns full key names)
         expected_keys = {
@@ -817,34 +769,8 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         assert result_dict["theme.font"] == "serif"
         assert result_dict["theme.sidebar.primaryColor"] == "#00ff00"
 
-    def test_convert_dot_notation_to_nested(self):
-        """Test convert_dot_notation_to_nested converts flat structure to nested."""
-        flat_options = {
-            "primaryColor": "#ff0000",
-            "backgroundColor": "#000000",
-            "sidebar.primaryColor": "#00ff00",
-            "sidebar.backgroundColor": "#111111",
-            "font": "serif",
-        }
-
-        result = config_util.convert_dot_notation_to_nested(flat_options)
-
-        expected = {
-            "primaryColor": "#ff0000",
-            "backgroundColor": "#000000",
-            "font": "serif",
-            "sidebar": {"primaryColor": "#00ff00", "backgroundColor": "#111111"},
-        }
-
-        assert result == expected
-
-    def test_convert_dot_notation_to_nested_empty(self):
-        """Test convert_dot_notation_to_nested with empty input."""
-        result = config_util.convert_dot_notation_to_nested({})
-        assert result == {}
-
     def test_extract_current_theme_config(self):
-        """Test extract_current_theme_config extracts theme config correctly."""
+        """Test _extract_current_theme_config extracts theme config correctly."""
         mock_config_options = {
             "theme.primaryColor": ConfigOption(
                 "theme.primaryColor", description="", default_val=None
@@ -866,7 +792,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         mock_config_options["theme.sidebar.primaryColor"].set_value("#00ff00", "test")
         mock_config_options["server.port"].set_value(9000, "test")  # Non-theme option
 
-        result = config_util.extract_current_theme_config(mock_config_options)
+        result = config_util._extract_current_theme_config(mock_config_options)
 
         expected = {
             "primaryColor": "#ff0000",
@@ -877,7 +803,7 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         assert result == expected
 
     def test_extract_current_theme_config_no_theme_options(self):
-        """Test extract_current_theme_config with no theme options set."""
+        """Test _extract_current_theme_config with no theme options set."""
         mock_config_options = {
             "server.port": ConfigOption(
                 "server.port", description="", default_val=8501
@@ -890,6 +816,6 @@ class ThemeInheritanceUtilTest(unittest.TestCase):
         mock_config_options["server.port"].set_value(9000, "test")
         # Don't set theme.primaryColor value (should remain None)
 
-        result = config_util.extract_current_theme_config(mock_config_options)
+        result = config_util._extract_current_theme_config(mock_config_options)
 
         assert result == {}

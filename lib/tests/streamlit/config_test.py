@@ -2355,3 +2355,86 @@ class ThemeInheritanceIntegrationTest(unittest.TestCase):
 
         finally:
             os.unlink(theme_a_file)
+
+    def test_theme_inheritance_preserves_env_var_and_flag_precedence(self):
+        """Test that theme inheritance preserves environment variables and command line flags."""
+        theme_content = """
+        [theme]
+        base = "dark"
+        primaryColor = "#00ff00"
+        backgroundColor = "#000000"
+        font = "serif"
+        borderColor = "#333333"
+        """
+
+        theme_file = self._create_theme_file(theme_content)
+
+        try:
+            # Config file references theme file and sets some overrides
+            config_toml = f"""
+            [theme]
+            base = "{theme_file}"
+            primaryColor = "#ff0000"
+            textColor = "#ffffff"
+            """
+
+            # Simulate environment variable and command line flag (higher precedence)
+            options_from_flags = {
+                # Env var would be processed as flag by Click framework
+                "theme.font": "Arial",  # Should override theme file's "serif"
+                "theme.borderColor": "#999999",  # Should override theme file's "#333333"
+                "theme.linkColor": "#0066cc",  # New value not in theme file or config
+            }
+
+            with patch("streamlit.config.open", mock_open(read_data=config_toml)):
+                with patch("streamlit.config.os.path.exists") as mock_exists:
+                    mock_exists.side_effect = (
+                        lambda path: path == theme_file
+                        or path == os.path.join(os.getcwd(), ".streamlit/config.toml")
+                    )
+
+                    config.get_config_options(
+                        force_reparse=True, options_from_flags=options_from_flags
+                    )
+
+                    # Verify correct precedence hierarchy:
+                    # 1. Theme file base values
+                    assert config.get_option("theme.base") == "dark"  # From theme file
+                    assert (
+                        config.get_option("theme.backgroundColor") == "#000000"
+                    )  # From theme file (no override)
+
+                    # 2. Config file overrides
+                    assert (
+                        config.get_option("theme.primaryColor") == "#ff0000"
+                    )  # Config overrides theme
+                    assert (
+                        config.get_option("theme.textColor") == "#ffffff"
+                    )  # From config (not in theme)
+
+                    # 3. Environment variables and command line flags (highest precedence)
+                    assert (
+                        config.get_option("theme.font") == "Arial"
+                    )  # Flag/env overrides theme file
+                    assert (
+                        config.get_option("theme.borderColor") == "#999999"
+                    )  # Flag/env overrides theme file
+                    assert (
+                        config.get_option("theme.linkColor") == "#0066cc"
+                    )  # New value from flag/env
+
+                    # Verify where_defined is correct for high-precedence options
+                    assert (
+                        "command-line" in config.get_where_defined("theme.font").lower()
+                    )
+                    assert (
+                        "command-line"
+                        in config.get_where_defined("theme.borderColor").lower()
+                    )
+                    assert (
+                        "command-line"
+                        in config.get_where_defined("theme.linkColor").lower()
+                    )
+
+        finally:
+            os.unlink(theme_file)
